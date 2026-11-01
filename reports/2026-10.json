@@ -1,6 +1,6 @@
 {
   "month": "2026-10",
-  "made_at": "2026-11-01T08:49:30+00:00",
+  "made_at": "2026-11-01T11:16:53+00:00",
   "visits": [
     {
       "month": "2026-10",
@@ -11,7 +11,7 @@
     },
     {
       "month": "2026-11",
-      "visitors": 13,
+      "visitors": 16,
       "visitors_2plus_days": 0,
       "visitors_4plus_days": 0,
       "avg_days": 1
