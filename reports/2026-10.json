@@ -1,0 +1,98 @@
+{
+  "month": "2026-10",
+  "made_at": "2026-11-01T08:49:30+00:00",
+  "visits": [
+    {
+      "month": "2026-10",
+      "visitors": 151,
+      "visitors_2plus_days": 19,
+      "visitors_4plus_days": 8,
+      "avg_days": 1.38
+    },
+    {
+      "month": "2026-11",
+      "visitors": 13,
+      "visitors_2plus_days": 0,
+      "visitors_4plus_days": 0,
+      "avg_days": 1
+    }
+  ],
+  "events": {
+    "starts": 120,
+    "saved": 11,
+    "sent": 1,
+    "sent_fast": 0,
+    "friend_opens": 2,
+    "navigations": 12,
+    "plus_want": 0,
+    "plus_no": 0
+  },
+  "event_rows": [
+    {
+      "month": "2026-10",
+      "name": "nav_open",
+      "detail": "",
+      "n": 12
+    },
+    {
+      "month": "2026-10",
+      "name": "share_sent",
+      "detail": "2-5 min",
+      "n": 1
+    },
+    {
+      "month": "2026-10",
+      "name": "shared_open",
+      "detail": "",
+      "n": 2
+    },
+    {
+      "month": "2026-10",
+      "name": "start_set",
+      "detail": "gps",
+      "n": 19
+    },
+    {
+      "month": "2026-10",
+      "name": "start_set",
+      "detail": "manual",
+      "n": 11
+    },
+    {
+      "month": "2026-10",
+      "name": "start_set",
+      "detail": "remembered",
+      "n": 90
+    },
+    {
+      "month": "2026-10",
+      "name": "trip_saved",
+      "detail": "0-2 min",
+      "n": 2
+    },
+    {
+      "month": "2026-10",
+      "name": "trip_saved",
+      "detail": "15+ min",
+      "n": 1
+    },
+    {
+      "month": "2026-10",
+      "name": "trip_saved",
+      "detail": "2-5 min",
+      "n": 6
+    },
+    {
+      "month": "2026-10",
+      "name": "trip_saved",
+      "detail": "5-15 min",
+      "n": 2
+    }
+  ],
+  "kpis": {
+    "confirmed_plans": 24,
+    "activation": 0.577,
+    "two_minute_share": 0.0,
+    "growth_loop": 2.0
+  }
+}
