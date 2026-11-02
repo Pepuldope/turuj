@@ -1,0 +1,34 @@
+name: D1 usage check
+
+# Read-only: which database queries read the most rows in the last days (D1 insights),
+# so the free 5M reads/day can be planned for. Deploys and writes nothing.
+
+on:
+  push:
+    branches: ["claude/project-thread-tenkmx"]
+    paths: [".github/workflows/d1-usage.yml"]
+  workflow_dispatch:
+
+jobs:
+  usage:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Top queries by rows read
+        run: |
+          for p in 1d 3d; do
+            echo "### $p by reads"
+            npx -y wrangler@4 d1 insights mountour-visits --timePeriod=$p --sort-type=sum --sort-by=reads --limit=25 --json 2>&1 \
+              | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const a=JSON.parse(s.slice(s.indexOf("[")));for(const q of a)console.log(String(q.totalRowsRead??q.rowsRead).padStart(12),String(q.numberOfTimesRun??q.count).padStart(8),(q.query||"").replace(/\s+/g," ").slice(0,230))}catch(e){console.log(s.slice(0,3000))}})'
+          done
+      - name: Table sizes
+        run: |
+          npx -y wrangler@4 d1 execute mountour-visits --remote --json --command "SELECT name FROM sqlite_master WHERE type='table'" 2>&1 | tail -40
+          for t in trip review visit_day event_month account account_session; do
+            echo "$t: $(npx -y wrangler@4 d1 execute mountour-visits --remote --json --command "SELECT COUNT(*) AS n FROM $t" 2>/dev/null | grep -o '"n": *[0-9]*')"
+          done
