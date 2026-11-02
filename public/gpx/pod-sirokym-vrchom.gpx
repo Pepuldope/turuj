@@ -73,13 +73,12 @@
   <trk><name>Vyhliadka pod Širokým vrchom</name><desc>pod-sirokym-vrchom-banky</desc><trkseg>
     <trkpt lat="48.481746" lon="18.860096"><ele>636</ele></trkpt>
     <trkpt lat="48.481807" lon="18.860282"><ele>637</ele></trkpt>
-    <trkpt lat="48.481637" lon="18.860312"><ele>638</ele></trkpt>
+    <trkpt lat="48.481648" lon="18.860307"><ele>638</ele></trkpt>
+    <trkpt lat="48.481614" lon="18.860351"><ele>639</ele></trkpt>
     <trkpt lat="48.481454" lon="18.860831"><ele>643</ele></trkpt>
-    <trkpt lat="48.481031" lon="18.861313"><ele>650</ele></trkpt>
-    <trkpt lat="48.480932" lon="18.861484"><ele>652</ele></trkpt>
-    <trkpt lat="48.480811" lon="18.861960"><ele>657</ele></trkpt>
-    <trkpt lat="48.480768" lon="18.862672"><ele>664</ele></trkpt>
-    <trkpt lat="48.480717" lon="18.863018"><ele>668</ele></trkpt>
+    <trkpt lat="48.481019" lon="18.861333"><ele>650</ele></trkpt>
+    <trkpt lat="48.480916" lon="18.861546"><ele>653</ele></trkpt>
+    <trkpt lat="48.480800" lon="18.862052"><ele>658</ele></trkpt>
     <trkpt lat="48.480711" lon="18.863359"><ele>673</ele></trkpt>
     <trkpt lat="48.480639" lon="18.863875"><ele>678</ele></trkpt>
     <trkpt lat="48.480491" lon="18.864390"><ele>687</ele></trkpt>
@@ -337,13 +336,12 @@
     <trkpt lat="48.480491" lon="18.864390"><ele>687</ele></trkpt>
     <trkpt lat="48.480639" lon="18.863875"><ele>678</ele></trkpt>
     <trkpt lat="48.480711" lon="18.863359"><ele>673</ele></trkpt>
-    <trkpt lat="48.480717" lon="18.863018"><ele>668</ele></trkpt>
-    <trkpt lat="48.480768" lon="18.862672"><ele>664</ele></trkpt>
-    <trkpt lat="48.480811" lon="18.861960"><ele>657</ele></trkpt>
-    <trkpt lat="48.480932" lon="18.861484"><ele>652</ele></trkpt>
-    <trkpt lat="48.481031" lon="18.861313"><ele>650</ele></trkpt>
+    <trkpt lat="48.480800" lon="18.862052"><ele>658</ele></trkpt>
+    <trkpt lat="48.480916" lon="18.861546"><ele>653</ele></trkpt>
+    <trkpt lat="48.481019" lon="18.861333"><ele>650</ele></trkpt>
     <trkpt lat="48.481454" lon="18.860831"><ele>643</ele></trkpt>
-    <trkpt lat="48.481637" lon="18.860312"><ele>638</ele></trkpt>
+    <trkpt lat="48.481614" lon="18.860351"><ele>639</ele></trkpt>
+    <trkpt lat="48.481648" lon="18.860307"><ele>638</ele></trkpt>
     <trkpt lat="48.481807" lon="18.860282"><ele>637</ele></trkpt>
     <trkpt lat="48.481746" lon="18.860096"><ele>636</ele></trkpt>
   </trkseg></trk>

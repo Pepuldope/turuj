@@ -2,8 +2,8 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Vysoká z Kuchyne</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Vysoká z Kuchyne</name><desc>vysoka</desc><trkseg>
-    <trkpt lat="48.406579" lon="17.155405"><ele>253</ele></trkpt>
-    <trkpt lat="48.406349" lon="17.155545"><ele>254</ele></trkpt>
+    <trkpt lat="48.406541" lon="17.155604"><ele>253</ele></trkpt>
+    <trkpt lat="48.406471" lon="17.155465"><ele>254</ele></trkpt>
     <trkpt lat="48.406272" lon="17.155636"><ele>255</ele></trkpt>
     <trkpt lat="48.406096" lon="17.156132"><ele>254</ele></trkpt>
     <trkpt lat="48.405982" lon="17.157304"><ele>253</ele></trkpt>
@@ -281,8 +281,8 @@
     <trkpt lat="48.405982" lon="17.157304"><ele>253</ele></trkpt>
     <trkpt lat="48.406096" lon="17.156132"><ele>254</ele></trkpt>
     <trkpt lat="48.406272" lon="17.155636"><ele>255</ele></trkpt>
-    <trkpt lat="48.406349" lon="17.155545"><ele>254</ele></trkpt>
-    <trkpt lat="48.406579" lon="17.155405"><ele>253</ele></trkpt>
+    <trkpt lat="48.406471" lon="17.155465"><ele>254</ele></trkpt>
+    <trkpt lat="48.406541" lon="17.155604"><ele>253</ele></trkpt>
   </trkseg></trk>
   <trk><name>Vysoká z Kuchyne</name><desc>vysoka-pansky-dom</desc><trkseg>
     <trkpt lat="48.382320" lon="17.261799"><ele>486</ele></trkpt>
@@ -659,8 +659,9 @@
     <trkpt lat="48.456767" lon="17.171062"><ele>201</ele></trkpt>
     <trkpt lat="48.457017" lon="17.172141"><ele>202</ele></trkpt>
     <trkpt lat="48.456170" lon="17.172908"><ele>205</ele></trkpt>
-    <trkpt lat="48.455322" lon="17.173527"><ele>205</ele></trkpt>
-    <trkpt lat="48.455188" lon="17.173130"><ele>206</ele></trkpt>
+    <trkpt lat="48.455759" lon="17.173239"><ele>206</ele></trkpt>
+    <trkpt lat="48.455337" lon="17.173514"><ele>205</ele></trkpt>
+    <trkpt lat="48.455173" lon="17.173139"><ele>206</ele></trkpt>
     <trkpt lat="48.453225" lon="17.174356"><ele>209</ele></trkpt>
     <trkpt lat="48.453242" lon="17.174546"><ele>209</ele></trkpt>
     <trkpt lat="48.453310" lon="17.174731"><ele>209</ele></trkpt>
@@ -976,8 +977,9 @@
     <trkpt lat="48.453310" lon="17.174731"><ele>209</ele></trkpt>
     <trkpt lat="48.453242" lon="17.174546"><ele>209</ele></trkpt>
     <trkpt lat="48.453225" lon="17.174356"><ele>209</ele></trkpt>
-    <trkpt lat="48.455188" lon="17.173130"><ele>206</ele></trkpt>
-    <trkpt lat="48.455322" lon="17.173527"><ele>205</ele></trkpt>
+    <trkpt lat="48.455173" lon="17.173139"><ele>206</ele></trkpt>
+    <trkpt lat="48.455337" lon="17.173514"><ele>205</ele></trkpt>
+    <trkpt lat="48.455759" lon="17.173239"><ele>206</ele></trkpt>
     <trkpt lat="48.456170" lon="17.172908"><ele>205</ele></trkpt>
     <trkpt lat="48.457017" lon="17.172141"><ele>202</ele></trkpt>
     <trkpt lat="48.456767" lon="17.171062"><ele>201</ele></trkpt>

@@ -272,16 +272,19 @@
     <trkpt lat="48.466996" lon="18.866445"><ele>766</ele></trkpt>
   </trkseg></trk>
   <trk><name>Horný Hodrušský tajch</name><desc>horny-hodrussky-tajch-hadova</desc><trkseg>
-    <trkpt lat="48.474225" lon="18.855149"><ele>811</ele></trkpt>
-    <trkpt lat="48.474185" lon="18.853663"><ele>815</ele></trkpt>
-    <trkpt lat="48.474133" lon="18.853171"><ele>808</ele></trkpt>
-    <trkpt lat="48.474169" lon="18.852871"><ele>801</ele></trkpt>
-    <trkpt lat="48.474466" lon="18.852321"><ele>794</ele></trkpt>
-    <trkpt lat="48.474519" lon="18.852058"><ele>793</ele></trkpt>
+    <trkpt lat="48.474229" lon="18.855109"><ele>811</ele></trkpt>
+    <trkpt lat="48.474221" lon="18.854606"><ele>811</ele></trkpt>
+    <trkpt lat="48.474178" lon="18.854178"><ele>815</ele></trkpt>
+    <trkpt lat="48.474187" lon="18.853651"><ele>814</ele></trkpt>
+    <trkpt lat="48.474136" lon="18.853350"><ele>811</ele></trkpt>
+    <trkpt lat="48.474116" lon="18.852945"><ele>802</ele></trkpt>
+    <trkpt lat="48.474164" lon="18.852790"><ele>798</ele></trkpt>
+    <trkpt lat="48.474436" lon="18.852420"><ele>794</ele></trkpt>
+    <trkpt lat="48.474509" lon="18.852203"><ele>793</ele></trkpt>
+    <trkpt lat="48.474517" lon="18.851986"><ele>793</ele></trkpt>
     <trkpt lat="48.474462" lon="18.851451"><ele>795</ele></trkpt>
-    <trkpt lat="48.474459" lon="18.851047"><ele>797</ele></trkpt>
-    <trkpt lat="48.474410" lon="18.850687"><ele>798</ele></trkpt>
-    <trkpt lat="48.474344" lon="18.850604"><ele>797</ele></trkpt>
+    <trkpt lat="48.474469" lon="18.851043"><ele>797</ele></trkpt>
+    <trkpt lat="48.474418" lon="18.850631"><ele>799</ele></trkpt>
     <trkpt lat="48.473799" lon="18.850608"><ele>788</ele></trkpt>
     <trkpt lat="48.473381" lon="18.850678"><ele>785</ele></trkpt>
     <trkpt lat="48.472816" lon="18.850906"><ele>776</ele></trkpt>
@@ -331,10 +334,11 @@
     <trkpt lat="48.465241" lon="18.849926"><ele>535</ele></trkpt>
     <trkpt lat="48.465139" lon="18.849976"><ele>531</ele></trkpt>
     <trkpt lat="48.464681" lon="18.849719"><ele>527</ele></trkpt>
+    <trkpt lat="48.464383" lon="18.849601"><ele>526</ele></trkpt>
     <trkpt lat="48.463925" lon="18.849436"><ele>529</ele></trkpt>
+    <trkpt lat="48.463740" lon="18.849420"><ele>532</ele></trkpt>
     <trkpt lat="48.463614" lon="18.849454"><ele>534</ele></trkpt>
     <trkpt lat="48.463556" lon="18.849673"><ele>535</ele></trkpt>
-    <trkpt lat="48.463543" lon="18.849889"><ele>537</ele></trkpt>
     <trkpt lat="48.463567" lon="18.851299"><ele>540</ele></trkpt>
     <trkpt lat="48.463487" lon="18.851654"><ele>544</ele></trkpt>
     <trkpt lat="48.463290" lon="18.852027"><ele>540</ele></trkpt>
@@ -384,10 +388,11 @@
     <trkpt lat="48.463290" lon="18.852027"><ele>540</ele></trkpt>
     <trkpt lat="48.463487" lon="18.851654"><ele>544</ele></trkpt>
     <trkpt lat="48.463567" lon="18.851299"><ele>540</ele></trkpt>
-    <trkpt lat="48.463543" lon="18.849889"><ele>537</ele></trkpt>
     <trkpt lat="48.463556" lon="18.849673"><ele>535</ele></trkpt>
     <trkpt lat="48.463614" lon="18.849454"><ele>534</ele></trkpt>
+    <trkpt lat="48.463740" lon="18.849420"><ele>532</ele></trkpt>
     <trkpt lat="48.463925" lon="18.849436"><ele>529</ele></trkpt>
+    <trkpt lat="48.464383" lon="18.849601"><ele>526</ele></trkpt>
     <trkpt lat="48.464681" lon="18.849719"><ele>527</ele></trkpt>
     <trkpt lat="48.465139" lon="18.849976"><ele>531</ele></trkpt>
     <trkpt lat="48.465241" lon="18.849926"><ele>535</ele></trkpt>
@@ -437,16 +442,19 @@
     <trkpt lat="48.472816" lon="18.850906"><ele>776</ele></trkpt>
     <trkpt lat="48.473381" lon="18.850678"><ele>785</ele></trkpt>
     <trkpt lat="48.473799" lon="18.850608"><ele>788</ele></trkpt>
-    <trkpt lat="48.474344" lon="18.850604"><ele>797</ele></trkpt>
-    <trkpt lat="48.474410" lon="18.850687"><ele>798</ele></trkpt>
-    <trkpt lat="48.474459" lon="18.851047"><ele>797</ele></trkpt>
+    <trkpt lat="48.474418" lon="18.850631"><ele>799</ele></trkpt>
+    <trkpt lat="48.474469" lon="18.851043"><ele>797</ele></trkpt>
     <trkpt lat="48.474462" lon="18.851451"><ele>795</ele></trkpt>
-    <trkpt lat="48.474519" lon="18.852058"><ele>793</ele></trkpt>
-    <trkpt lat="48.474466" lon="18.852321"><ele>794</ele></trkpt>
-    <trkpt lat="48.474169" lon="18.852871"><ele>801</ele></trkpt>
-    <trkpt lat="48.474133" lon="18.853171"><ele>808</ele></trkpt>
-    <trkpt lat="48.474185" lon="18.853663"><ele>815</ele></trkpt>
-    <trkpt lat="48.474225" lon="18.855149"><ele>811</ele></trkpt>
+    <trkpt lat="48.474517" lon="18.851986"><ele>793</ele></trkpt>
+    <trkpt lat="48.474509" lon="18.852203"><ele>793</ele></trkpt>
+    <trkpt lat="48.474436" lon="18.852420"><ele>794</ele></trkpt>
+    <trkpt lat="48.474164" lon="18.852790"><ele>798</ele></trkpt>
+    <trkpt lat="48.474116" lon="18.852945"><ele>802</ele></trkpt>
+    <trkpt lat="48.474136" lon="18.853350"><ele>811</ele></trkpt>
+    <trkpt lat="48.474187" lon="18.853651"><ele>814</ele></trkpt>
+    <trkpt lat="48.474178" lon="18.854178"><ele>815</ele></trkpt>
+    <trkpt lat="48.474221" lon="18.854606"><ele>811</ele></trkpt>
+    <trkpt lat="48.474229" lon="18.855109"><ele>811</ele></trkpt>
   </trkseg></trk>
   <trk><name>Horný Hodrušský tajch</name><desc>horny-hodrussky-tajch-od-auta</desc><trkseg>
     <trkpt lat="48.458844" lon="18.852969"><ele>578</ele></trkpt>

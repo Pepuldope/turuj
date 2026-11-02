@@ -3,7 +3,7 @@
   <metadata><name>Jánošíkov stôl na Čerenovej</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Jánošíkov stôl na Čerenovej</name><desc>janosikov-stol-na-cerenovej</desc><trkseg>
     <trkpt lat="49.146731" lon="19.468916"><ele>662</ele></trkpt>
-    <trkpt lat="49.147192" lon="19.468470"><ele>666</ele></trkpt>
+    <trkpt lat="49.147183" lon="19.468484"><ele>666</ele></trkpt>
     <trkpt lat="49.147596" lon="19.468212"><ele>669</ele></trkpt>
     <trkpt lat="49.148562" lon="19.468039"><ele>675</ele></trkpt>
     <trkpt lat="49.149262" lon="19.467860"><ele>680</ele></trkpt>
@@ -153,7 +153,7 @@
     <trkpt lat="49.149262" lon="19.467860"><ele>680</ele></trkpt>
     <trkpt lat="49.148562" lon="19.468039"><ele>675</ele></trkpt>
     <trkpt lat="49.147596" lon="19.468212"><ele>669</ele></trkpt>
-    <trkpt lat="49.147192" lon="19.468470"><ele>666</ele></trkpt>
+    <trkpt lat="49.147183" lon="19.468484"><ele>666</ele></trkpt>
     <trkpt lat="49.146731" lon="19.468916"><ele>662</ele></trkpt>
   </trkseg></trk>
   <trk><name>Jánošíkov stôl na Čerenovej</name><desc>janosikov-stol-na-cerenovej-liptovska-anna-pd</desc><trkseg>

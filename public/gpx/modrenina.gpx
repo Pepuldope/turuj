@@ -319,7 +319,7 @@
   </trkseg></trk>
   <trk><name>Modrenina</name><desc>modrenina-stara-lubovna-vendo-park</desc><trkseg>
     <trkpt lat="49.306054" lon="20.686679"><ele>524</ele></trkpt>
-    <trkpt lat="49.306065" lon="20.686742"><ele>524</ele></trkpt>
+    <trkpt lat="49.306063" lon="20.686739"><ele>524</ele></trkpt>
     <trkpt lat="49.305628" lon="20.687027"><ele>525</ele></trkpt>
     <trkpt lat="49.305232" lon="20.687219"><ele>525</ele></trkpt>
     <trkpt lat="49.305088" lon="20.687276"><ele>526</ele></trkpt>
@@ -503,7 +503,7 @@
     <trkpt lat="49.305088" lon="20.687276"><ele>526</ele></trkpt>
     <trkpt lat="49.305232" lon="20.687219"><ele>525</ele></trkpt>
     <trkpt lat="49.305628" lon="20.687027"><ele>525</ele></trkpt>
-    <trkpt lat="49.306065" lon="20.686742"><ele>524</ele></trkpt>
+    <trkpt lat="49.306063" lon="20.686739"><ele>524</ele></trkpt>
     <trkpt lat="49.306054" lon="20.686679"><ele>524</ele></trkpt>
   </trkseg></trk>
 </gpx>

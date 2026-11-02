@@ -397,10 +397,9 @@
   <trk><name>Malý Kriváň</name><desc>maly-krivan-pod-jedlovinou</desc><trkseg>
     <trkpt lat="49.195221" lon="18.908416"><ele>604</ele></trkpt>
     <trkpt lat="49.195200" lon="18.908463"><ele>604</ele></trkpt>
-    <trkpt lat="49.195328" lon="18.908717"><ele>611</ele></trkpt>
-    <trkpt lat="49.195604" lon="18.909660"><ele>619</ele></trkpt>
-    <trkpt lat="49.195705" lon="18.910341"><ele>621</ele></trkpt>
-    <trkpt lat="49.195737" lon="18.910812"><ele>620</ele></trkpt>
+    <trkpt lat="49.195288" lon="18.908661"><ele>609</ele></trkpt>
+    <trkpt lat="49.195540" lon="18.909510"><ele>618</ele></trkpt>
+    <trkpt lat="49.195720" lon="18.910793"><ele>621</ele></trkpt>
     <trkpt lat="49.195795" lon="18.911058"><ele>616</ele></trkpt>
     <trkpt lat="49.195943" lon="18.911135"><ele>613</ele></trkpt>
     <trkpt lat="49.196214" lon="18.911128"><ele>607</ele></trkpt>
@@ -842,10 +841,9 @@
     <trkpt lat="49.196214" lon="18.911128"><ele>607</ele></trkpt>
     <trkpt lat="49.195943" lon="18.911135"><ele>613</ele></trkpt>
     <trkpt lat="49.195795" lon="18.911058"><ele>616</ele></trkpt>
-    <trkpt lat="49.195737" lon="18.910812"><ele>620</ele></trkpt>
-    <trkpt lat="49.195705" lon="18.910341"><ele>621</ele></trkpt>
-    <trkpt lat="49.195604" lon="18.909660"><ele>619</ele></trkpt>
-    <trkpt lat="49.195328" lon="18.908717"><ele>611</ele></trkpt>
+    <trkpt lat="49.195720" lon="18.910793"><ele>621</ele></trkpt>
+    <trkpt lat="49.195540" lon="18.909510"><ele>618</ele></trkpt>
+    <trkpt lat="49.195288" lon="18.908661"><ele>609</ele></trkpt>
     <trkpt lat="49.195200" lon="18.908463"><ele>604</ele></trkpt>
     <trkpt lat="49.195221" lon="18.908416"><ele>604</ele></trkpt>
   </trkseg></trk>

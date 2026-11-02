@@ -252,16 +252,19 @@
     <trkpt lat="48.466996" lon="18.866445"><ele>766</ele></trkpt>
   </trkseg></trk>
   <trk><name>Dolný Hodrušský tajch</name><desc>dolny-hodrussky-tajch-hadova</desc><trkseg>
-    <trkpt lat="48.474225" lon="18.855149"><ele>811</ele></trkpt>
-    <trkpt lat="48.474185" lon="18.853663"><ele>815</ele></trkpt>
-    <trkpt lat="48.474133" lon="18.853171"><ele>808</ele></trkpt>
-    <trkpt lat="48.474169" lon="18.852871"><ele>801</ele></trkpt>
-    <trkpt lat="48.474466" lon="18.852321"><ele>794</ele></trkpt>
-    <trkpt lat="48.474519" lon="18.852058"><ele>793</ele></trkpt>
+    <trkpt lat="48.474229" lon="18.855109"><ele>811</ele></trkpt>
+    <trkpt lat="48.474221" lon="18.854606"><ele>811</ele></trkpt>
+    <trkpt lat="48.474178" lon="18.854178"><ele>815</ele></trkpt>
+    <trkpt lat="48.474187" lon="18.853651"><ele>814</ele></trkpt>
+    <trkpt lat="48.474136" lon="18.853350"><ele>811</ele></trkpt>
+    <trkpt lat="48.474116" lon="18.852945"><ele>802</ele></trkpt>
+    <trkpt lat="48.474164" lon="18.852790"><ele>798</ele></trkpt>
+    <trkpt lat="48.474436" lon="18.852420"><ele>794</ele></trkpt>
+    <trkpt lat="48.474509" lon="18.852203"><ele>793</ele></trkpt>
+    <trkpt lat="48.474517" lon="18.851986"><ele>793</ele></trkpt>
     <trkpt lat="48.474462" lon="18.851451"><ele>795</ele></trkpt>
-    <trkpt lat="48.474459" lon="18.851047"><ele>797</ele></trkpt>
-    <trkpt lat="48.474410" lon="18.850687"><ele>798</ele></trkpt>
-    <trkpt lat="48.474344" lon="18.850604"><ele>797</ele></trkpt>
+    <trkpt lat="48.474469" lon="18.851043"><ele>797</ele></trkpt>
+    <trkpt lat="48.474418" lon="18.850631"><ele>799</ele></trkpt>
     <trkpt lat="48.473799" lon="18.850608"><ele>788</ele></trkpt>
     <trkpt lat="48.473381" lon="18.850678"><ele>785</ele></trkpt>
     <trkpt lat="48.472816" lon="18.850906"><ele>776</ele></trkpt>
@@ -372,16 +375,19 @@
     <trkpt lat="48.472816" lon="18.850906"><ele>776</ele></trkpt>
     <trkpt lat="48.473381" lon="18.850678"><ele>785</ele></trkpt>
     <trkpt lat="48.473799" lon="18.850608"><ele>788</ele></trkpt>
-    <trkpt lat="48.474344" lon="18.850604"><ele>797</ele></trkpt>
-    <trkpt lat="48.474410" lon="18.850687"><ele>798</ele></trkpt>
-    <trkpt lat="48.474459" lon="18.851047"><ele>797</ele></trkpt>
+    <trkpt lat="48.474418" lon="18.850631"><ele>799</ele></trkpt>
+    <trkpt lat="48.474469" lon="18.851043"><ele>797</ele></trkpt>
     <trkpt lat="48.474462" lon="18.851451"><ele>795</ele></trkpt>
-    <trkpt lat="48.474519" lon="18.852058"><ele>793</ele></trkpt>
-    <trkpt lat="48.474466" lon="18.852321"><ele>794</ele></trkpt>
-    <trkpt lat="48.474169" lon="18.852871"><ele>801</ele></trkpt>
-    <trkpt lat="48.474133" lon="18.853171"><ele>808</ele></trkpt>
-    <trkpt lat="48.474185" lon="18.853663"><ele>815</ele></trkpt>
-    <trkpt lat="48.474225" lon="18.855149"><ele>811</ele></trkpt>
+    <trkpt lat="48.474517" lon="18.851986"><ele>793</ele></trkpt>
+    <trkpt lat="48.474509" lon="18.852203"><ele>793</ele></trkpt>
+    <trkpt lat="48.474436" lon="18.852420"><ele>794</ele></trkpt>
+    <trkpt lat="48.474164" lon="18.852790"><ele>798</ele></trkpt>
+    <trkpt lat="48.474116" lon="18.852945"><ele>802</ele></trkpt>
+    <trkpt lat="48.474136" lon="18.853350"><ele>811</ele></trkpt>
+    <trkpt lat="48.474187" lon="18.853651"><ele>814</ele></trkpt>
+    <trkpt lat="48.474178" lon="18.854178"><ele>815</ele></trkpt>
+    <trkpt lat="48.474221" lon="18.854606"><ele>811</ele></trkpt>
+    <trkpt lat="48.474229" lon="18.855109"><ele>811</ele></trkpt>
   </trkseg></trk>
   <trk><name>Dolný Hodrušský tajch</name><desc>dolny-hodrussky-tajch-od-auta</desc><trkseg>
     <trkpt lat="48.463555" lon="18.848918"><ele>538</ele></trkpt>
