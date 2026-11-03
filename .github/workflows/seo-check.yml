@@ -20,7 +20,8 @@ jobs:
         run: |
           P=https://project-thread-tenkmx-turuj.nemcok-peter123.workers.dev
           for u in /en /en/trasa/krivan /en/vylety-z/zilina /en/o-nas /trasa/krivan /; do
-            echo "$u -> $(curl -sS -A 'Mozilla/5.0 Chrome/141' "$P$u" | grep -oE '<html lang="[a-z]+"|<title>[^<]*' | tr '\n' ' ')"
+            curl -sS -D h.txt -A 'Mozilla/5.0 Chrome/141' "$P$u" -o p.html
+            echo "$u -> $(grep -iE '^(x-turuj-fast|content-type)' h.txt | tr -d '\r' | tr '\n' ' ') $(grep -oE '<html[^>]{0,40}|<title>[^<]*' p.html | tr '\n' ' ')"
           done
       - name: Lighthouse SEO on live pages
         run: |
