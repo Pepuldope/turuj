@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { googleHref, signOut, signedIn, useAccount } from "@/lib/account";
+import { deleteMyAccount, googleHref, signOut, signedIn, useAccount } from "@/lib/account";
 import type { MyAccount } from "@/lib/account";
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { langOfPath, langPath, skPath } from "@/lib/lang";
@@ -255,6 +255,21 @@ function AccountPanel({ notice, code: why, onDone }: { notice: string | null; co
           <span className="text-[var(--muted)]"><UiIcon name="logout" size={19} /></span>
           {t("Odhlásiť sa")}
         </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            if (!window.confirm(t("Naozaj zmazať účet? Zmažeme meno, email aj heslo a nedá sa to vrátiť. Uložené výlety ostanú v tomto prehliadači."))) return;
+            setBusy(true);
+            const ok = await deleteMyAccount();
+            setBusy(false);
+            if (!ok) setError(t("Účet sa teraz nepodarilo zmazať. Skúste neskôr alebo napíšte na info@turuj.sk."));
+          }}
+          className="mt-1 px-2 py-1.5 text-left text-xs font-medium text-[var(--muted)] underline hover:text-[var(--danger)]"
+        >
+          {t("Zmazať účet")}
+        </button>
+        {error && <p className="px-2 text-xs font-semibold text-[var(--danger)]">{error}</p>}
       </div>
     );
   }
@@ -447,6 +462,10 @@ function AccountPanel({ notice, code: why, onDone }: { notice: string | null; co
             <GoogleG />
             {t("Pokračovať cez Google")}
           </a>
+          <p className="px-1 text-center text-xs text-[var(--muted)]">
+            {t("Prihlásením súhlasíte s")} <LangLink href="/podmienky" className="underline">{t("podmienkami")}</LangLink>.{" "}
+            {t("Ako chránime údaje:")} <LangLink href="/sukromie" className="underline">{t("Súkromie")}</LangLink>.
+          </p>
         </>
       )}
     </div>

@@ -120,6 +120,20 @@ export async function startSession(accountId: string, method: SignInMethod): Pro
   return token;
 }
 
+/**
+ * Deletes the account with its sessions and any pending email code (/sukromie: "Zmazať účet").
+ * Reviews carry only a random browser id, never the account, so nothing else points at it.
+ */
+export async function deleteAccount(account: Account): Promise<void> {
+  const d = await db();
+  if (!d) throw new Error("no database");
+  await d.batch([
+    d.prepare(`DELETE FROM account_session WHERE account = ?`).bind(account.id),
+    d.prepare(`DELETE FROM login_code WHERE email = ?`).bind(account.email),
+    d.prepare(`DELETE FROM account WHERE id = ?`).bind(account.id),
+  ]);
+}
+
 export async function endSession(req: Request): Promise<void> {
   const token = sessionToken(req);
   const d = await db();

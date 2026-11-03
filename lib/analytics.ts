@@ -67,6 +67,16 @@ export function applyOptOut(): void {
   }
 }
 
+/** "Nepočítať ma" on /sukromie: a button, so no link can switch it for someone else. */
+export function setOptedOut(off: boolean): void {
+  try {
+    if (off) localStorage.setItem(OPT_OUT_KEY, "1");
+    else localStorage.removeItem(OPT_OUT_KEY);
+  } catch {
+    // Storage blocked: nothing is remembered, and nothing to switch.
+  }
+}
+
 export function optedOut(): boolean {
   try {
     return Boolean(localStorage.getItem(OPT_OUT_KEY));

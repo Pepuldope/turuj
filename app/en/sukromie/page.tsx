@@ -1,104 +1,44 @@
+import { CountMeToggle } from "@/components/CountMeToggle";
 import { InfoPage } from "@/components/InfoPage";
-import { LangLink } from "@/lib/i18n";
+import { LEGAL_FACTS, LEGAL_UPDATED } from "@/lib/legal";
+import { formatDateSk } from "@/lib/format";
 import { pageMetadata } from "@/lib/seo";
-import { CONTACT_EMAIL, REPO_URL } from "@/lib/site";
 
 export const metadata = pageMetadata({
   title: "Privacy",
-  description: "What data Túruj uses: an account only if you want one, no advertising cookies, saved trips stay on your device.",
+  description: "What data Túruj processes, why, for how long and who receives it, your rights, and how to switch statistics off.",
   path: "/sukromie",
   lang: "en",
 });
 
-// The Slovak page (app/sukromie) is the one that counts; this is its translation.
+// The Slovak page (app/sukromie) is the one that counts; this is a summary of it.
 export default function PrivacyPage() {
   return (
-    <InfoPage title="Privacy" intro="In short: an account only if you want one, a cookie only for signing in, and we sell no data. Updated 30 October 2026.">
+    <InfoPage title="Privacy" intro={`Updated ${formatDateSk(LEGAL_UPDATED, "en")}. A summary: the Slovak text is the binding one.`}>
+      <p><strong>In short:</strong> an account only if you want one, a cookie only for signing in, visits counted without cookies or ad tools, and we neither sell data nor use it for ads. Some services we use are in the USA; they are listed below.</p>
       <h2>Who we are</h2>
-      <p>
-        Túruj is a student project by Peter Nemčok and Radoslav Nemec. For questions about your data, write to us{" "}
-        {CONTACT_EMAIL ? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> : <a href={`${REPO_URL}/issues`}>on GitHub</a>}.
-      </p>
-
-      <h2>Visit statistics</h2>
-      <p>
-        We count visits with <a href="https://umami.is">Umami</a> (Umami Cloud): we see, for example, how many people
-        opened a route, saved a trip or came from Facebook. Umami uses no cookies, stores nothing on your device and
-        does not find out who you are. Its server sees your IP address, as with any website. We only see totals.
-      </p>
-      <p>
-        To know how many people come back to Túruj, the server writes down the date of a visit and a one-way
-        fingerprint (hash) made from the IP address and the browser type with a random key that changes every month. We
-        do not store the IP address. Without the key the fingerprint says nothing, and when the month ends we delete the
-        key and the fingerprints, leaving only totals (for example &ldquo;120 people, 15 of them on at least 4 days&rdquo;).
-      </p>
-      <p>
-        For a few steps (entering a start, saving or sending a plan, opening a plan from a friend, navigation) the
-        server also adds one to a monthly total, and for a plan whether it happened within 2 minutes of arriving.
-        Nothing about you or the place is stored.
-      </p>
-
-      <h2>Account and sign-in</h2>
-      <p>
-        An account is optional. We store your email, your name if you give one (with Google, the one Google sends us,
-        and the Google account number), and when you last signed in. We never store your password in readable form,
-        only a salted fingerprint of it (PBKDF2) that the password cannot be worked out from. The email code is sent through the Resend service and deleted once used or after 15 minutes. Your
-        browser keeps the sign-in in one cookie (turuj_s) for at most 180 days; we store only a fingerprint of it. It
-        is set only after you sign in and is not used for advertising. We delete the account and all its data on request.
-      </p>
-
-      <h2>Trip reviews</h2>
-      <p>
-        When you send a short review after a trip (stars, whether the route matched the description, whether the
-        plan&apos;s times were right and whether it was crowded), we store it in our database together with the trip&apos;s
-        name, the date and a random number kept by your browser, so that a second review of the same trip replaces the
-        first. We do not store your name, e-mail or IP address. The trip page shows only totals.
-      </p>
-
-      <h2>Messages via Write to us and Report a problem</h2>
-      <p>
-        What you write is stored in our database on Cloudflare, with the date and the trip it is about. We store your
-        email only if you fill it in, and use it only to reply. We store no IP address and nothing else about you. We
-        delete a message on request.
-      </p>
-
-      <h2>Tester sign-up and feedback</h2>
-      <p>
-        If you sign up for testing (the &ldquo;I want to test&rdquo; link) or fill in the short questionnaire after a
-        test, the answers are collected by Google Forms. You don&apos;t need to sign in to a Google account. We use your
-        name and contact only to arrange the testing and delete them when testing ends.
-      </p>
-
-      <h2>Your location and starting place</h2>
-      <p>
-        If you allow location or type in a starting place, we use them only to work out the drive. We round the
-        coordinates to about 100 m and send them to <a href="https://openrouteservice.org">openrouteservice</a> (route
-        calculation). We look up a typed place with{" "}
-        <a href="https://nominatim.openstreetmap.org">Nominatim (OpenStreetMap)</a>. With location allowed we also send
-        Nominatim the rounded coordinates (about 100 m) to find the name of the town. We do not store your location.
-      </p>
-
-      <h2>What stays only on your device</h2>
-      <p>
-        Saved trips, a typed starting place and offline copies of maps are stored only in your browser, so they work
-        without signal too. We do not send them to the server. You can delete them in My trips or by clearing the
-        site&apos;s data in your browser.
-      </p>
-
-      <h2>Maps and hosting</h2>
-      <p>
-        Map tiles load directly from their sources (see <LangLink href="/zdroje">Sources</LangLink>) and photos on town
-        pages from Wikimedia Commons. These servers see your IP address as with any website; we load photos without
-        cookies and without the address of the page you come from. The site runs on Cloudflare, which keeps the usual
-        technical logs.
-      </p>
-
+      <p>{LEGAL_FACTS.OPERATORS_SHORT}, joint controllers under GDPR art. 26. Email <a href="mailto:info@turuj.sk">info@turuj.sk</a> · address {LEGAL_FACTS.ADDRESS}. No data protection officer.</p>
+      <h2>What we keep and for how long</h2>
+      <ul>
+        <li>Account (email, name if given, Google account number with Google sign-in, dates): until you delete it. Passwords only as a salted PBKDF2 hash.</li>
+        <li>Sign-in cookie <code>turuj_s</code>: at most 180 days; we store only its hash. Email codes: deleted when used, otherwise within an hour.</li>
+        <li>Quick reviews: trip, answers, date and a random number from your browser; no name, email or IP address.</li>
+        <li>Messages from “Write to us” / “Report a problem”: deleted automatically 12 months after they arrive. Emails to info@turuj.sk: at most 12 months after the last reply.</li>
+        <li>Walk reminders you switch on: push address and keys, deleted once sent or cancelled (about 16 hours at most).</li>
+        <li>Returning visitors: a monthly-keyed hash of IP address and browser type, deleted at month end; only totals stay.</li>
+        <li>Technical logs: 3 days. Your location or start: rounded (about 100 m or 1 km), never stored in our database.</li>
+      </ul>
+      <h2>Who receives data</h2>
+      <p>Cloudflare (hosting, database, logs, email forwarding, Web Analytics), Umami (statistics), Resend (sign-in emails), Google (Google sign-in, the Gmail inbox behind info@turuj.sk, tester forms), your browser’s push service (encrypted reminders), openrouteservice by HeiGIT in Germany and, as a fallback, the public OSRM demo server (drive times from your rounded start, called by our server), Nominatim by the OpenStreetMap Foundation in the UK (place search, called by your browser), OpenFreeMap and Wikimedia Commons (map tiles and photos). US transfers rely on the EU-US Data Privacy Framework and standard contractual clauses; the UK on the Commission’s adequacy decision.</p>
+      <h2>Cookies and browser storage</h2>
+      <p>Two strictly necessary cookies: <code>turuj_s</code> (signed in) and <code>turuj_g</code> (Google sign-in protection, 10 minutes). Saved trips, your start and settings stay in your browser’s storage and are never sent to us.</p>
+      <h2>Statistics and how to switch them off</h2>
+      <p>Umami counts pages and a few steps without cookies; Cloudflare measures page speed; our own counter keeps only monthly totals. This button stops Umami and our counters in this browser (an ad blocker stops Cloudflare’s speed beacon):</p>
+      <CountMeToggle />
       <h2>Your rights</h2>
-      <p>
-        You can ask for access to your data, for it to be corrected or deleted. If you feel we are not handling data
-        properly, you can turn to the{" "}
-        <a href="https://dataprotection.gov.sk">Office for Personal Data Protection of the Slovak Republic</a>.
-      </p>
+      <p>Access, correction, erasure, restriction, portability, objection, and withdrawing consent (GDPR arts. 15–21, 7(3)). Write to info@turuj.sk, from the account’s address for account data; we answer within a month, free of charge. You can complain to the Slovak Office for Personal Data Protection, Galvaniho 7/B, 821 04 Bratislava, dataprotection.gov.sk.</p>
+      <h2>Children and security</h2>
+      <p>Accounts from age 16; younger people can use everything else without one. Only Peter can reach the database, and our Cloudflare and GitHub accounts use two-step sign-in. If a breach puts you at risk we tell the authority within 72 hours and you too when the risk is high.</p>
     </InfoPage>
   );
 }

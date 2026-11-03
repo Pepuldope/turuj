@@ -1,108 +1,21 @@
-import Link from "next/link";
+import { CountMeToggle } from "@/components/CountMeToggle";
 import { InfoPage } from "@/components/InfoPage";
+import { PRIVACY_SK } from "@/content/legal/sukromie";
+import { LEGAL_UPDATED } from "@/lib/legal";
+import { LegalText } from "@/lib/legalText";
+import { formatDateSk } from "@/lib/format";
 import { pageMetadata } from "@/lib/seo";
-import { CONTACT_EMAIL, REPO_URL } from "@/lib/site";
 
 export const metadata = pageMetadata({
   title: "Súkromie",
-  description: "Aké údaje Túruj používa: účet len ak chcete, žiadne reklamné cookies, uložené výlety ostávajú vo vašom zariadení.",
+  description: "Aké údaje Túruj spracúva, prečo, ako dlho a komu ich posiela, vaše práva a ako vypnúť štatistiky.",
   path: "/sukromie",
 });
 
 export default function PrivacyPage() {
   return (
-    <InfoPage title="Súkromie" intro="Krátko: účet si založíte, len ak chcete, cookie používame len na prihlásenie a nepredávame žiadne údaje. Aktualizované 30. 10. 2026.">
-      <h2>Kto sme</h2>
-      <p>
-        Túruj je študentský projekt Petra Nemčoka a Radoslava Nemca. Pri otázkach o vašich údajoch nám napíšte{" "}
-        {CONTACT_EMAIL ? (
-          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-        ) : (
-          <a href={`${REPO_URL}/issues`}>cez GitHub</a>
-        )}
-        .
-      </p>
-
-      <h2>Štatistika návštevnosti</h2>
-      <p>
-        Na počítanie návštev používame <a href="https://umami.is">Umami</a> (Umami Cloud): vidíme napríklad, koľko
-        ľudí otvorilo trasu, uložilo si výlet alebo prišlo z Facebooku. Umami nepoužíva cookies, nič neukladá do
-        vášho zariadenia a nezisťuje, kto ste. Jeho server pri tom vidí vašu IP adresu, ako pri každej stránke. Vidíme
-        len súhrnné čísla.
-      </p>
-      <p>
-        Aby sme vedeli, koľko ľudí sa k Túruju vracia, server si pri návšteve zapíše dátum a jednosmerný
-        odtlačok (hash) vytvorený z IP adresy a typu prehliadača s náhodným kľúčom, ktorý sa mení každý mesiac. IP
-        adresu neukladáme. Odtlačok bez kľúča nič nepovie a po skončení mesiaca kľúč aj odtlačky
-        zmažeme a ostanú len súhrnné čísla (napríklad „120 ľudí, z toho 15 aspoň 4 dni“).
-      </p>
-      <p>
-        Pre niekoľko krokov (zadaný štart, uložený alebo poslaný plán, otvorený plán od kamaráta, navigácia) si
-        server navyše pripočíta jedna k mesačnému súčtu, pri pláne aj to, či to bolo do 2 minút od príchodu. Neukladá
-        sa pri tom nič o vás ani o mieste.
-      </p>
-
-      <h2>Účet a prihlásenie</h2>
-      <p>
-        Účet je dobrovoľný. Uložíme váš email, meno, ak ho zadáte (pri Google to, ktoré nám Google pošle, a číslo
-        účtu Google), a kedy ste sa naposledy prihlásili. Heslo nemáme v čitateľnej podobe, len jeho solený odtlačok
-        (PBKDF2), z ktorého sa heslo spätne nedá zistiť. Kód na email
-        posielame cez službu Resend a po použití alebo 15 minútach ho zmažeme. Prihlásenie si prehliadač drží v jednej
-        cookie (turuj_s) najviac 180 dní; u nás je uložený len jej odtlačok. Nastavuje sa až po prihlásení a nie je
-        reklamná. Účet so všetkými údajmi na požiadanie zmažeme.
-      </p>
-
-      <h2>Hodnotenia výletov</h2>
-      <p>
-        Keď po výlete pošlete krátke hodnotenie (hviezdičky, či trasa sedela s popisom, či sedeli časy z plánu a
-        či tam bolo veľa ľudí), uložíme ho do našej databázy spolu s názvom výletu, dátumom a náhodným číslom, ktoré si
-        drží váš prehliadač, aby druhé hodnotenie toho istého výletu nahradilo prvé. Meno, e-mail ani IP adresu
-        neukladáme. Na stránke výletu ukazujeme len súčty.
-      </p>
-
-      <h2>Správy cez Napíšte nám a Nahlásiť chybu</h2>
-      <p>
-        Čo napíšete, uložíme v našej databáze na Cloudflare spolu s dátumom a výletom, ktorého sa správa týka. Email
-        uložíme, len ak ho vyplníte, a použijeme ho iba na odpoveď. IP adresu ani nič iné o vás neukladáme. Správu
-        na požiadanie zmažeme.
-      </p>
-
-      <h2>Prihláška na testovanie a spätná väzba</h2>
-      <p>
-        Ak sa prihlásite na testovanie (odkaz „Chcem testovať“) alebo vyplníte krátky dotazník po teste, odpovede
-        zbiera Google Forms. Prihlásenie do Google účtu netreba. Meno a kontakt použijeme len na dohodnutie
-        testovania a po skončení testovania ich zmažeme.
-      </p>
-
-      <h2>Vaša poloha a miesto štartu</h2>
-      <p>
-        Ak povolíte polohu alebo napíšete miesto štartu, použijeme ich len na výpočet cesty autom. Súradnice
-        zaokrúhlime asi na 100 m a pošleme službe <a href="https://openrouteservice.org">openrouteservice</a>{" "}
-        (výpočet trasy). Napísané miesto vyhľadáme cez{" "}
-        <a href="https://nominatim.openstreetmap.org">Nominatim (OpenStreetMap)</a>. Pri povolenej polohe pošleme
-        Nominatimu aj zaokrúhlené súradnice (asi 100 m), aby sme zistili názov obce. Polohu si neukladáme.
-      </p>
-
-      <h2>Čo ostáva len vo vašom zariadení</h2>
-      <p>
-        Uložené výlety, napísané miesto štartu a offline kópie máp sa ukladajú iba vo vašom prehliadači, aby
-        fungovali aj bez signálu. Na server ich neposielame. Zmažete ich v Mojich výletoch alebo vymazaním údajov
-        stránky v prehliadači.
-      </p>
-
-      <h2>Mapy a hosting</h2>
-      <p>
-        Mapové dlaždice sa načítavajú priamo z ich zdrojov (pozri <Link href="/zdroje">Zdroje</Link>) a fotky na
-        stránkach miest z Wikimedia Commons. Tieto servery vidia vašu IP adresu ako pri každej webovej stránke; fotky
-        načítavame bez cookies a bez adresy stránky, z ktorej prichádzate. Stránka beží na Cloudflare, ktorý vedie
-        bežné technické záznamy.
-      </p>
-
-      <h2>Vaše práva</h2>
-      <p>
-        Môžete požiadať o prístup k údajom, ich opravu alebo vymazanie. Ak máte pocit, že s údajmi nezaobchádzame
-        správne, môžete sa obrátiť na <a href="https://dataprotection.gov.sk">Úrad na ochranu osobných údajov SR</a>.
-      </p>
+    <InfoPage title="Súkromie" intro={`Aktualizované ${formatDateSk(LEGAL_UPDATED, "sk")}`}>
+      <LegalText text={PRIVACY_SK} blocks={{ COUNT_ME: <CountMeToggle /> }} />
     </InfoPage>
   );
 }

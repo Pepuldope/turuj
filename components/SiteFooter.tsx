@@ -30,6 +30,7 @@ const GROUPS: { title: string; links: FooterLink[] }[] = [
       { href: "/ako-to-funguje", label: "Ako to funguje", icon: "list" },
       { href: "/o-nas", label: "O nás", icon: "person" },
       { href: "/sukromie", label: "Súkromie", icon: "lock" },
+      { href: "/podmienky", label: "Podmienky", icon: "list" },
       { href: "/upozornenie", label: "Upozornenie", icon: "warn" },
     ],
   },

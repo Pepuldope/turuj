@@ -29,6 +29,7 @@ import { runWithCloudflareRequestContext } from "./.open-next/cloudflare/init.js
 import { GET as reviewTotals } from "./app/api/review/route";
 import { GET as tripList } from "./app/api/vylety/route";
 import { weatherKey } from "./lib/apiKeys";
+import { cleanup } from "./lib/cleanup";
 import type { D1Like } from "./lib/d1";
 import { edgeHit, edgeKey } from "./lib/edgeCache";
 import { pick } from "./lib/pageEntry";
@@ -152,8 +153,14 @@ const worker = {
     if (!isEnglish(new URL(req.url).pathname) || !res.headers.get("Content-Type")?.startsWith("text/html")) return res;
     return new HTMLRewriter().on("html", { element: (el) => el.setAttribute("lang", "en") }).transform(res);
   },
-  async scheduled(_event: unknown, env: Env, ctx: Ctx) {
+  async scheduled(event: unknown, env: Env, ctx: Ctx) {
     if (!env.VISITS_DB) return;
+    // Once an hour (the run at :00): old email codes, sessions and messages (lib/cleanup.ts).
+    const at = (event as { scheduledTime?: number })?.scheduledTime ?? Date.now();
+    if (new Date(at).getUTCMinutes() < 5) {
+      const db = env.VISITS_DB;
+      ctx.waitUntil(cleanup(db, at).then((n) => n > 0 && console.log(`[cleanup] removed ${n} rows`), (err) => console.warn("[cleanup] failed:", err)));
+    }
     ctx.waitUntil(
       sendDue(env.VISITS_DB).then(
         (r) => r.sent + r.dropped > 0 && console.log(`[push] sent ${r.sent}, dropped ${r.dropped}`),
