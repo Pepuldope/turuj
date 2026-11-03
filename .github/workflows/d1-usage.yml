@@ -1,0 +1,39 @@
+name: D1 usage check
+
+# Read-only: which database queries read the most rows in the last days (D1 insights),
+# so the free 5M reads/day can be planned for. Deploys and writes nothing.
+
+on:
+  push:
+    branches: ["claude/project-thread-tenkmx"]
+    paths: [".github/workflows/d1-usage.yml"]
+  workflow_dispatch:
+
+jobs:
+  usage:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Top queries by rows read
+        run: |
+          for p in 1d 3d; do
+            echo "### $p by reads"
+            npx -y wrangler@4 d1 insights mountour-visits --timePeriod=$p --sort-type=sum --sort-by=reads --limit=25 --json 2>&1 \
+              | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const a=JSON.parse(s.slice(s.indexOf("[")));for(const q of a)console.log(String(q.totalRowsRead??q.rowsRead).padStart(12),String(q.numberOfTimesRun??q.count).padStart(8),(q.query||"").replace(/\s+/g," ").slice(0,230))}catch(e){console.log(s.slice(0,3000))}})'
+          done
+      - name: Rows read by the site's hot read-only queries
+        run: |
+          q() { echo "== $1"; npx -y wrangler@4 d1 execute mountour-visits --remote --json --command "$2" 2>&1 | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const r=JSON.parse(s)[0];console.log("rows_read",r.meta.rows_read,"results",r.results.length,JSON.stringify(r.results.slice(0,3)).slice(0,300))}catch(e){console.log(s.slice(-600))}})'; }
+          q "row counts" "SELECT (SELECT COUNT(*) FROM trip) trips, (SELECT COUNT(*) FROM visit_day) visit_days, (SELECT COUNT(*) FROM event_month) events, (SELECT COUNT(*) FROM account) accounts, (SELECT COUNT(*) FROM push_plan) push"
+          q "main slugs" "SELECT slug FROM trip WHERE variant_of IS NULL ORDER BY id"
+          q "trip list" "SELECT t.slug, r.slug AS region, d.name, (SELECT group_concat(rule_id) FROM trip_closure tc WHERE tc.trip_id = t.id) AS rule_ids FROM trip t JOIN region r ON r.id = t.region_id JOIN place d ON d.id = t.destination_id WHERE t.variant_of IS NULL"
+          q "one trip" "SELECT t.slug FROM trip t JOIN region r ON r.id = t.region_id LEFT JOIN protected_area pa ON pa.id = t.protected_area_id JOIN place d ON d.id = t.destination_id JOIN place s ON s.id = t.start_id WHERE t.slug = 'krivan'"
+          q "visit month totals" "SELECT substr(day, 1, 7) AS month, COUNT(*) FROM visit_day GROUP BY 1"
+          q "town drive" "SELECT length(td.minutes_json) FROM town_drive td JOIN town ON town.id = td.town_id WHERE town.slug = 'zilina'"
+          q "push due" "SELECT * FROM push_plan WHERE at <= 0 ORDER BY at LIMIT 50"
+          q "events" "SELECT month, name, detail, n FROM event_month ORDER BY month DESC"

@@ -346,16 +346,21 @@
     <trkpt lat="48.467337" lon="18.818834"><ele>460</ele></trkpt>
   </trkseg></trk>
   <trk><name>Spálený vrch</name><desc>spaleny-vrch-hadova</desc><trkseg>
-    <trkpt lat="48.474225" lon="18.855149"><ele>811</ele></trkpt>
-    <trkpt lat="48.474185" lon="18.853663"><ele>815</ele></trkpt>
-    <trkpt lat="48.474133" lon="18.853171"><ele>808</ele></trkpt>
-    <trkpt lat="48.474169" lon="18.852871"><ele>801</ele></trkpt>
-    <trkpt lat="48.474466" lon="18.852321"><ele>794</ele></trkpt>
-    <trkpt lat="48.474519" lon="18.852058"><ele>793</ele></trkpt>
-    <trkpt lat="48.474408" lon="18.850608"><ele>799</ele></trkpt>
-    <trkpt lat="48.474431" lon="18.850058"><ele>807</ele></trkpt>
-    <trkpt lat="48.474479" lon="18.849698"><ele>811</ele></trkpt>
-    <trkpt lat="48.474776" lon="18.848880"><ele>817</ele></trkpt>
+    <trkpt lat="48.474229" lon="18.855109"><ele>811</ele></trkpt>
+    <trkpt lat="48.474221" lon="18.854606"><ele>811</ele></trkpt>
+    <trkpt lat="48.474178" lon="18.854178"><ele>815</ele></trkpt>
+    <trkpt lat="48.474187" lon="18.853651"><ele>814</ele></trkpt>
+    <trkpt lat="48.474136" lon="18.853350"><ele>811</ele></trkpt>
+    <trkpt lat="48.474116" lon="18.852945"><ele>802</ele></trkpt>
+    <trkpt lat="48.474164" lon="18.852790"><ele>798</ele></trkpt>
+    <trkpt lat="48.474436" lon="18.852420"><ele>794</ele></trkpt>
+    <trkpt lat="48.474522" lon="18.852096"><ele>793</ele></trkpt>
+    <trkpt lat="48.474462" lon="18.851451"><ele>795</ele></trkpt>
+    <trkpt lat="48.474469" lon="18.851043"><ele>797</ele></trkpt>
+    <trkpt lat="48.474413" lon="18.850579"><ele>799</ele></trkpt>
+    <trkpt lat="48.474456" lon="18.849919"><ele>809</ele></trkpt>
+    <trkpt lat="48.474527" lon="18.849569"><ele>813</ele></trkpt>
+    <trkpt lat="48.474786" lon="18.848860"><ele>818</ele></trkpt>
     <trkpt lat="48.474831" lon="18.848315"><ele>819</ele></trkpt>
     <trkpt lat="48.474891" lon="18.848040"><ele>818</ele></trkpt>
     <trkpt lat="48.475245" lon="18.847566"><ele>824</ele></trkpt>
@@ -531,15 +536,20 @@
     <trkpt lat="48.475245" lon="18.847566"><ele>824</ele></trkpt>
     <trkpt lat="48.474891" lon="18.848040"><ele>818</ele></trkpt>
     <trkpt lat="48.474831" lon="18.848315"><ele>819</ele></trkpt>
-    <trkpt lat="48.474776" lon="18.848880"><ele>817</ele></trkpt>
-    <trkpt lat="48.474479" lon="18.849698"><ele>811</ele></trkpt>
-    <trkpt lat="48.474431" lon="18.850058"><ele>807</ele></trkpt>
-    <trkpt lat="48.474408" lon="18.850608"><ele>799</ele></trkpt>
-    <trkpt lat="48.474519" lon="18.852058"><ele>793</ele></trkpt>
-    <trkpt lat="48.474466" lon="18.852321"><ele>794</ele></trkpt>
-    <trkpt lat="48.474169" lon="18.852871"><ele>801</ele></trkpt>
-    <trkpt lat="48.474133" lon="18.853171"><ele>808</ele></trkpt>
-    <trkpt lat="48.474185" lon="18.853663"><ele>815</ele></trkpt>
-    <trkpt lat="48.474225" lon="18.855149"><ele>811</ele></trkpt>
+    <trkpt lat="48.474786" lon="18.848860"><ele>818</ele></trkpt>
+    <trkpt lat="48.474527" lon="18.849569"><ele>813</ele></trkpt>
+    <trkpt lat="48.474456" lon="18.849919"><ele>809</ele></trkpt>
+    <trkpt lat="48.474413" lon="18.850579"><ele>799</ele></trkpt>
+    <trkpt lat="48.474469" lon="18.851043"><ele>797</ele></trkpt>
+    <trkpt lat="48.474462" lon="18.851451"><ele>795</ele></trkpt>
+    <trkpt lat="48.474522" lon="18.852096"><ele>793</ele></trkpt>
+    <trkpt lat="48.474436" lon="18.852420"><ele>794</ele></trkpt>
+    <trkpt lat="48.474164" lon="18.852790"><ele>798</ele></trkpt>
+    <trkpt lat="48.474116" lon="18.852945"><ele>802</ele></trkpt>
+    <trkpt lat="48.474136" lon="18.853350"><ele>811</ele></trkpt>
+    <trkpt lat="48.474187" lon="18.853651"><ele>814</ele></trkpt>
+    <trkpt lat="48.474178" lon="18.854178"><ele>815</ele></trkpt>
+    <trkpt lat="48.474221" lon="18.854606"><ele>811</ele></trkpt>
+    <trkpt lat="48.474229" lon="18.855109"><ele>811</ele></trkpt>
   </trkseg></trk>
 </gpx>

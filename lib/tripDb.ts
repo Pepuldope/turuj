@@ -194,50 +194,13 @@ export async function getTripLive(slug: string): Promise<{ trip: TripDetail | nu
   return { trip: await getTrip(slug), source: "subory" };
 }
 
-/** Car minutes from one precomputed town to every trip, by slug. */
+/**
+ * Car minutes from one precomputed town to every trip, by slug. From the deployed files, not the
+ * database: lining the database's array up with the trips read all 6,468 trip rows each time
+ * (D1 free plan: 5 million rows a day, used up on 29 Oct and 2 Nov).
+ */
 export async function townDriveMinutes(townSlug: string): Promise<{ minutes: Record<string, number | null>; source: DataSource }> {
-  const db = await tripDb();
-  if (db) {
-    try {
-      const minutes = await dbTownMinutes(db, townSlug);
-      if (minutes) return { minutes, source: "databaza" };
-    } catch {
-      // Fall through to the files.
-    }
-  }
   return { minutes: await getTownDrives(townSlug), source: "subory" };
-}
-
-// The main trips in id order: thousands of rows read, so read once per Worker instance and
-// kept a few minutes (a weekly reload can change it), not on every request.
-const SLUG_ORDER_MS = 10 * 60 * 1000;
-let slugOrder: { at: number; slugs: Promise<string[]> } | null = null;
-
-function mainSlugsInOrder(db: D1Like): Promise<string[]> {
-  if (!slugOrder || Date.now() - slugOrder.at > SLUG_ORDER_MS) {
-    const slugs = db
-      .prepare("SELECT slug FROM trip WHERE variant_of IS NULL ORDER BY id")
-      .all<{ slug: string }>()
-      .then((r) => r.results.map((t) => t.slug));
-    slugs.catch(() => (slugOrder = null));
-    slugOrder = { at: Date.now(), slugs };
-  }
-  return slugOrder.slugs;
-}
-
-/** Car minutes by slug from the town's row of town_drive (an array over the main trips in id order), or null without one. */
-async function dbTownMinutes(db: D1Like, townSlug: string): Promise<Record<string, number | null> | null> {
-  const [row, slugs] = await Promise.all([
-    db
-      .prepare("SELECT td.minutes_json FROM town_drive td JOIN town ON town.id = td.town_id WHERE town.slug = ?1")
-      .bind(townSlug)
-      .first<{ minutes_json: string }>(),
-    mainSlugsInOrder(db),
-  ]);
-  if (!row) return null;
-  const minutes = JSON.parse(row.minutes_json) as (number | null)[];
-  // One entry per main trip in id order; other routes to a place have no drive times (the home list never shows them).
-  return Object.fromEntries(slugs.map((slug, i) => [slug, minutes[i] ?? null]));
 }
 
 export interface TripListItem {
@@ -287,72 +250,8 @@ function sortList(items: TripListItem[]): TripListItem[] {
 
 /** Trips for GET /api/vylety: nearest first from a town, or best known first. One per place (its main route). */
 export async function listTrips(q: TripListQuery): Promise<{ trips: TripListItem[]; source: DataSource; generated_at: string }> {
-  const db = await tripDb();
-  if (db) {
-    try {
-      const [rows, rules, version, drives] = await Promise.all([
-        db
-          .prepare(
-            `SELECT t.slug, t.name, r.slug AS region, r.name AS region_name, t.difficulty, t.family_friendly,
-                    t.distance_m, t.ascent_m, t.duration_min, t.rank,
-                    d.name AS d_name, d.kind AS d_kind, d.lat AS d_lat, d.lon AS d_lon, d.ele_m AS d_ele,
-                    (SELECT group_concat(rule_id) FROM trip_closure tc WHERE tc.trip_id = t.id) AS rule_ids
-             FROM trip t
-             JOIN region r ON r.id = t.region_id
-             JOIN place d ON d.id = t.destination_id
-             WHERE t.variant_of IS NULL`
-          )
-          .all<{
-            slug: string;
-            name: string;
-            region: string;
-            region_name: string;
-            difficulty: string;
-            family_friendly: number;
-            distance_m: number;
-            ascent_m: number;
-            duration_min: number;
-            rank: number;
-            d_name: string;
-            d_kind: string;
-            d_lat: number;
-            d_lon: number;
-            d_ele: number | null;
-            rule_ids: string | null;
-          }>(),
-        db
-          .prepare("SELECT id, kind, starts_on, ends_on FROM closure_rule")
-          .all<{ id: string; kind: "rocna" | "jednorazova"; starts_on: string; ends_on: string }>(),
-        loadedVersion(db),
-        q.town ? dbTownMinutes(db, q.town) : null,
-      ]);
-      const active = activeRuleIds(rules.results, q.date);
-      const trips = rows.results.map((r) => {
-        const drive = drives?.[r.slug] ?? null;
-        return {
-          slug: r.slug,
-          name: r.name,
-          region: r.region,
-          region_name: r.region_name,
-          destination: { name: r.d_name, kind: r.d_kind, lat: r.d_lat, lon: r.d_lon, ele_m: r.d_ele },
-          difficulty: r.difficulty,
-          family_friendly: r.family_friendly === 1,
-          distance_m: r.distance_m,
-          ascent_m: r.ascent_m,
-          duration_min: r.duration_min,
-          rank: r.rank,
-          drive_min: drive,
-          total_min: drive === null ? null : 2 * drive + r.duration_min,
-          closed: (r.rule_ids ?? "").split(",").some((id) => active.has(id)),
-          url: `/trasa/${r.slug}`,
-        };
-      });
-      return { trips: sortList(trips).slice(0, q.limit), source: "databaza", generated_at: version ?? "" };
-    } catch {
-      // Fall through to the files.
-    }
-  }
-
+  // From the deployed files: the same data as the database (lib/tripDb.test.ts), without reading
+  // about 10,900 database rows per answer (D1 free plan: 5 million a day).
   const { minutes } = await townDriveMinutes(q.town ?? "");
   const trips = (await getAllTrips()).filter((t) => !t.variant_of).map((t) => {
     const drive = q.town ? (minutes[t.slug] ?? null) : null;
