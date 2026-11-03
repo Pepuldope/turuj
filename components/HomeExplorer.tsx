@@ -1235,8 +1235,8 @@ function StartReminder() {
       ref={barRef}
       aria-hidden={!away}
       inert={!away}
-      style={{ transform: away ? "translateY(var(--topbar, 0px))" : "translateY(-110%)" }}
-      className="pointer-events-none fixed inset-x-0 top-0 z-30 px-3 pt-2 pb-1 transition-transform duration-200 will-change-transform motion-reduce:transition-none lg:hidden"
+      style={{ transform: away ? "translateY(var(--topbar, 0px))" : "translateY(-110%)", opacity: away ? 1 : 0 }}
+      className="pointer-events-none fixed inset-x-0 top-0 z-30 px-3 pt-2 pb-1 transition-[transform,opacity] duration-[280ms] will-change-transform motion-reduce:transition-none lg:hidden"
     >
       <div className="pointer-events-auto mx-auto flex max-w-[640px] items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2 shadow-[var(--shadow-float)] md:max-w-[760px]">
         <span className="min-w-0 flex-1 leading-tight">

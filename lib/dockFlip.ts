@@ -10,7 +10,7 @@ import type { RefObject } from "react";
 // over the same 200 ms, moving together with the bar as one piece.
 
 const EVENT = "turuj-dock";
-const MS = 200;
+const MS = 280;
 
 /** Call right after --topbar or --startbar changed. */
 export function dockMoved() {
