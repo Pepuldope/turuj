@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { LangLink } from "@/lib/i18n";
 import { LEGAL_FACTS } from "@/lib/legal";
 
-// A small Markdown for the terms and privacy texts (content/legal): "### " headings, paragraphs,
+// A small Markdown for the terms, privacy and closure texts (content/): "### " and "#### " headings, paragraphs,
 // "- " lists, "| a | b |" tables (second row is the separator), **bold**, `code`, [text](href).
 // A line "{{NAME}}" on its own is replaced by blocks[NAME]; "{{NAME}}" inside text by LEGAL_FACTS.
 
@@ -30,6 +30,13 @@ export function fillFacts(text: string): string {
   return text.replace(/\{\{(\w+)\}\}/g, (all, name: string) => LEGAL_FACTS[name] ?? all);
 }
 
+/** "13. Vaše práva" -> "b13"; "Výnimky a osobitné pravidlá" -> "vynimky" (links like /uzavery/tanap#vynimky). */
+function anchor(heading: string): string {
+  const num = heading.match(/^(\d+)\./);
+  if (num) return `b${num[1]}`;
+  return heading.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)[0] ?? "";
+}
+
 const cells = (row: string) => row.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
 
 export function LegalText({ text, blocks = {} }: { text: string; blocks?: Record<string, ReactNode> }) {
@@ -41,7 +48,8 @@ export function LegalText({ text, blocks = {} }: { text: string; blocks?: Record
     const only = part.match(/^\{\{(\w+)\}\}$/);
     if (only && blocks[only[1]] !== undefined) return void out.push(<Fragment key={key}>{blocks[only[1]]}</Fragment>);
     const body = fillFacts(part);
-    if (body.startsWith("### ")) return void out.push(<h2 key={key} id={`b${body.match(/^### (\d+)/)?.[1] ?? n}`}>{inline(body.slice(4), key)}</h2>);
+    if (body.startsWith("#### ")) return void out.push(<h3 key={key} className="pt-1 font-semibold">{inline(body.slice(5), key)}</h3>);
+    if (body.startsWith("### ")) return void out.push(<h2 key={key} id={anchor(body.slice(4))}>{inline(body.slice(4), key)}</h2>);
     const lines = body.split("\n");
     if (lines.every((l) => l.startsWith("|"))) {
       const [head, , ...rows] = lines;

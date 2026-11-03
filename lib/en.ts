@@ -796,6 +796,8 @@ export const EN: Record<string, string> = {
   "Ako to funguje": "How it works",
   "Súkromie": "Privacy",
   "Podmienky": "Terms",
+  "Uzávery": "Closures",
+  "Sezónna uzávera v TANAP-e: čo je zatvorené a kam sa dá ísť": "TANAP seasonal closure: what is closed and where you can go",
   "Podmienky používania": "Terms of use",
   "Zmazať účet": "Delete account",
   "Tento prehliadač sa do štatistík nepočíta.": "This browser is left out of the statistics.",
