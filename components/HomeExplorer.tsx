@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { startTransition, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { Difficulty, LatLng, TrailDetail } from "@/lib/types";
 import { driveDestination, nearestStop, primaryTrailhead, routeWalk, sunLocation, trailDetailFrom } from "@/lib/data";
 import { formatKm, pickWalk, walkMinutes } from "@/lib/walkFacts";
@@ -39,6 +39,7 @@ import type { TripCardItem } from "@/components/TripCard";
 import { BrowseMap } from "@/components/BrowseMap";
 import type { BrowseArea, BrowseTrip, MapFocus, MapView } from "@/components/BrowseMap";
 import "@/lib/legacyStorage";
+import { dockMoved, pop, useDockFlip, useStuckPop } from "@/lib/dockFlip";
 
 /** The home headline, one at random per visit (the server and first paint keep the first one). */
 const HEADLINES = ["Kam na výlet?", "Kam vyrazíme?", "Kam do hôr?", "Kam ťa to ťahá?", "Vyrazme von!", "Hory čakajú."];
@@ -315,6 +316,11 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
   const columnRef = useRef<HTMLDivElement>(null);
   const toolsRef = useRef<HTMLDivElement>(null);
   const pickedRef = useRef<HTMLDivElement>(null);
+  // The stuck search row and picked card move with the top bar and start reminder as one piece.
+  const searchRowRef = useRef<HTMLDivElement>(null);
+  useDockFlip(pickedRef);
+  useDockFlip(searchRowRef);
+  useStuckPop(searchRowRef);
   const isDesktop = useIsDesktop();
   // Picking the start on a phone: the map goes full screen so the pin in its middle is easy to place,
   // and closes again when the start is set or picking is cancelled (Peter, 2026-10-29).
@@ -982,7 +988,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
 
       {pickedItem && (
         // Picked on the map: a bigger card that stays on top while the list scrolls under it.
-        <div ref={pickedRef} className="sticky top-[var(--topbar,0px)] z-10 transition-[top] duration-200 -mx-1 bg-[var(--background)] px-1 pt-1 pb-2">
+        <div ref={pickedRef} className="sticky top-[calc(var(--topbar,0px)+var(--startbar,0px))] z-10 -mx-1 bg-[var(--background)] px-1 pt-1 pb-2">
           <TripCard
             item={pickedItem}
             dayWord={dayWord}
@@ -1041,9 +1047,10 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
 
         <TownButton start={start} knownTowns={knownTowns} />
 
+        {startReady && !start && <StartReminder />}
+
         {/* Search, filters and Mapa / Zoznam stay on top while the map fills the screen. */}
-        <div className="sticky top-[var(--topbar,0px)] z-20 transition-[top] duration-200 -mx-4 bg-[var(--background)] px-4 py-2 lg:static lg:mx-0 lg:bg-transparent lg:p-0">
-          {startReady && !start && <StartReminder />}
+        <div ref={searchRowRef} className="sticky top-[calc(var(--topbar,0px)+var(--startbar,0px))] z-20 -mx-4 px-4 py-2 lg:static lg:mx-0 lg:p-0">
           {tools}
         </div>
 
@@ -1187,6 +1194,7 @@ function PopularityKey() {
 function StartReminder() {
   const t = useT();
   const [away, setAway] = useState(false);
+  const barRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const card = document.querySelector("[data-start-chip]");
     if (!card) return;
@@ -1194,25 +1202,65 @@ function StartReminder() {
     io.observe(card);
     return () => io.disconnect();
   }, []);
-  if (!away) return null;
+  // Phone: once the start card scrolls away, the reminder sits straight at the top of the screen
+  // (under the top bar) instead of popping up above the trip search (Peter, 2026-11-02). Things
+  // stuck to the top (the search row, a picked trip) move down under it by --startbar.
+  useLayoutEffect(() => {
+    const root = document.documentElement.style;
+    const el = barRef.current;
+    if (!away || !el) {
+      root.setProperty("--startbar", "0px");
+      dockMoved();
+      return;
+    }
+    const phone = window.matchMedia("(max-width: 1023.98px)");
+    const apply = () => {
+      root.setProperty("--startbar", phone.matches ? `${el.offsetHeight}px` : "0px");
+      dockMoved();
+    };
+    apply();
+    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(apply);
+    ro?.observe(el);
+    phone.addEventListener("change", apply);
+    return () => {
+      ro?.disconnect();
+      phone.removeEventListener("change", apply);
+      root.setProperty("--startbar", "0px");
+      dockMoved();
+    };
+  }, [away]);
+  // Appearing, the card pops a little as it slides down.
+  useEffect(() => {
+    if (away) pop(barRef.current?.firstElementChild);
+  }, [away]);
+  // Always there (off screen above) so it slides in and moves with the top bar by transform
+  // instead of popping up and jumping (Peter, 2026-11-03: "laggy/glitchy").
   return (
-    <div className="mb-2 flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2 shadow-[var(--shadow-float)] lg:hidden">
-      <span className="min-w-0 flex-1 leading-tight">
-        <span className="block text-[11.5px] text-[var(--muted)]">{t("Vyrážate z")}</span>
-        <strong className="block truncate text-sm text-[var(--accent)]">{t("nevybraté")}</strong>
-      </span>
-      <button
-        type="button"
-        onClick={() => {
-          const card = document.querySelector("[data-start-chip]");
-          card?.scrollIntoView({ block: "start", behavior: "smooth" });
-          // Ready to type once it is back in view.
-          setTimeout(() => (document.querySelector("[data-start-search]") as HTMLInputElement | null)?.focus({ preventScroll: true }), 450);
-        }}
-        className="h-9 shrink-0 rounded-lg bg-[var(--accent)] px-3.5 text-sm font-bold text-[var(--accent-contrast)]"
-      >
-        {t("Vybrať štart")}
-      </button>
+    <div
+      ref={barRef}
+      aria-hidden={!away}
+      inert={!away}
+      style={{ transform: away ? "translateY(var(--topbar, 0px))" : "translateY(-110%)", opacity: away ? 1 : 0, transitionTimingFunction: "var(--dock-ease, ease)" }}
+      className="pointer-events-none fixed inset-x-0 top-0 z-30 px-3 pt-2 pb-1 transition-[transform,opacity] duration-[280ms] will-change-transform motion-reduce:transition-none lg:hidden"
+    >
+      <div className="pointer-events-auto mx-auto flex max-w-[640px] items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2 shadow-[var(--shadow-float)] md:max-w-[760px]">
+        <span className="min-w-0 flex-1 leading-tight">
+          <span className="block text-[11.5px] text-[var(--muted)]">{t("Vyrážate z")}</span>
+          <strong className="block truncate text-sm text-[var(--accent)]">{t("nevybraté")}</strong>
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            const card = document.querySelector("[data-start-chip]");
+            card?.scrollIntoView({ block: "start", behavior: "smooth" });
+            // Ready to type once it is back in view.
+            setTimeout(() => (document.querySelector("[data-start-search]") as HTMLInputElement | null)?.focus({ preventScroll: true }), 450);
+          }}
+          className="h-9 shrink-0 rounded-lg bg-[var(--accent)] px-3.5 text-sm font-bold text-[var(--accent-contrast)]"
+        >
+          {t("Vybrať štart")}
+        </button>
+      </div>
     </div>
   );
 }

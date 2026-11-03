@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { googleHref, signOut, signedIn, useAccount } from "@/lib/account";
 import type { MyAccount } from "@/lib/account";
@@ -9,6 +9,7 @@ import { LangLink, useLang, useT } from "@/lib/i18n";
 import { langOfPath, langPath, skPath } from "@/lib/lang";
 import { useSavedTrips } from "@/lib/savedTrips";
 import { UiIcon } from "@/components/UiIcon";
+import { EASE_IN, EASE_OUT, dockMoved, pop } from "@/lib/dockFlip";
 import type { UiIconName } from "@/lib/uiIcons";
 
 // The account button and the menu (Peter, 2026-10-29). Phone: a bar along the top that slides
@@ -38,6 +39,7 @@ export function TopBar() {
   const panel = opened.path === path ? opened.kind : null;
   const setPanel = (p: Panel | ((cur: Panel) => Panel)) => setOpened((o) => ({ kind: typeof p === "function" ? p(o.path === path ? o.kind : null) : p, path }));
   const [shown, setShown] = useState(true);
+  const shownRef = useRef(true);
   const [solid, setSolid] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [noticeCode, setNoticeCode] = useState<string | null>(null);
@@ -49,10 +51,16 @@ export function TopBar() {
     let last = window.scrollY;
     const onScroll = () => {
       const y = window.scrollY;
-      setSolid(y > 8);
-      if (y < 60) setShown(true);
-      else if (y - last > 6) setShown(false);
-      else if (last - y > 6) setShown(true);
+      // Scrolling down from the top, the bar goes straight away: it never turns into the white bar
+      // first only to slide off a moment later (Peter, 2026-11-03). It only turns white while shown,
+      // and keeps its look while sliding away.
+      let next: boolean | null = null;
+      if (y <= 8) next = true;
+      else if (y > last && (last <= 60 || y - last > 6)) next = false;
+      else if (last - y > 6) next = true;
+      if (next !== null) setShown(next);
+      if (next ?? shownRef.current) setSolid(y > 8);
+      if (next !== null) shownRef.current = next;
       last = y;
     };
     onScroll();
@@ -60,12 +68,26 @@ export function TopBar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   const visible = shown || panel !== null;
-
-  // Things stuck to the top of the page (the home page's search row) move down under the bar.
+  // Coming back into view, the bar's row pops a little as it slides in (not on the first paint).
+  const rowRef = useRef<HTMLDivElement>(null);
+  const wasVisible = useRef(visible);
   useEffect(() => {
+    if (visible && !wasVisible.current) pop(rowRef.current);
+    wasVisible.current = visible;
+  }, [visible]);
+
+  // Things stuck to the top of the page (the home page's search row) move down under the bar,
+  // in the same frame as the bar itself.
+  useLayoutEffect(() => {
     const phone = window.matchMedia("(max-width: 1023.98px)");
-    const apply = () =>
+    const apply = () => {
+      const root = document.documentElement;
+      // Everything at the top moves with the bar's easing: a little overshoot coming in, plain going away.
+      root.dataset.dock = visible ? "in" : "out";
+      root.style.setProperty("--dock-ease", visible ? EASE_IN : EASE_OUT);
       document.documentElement.style.setProperty("--topbar", phone.matches && visible ? `calc(${BAR_PX}px + env(safe-area-inset-top))` : "0px");
+      dockMoved();
+    };
     apply();
     phone.addEventListener("change", apply);
     return () => phone.removeEventListener("change", apply);
@@ -107,7 +129,8 @@ export function TopBar() {
   return (
     <div
       ref={boxRef}
-      className={`fixed inset-x-0 top-0 z-40 pt-[env(safe-area-inset-top)] transition-[transform,background-color,box-shadow] duration-200 motion-reduce:transition-none lg:inset-x-auto lg:top-3 lg:right-3 lg:translate-y-0 lg:bg-transparent lg:p-0 lg:shadow-none ${
+      style={{ transitionTimingFunction: visible ? EASE_IN : EASE_OUT }}
+      className={`fixed inset-x-0 top-0 z-40 pt-[env(safe-area-inset-top)] transition-[translate,transform,background-color,box-shadow] duration-[280ms] motion-reduce:transition-none lg:inset-x-auto lg:top-3 lg:right-3 lg:translate-y-0 lg:bg-transparent lg:p-0 lg:shadow-none ${
         visible ? "translate-y-0" : "-translate-y-full"
       } ${
         solid || panel
@@ -117,7 +140,7 @@ export function TopBar() {
             "pointer-events-none bg-transparent"
       }`}
     >
-      <div className={`flex h-[52px] items-center justify-between gap-2 px-3 lg:h-auto lg:justify-end lg:gap-1 lg:rounded-full lg:bg-[var(--card-bg)] lg:p-1 lg:shadow-[var(--shadow-float)]`}>
+      <div ref={rowRef} className={`flex h-[52px] items-center justify-between gap-2 px-3 lg:h-auto lg:justify-end lg:gap-1 lg:rounded-full lg:bg-[var(--card-bg)] lg:p-1 lg:shadow-[var(--shadow-float)]`}>
         {/* The name only once the page's own header (which shows it) has scrolled away. */}
         <LangLink href="/" aria-label="Túruj" className={`block lg:hidden ${solid || panel ? "" : "invisible"}`}>
           <picture>
