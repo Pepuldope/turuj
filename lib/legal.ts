@@ -11,7 +11,7 @@ export const LEGAL_FACTS: Record<string, string> = {
   CONTROLLERS:
     "Túruj robia Peter Nemčok a Radoslav Nemec. O vašich údajoch rozhodujeme spoločne, preto sme spoloční prevádzkovatelia (čl. 26 nariadenia (EÚ) 2016/679, ďalej GDPR). Medzi sebou sme sa dohodli, že žiadosti o údaje vybavuje Peter Nemčok a Radoslav Nemec ho zastúpi, keď nemôže. Napísať však môžete ktorémukoľvek z nás a svoje práva môžete uplatniť voči obom.",
   DB_ACCESS:
-    "Prístup k databáze a ku kódu má len Peter Nemčok.",
+    "Prístup k databáze a ku kódu má len Peter Nemčok a jeho účty sú chránené dvojfázovým overením (2FA).",
 };
 
 /** Placeholders left open: a test keeps them off the live site. */
