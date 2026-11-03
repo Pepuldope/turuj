@@ -73,35 +73,57 @@ interface Props {
   onHover: (hover: { slug: string; x: number; y: number } | null) => void;
   /** Tap on a grey trail no trip uses: the trips closest to that spot. */
   onTrailTap: (tap: { nearby: { slug: string; km: number }[]; x: number; y: number }) => void;
+  /** Once, when the map has drawn its first full view (the phone picture of the map can go). */
+  onReady?: () => void;
   /** Phones keep the bottom of the map free for the preview. */
   bottomInset: number;
-  /** Phones: start the map only after the visitor first scrolls, touches or types (see whenUsed). */
+  /** Phones: start the map after the page has loaded and gone idle, or on the first scroll or touch (see whenUsed). */
   waitForUse?: boolean;
   ariaLabel: string;
 }
 
-// Whether the visitor has scrolled, touched or typed since the site opened (kept across pages).
+// Whether the map may start: the visitor scrolled, touched or typed, or the page
+// finished loading and sat idle (kept across pages).
 let used = false;
 const USE_EVENTS = ["scroll", "wheel", "touchstart", "pointerdown", "keydown"] as const;
+/** After the page's load event: this long, then the first idle moment. */
+const IDLE_START_MS = 5000;
 
 /**
- * Calls `go` once the visitor does anything on the page. On phones the map
- * (MapLibre drawing thousands of lines) kept the page busy for seconds right
- * after it opened, even though it sits below the first screen; this way the
- * page is free first, and the map starts with the first scroll on the way to it.
+ * Calls `go` once the visitor does anything on the page, or once the page has
+ * loaded and gone quiet. On phones the map (MapLibre drawing thousands of
+ * lines) kept the page busy for seconds right after it opened, even though it
+ * sits below the first screen; this way the page, its list and pictures come
+ * first, and the map follows on its own (or sooner, with the first scroll).
  */
 function whenUsed(go: () => void): () => void {
   if (used) {
     go();
     return () => {};
   }
-  const off = () => USE_EVENTS.forEach((e) => window.removeEventListener(e, onUse, true));
-  function onUse() {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let idle: number | undefined;
+  const off = () => {
+    USE_EVENTS.forEach((e) => window.removeEventListener(e, start, true));
+    window.removeEventListener("load", afterLoad);
+    clearTimeout(timer);
+    if (idle !== undefined) window.cancelIdleCallback?.(idle);
+  };
+  function start() {
+    if (used) return;
     used = true;
     off();
     go();
   }
-  USE_EVENTS.forEach((e) => window.addEventListener(e, onUse, { capture: true, passive: true }));
+  function afterLoad() {
+    timer = setTimeout(() => {
+      if (window.requestIdleCallback) idle = window.requestIdleCallback(start, { timeout: 2000 });
+      else start();
+    }, IDLE_START_MS);
+  }
+  USE_EVENTS.forEach((e) => window.addEventListener(e, start, { capture: true, passive: true }));
+  if (document.readyState === "complete") afterLoad();
+  else window.addEventListener("load", afterLoad, { once: true });
   return off;
 }
 
@@ -283,6 +305,7 @@ export function BrowseMap({
   onPick,
   onHover,
   onTrailTap,
+  onReady,
   bottomInset,
   waitForUse = false,
   ariaLabel,
@@ -292,7 +315,7 @@ export function BrowseMap({
   // Every line seen so far, by slug: the detailed one once its area has loaded.
   const lines = useRef(new Map<string, { coords: number[][]; detailed: boolean }>());
   const [linesVersion, setLinesVersion] = useState(0);
-  const handlers = useRef({ onView, onPick, onHover, onTrailTap });
+  const handlers = useRef({ onView, onPick, onHover, onTrailTap, onReady });
   const tripsRef = useRef(trips);
   const areasRef = useRef(areas);
   const areaEls = useRef<HTMLElement[]>([]);
@@ -319,7 +342,7 @@ export function BrowseMap({
   const hoverAreaRef = useRef<(id: string | null) => void>(() => {});
 
   useEffect(() => {
-    handlers.current = { onView, onPick, onHover, onTrailTap };
+    handlers.current = { onView, onPick, onHover, onTrailTap, onReady };
     tripsRef.current = trips;
     areasRef.current = areas;
     insetRef.current = bottomInset;
@@ -369,6 +392,8 @@ export function BrowseMap({
       map.on("load", () => {
         if (!map || cancelled) return;
         const m = map;
+        // The first time everything on screen is drawn (tiles, lines, dots).
+        m.once("idle", () => handlers.current.onReady?.());
         hideBasePois(m);
         detachLimit = keepInSlovakia(m);
         // Every marked trail, faint grey: the trips are drawn over it in colour.

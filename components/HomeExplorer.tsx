@@ -324,6 +324,12 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
   const showMapCard = useCallback(() => mapCardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }), []);
   // Back on the home page the map opens where it was left (kept for this visit, not stored).
   const [mapView, setMapView] = useState<MapView | null>(() => lastView);
+  // Phones: a picture of the map (public/map-picture.jpg, scripts/map-picture.mjs)
+  // covers the card until the live map has drawn, then fades out. The map fits
+  // Slovakia to the card's width and centres it, so the picture (taken in the
+  // tallest card) is sized by width and centred too. Not when coming
+  // back to the home page: the map then opens where it was left.
+  const [mapPicture, setMapPicture] = useState<"shown" | "fading" | "gone">(() => (lastView ? "gone" : "shown"));
   const [focus, setFocus] = useState<MapFocus | null>(null);
   const itemRefs = useRef(new Map<string, HTMLElement>());
   const columnRef = useRef<HTMLDivElement>(null);
@@ -735,6 +741,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
           // The list follows the map without holding up the next frame of a pinch.
           startTransition(() => setMapView(v));
         }}
+        onReady={() => setMapPicture((v) => (v === "shown" ? "fading" : v))}
         onPick={(p) => (p ? pickTrip(p.slug, p.also, p) : pickTrip(null))}
         onHover={(h) => {
           setPointed(h?.slug ?? null);
@@ -1082,6 +1089,18 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
             }
           >
             {map}
+            {mapPicture !== "gone" && !fullMap && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src="/map-picture.jpg"
+                alt=""
+                aria-hidden
+                decoding="async"
+                fetchPriority="low"
+                onTransitionEnd={() => setMapPicture("gone")}
+                className={`pointer-events-none absolute top-1/2 left-0 h-auto w-full max-w-none -translate-y-1/2 transition-opacity duration-500 ${mapPicture === "fading" ? "opacity-0" : ""}`}
+              />
+            )}
             <MapExpandButton full={fullMap} onClick={() => setFullMap((v) => !v)} />
           </div>
         )}
