@@ -39,6 +39,7 @@ export function TopBar() {
   const panel = opened.path === path ? opened.kind : null;
   const setPanel = (p: Panel | ((cur: Panel) => Panel)) => setOpened((o) => ({ kind: typeof p === "function" ? p(o.path === path ? o.kind : null) : p, path }));
   const [shown, setShown] = useState(true);
+  const shownRef = useRef(true);
   const [solid, setSolid] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [noticeCode, setNoticeCode] = useState<string | null>(null);
@@ -50,10 +51,16 @@ export function TopBar() {
     let last = window.scrollY;
     const onScroll = () => {
       const y = window.scrollY;
-      setSolid(y > 8);
-      if (y < 60) setShown(true);
-      else if (y - last > 6) setShown(false);
-      else if (last - y > 6) setShown(true);
+      // Scrolling down from the top, the bar goes straight away: it never turns into the white bar
+      // first only to slide off a moment later (Peter, 2026-11-03). It only turns white while shown,
+      // and keeps its look while sliding away.
+      let next: boolean | null = null;
+      if (y <= 8) next = true;
+      else if (y > last && (last <= 60 || y - last > 6)) next = false;
+      else if (last - y > 6) next = true;
+      if (next !== null) setShown(next);
+      if (next ?? shownRef.current) setSolid(y > 8);
+      if (next !== null) shownRef.current = next;
       last = y;
     };
     onScroll();
