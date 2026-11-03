@@ -101,6 +101,8 @@ export function aboutTrip({ trip, detail, town, driveMin }: AboutInput): string[
   return out;
 }
 
+const MAX_DESCRIPTION = 155;
+
 /** The search-result text: the trip's facts in one line, under about 160 characters where it can. */
 export function metaDescription(trip: TripDetail, facts: string): string {
   const how = [trip.parking ? "parkovanie" : null, trip.transit ? (trip.transit.mode === "vlak" ? "vlak" : "autobus") : null]
@@ -108,5 +110,13 @@ export function metaDescription(trip: TripDetail, facts: string): string {
     .join(", ");
   const start = trip.variant_of ? ` zo štartu ${trip.start.name}` : "";
   const where = trip.region_name ? ` (${trip.region_name})` : "";
-  return `${trip.name}${start}${where}: ${facts}. ${how ? `${how[0].toUpperCase()}${how.slice(1)}, ` : ""}kedy najneskôr vyraziť a stihnúť návrat za svetla.`;
+  const head = `${trip.name}${start}${where}: ${facts}.`;
+  // Search results cut at about 155 characters: the tail goes shorter, then away, on long names.
+  for (const tail of [
+    ` ${how ? `${how[0].toUpperCase()}${how.slice(1)}, ` : ""}kedy najneskôr vyraziť a stihnúť návrat za svetla.`,
+    ` ${how ? `${how[0].toUpperCase()}${how.slice(1)} a ` : ""}čas návratu za svetla.`,
+  ]) {
+    if (head.length + tail.length <= MAX_DESCRIPTION) return head + tail;
+  }
+  return head;
 }

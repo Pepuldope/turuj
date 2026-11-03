@@ -44,6 +44,21 @@ interface Ctx {
   waitUntil(p: Promise<unknown>): void;
 }
 
+// The Workers runtime's streaming HTML editor (no type package for it here).
+declare class HTMLRewriter {
+  on(selector: string, handlers: { element(el: { setAttribute(name: string, value: string): void }): void }): HTMLRewriter;
+  transform(res: Response): Response;
+}
+
+/**
+ * English pages share the root layout, which says lang="sk"; the browser fixes it with a script,
+ * but search engines read the HTML as sent (Ahrefs 2 Nov: 1,880 hreflang/lang mismatches). So the
+ * Worker says "en" in the HTML itself.
+ */
+const isEnglish = (path: string) => path === "/en" || path.startsWith("/en/");
+// The deployed page's tag carries other attributes first (<html data-dpl-id="…" lang="sk" …>).
+const SK_HTML = /(<html\b[^>]*?) lang="sk"/;
+
 interface FastPages {
   buildId: string;
   routes: [string, string][];
@@ -89,8 +104,9 @@ async function fastPage(req: Request, env: Env): Promise<Response | null> {
   }
   const rsc = req.headers.get("RSC") === "1";
   const entry = pick(await res.text(), rsc ? "rsc" : "html");
-  const body = rsc ? entry.rsc : entry.html;
+  let body = rsc ? entry.rsc : entry.html;
   if (entry.type !== "app" || (entry.meta?.status ?? 200) !== 200 || typeof body !== "string") return null;
+  if (!rsc && isEnglish(url.pathname)) body = body.replace(SK_HTML, '$1 lang="en"');
   const headers = new Headers({ "Content-Type": rsc ? "text/x-component" : "text/html; charset=utf-8", Vary: VARY });
   for (const [re, hs] of pageHeaders) if (re.test(url.pathname)) for (const [k, v] of hs) headers.set(k, v);
   const stale = entry.meta?.headers?.["x-nextjs-stale-time"];
@@ -132,7 +148,9 @@ const worker = {
     }
     const route = req.method === "GET" ? DATA_ROUTES[new URL(req.url).pathname] : undefined;
     if (route) return runWithCloudflareRequestContext(req, env, ctx, () => route(req));
-    return openNext.fetch(req, env, ctx);
+    const res: Response = await openNext.fetch(req, env, ctx);
+    if (!isEnglish(new URL(req.url).pathname) || !res.headers.get("Content-Type")?.startsWith("text/html")) return res;
+    return new HTMLRewriter().on("html", { element: (el) => el.setAttribute("lang", "en") }).transform(res);
   },
   async scheduled(_event: unknown, env: Env, ctx: Ctx) {
     if (!env.VISITS_DB) return;

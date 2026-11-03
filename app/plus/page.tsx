@@ -5,7 +5,7 @@ import { T } from "@/lib/i18n";
 
 export const metadata = pageMetadata({
   title: "Túruj+",
-  description: "Túruj+ pre tých, čo chodia von často: víkendový tip, strážca výletu a neobmedzené offline výlety za 9,99 € ročne.",
+  description: "Túruj+ pre tých, čo chodia von často: víkendový tip, strážca výletu a vlastné výlety za 9,99 € ročne. Offline výlety ostávajú zadarmo.",
   path: "/plus",
 });
 
@@ -19,8 +19,8 @@ const FEATURES = [
     text: "Uložený výlet strážime. Keď sa zhorší počasie, pribudne uzávera alebo by ste nestihli návrat za svetla, dáme vám vedieť.",
   },
   {
-    title: "Neobmedzené offline výlety",
-    text: "Uložte si do mobilu toľko výletov a máp, koľko chcete. Fungujú aj bez signálu.",
+    title: "Vlastné výlety",
+    text: "Poskladajte si vlastnú trasu s vlastným štartom a zastávkami. Čas, návrat za svetla aj uzávery prepočítame ako pri ostatných výletoch.",
   },
 ];
 
@@ -35,7 +35,7 @@ export default function PlusPage() {
           </span>
         </>
       }
-      intro="Pre tých, čo chodia von často. Zoznam výletov, plány, parkovanie, uzávery aj zdieľanie výletov ostávajú zadarmo navždy."
+      intro="Pre tých, čo chodia von často. Zoznam výletov, plány, parkovanie, uzávery, zdieľanie aj uložené výlety bez signálu ostávajú zadarmo navždy."
     >
       <ul className="!list-none !pl-0 flex flex-col gap-3">
         {FEATURES.map((f) => (

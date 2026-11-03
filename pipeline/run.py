@@ -12,6 +12,7 @@ import time
 import urllib.request
 from pathlib import Path
 
+import numpy as np
 import yaml
 
 from . import drive as drive_mod
@@ -60,6 +61,31 @@ def sitelinks(qids):
             failed += 1
     log(f"wikidata: {len(out)} of {len(qids)} ids, {failed} batches failed")
     return out
+
+
+def replay_closures(cm, closures, trips_dir=Path("public/data/trips")):
+    """Walk last week's trips through today's closure rules and print each trip whose rules would
+    change, so a rule edit shows its effect in the pull-request check. Only rules decided by stretches,
+    probes and goals: the trip files don't keep the route refs or way tags a walk used."""
+    from .geo import resample
+    from .rules import STEP_M
+
+    geo_only = {r["id"] for r in closures if not (r.get("selector") or {}).get("route_refs")
+                and not (r.get("selector") or {}).get("way_tags")}
+    changed = 0
+    for f in sorted(trips_dir.glob("*.json")):
+        t = json.loads(f.read_text())
+        if not isinstance(t, dict) or not t.get("path") or "closure_rule_ids" not in t:
+            continue
+        lon, lat = (np.array([p[i] for p in t["path"]], float) for i in (0, 1))
+        rl, ro, _ = resample(lat, lon, STEP_M)
+        d = t["destination"]
+        now = set(cm.match(rl, ro, set(), set(), (d["location"]["lat"], d["location"]["lon"]), d.get("name"))) & geo_only
+        was = set(t["closure_rule_ids"]) & geo_only
+        if now != was:
+            changed += 1
+            print(f"WOULD CHANGE {t['slug']}: {sorted(was)} -> {sorted(now)}")
+    print(f"{changed} trips would change their closure rules")
 
 
 def main(argv=None):
@@ -115,8 +141,14 @@ def main(argv=None):
         for rid, secs in {**cm.sections, **fm.sections}.items():
             for label, m in secs:
                 print(f"{rid}: {label} ({m / 1000:.1f} km)")
+        for rid, secs in cm.ends.items():
+            for label, found in secs:
+                for k, f in zip(("from", "to"), found):
+                    if len(f["near"]) > 1:
+                        print(f"  {rid}: {label}: {k} took {f['took']}; near the route: {'; '.join(f['near'][:6])}")
         for rid, what in unresolved.items():
             print(f"NOT FOUND {rid}: " + "; ".join(what))
+        replay_closures(cm, closures)
         return 1 if unresolved else 0
     car_ok = drive_mod.CarCheck(a.osrm, cfg["trips"]["parking_road_max_m"]) if a.osrm else None
     tb = TripBuilder(cfg, osm, graph, dem, cm, fm, slugs, links, log, car_ok)

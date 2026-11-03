@@ -49,6 +49,8 @@ describe("English dictionary", () => {
     const texts = (file: string, key: string) =>
       [...readFileSync(join(ROOT, "data", file), "utf8").matchAll(new RegExp(`"${key}":\\s*${STR}`, "g"))].map((m) => JSON.parse(`"${m[1]}"`) as string);
     expect(missing([...texts("closure-rules.json", "reason"), ...texts("fee-rules.json", "text")])).toEqual([]);
+    const rules = JSON.parse(readFileSync(join(ROOT, "data", "closure-rules.json"), "utf8")).rules as { trip_notes?: Record<string, string> }[];
+    expect(missing(rules.flatMap((r) => Object.values(r.trip_notes ?? {})))).toEqual([]);
   });
 
   it("keeps the same placeholders", () => {

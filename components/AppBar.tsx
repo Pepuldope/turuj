@@ -3,27 +3,38 @@
 import { useEffect, useState } from "react";
 import { track } from "@/lib/analytics";
 import { useInstalled } from "@/lib/installApp";
+import { useSavedTrips } from "@/lib/savedTrips";
 import { LangLink, useT } from "@/lib/i18n";
 import { UiIcon } from "@/components/UiIcon";
 
 const KEY = "turuj-app-bar";
+/** The day of the first visit (YYYY-MM-DD), so the bar can wait for a second one. */
+const FIRST = "turuj-first-visit";
 
-/** Phone home page: a bar at the bottom pointing to /aplikacia, until closed once (Peter, 2026-10-28). */
+/** Phone home page: a bar at the bottom pointing to /aplikacia, until closed once (Peter, 2026-10-28).
+ *  Only once the visitor has saved a trip or comes back on another day: a first visit stays clean (research 2026-10-31). */
 export function AppBar({ hidden }: { hidden?: boolean }) {
   const t = useT();
   const installed = useInstalled();
+  const { trips } = useSavedTrips();
   const [show, setShow] = useState(false);
+  const saved = trips.length > 0;
 
   useEffect(() => {
     let closed = false;
+    let returning = false;
     try {
       closed = localStorage.getItem(KEY) === "closed";
+      const today = new Date().toISOString().slice(0, 10);
+      const first = localStorage.getItem(FIRST);
+      if (!first) localStorage.setItem(FIRST, today);
+      returning = !!first && first !== today;
     } catch {}
-    if (closed) return;
+    if (closed || !(saved || returning)) return;
     // A few seconds in, so the first look at the page stays clean.
     const id = setTimeout(() => setShow(true), 3000);
     return () => clearTimeout(id);
-  }, []);
+  }, [saved]);
 
   function close() {
     setShow(false);

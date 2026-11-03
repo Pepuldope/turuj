@@ -96,6 +96,8 @@ export interface Closure {
   reason: string;
   source_url: string;
   verified_on: string;
+  /** An extra line for this trip only (Slovak), e.g. the lift around a closed path. */
+  note?: string;
 }
 
 /** Public-transport stop near a trailhead (OpenStreetMap). */

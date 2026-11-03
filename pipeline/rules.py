@@ -18,12 +18,14 @@ GOAL_ON_M = 50  # a goal this close to a closed stretch...
 GOAL_END_M = 200  # ...and this far from both its ends is on it
 GAP_PAD = 0.03  # degrees around a stretch's ends searched to bridge a gap in its route
 GAP_COST = 5
+EXCEPTION_MIN_M = 200  # a trip walking this much of a goal exception's open way comes that way
 
 
 def section_keys(rules):
     """plain() names of every section end, for osm.load(name_keys=...)."""
-    return {plain(n) for r in rules for s in (r.get("selector") or {}).get("sections", [])
-            for k in ("from", "to") for n in _names(s.get(k))}
+    sel = [r.get("selector") or {} for r in rules]
+    secs = [s for x in sel for s in x.get("sections", []) + [e["via"] for e in x.get("goal_exceptions", [])]]
+    return {plain(n) for s in secs for k in ("from", "to") for n in _names(s.get(k))}
 
 
 def _names(v):
@@ -40,6 +42,7 @@ class RuleMatcher:
         self.rules = []
         self.unresolved = {}  # rule id -> what could not be found
         self.sections = {}  # rule id -> [(label, length m)], for the report
+        self.ends = {}  # rule id -> [(label, [(place name, lat, lon, other places of that name near the route)])]
         for r in rules:
             sel = r.get("selector") or {}
             w, s, e, n = sel.get("bbox", [-180, -90, 180, 90])
@@ -58,6 +61,17 @@ class RuleMatcher:
                 else:
                     secs.append(got)
                     self.sections.setdefault(r["id"], []).append((_label(sec), got["length"]))
+                    self.ends.setdefault(r["id"], []).append((_label(sec), got["found"]))
+            # A goal on a closed stretch closes the trip, unless the source names that goal as reachable
+            # by an open trail and the trip comes that way (TANAP: yellow 8618 to Baranec and Plačlivé).
+            exceptions = []
+            for ex in sel.get("goal_exceptions", []):
+                got = self._section(graph, named, ex["via"], (w, s, e, n))
+                if isinstance(got, str):
+                    missing.append(f"goal exception {ex['goal']}: {got}")
+                else:
+                    exceptions.append((plain(ex["goal"]), got))
+                    self.sections.setdefault(r["id"], []).append((f"výnimka {ex['goal']} po {_label(ex['via'])}", got["length"]))
             if missing:
                 self.unresolved[r["id"]] = missing
             self.rules.append(dict(
@@ -65,19 +79,22 @@ class RuleMatcher:
                 bbox=(w, s, e, n),
                 probes=self.proj.xy([p[0] for p in pts], [p[1] for p in pts]) if pts else np.zeros((0, 2)),
                 sections=secs,
+                exceptions=exceptions,
                 route_refs=set(sel.get("route_refs", [])),
                 way_tags=set(sel.get("way_tags", [])),
                 rule=r,
             ))
 
-    def match(self, lats, lons, route_refs, way_tags, goal=None):
+    def match(self, lats, lons, route_refs, way_tags, goal=None, goal_name=None):
         """Ids of rules covering a walk given its resampled points, route refs and way tags used, and
-        its goal (lat, lon): a goal on a closed stretch, away from its ends, closes the trip however
-        little of the stretch it walks (Plačlivé on the main ridge, reached from the side)."""
+        its goal (lat, lon) and name: a goal on a closed stretch, away from its ends, closes the trip however
+        little of the stretch it walks (Kasne on the closed green, reached from the side), unless the
+        rule's goal_exceptions name it and the trip walks the open way given there."""
         xy = self.proj.xy(lats, lons)
         gxy = self.proj.xy([goal[0]], [goal[1]])[0] if goal else None
         lo, hi = xy.min(axis=0) - ON_SECTION_M, xy.max(axis=0) + ON_SECTION_M
         out = []
+        gname = plain(goal_name or "")
         for r in self.rules:
             w, s, e, n = r["bbox"]
             inside = (lons >= w) & (lons <= e) & (lats >= s) & (lats <= n)
@@ -95,11 +112,17 @@ class RuleMatcher:
                 d, _ = sec["tree"].query(xy, distance_upper_bound=ON_SECTION_M)
                 hit = np.isfinite(d).sum() * STEP_M >= min(ON_SECTION_MIN_M, sec["length"] / 2)
                 if not hit and gxy is not None and min(np.hypot(*(gxy - e)) for e in sec["ends"]) > GOAL_END_M:
-                    hit = sec["tree"].query(gxy)[0] <= GOAL_ON_M
+                    hit = sec["tree"].query(gxy)[0] <= GOAL_ON_M and not any(
+                        g == gname and self._walks(xy, via, EXCEPTION_MIN_M) for g, via in r["exceptions"])
             hit = hit or bool(r["route_refs"] & route_refs) or bool(r["way_tags"] & way_tags)
             if hit:
                 out.append(r["id"])
         return out
+
+    @staticmethod
+    def _walks(xy, sec, min_m):
+        d, _ = sec["tree"].query(xy, distance_upper_bound=ON_SECTION_M)
+        return np.isfinite(d).sum() * STEP_M >= min(min_m, sec["length"] / 2)
 
     def _section(self, graph, named, sec, bbox):
         """The stretch of route `ref` from `from` to `to` as points, or a text saying what is missing."""
@@ -121,15 +144,16 @@ class RuleMatcher:
         a, b, length = src[keep], dst[keep], graph.edge_len[keep]
         nodes = np.unique(np.concatenate([a, b]))
         tree = cKDTree(self.proj.xy(graph.lat[nodes], graph.lon[nodes]))
-        ends, places = [], []
+        ends, places, found = [], [], []
         for k in ("from", "to"):
-            node, place = self._end(named, sec.get(k), tree, nodes, bbox)
+            node, place, what = self._end(named, sec.get(k), tree, nodes, bbox)
             if node is None:
                 near = sorted({h for h, la, lo in self.hints if tree.query(self.proj.xy([la], [lo])[0])[0] < 100})
                 return (f"{label}: '{' / '.join(_names(sec.get(k)))}' not found within {END_SNAP_M} m of route {'/'.join(refs)}"
                         + (f" (guideposts on it: {', '.join(near)})" if near else ""))
             ends.append(node)
             places.append(place)
+            found.append(what)
         g = csr_matrix((length, (a, b)), shape=(graph.n, graph.n))
         dist, pred = dijkstra(g, directed=False, indices=ends[0], return_predecessors=True)
         if not np.isfinite(dist[ends[1]]):
@@ -158,13 +182,15 @@ class RuleMatcher:
             path.append(int(pred[path[-1]]))
         rl, ro, t = resample(graph.lat[path], graph.lon[path], STEP_M)
         xy = self.proj.xy(rl, ro)
-        return dict(tree=cKDTree(xy), lo=xy.min(axis=0), hi=xy.max(axis=0), length=float(t[-1]), label=label, ends=(xy[0], xy[-1]))
+        return dict(tree=cKDTree(xy), lo=xy.min(axis=0), hi=xy.max(axis=0), length=float(t[-1]), label=label,
+                    ends=(xy[0], xy[-1]), found=found)
 
     def _end(self, named, names, tree, nodes, bbox):
-        """(route node nearest the named place, the place's x/y), for the closest such place to the route,
-        or (None, None)."""
+        """(route node nearest the named place, the place's x/y, what was taken and what else matched),
+        for the closest such place to the route, or (None, None, None)."""
         w, s, e, n = bbox
         best = None
+        seen = []
         for key in map(plain, _names(names)):
             for name, p, lat, lon in named:
                 if key not in p or not (w <= lon <= e and s <= lat <= n):
@@ -172,11 +198,13 @@ class RuleMatcher:
                 xy = self.proj.xy([lat], [lon])[0]
                 d, i = tree.query(xy)
                 rank = (d > END_SNAP_M, p != key, d)  # near the route first, then the exact name, then distance
+                if d <= END_SNAP_M:
+                    seen.append(f"{name} ({lat:.5f}, {lon:.5f}) {d:.0f} m")
                 if best is None or rank < best[0]:
-                    best = (rank, int(nodes[i]), xy)
+                    best = (rank, int(nodes[i]), xy, f"{name} ({lat:.5f}, {lon:.5f})")
             if best and not best[0][0]:
-                return best[1], best[2]
-        return None, None
+                return best[1], best[2], dict(took=best[3], near=seen)
+        return None, None, None
 
 
 def _label(sec):

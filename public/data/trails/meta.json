@@ -1,7 +1,7 @@
 {
  "version": 1,
- "generated_at": "2026-10-29T15:02:31+00:00",
- "osm_data_at": "2026-10-28T21:21:02Z",
+ "generated_at": "2026-11-02T13:25:23+00:00",
+ "osm_data_at": "2026-11-01T21:21:36Z",
  "attribution": "© OpenStreetMap contributors (ODbL); popularity from Wikipedia page views (Wikimedia, CC0)",
  "grid": {
   "lon0": 16.75,
@@ -80,146 +80,146 @@
   "9_7"
  ],
  "levels": 5,
- "km": 19903,
- "pieces": 72521,
+ "km": 19920,
+ "pieces": 72641,
  "level_km": [
-  7961,
-  4976,
-  3583,
-  2189,
-  1194
+  7968,
+  4980,
+  3586,
+  2191,
+  1195
  ],
  "cuts": [
-  444,
-  1357,
-  3324,
-  11683
+  407,
+  1292,
+  3222,
+  11514
  ],
  "top_goals": [
   {
    "name": "Rysy",
    "kind": "vrchol",
-   "views": 213186
+   "views": 202591
   },
   {
    "name": "Rysy",
    "kind": "vrchol",
-   "views": 213186
+   "views": 202591
   },
   {
    "name": "Gerlachovský štít",
    "kind": "vrchol",
-   "views": 174152
+   "views": 172138
   },
   {
    "name": "Babia hora",
    "kind": "vrchol",
-   "views": 170281
+   "views": 171307
   },
   {
    "name": "Oravský hrad",
    "kind": "hrad",
-   "views": 140359
+   "views": 140817
   },
   {
    "name": "Spišský hrad",
    "kind": "hrad",
-   "views": 131649
+   "views": 131853
   },
   {
    "name": "Čachtický hrad",
    "kind": "hrad",
-   "views": 97258
+   "views": 101616
   },
   {
    "name": "Bratislavský hrad",
    "kind": "hrad",
-   "views": 97257
+   "views": 94585
   },
   {
    "name": "Kasprov vrch",
    "kind": "vrchol",
-   "views": 75972
-  },
-  {
-   "name": "Karpatsko-duklianska operácia",
-   "kind": "vyhliadka",
-   "views": 68506
+   "views": 75403
   },
   {
    "name": "Lomnický štít",
    "kind": "vrchol",
-   "views": 67855
+   "views": 67215
+  },
+  {
+   "name": "Karpatsko-duklianska operácia",
+   "kind": "vyhliadka",
+   "views": 64857
   },
   {
    "name": "Kriváň",
    "kind": "vrchol",
-   "views": 63205
+   "views": 63804
   },
   {
    "name": "Bojnický zámok",
    "kind": "vyhliadka",
-   "views": 60673
+   "views": 59678
   },
   {
    "name": "Štrbské pleso",
    "kind": "pleso",
-   "views": 52740
+   "views": 54643
   },
   {
    "name": "Sútok Bieleho a Čierneho Váhu",
    "kind": "vyhliadka",
-   "views": 50472
+   "views": 49515
   },
   {
    "name": "Devín",
    "kind": "hrad",
-   "views": 50323
+   "views": 49251
   },
   {
    "name": "Dóm svätej Alžbety",
    "kind": "vyhliadka",
-   "views": 49315
+   "views": 48186
   },
   {
    "name": "Dolina Pięciu Stawów Polskich",
    "kind": "roklina",
-   "views": 46793
+   "views": 46397
   },
   {
    "name": "Svinica",
    "kind": "vrchol",
-   "views": 43053
+   "views": 42784
   },
   {
    "name": "Zelené pleso",
    "kind": "pleso",
-   "views": 40884
+   "views": 41789
   },
   {
    "name": "Chopok",
    "kind": "vrchol",
-   "views": 35691
+   "views": 35198
   },
   {
    "name": "Trenčiansky hrad",
    "kind": "hrad",
-   "views": 33070
+   "views": 32624
   },
   {
    "name": "Pilsko",
    "kind": "vrchol",
-   "views": 27852
+   "views": 28319
   },
   {
    "name": "Kráľova hoľa",
    "kind": "vrchol",
-   "views": 27427
+   "views": 28008
   },
   {
    "name": "Sokolica",
    "kind": "vrchol",
-   "views": 25588
+   "views": 25813
   }
  ]
 }
