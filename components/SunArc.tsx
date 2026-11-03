@@ -30,10 +30,16 @@ const PAD = 8;
 const SLIDER_KNOB = 36;
 /** Zoomed in on a short trip, the dial still shows at least this many hours. */
 const ZOOM_MIN_H = 6;
+/** Walk lens: on a short trip the walk gets this share of the dial's width, the rides squeeze into the rest. */
+const LENS_WALK = 0.66;
+/** A short trip's dial shows at least this many hours. */
+const LENS_MIN_H = 1.5;
 /** A trip window wider than this share of the whole day shows the whole day. */
 const ZOOM_UNDER = 0.7;
 /** How long "Play" takes to run through the whole day, ms. */
 const PLAY_MS = 10000;
+/** Steps of the phone slider. */
+const SLIDE = 1000;
 // The picture is a sky, so it keeps its own day colours in dark mode too.
 const INK = "#14233b";
 const WALKER = "#1769d1";
@@ -158,10 +164,47 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
       if (lo > dayLo) lo -= HOUR;
       if (hi - lo < ZOOM_MIN_H * HOUR && hi < dayHi) hi += HOUR;
     }
-    if (hi - lo > ZOOM_UNDER * (dayHi - dayLo)) [lo, hi] = [dayLo, dayHi];
+    const whole = hi - lo > ZOOM_UNDER * (dayHi - dayLo);
+    if (whole) [lo, hi] = [dayLo, dayHi];
     lo = Math.max(lo, dayLo);
     hi = Math.min(hi, dayHi);
-    const x = (t: number) => PAD + ((t - lo) / (hi - lo)) * (W - 2 * PAD);
+    // Walk lens (Peter, 2026-11-02: short trips still looked bad): a short trip's walk takes most of
+    // the width and the rides there and back squeeze into the edges, so the hill is always big.
+    // The rides are only ever squeezed, never stretched.
+    let lens = false;
+    if (!whole && he > hs) {
+      let llo = Math.min(hs, Math.floor((first - 15 * MIN) / (15 * MIN)) * 15 * MIN);
+      let lhi = Math.max(he, Math.ceil((home + 15 * MIN) / (15 * MIN)) * 15 * MIN);
+      // A very short walk still shows a little of the day around it.
+      while (lhi - llo < LENS_MIN_H * HOUR) [llo, lhi] = [llo - 15 * MIN, lhi + 15 * MIN];
+      [lo, hi] = [Math.max(llo, dayLo), Math.min(lhi, dayHi)];
+      lens = (he - hs) / (hi - lo) < LENS_WALK;
+    }
+    const inner = W - 2 * PAD;
+    const sideL = hs - lo;
+    const sideR = hi - he;
+    // Dial x at each knot: the window's ends and, with the lens, the walk's start and end.
+    const knots: [number, number][] = lens
+      ? [
+          [lo, PAD],
+          [hs, PAD + (1 - LENS_WALK) * inner * (sideL / (sideL + sideR || 1))],
+          [he, W - PAD - (1 - LENS_WALK) * inner * (sideR / (sideL + sideR || 1))],
+          [hi, W - PAD],
+        ]
+      : [
+          [lo, PAD],
+          [hi, W - PAD],
+        ];
+    const piece = (v: number, a: 0 | 1) => {
+      let i = 1;
+      while (i < knots.length - 1 && v > knots[i][a]) i++;
+      const [p, q] = [knots[i - 1], knots[i]];
+      const b = (1 - a) as 0 | 1;
+      return p[b] + ((v - p[a]) / (q[a] - p[a] || 1)) * (q[b] - p[b]);
+    };
+    const x = (t: number) => piece(t, 0);
+    /** The moment at dial x (the inverse of x). */
+    const tAt = (px: number) => piece(px, 1);
 
     const points = profile?.points ?? [
       { ele: 0, at: 0, colour: null },
@@ -214,8 +257,30 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
       walk.map((p) => `L${p.x.toFixed(1)},${p.y.toFixed(1)}`).join("") +
       `L${walk[walk.length - 1].x.toFixed(1)},${HOR}Z`;
 
-    const hours: number[] = [];
-    for (let t = lo; t <= hi; t += HOUR) hours.push(t);
+    // The ruler: whole hours; with the lens a tick every quarter hour along the walk, a label every half
+    // hour, and the departure and home times at the edges.
+    const ticks: { t: number; major: boolean; text?: string; bold?: boolean }[] = [];
+    if (lens || hi - lo <= 4 * HOUR) {
+      const rides = first < hs || home > he;
+      const near = (t: number) => rides && (Math.abs(x(t) - x(first)) < 30 || Math.abs(x(t) - x(home)) < 30);
+      for (let t = Math.ceil((lens ? hs : lo) / (15 * MIN)) * 15 * MIN; t <= (lens ? he : hi); t += 15 * MIN) {
+        const major = t % (30 * MIN) === 0;
+        // No half-hour label crowding the departure and home times.
+        ticks.push({ t, major, text: major && !near(t) ? formatTime(new Date(t)) : undefined });
+      }
+      if (rides) {
+        ticks.push({ t: first, major: true, text: formatTime(new Date(first)), bold: true });
+        ticks.push({ t: home, major: true, text: formatTime(new Date(home)), bold: true });
+      }
+    } else {
+      const every = hi - lo <= 9 * HOUR ? 1 : 3;
+      for (let t = lo; t <= hi; t += HOUR) {
+        const major = hourOf(t) % every === 0;
+        ticks.push({ t, major, text: major ? `${hourOf(t)}:00` : undefined });
+      }
+    }
+    // Where the lens changes scale: a small break mark on the ruler.
+    const breaks = lens ? [hs, he].filter((t) => t > first && t < home).map((t) => x(t)) : [];
 
     // Season: hill colour, snow on the top, trees or flowers on the ground away from the hill.
     const season = seasonOf(new Date(hs));
@@ -261,7 +326,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
       return { t0, t1, name: pa.name, kind: pa.kind, icon: pa.icon, x: x((t0 + t1) / 2), x0: x(t0), x1: x(t1), y: walk[i].y };
     });
 
-    return { lo, hi, x, y, walk, pauses, sky, goal: walk[goalIndex], goalT: walk[goalIndex].t, arc, dash, ridge, hill, hours, season, deco, snow, capY, capEdge };
+    return { lo, hi, x, tAt, y, walk, pauses, sky, goal: walk[goalIndex], goalT: walk[goalIndex].t, arc, dash, ridge, hill, ticks, breaks, season, deco, snow, capY, capEdge };
   }, [first, home, hs, he, sunrise, sunset, dusk, plan.dawn, profile, sun.lat, sun.lon, weather]);
   const land = LAND[scene.season];
   const sunR = 8.5 * land.sunScale;
@@ -329,11 +394,18 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   // The slider spans the dial's full width, but its knob centre can only travel
   // from half a knob in on each side. Give it the times found at those two
   // points of the picture so the knob and the time line always line up.
+  // The slider runs 0..SLIDE over the knob's travel; each step is the time under that point of the
+  // picture, so it follows the walk lens too.
   const knob = SLIDER_KNOB / 2;
-  const span = (scene.hi - scene.lo) / (1 - (2 * PAD) / W);
-  const edgeT = sliderW > 2 * knob ? (knob / sliderW) * span - (PAD / W) * span : 0;
-  const slideLo = scene.lo + Math.max(0, edgeT);
-  const slideHi = scene.hi - Math.max(0, edgeT);
+  const travel = sliderW > 2 * knob ? sliderW - 2 * knob : 0;
+  const slideX = (v: number) => (travel ? ((knob + (v / SLIDE) * travel) / sliderW) * W : PAD + (v / SLIDE) * (W - 2 * PAD));
+  const slideLo = Math.max(scene.lo, scene.tAt(slideX(0)));
+  const slideHi = Math.min(scene.hi, scene.tAt(slideX(SLIDE)));
+  const slideOf = (at: number) => {
+    const px = scene.x(Math.max(slideLo, Math.min(slideHi, at)));
+    const v = travel ? ((px / W) * sliderW - knob) / travel : (px - PAD) / (W - 2 * PAD);
+    return Math.round(Math.max(0, Math.min(1, v)) * SLIDE);
+  };
   const sy = scene.y(alt);
 
   const onTrail = t >= hs && t <= he;
@@ -419,7 +491,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   const timeAt = (clientX: number) => {
     const r = svgRef.current!.getBoundingClientRect();
     const vx = ((clientX - r.left) / r.width) * W;
-    return scene.lo + ((vx - PAD) / (W - 2 * PAD)) * (scene.hi - scene.lo);
+    return scene.tAt(vx);
   };
   const onMove = (e: ReactPointerEvent) => {
     if (dragging.current) take(timeAt(e.clientX));
@@ -673,30 +745,30 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
         ))}
 
         <line x1={PAD} x2={W - PAD} y1={RULER} y2={RULER} stroke="var(--muted)" strokeWidth={0.8} opacity={0.6} />
-        {scene.hours.map((h) => {
-          const x = scene.x(h);
-          const hour = hourOf(h);
-          // Every hour is labelled when the dial is zoomed in on a short trip.
-          const major = hour % (scene.hi - scene.lo <= 9 * HOUR ? 1 : 3) === 0;
+        {scene.ticks.map((tk) => {
+          const x = scene.x(tk.t);
           return (
-            <g key={h}>
-              <line x1={x} x2={x} y1={RULER} y2={RULER + (major ? 5 : 3)} stroke="var(--muted)" />
-              {major && (
+            <g key={tk.t}>
+              <line x1={x} x2={x} y1={RULER} y2={RULER + (tk.major ? 5 : 3)} stroke="var(--muted)" />
+              {tk.text && (
                 <text
                   x={x}
                   y={RULER + 17}
                   textAnchor={x > W - 22 ? "end" : x < 22 ? "start" : "middle"}
                   fontSize={12}
-                  fontWeight={600}
-                  fill="var(--muted)"
+                  fontWeight={tk.bold ? 700 : 600}
+                  fill={tk.bold ? "var(--foreground)" : "var(--muted)"}
                   className="font-data"
                 >
-                  {hour}:00
+                  {tk.text}
                 </text>
               )}
             </g>
           );
         })}
+        {scene.breaks.map((bx) => (
+          <path key={bx} d={`M${bx - 4},${RULER + 4}l4,-8M${bx},${RULER + 4}l4,-8`} fill="none" stroke="var(--muted)" strokeWidth={1.3} />
+        ))}
 
         {/* Who is where: the car on the road, the walker on the trail (the place's pin at a stop), a dot at home. */}
         {atPause?.kind ? (
@@ -763,11 +835,11 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
         <input
           ref={sliderRef}
           type="range"
-          min={slideLo}
-          max={slideHi}
-          step={5 * MIN}
-          value={Math.max(slideLo, Math.min(slideHi, t))}
-          onChange={(e) => take(Number(e.target.value))}
+          min={0}
+          max={SLIDE}
+          step={1}
+          value={slideOf(t)}
+          onChange={(e) => take(scene.tAt(slideX(Number(e.target.value))))}
           className="time-slider"
           aria-label={tx("Čas počas dňa")}
           aria-valuetext={formatTime(new Date(t))}
