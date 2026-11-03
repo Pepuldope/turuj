@@ -75,7 +75,34 @@ interface Props {
   onTrailTap: (tap: { nearby: { slug: string; km: number }[]; x: number; y: number }) => void;
   /** Phones keep the bottom of the map free for the preview. */
   bottomInset: number;
+  /** Phones: start the map only after the visitor first scrolls, touches or types (see whenUsed). */
+  waitForUse?: boolean;
   ariaLabel: string;
+}
+
+// Whether the visitor has scrolled, touched or typed since the site opened (kept across pages).
+let used = false;
+const USE_EVENTS = ["scroll", "wheel", "touchstart", "pointerdown", "keydown"] as const;
+
+/**
+ * Calls `go` once the visitor does anything on the page. On phones the map
+ * (MapLibre drawing thousands of lines) kept the page busy for seconds right
+ * after it opened, even though it sits below the first screen; this way the
+ * page is free first, and the map starts with the first scroll on the way to it.
+ */
+function whenUsed(go: () => void): () => void {
+  if (used) {
+    go();
+    return () => {};
+  }
+  const off = () => USE_EVENTS.forEach((e) => window.removeEventListener(e, onUse, true));
+  function onUse() {
+    used = true;
+    off();
+    go();
+  }
+  USE_EVENTS.forEach((e) => window.addEventListener(e, onUse, { capture: true, passive: true }));
+  return off;
 }
 
 const MAP_DATA = "/data/map";
@@ -257,6 +284,7 @@ export function BrowseMap({
   onHover,
   onTrailTap,
   bottomInset,
+  waitForUse = false,
   ariaLabel,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -281,6 +309,7 @@ export function BrowseMap({
   // Picking with a mouse: where the click put the pin, waiting for "Tu začínam".
   const [pickAt, setPickAt] = useState<{ lat: number; lon: number } | null>(null);
   const initialRef = useRef(initialView);
+  const waitRef = useRef(waitForUse);
   const insetRef = useRef(bottomInset);
   const zoomToAreaRef = useRef<(a: BrowseArea) => void>(() => {});
   const startPickRef = useRef(pickPoint);
@@ -673,9 +702,12 @@ export function BrowseMap({
     // comes near the screen (300 px): ready by the time it is scrolled to,
     // and nothing downloaded for visitors who never get there.
     let near: IntersectionObserver | null = null;
-    if (typeof IntersectionObserver === "undefined" || !containerRef.current) {
-      init();
-    } else {
+    function watchNear() {
+      if (cancelled) return;
+      if (typeof IntersectionObserver === "undefined" || !containerRef.current) {
+        init();
+        return;
+      }
       near = new IntersectionObserver(
         (entries) => {
           if (!entries.some((e) => e.isIntersecting)) return;
@@ -687,8 +719,11 @@ export function BrowseMap({
       );
       near.observe(containerRef.current);
     }
+    // Coming back to the home page (a saved view) or a desktop: no waiting.
+    const stopWaiting = waitRef.current && !initialRef.current ? whenUsed(watchNear) : (watchNear(), () => {});
     return () => {
       cancelled = true;
+      stopWaiting();
       clearTimeout(declutterSoon);
       near?.disconnect();
       observer?.disconnect();

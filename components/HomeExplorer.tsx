@@ -41,13 +41,26 @@ import type { BrowseArea, BrowseTrip, MapFocus, MapView } from "@/components/Bro
 import "@/lib/legacyStorage";
 import { dockMoved, pop, useDockFlip, useStuckPop } from "@/lib/dockFlip";
 
-/** The home headline, one at random per visit (the server and first paint keep the first one). */
+/**
+ * The home headline, one at random per visit. A tiny script right after the
+ * <h1> (PICK_HEADLINE) picks it while the page is still loading, so the first
+ * paint already shows it: changing it after the scripts start made the
+ * headline repaint seconds later, which phones scored as a slow page (LCP).
+ */
 const HEADLINES = ["Kam na výlet?", "Kam vyrazíme?", "Kam do hôr?", "Kam ťa to ťahá?", "Vyrazme von!", "Hory čakajú."];
+const PICK_HEADLINE =
+  "(function(){var h=document.currentScript.previousElementSibling,l=JSON.parse(h.dataset.hl),i=Math.floor(Math.random()*l.length);window.__turujHl=i;h.textContent=l[i]})()";
+declare global {
+  interface Window {
+    __turujHl?: number;
+  }
+}
 let headline: string | null = null;
-const pickHeadline = () => (headline ??= HEADLINES[Math.floor(Math.random() * HEADLINES.length)]);
+const pickHeadline = () => (headline ??= HEADLINES[window.__turujHl ?? Math.floor(Math.random() * HEADLINES.length)]);
 const noChange = () => () => {};
 function useHeadline(): string {
-  return useSyncExternalStore(noChange, pickHeadline, () => HEADLINES[0]);
+  // While hydrating, the server snapshot runs in the browser too: the script's pick, so nothing changes.
+  return useSyncExternalStore(noChange, pickHeadline, () => (typeof window === "undefined" ? HEADLINES[0] : pickHeadline()));
 }
 
 interface Props {
@@ -733,6 +746,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
           setPreview({ kind: "trail", ...t });
         }}
         bottomInset={isDesktop ? 0 : SHEET_INSET}
+        waitForUse={!isDesktop}
         ariaLabel={t("Mapa všetkých výletov")}
       />
       <div
@@ -1031,7 +1045,10 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
             </LangLink>
           </nav>
           <div className="relative flex flex-col gap-2 px-4 pt-6 pb-16 text-[#14233b]">
-            <h1 className="text-[2.15rem] leading-none font-extrabold tracking-tight">{t(title)}</h1>
+            <h1 className="text-[2.15rem] leading-none font-extrabold tracking-tight" data-hl={JSON.stringify(HEADLINES.map((h) => t(h)))} suppressHydrationWarning>
+              {t(title)}
+            </h1>
+            <script dangerouslySetInnerHTML={{ __html: PICK_HEADLINE }} />
             <p className="max-w-[30ch] text-[15px] font-medium">{t("Výlety, z ktorých budete späť za svetla.")}</p>
           </div>
         </header>
