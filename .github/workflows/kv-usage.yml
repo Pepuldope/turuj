@@ -21,7 +21,8 @@ jobs:
           node-version: 22
       - name: Page cache keys by kind of page
         run: |
-          npx -y wrangler@4 kv namespace list > ns.json 2>/dev/null || true
+          npx -y wrangler@4 kv namespace list > ns.json 2> err.txt || true
+          if ! grep -q '\[' ns.json; then echo "Could not list KV namespaces:"; cat ns.json err.txt | grep -v -i token | tail -20; exit 0; fi
           node -e 'const a=JSON.parse(require("fs").readFileSync("ns.json","utf8").replace(/^[^\[]*/,""));for(const n of a)console.log(n.id,n.title)'
           for id in $(node -e 'const a=JSON.parse(require("fs").readFileSync("ns.json","utf8").replace(/^[^\[]*/,""));for(const n of a)if(/PAGE_CACHE|page/i.test(n.title))console.log(n.id)'); do
             echo "### namespace $id"
