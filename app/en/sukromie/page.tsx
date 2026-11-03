@@ -38,7 +38,7 @@ export default function PrivacyPage() {
       <h2>Your rights</h2>
       <p>Access, correction, erasure, restriction, portability, objection, and withdrawing consent (GDPR arts. 15–21, 7(3)). Write to info@turuj.sk, from the account’s address for account data; we answer within a month, free of charge. You can complain to the Slovak Office for Personal Data Protection, Galvaniho 7/B, 821 04 Bratislava, dataprotection.gov.sk.</p>
       <h2>Children and security</h2>
-      <p>Accounts from age 16; younger people can use everything else without one. Only Peter can reach the database, and our Cloudflare and GitHub accounts use two-step sign-in. If a breach puts you at risk we tell the authority within 72 hours and you too when the risk is high.</p>
+      <p>Accounts from age 16; younger people can use everything else without one. Only Peter can reach the database and the code. If a breach puts you at risk we tell the authority within 72 hours and you too when the risk is high.</p>
     </InfoPage>
   );
 }
