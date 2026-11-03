@@ -1049,7 +1049,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
         {startReady && !start && <StartReminder />}
 
         {/* Search, filters and Mapa / Zoznam stay on top while the map fills the screen. */}
-        <div ref={searchRowRef} className="sticky top-[calc(var(--topbar,0px)+var(--startbar,0px))] z-20 -mx-4 bg-[var(--background)] px-4 py-2 lg:static lg:mx-0 lg:bg-transparent lg:p-0">
+        <div ref={searchRowRef} className="sticky top-[calc(var(--topbar,0px)+var(--startbar,0px))] z-20 -mx-4 px-4 py-2 lg:static lg:mx-0 lg:p-0">
           {tools}
         </div>
 
@@ -1236,9 +1236,9 @@ function StartReminder() {
       aria-hidden={!away}
       inert={!away}
       style={{ transform: away ? "translateY(var(--topbar, 0px))" : "translateY(-110%)" }}
-      className="fixed inset-x-0 top-0 z-30 bg-[var(--background)] px-3 pt-2 pb-1 transition-transform duration-200 will-change-transform motion-reduce:transition-none lg:hidden"
+      className="pointer-events-none fixed inset-x-0 top-0 z-30 px-3 pt-2 pb-1 transition-transform duration-200 will-change-transform motion-reduce:transition-none lg:hidden"
     >
-      <div className="mx-auto flex max-w-[640px] items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2 shadow-[var(--shadow-float)] md:max-w-[760px]">
+      <div className="pointer-events-auto mx-auto flex max-w-[640px] items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2 shadow-[var(--shadow-float)] md:max-w-[760px]">
         <span className="min-w-0 flex-1 leading-tight">
           <span className="block text-[11.5px] text-[var(--muted)]">{t("Vyrážate z")}</span>
           <strong className="block truncate text-sm text-[var(--accent)]">{t("nevybraté")}</strong>
