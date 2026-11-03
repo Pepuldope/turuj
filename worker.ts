@@ -56,7 +56,8 @@ declare class HTMLRewriter {
  * Worker says "en" in the HTML itself.
  */
 const isEnglish = (path: string) => path === "/en" || path.startsWith("/en/");
-const SK_HTML = '<html lang="sk"';
+// The deployed page's tag carries other attributes first (<html data-dpl-id="…" lang="sk" …>).
+const SK_HTML = /(<html\b[^>]*?) lang="sk"/;
 
 interface FastPages {
   buildId: string;
@@ -105,7 +106,7 @@ async function fastPage(req: Request, env: Env): Promise<Response | null> {
   const entry = pick(await res.text(), rsc ? "rsc" : "html");
   let body = rsc ? entry.rsc : entry.html;
   if (entry.type !== "app" || (entry.meta?.status ?? 200) !== 200 || typeof body !== "string") return null;
-  if (!rsc && isEnglish(url.pathname)) body = body.replace(SK_HTML, '<html lang="en"');
+  if (!rsc && isEnglish(url.pathname)) body = body.replace(SK_HTML, '$1 lang="en"');
   const headers = new Headers({ "Content-Type": rsc ? "text/x-component" : "text/html; charset=utf-8", Vary: VARY });
   for (const [re, hs] of pageHeaders) if (re.test(url.pathname)) for (const [k, v] of hs) headers.set(k, v);
   const stale = entry.meta?.headers?.["x-nextjs-stale-time"];
