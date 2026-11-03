@@ -73,8 +73,6 @@ interface Props {
   onHover: (hover: { slug: string; x: number; y: number } | null) => void;
   /** Tap on a grey trail no trip uses: the trips closest to that spot. */
   onTrailTap: (tap: { nearby: { slug: string; km: number }[]; x: number; y: number }) => void;
-  /** Once, when the map has drawn its first full view (the phone picture of the map can go). */
-  onReady?: () => void;
   /** Phones keep the bottom of the map free for the preview. */
   bottomInset: number;
   /** Phones: start the map after the page has loaded and gone idle, or on the first scroll or touch (see whenUsed). */
@@ -95,6 +93,8 @@ const IDLE_START_MS = 5000;
  * lines) kept the page busy for seconds right after it opened, even though it
  * sits below the first screen; this way the page, its list and pictures come
  * first, and the map follows on its own (or sooner, with the first scroll).
+ * No picture in its place meanwhile: an empty card that turns into a map shows
+ * clearly when it can be used (Peter, 2026-11-03).
  */
 function whenUsed(go: () => void): () => void {
   if (used) {
@@ -305,7 +305,6 @@ export function BrowseMap({
   onPick,
   onHover,
   onTrailTap,
-  onReady,
   bottomInset,
   waitForUse = false,
   ariaLabel,
@@ -315,7 +314,7 @@ export function BrowseMap({
   // Every line seen so far, by slug: the detailed one once its area has loaded.
   const lines = useRef(new Map<string, { coords: number[][]; detailed: boolean }>());
   const [linesVersion, setLinesVersion] = useState(0);
-  const handlers = useRef({ onView, onPick, onHover, onTrailTap, onReady });
+  const handlers = useRef({ onView, onPick, onHover, onTrailTap });
   const tripsRef = useRef(trips);
   const areasRef = useRef(areas);
   const areaEls = useRef<HTMLElement[]>([]);
@@ -342,7 +341,7 @@ export function BrowseMap({
   const hoverAreaRef = useRef<(id: string | null) => void>(() => {});
 
   useEffect(() => {
-    handlers.current = { onView, onPick, onHover, onTrailTap, onReady };
+    handlers.current = { onView, onPick, onHover, onTrailTap };
     tripsRef.current = trips;
     areasRef.current = areas;
     insetRef.current = bottomInset;
@@ -392,8 +391,6 @@ export function BrowseMap({
       map.on("load", () => {
         if (!map || cancelled) return;
         const m = map;
-        // The first time everything on screen is drawn (tiles, lines, dots).
-        m.once("idle", () => handlers.current.onReady?.());
         hideBasePois(m);
         detachLimit = keepInSlovakia(m);
         // Every marked trail, faint grey: the trips are drawn over it in colour.
