@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/season-icon.mjs && node scripts/photo-thumbs.mjs && node scripts/pack-list.mjs",
+    "prebuild": "node scripts/season-icon.mjs && node scripts/photo-thumbs.mjs && node scripts/pack-list.mjs && node scripts/line-tiles.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -22,6 +22,8 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@maplibre/geojson-vt": "^6.1.2",
+    "@maplibre/vt-pbf": "^4.3.2",
     "@opennextjs/cloudflare": "^1.20.10",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
