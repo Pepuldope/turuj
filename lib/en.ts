@@ -463,6 +463,7 @@ export const EN: Record<string, string> = {
   "Jaskyňa": "Cave",
   "Roklina": "Gorge",
   "Výlet": "Trip",
+  "Zaujímavosť": "Sight",
   "Vrcholy": "Summits",
   "Vodopády": "Waterfalls",
   "Plesá": "Tarns",
