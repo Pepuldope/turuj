@@ -75,7 +75,56 @@ interface Props {
   onTrailTap: (tap: { nearby: { slug: string; km: number }[]; x: number; y: number }) => void;
   /** Phones keep the bottom of the map free for the preview. */
   bottomInset: number;
+  /** Phones: start the map after the page has loaded and gone idle, or on the first scroll or touch (see whenUsed). */
+  waitForUse?: boolean;
   ariaLabel: string;
+}
+
+// Whether the map may start: the visitor scrolled, touched or typed, or the page
+// finished loading and sat idle (kept across pages).
+let used = false;
+const USE_EVENTS = ["scroll", "wheel", "touchstart", "pointerdown", "keydown"] as const;
+/** After the page's load event: this long, then the first idle moment. */
+const IDLE_START_MS = 5000;
+
+/**
+ * Calls `go` once the visitor does anything on the page, or once the page has
+ * loaded and gone quiet. On phones the map (MapLibre drawing thousands of
+ * lines) kept the page busy for seconds right after it opened, even though it
+ * sits below the first screen; this way the page, its list and pictures come
+ * first, and the map follows on its own (or sooner, with the first scroll).
+ * No picture in its place meanwhile: an empty card that turns into a map shows
+ * clearly when it can be used (Peter, 2026-11-03).
+ */
+function whenUsed(go: () => void): () => void {
+  if (used) {
+    go();
+    return () => {};
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let idle: number | undefined;
+  const off = () => {
+    USE_EVENTS.forEach((e) => window.removeEventListener(e, start, true));
+    window.removeEventListener("load", afterLoad);
+    clearTimeout(timer);
+    if (idle !== undefined) window.cancelIdleCallback?.(idle);
+  };
+  function start() {
+    if (used) return;
+    used = true;
+    off();
+    go();
+  }
+  function afterLoad() {
+    timer = setTimeout(() => {
+      if (window.requestIdleCallback) idle = window.requestIdleCallback(start, { timeout: 2000 });
+      else start();
+    }, IDLE_START_MS);
+  }
+  USE_EVENTS.forEach((e) => window.addEventListener(e, start, { capture: true, passive: true }));
+  if (document.readyState === "complete") afterLoad();
+  else window.addEventListener("load", afterLoad, { once: true });
+  return off;
 }
 
 const MAP_DATA = "/data/map";
@@ -257,6 +306,7 @@ export function BrowseMap({
   onHover,
   onTrailTap,
   bottomInset,
+  waitForUse = false,
   ariaLabel,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -281,6 +331,7 @@ export function BrowseMap({
   // Picking with a mouse: where the click put the pin, waiting for "Tu začínam".
   const [pickAt, setPickAt] = useState<{ lat: number; lon: number } | null>(null);
   const initialRef = useRef(initialView);
+  const waitRef = useRef(waitForUse);
   const insetRef = useRef(bottomInset);
   const zoomToAreaRef = useRef<(a: BrowseArea) => void>(() => {});
   const startPickRef = useRef(pickPoint);
@@ -673,9 +724,12 @@ export function BrowseMap({
     // comes near the screen (300 px): ready by the time it is scrolled to,
     // and nothing downloaded for visitors who never get there.
     let near: IntersectionObserver | null = null;
-    if (typeof IntersectionObserver === "undefined" || !containerRef.current) {
-      init();
-    } else {
+    function watchNear() {
+      if (cancelled) return;
+      if (typeof IntersectionObserver === "undefined" || !containerRef.current) {
+        init();
+        return;
+      }
       near = new IntersectionObserver(
         (entries) => {
           if (!entries.some((e) => e.isIntersecting)) return;
@@ -687,8 +741,11 @@ export function BrowseMap({
       );
       near.observe(containerRef.current);
     }
+    // Coming back to the home page (a saved view) or a desktop: no waiting.
+    const stopWaiting = waitRef.current && !initialRef.current ? whenUsed(watchNear) : (watchNear(), () => {});
     return () => {
       cancelled = true;
+      stopWaiting();
       clearTimeout(declutterSoon);
       near?.disconnect();
       observer?.disconnect();
