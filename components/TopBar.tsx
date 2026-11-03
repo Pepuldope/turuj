@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { googleHref, signOut, signedIn, useAccount } from "@/lib/account";
 import type { MyAccount } from "@/lib/account";
@@ -9,6 +9,7 @@ import { LangLink, useLang, useT } from "@/lib/i18n";
 import { langOfPath, langPath, skPath } from "@/lib/lang";
 import { useSavedTrips } from "@/lib/savedTrips";
 import { UiIcon } from "@/components/UiIcon";
+import { dockMoved } from "@/lib/dockFlip";
 import type { UiIconName } from "@/lib/uiIcons";
 
 // The account button and the menu (Peter, 2026-10-29). Phone: a bar along the top that slides
@@ -61,11 +62,14 @@ export function TopBar() {
   }, []);
   const visible = shown || panel !== null;
 
-  // Things stuck to the top of the page (the home page's search row) move down under the bar.
-  useEffect(() => {
+  // Things stuck to the top of the page (the home page's search row) move down under the bar,
+  // in the same frame as the bar itself.
+  useLayoutEffect(() => {
     const phone = window.matchMedia("(max-width: 1023.98px)");
-    const apply = () =>
+    const apply = () => {
       document.documentElement.style.setProperty("--topbar", phone.matches && visible ? `calc(${BAR_PX}px + env(safe-area-inset-top))` : "0px");
+      dockMoved();
+    };
     apply();
     phone.addEventListener("change", apply);
     return () => phone.removeEventListener("change", apply);
@@ -107,7 +111,7 @@ export function TopBar() {
   return (
     <div
       ref={boxRef}
-      className={`fixed inset-x-0 top-0 z-40 pt-[env(safe-area-inset-top)] transition-[transform,background-color,box-shadow] duration-200 motion-reduce:transition-none lg:inset-x-auto lg:top-3 lg:right-3 lg:translate-y-0 lg:bg-transparent lg:p-0 lg:shadow-none ${
+      className={`fixed inset-x-0 top-0 z-40 pt-[env(safe-area-inset-top)] transition-[translate,transform,background-color,box-shadow] duration-200 motion-reduce:transition-none lg:inset-x-auto lg:top-3 lg:right-3 lg:translate-y-0 lg:bg-transparent lg:p-0 lg:shadow-none ${
         visible ? "translate-y-0" : "-translate-y-full"
       } ${
         solid || panel
