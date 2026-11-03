@@ -39,7 +39,7 @@ import type { TripCardItem } from "@/components/TripCard";
 import { BrowseMap } from "@/components/BrowseMap";
 import type { BrowseArea, BrowseTrip, MapFocus, MapView } from "@/components/BrowseMap";
 import "@/lib/legacyStorage";
-import { dockMoved, useDockFlip } from "@/lib/dockFlip";
+import { dockMoved, pop, useDockFlip, useStuckPop } from "@/lib/dockFlip";
 
 /** The home headline, one at random per visit (the server and first paint keep the first one). */
 const HEADLINES = ["Kam na výlet?", "Kam vyrazíme?", "Kam do hôr?", "Kam ťa to ťahá?", "Vyrazme von!", "Hory čakajú."];
@@ -320,6 +320,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
   const searchRowRef = useRef<HTMLDivElement>(null);
   useDockFlip(pickedRef);
   useDockFlip(searchRowRef);
+  useStuckPop(searchRowRef);
   const isDesktop = useIsDesktop();
   // Picking the start on a phone: the map goes full screen so the pin in its middle is easy to place,
   // and closes again when the start is set or picking is cancelled (Peter, 2026-10-29).
@@ -1228,6 +1229,10 @@ function StartReminder() {
       dockMoved();
     };
   }, [away]);
+  // Appearing, the card pops a little as it slides down.
+  useEffect(() => {
+    if (away) pop(barRef.current?.firstElementChild);
+  }, [away]);
   // Always there (off screen above) so it slides in and moves with the top bar by transform
   // instead of popping up and jumping (Peter, 2026-11-03: "laggy/glitchy").
   return (
@@ -1235,7 +1240,7 @@ function StartReminder() {
       ref={barRef}
       aria-hidden={!away}
       inert={!away}
-      style={{ transform: away ? "translateY(var(--topbar, 0px))" : "translateY(-110%)", opacity: away ? 1 : 0 }}
+      style={{ transform: away ? "translateY(var(--topbar, 0px))" : "translateY(-110%)", opacity: away ? 1 : 0, transitionTimingFunction: "var(--dock-ease, ease)" }}
       className="pointer-events-none fixed inset-x-0 top-0 z-30 px-3 pt-2 pb-1 transition-[transform,opacity] duration-[280ms] will-change-transform motion-reduce:transition-none lg:hidden"
     >
       <div className="pointer-events-auto mx-auto flex max-w-[640px] items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2 shadow-[var(--shadow-float)] md:max-w-[760px]">

@@ -9,7 +9,7 @@ import { LangLink, useLang, useT } from "@/lib/i18n";
 import { langOfPath, langPath, skPath } from "@/lib/lang";
 import { useSavedTrips } from "@/lib/savedTrips";
 import { UiIcon } from "@/components/UiIcon";
-import { dockMoved } from "@/lib/dockFlip";
+import { EASE_IN, EASE_OUT, dockMoved, pop } from "@/lib/dockFlip";
 import type { UiIconName } from "@/lib/uiIcons";
 
 // The account button and the menu (Peter, 2026-10-29). Phone: a bar along the top that slides
@@ -61,12 +61,23 @@ export function TopBar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   const visible = shown || panel !== null;
+  // Coming back into view, the bar's row pops a little as it slides in (not on the first paint).
+  const rowRef = useRef<HTMLDivElement>(null);
+  const wasVisible = useRef(visible);
+  useEffect(() => {
+    if (visible && !wasVisible.current) pop(rowRef.current);
+    wasVisible.current = visible;
+  }, [visible]);
 
   // Things stuck to the top of the page (the home page's search row) move down under the bar,
   // in the same frame as the bar itself.
   useLayoutEffect(() => {
     const phone = window.matchMedia("(max-width: 1023.98px)");
     const apply = () => {
+      const root = document.documentElement;
+      // Everything at the top moves with the bar's easing: a little overshoot coming in, plain going away.
+      root.dataset.dock = visible ? "in" : "out";
+      root.style.setProperty("--dock-ease", visible ? EASE_IN : EASE_OUT);
       document.documentElement.style.setProperty("--topbar", phone.matches && visible ? `calc(${BAR_PX}px + env(safe-area-inset-top))` : "0px");
       dockMoved();
     };
@@ -111,6 +122,7 @@ export function TopBar() {
   return (
     <div
       ref={boxRef}
+      style={{ transitionTimingFunction: visible ? EASE_IN : EASE_OUT }}
       className={`fixed inset-x-0 top-0 z-40 pt-[env(safe-area-inset-top)] transition-[translate,transform,background-color,box-shadow] duration-[280ms] motion-reduce:transition-none lg:inset-x-auto lg:top-3 lg:right-3 lg:translate-y-0 lg:bg-transparent lg:p-0 lg:shadow-none ${
         visible ? "translate-y-0" : "-translate-y-full"
       } ${
@@ -121,7 +133,7 @@ export function TopBar() {
             "pointer-events-none bg-transparent"
       }`}
     >
-      <div className={`flex h-[52px] items-center justify-between gap-2 px-3 lg:h-auto lg:justify-end lg:gap-1 lg:rounded-full lg:bg-[var(--card-bg)] lg:p-1 lg:shadow-[var(--shadow-float)]`}>
+      <div ref={rowRef} className={`flex h-[52px] items-center justify-between gap-2 px-3 lg:h-auto lg:justify-end lg:gap-1 lg:rounded-full lg:bg-[var(--card-bg)] lg:p-1 lg:shadow-[var(--shadow-float)]`}>
         {/* The name only once the page's own header (which shows it) has scrolled away. */}
         <LangLink href="/" aria-label="Túruj" className={`block lg:hidden ${solid || panel ? "" : "invisible"}`}>
           <picture>
