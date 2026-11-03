@@ -59,7 +59,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    // English pages (app/en) set lang="en" before the page shows.
+    // English pages (app/en): worker.ts sends lang="en" in the HTML, the script in app/en/layout.tsx covers local runs.
     <html
       lang="sk"
       suppressHydrationWarning

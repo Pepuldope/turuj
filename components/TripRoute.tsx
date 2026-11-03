@@ -4,7 +4,7 @@ import { cache } from "react";
 import { routeWalk, trailDetailFrom } from "@/lib/data";
 import { pickWalk } from "@/lib/walkFacts";
 import { getTripLive } from "@/lib/tripDb";
-import { getTripPhoto } from "@/lib/tripFiles";
+import { englishTripsAhead, getTripPhoto } from "@/lib/tripFiles";
 import { formatDistance, formatDuration } from "@/lib/format";
 import { TripSheet } from "@/components/TripSheet";
 import { pageMetadata } from "@/lib/seo";
@@ -34,21 +34,44 @@ export async function tripMetadata(slug: string, lang: Lang): Promise<Metadata> 
   return pageMetadata({
     // Most places have several routes, one page each: the other routes' pages carry their start in
     // the title, so search results tell them apart (6,200 of 6,466 pages shared a title before).
-    title: trip.variant_of
-      ? tr(lang, "{name} zo štartu {start} ({km}) – výlet, túra a parkovanie", { name: trail.name, start: trip.start.name, km: formatDistance(trip.distance_m, lang) })
-      : town
-        ? // People search "výlet na Devín", "výlety z Bratislavy": the place, then the nearest town (Peter 2026-10-30).
-          tr(lang, "{name} – výlet {from}: túra, parkovanie", { name: trail.name, from: townFrom(lang, town.id, town.name) })
-        : tr(lang, "{name} – výlet a túra: parkovanie, čas návratu", { name: trail.name }),
+    // People search "výlet na Devín", "výlety z Bratislavy": the place, then the nearest town
+    // (Peter 2026-10-30). The longest wording that fits 60 characters (Ahrefs 2 Nov).
+    title: fitTitle(
+      trip.variant_of
+        ? [
+            tr(lang, "{name} zo štartu {start} ({km}) – výlet", { name: trail.name, start: trip.start.name, km: formatDistance(trip.distance_m, lang) }),
+            tr(lang, "{name} zo štartu {start} ({km})", { name: trail.name, start: trip.start.name, km: formatDistance(trip.distance_m, lang) }),
+          ]
+        : [
+            ...(town
+              ? [
+                  tr(lang, "{name} – výlet {from}: túra, parkovanie", { name: trail.name, from: townFrom(lang, town.id, town.name) }),
+                  tr(lang, "{name} – výlet {from}", { name: trail.name, from: townFrom(lang, town.id, town.name) }),
+                ]
+              : []),
+            tr(lang, "{name} – výlet a túra", { name: trail.name }),
+          ]
+    ),
     description:
       lang === "sk"
         ? metaDescription(trip, facts)
         : tr(lang, "{name}: {facts}. Kde zaparkovať, kedy najneskôr vyraziť a stihnúť návrat za svetla.", { name: trail.name, facts }),
     path: `/trasa/${trail.slug}`,
+    // No " | Túruj": search results show the site name on their own, and the place names are long
+    // enough already (Ahrefs 2 Nov: 999 titles over its 60-character mark).
+    absoluteTitle: true,
     lang,
+    english: (await englishTripsAhead()).has(trail.slug),
     // Shared links and search results show the place itself when Commons has a photo of it.
     ...(photo ? { image: { url: photo.url, width: photo.w, height: photo.h, alt: trail.name } } : {}),
   });
+}
+
+const MAX_TITLE = 60;
+
+/** The first title that fits search results' width, else the shortest (the last). */
+function fitTitle(candidates: string[]): string {
+  return candidates.find((t) => t.length <= MAX_TITLE) ?? candidates[candidates.length - 1];
 }
 
 function plainSlug(slug: string): string {

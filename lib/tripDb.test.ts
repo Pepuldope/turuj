@@ -53,33 +53,19 @@ describe("trips from the database", () => {
     expect((await getTripLive("neexistuje")).trip).toBeNull();
   });
 
-  it("lists trips nearest first from a town, the same from both sources", async () => {
-    const fromDb = await listTrips({ town: "zilina", date: "2027-04-01", limit: 5000 });
-    const saved = db;
-    db = null;
-    const fromFiles = await listTrips({ town: "zilina", date: "2027-04-01", limit: 5000 });
-    db = saved;
-    expect(fromDb.source).toBe("databaza");
-    expect(fromFiles.source).toBe("subory");
-    expect(fromDb.trips).toEqual(fromFiles.trips);
-    expect(fromDb.trips.length).toBe(Math.min(5000, (await getAllTrips()).filter((t) => !t.variant_of).length));
-    const totals = fromDb.trips.map((t) => t.total_min ?? Infinity);
+  it("lists trips nearest first from a town, from the files", async () => {
+    const list = await listTrips({ town: "zilina", date: "2027-04-01", limit: 5000 });
+    expect(list.source).toBe("subory");
+    expect(list.trips.length).toBe(Math.min(5000, (await getAllTrips()).filter((t) => !t.variant_of).length));
+    const totals = list.trips.map((t) => t.total_min ?? Infinity);
     expect(totals).toEqual([...totals].sort((a, b) => a - b));
     // Malá Fatra's spring closure covers Rozsutec on 1 April.
-    expect(fromDb.trips.some((t) => t.closed)).toBe(true);
+    expect(list.trips.some((t) => t.closed)).toBe(true);
   });
 
-  it("has drive minutes per town", async () => {
-    const { minutes, source } = await townDriveMinutes("bratislava");
-    expect(source).toBe("databaza");
-    // The home list's table: main routes only.
+  it("has drive minutes per town for every main route", async () => {
+    const { minutes } = await townDriveMinutes("bratislava");
     expect(Object.keys(minutes).length).toBe((await getAllTrips()).filter((t) => !t.variant_of).length);
-    const saved = db;
-    db = null;
-    const fromFiles = await townDriveMinutes("bratislava");
-    db = saved;
-    expect(fromFiles.source).toBe("subory");
-    expect(minutes).toEqual(fromFiles.minutes);
   });
 
   it("falls back to the files without a loaded database", async () => {

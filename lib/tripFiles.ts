@@ -1,6 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { driveDestination, routeWalk, trailDetailFrom, walkFromCar } from "@/lib/data";
 import { summaryFromList } from "@/lib/trips";
+import { EN_TRIPS_AHEAD } from "@/lib/site";
 import { LOOP_SUFFIX, loopPartner, loopTrip } from "@/lib/loopRoute";
 import type { RouteBrief, TownDriveFile, TripDetail, TripIndex, TripList, TripSummary } from "@/lib/tripSchema";
 import type { TrailDetail } from "@/lib/types";
@@ -108,6 +109,18 @@ export async function getAllTrips(): Promise<TripSummary[]> {
 /** Every trip in the shape the pages use, best known first. */
 export async function getAllTrails(): Promise<TrailDetail[]> {
   return [...(await getAllTrips())].sort((a, b) => b.rank - a.rank).map(trailDetailFrom);
+}
+
+let englishAhead: Promise<Set<string>> | null = null;
+
+/**
+ * The trips whose English page is built ahead (the EN_TRIPS_AHEAD best known). Only these are
+ * offered to search engines in English: the others would be drawn on each crawler's first visit,
+ * which spent the free plan's CPU and page-cache writes (Ahrefs crawl, 2 Nov: 283 server errors).
+ */
+export function englishTripsAhead(): Promise<Set<string>> {
+  englishAhead ??= getAllTrails().then((trails) => new Set(trails.slice(0, EN_TRIPS_AHEAD).map(({ trail }) => trail.slug)));
+  return englishAhead;
 }
 
 /** Full trip with path, alternatives and POIs, or null for an unknown slug. */
