@@ -55,6 +55,12 @@ jobs:
           for attempt in 1 2 3; do
             git fetch origin "${GITHUB_REF_NAME}"
             git checkout -f --detach "origin/${GITHUB_REF_NAME}"
+            # A run that started before the photo code or the photo files changed on the branch
+            # would put its older result over them (31 Oct: a run started before #189 wiped the
+            # 132 photos #189 had brought back). Leave those to next week's run instead.
+            if ! git diff --quiet "$GITHUB_SHA" HEAD -- pipeline/photos.py data/photo-overrides.json public/data/photos.json public/photos/m; then
+              echo "Photo code or files changed on ${GITHUB_REF_NAME} during this run: not committing."; exit 0
+            fi
             cp "$RUNNER_TEMP/photos.json" public/data/photos.json
             rm -rf public/photos/m && mkdir -p public/photos && cp -r "$RUNNER_TEMP/mly" public/photos/m
             git add public/data/photos.json public/photos/m
