@@ -8,6 +8,10 @@ name: Map picture
 on:
   schedule:
     - cron: "40 14 * * 1"
+  # A changed picture script takes a new picture on its branch.
+  push:
+    branches: ["claude/**"]
+    paths: ["scripts/map-picture.mjs", ".github/workflows/map-picture.yml"]
   workflow_dispatch:
     inputs:
       url:
