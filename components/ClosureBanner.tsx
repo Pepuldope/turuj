@@ -4,7 +4,7 @@ import type { Closure } from "@/lib/types";
 import { activeClosures } from "@/lib/closures";
 import { formatDateSk } from "@/lib/format";
 import { useTripDay } from "@/lib/tripSettings";
-import { useLang, useT } from "@/lib/i18n";
+import { LangLink, useLang, useT } from "@/lib/i18n";
 
 interface Props {
   closures: Closure[];
@@ -60,6 +60,13 @@ export function ClosureBanner({ closures }: Props) {
           <div key={c.id} className="flex flex-col gap-1 text-sm">
             <p>{t(c.reason)}</p>
             {c.note && <p className="font-semibold">{t(c.note)}</p>}
+            {c.id.startsWith("tanap-") && (
+              <p>
+                <LangLink href={c.note ? "/uzavery/tanap#vynimky" : "/uzavery/tanap"} className="font-semibold underline">
+                  {t("Sezónna uzávera v TANAP-e: čo je zatvorené a kam sa dá ísť")}
+                </LangLink>
+              </p>
+            )}
             <p>
               <a href={c.source_url} target="_blank" rel="noopener noreferrer" className="underline">
                 {t("Zdroj informácie")}

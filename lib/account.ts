@@ -51,6 +51,14 @@ export async function signOut() {
   set({ loaded: true, account: null });
 }
 
+/** Deletes the signed-in account for good; false when the server couldn't. */
+export async function deleteMyAccount(): Promise<boolean> {
+  const r = await fetch("/api/auth/delete", { method: "POST", credentials: "same-origin" }).catch(() => null);
+  if (!r?.ok) return false;
+  set({ loaded: true, account: null });
+  return true;
+}
+
 /** Where "Pokračovať cez Google" goes: back to this page afterwards. */
 export function googleHref(): string {
   const here = `${location.pathname}${location.search.replace(/[?&]prihlasenie=[^&]*/, "")}`;

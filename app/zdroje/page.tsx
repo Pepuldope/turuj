@@ -38,6 +38,12 @@ export default function SourcesPage() {
         </li>
         <li>Východ a západ slnka počítame priamo v aplikácii.</li>
         <li>
+          Výšky a prevýšenia: <a href="https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model">Copernicus DEM GLO-30</a>,
+          © DLR e.V. 2010-2014 a © Airbus Defence and Space GmbH 2014-2018, poskytnuté v rámci programu COPERNICUS
+          Európskou úniou a ESA. Organizácie zodpovedné za program Copernicus nezodpovedajú za žiadne použitie týchto
+          údajov.
+        </li>
+        <li>
           Predpoveď počasia: <a href="https://api.met.no">MET Norway</a> (Norwegian Meteorological Institute), licencia{" "}
           <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
         </li>

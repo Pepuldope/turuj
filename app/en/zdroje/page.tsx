@@ -38,6 +38,11 @@ export default function SourcesPage() {
         </li>
         <li>We calculate sunrise and sunset right in the app.</li>
         <li>
+          Elevation and climb: <a href="https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model">Copernicus DEM GLO-30</a>,
+          © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European
+          Union and ESA. The organisations in charge of the Copernicus programme are not liable for any use of these data.
+        </li>
+        <li>
           Weather forecast: <a href="https://api.met.no">MET Norway</a> (Norwegian Meteorological Institute), licence{" "}
           <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
         </li>
