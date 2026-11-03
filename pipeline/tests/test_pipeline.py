@@ -287,6 +287,29 @@ def test_closure_section(tmp_path):
     assert m.match(lats[:15], lons[:15], set(), set(), (48.186, 17.0875)) == ["usek"]
 
 
+def test_closure_goal_exception(tmp_path):
+    """TANAP keeps the yellow to Baranec open as far as Plačlivé, a summit on the closed ridge: a trip
+    to that goal coming up the open way stays open; the same goal from elsewhere, or another goal, closes."""
+    from pipeline import osm as osm_mod
+    from pipeline.graph import Graph
+    from pipeline.rules import section_keys
+
+    sec = dict(ref="0801", **{"from": "Dolná studnička", "to": "Testovací vrch"})
+    rules = [dict(id="usek", selector=dict(sections=[sec], goal_exceptions=[
+        dict(goal="Vyhliadka", via=dict(ref="0801", **{"from": "Dolná studnička", "to": "Vyhliadka"}))]))]
+    f = tmp_path / "t.osm"
+    f.write_text(osm_xml())
+    osm = osm_mod.load(str(f), [[17.0, 48.1, 17.2, 48.3]], name_keys=section_keys(rules))
+    m = RuleMatcher(rules, osm.probes, Graph(osm), osm.named, osm.guideposts)
+    assert not m.unresolved
+    lats, lons = np.linspace(48.190, 48.182, 60), np.linspace(17.082, 17.093, 60)
+    goal = (48.186, 17.0875)
+    assert m.match(lats[:15], lons[:15], set(), set(), goal, "Vyhliadka") == []
+    assert m.match(lats[:15], lons[:15], set(), set(), goal, "Iný vrch") == ["usek"]
+    # walking the closed stretch itself still closes, exception or not
+    assert m.match(lats, lons, set(), set(), goal, "Vyhliadka") == ["usek"]
+
+
 def test_elevation_tags_that_are_not_numbers():
     from pipeline.trips import _num
 

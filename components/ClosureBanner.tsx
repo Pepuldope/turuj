@@ -59,6 +59,7 @@ export function ClosureBanner({ closures }: Props) {
         {active.map((c) => (
           <div key={c.id} className="flex flex-col gap-1 text-sm">
             <p>{t(c.reason)}</p>
+            {c.note && <p className="font-semibold">{t(c.note)}</p>}
             <p>
               <a href={c.source_url} target="_blank" rel="noopener noreferrer" className="underline">
                 {t("Zdroj informácie")}

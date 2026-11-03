@@ -6,11 +6,17 @@
       "id": "tanap-sezonna-uzavera",
       "reason": "Sezónna uzávera v TANAP-e: vysokohorské úseky sú zatvorené od 1. novembra do 31. mája.",
       "kind": "rocna",
-      "starts_on": "2025-11-01",
-      "ends_on": "2026-05-31",
+      "starts_on": "2026-11-01",
+      "ends_on": "2027-05-31",
       "source_url": "https://www.minv.sk/swift_data/source/verejna_sprava/vestnik_vlady_sr_rok_2022-2023/2023/vyhlaska_26.pdf",
-      "verified_on": "2026-10-10",
-      "applies_to": "Úseky 1 až 40 z prílohy č. 3 vyhlášky Okresného úradu Prešov č. 26/2023 V. v. SR (návštevný poriadok TANAP): sedlá, hrebene a štíty vo Vysokých, Belianskych a Západných Tatrách nad chatami. Úseky k chatám a plesám pod nimi ostávajú otvorené.",
+      "verified_on": "2026-10-31",
+      "applies_to": "Úseky 1 až 40 z prílohy č. 3 vyhlášky Okresného úradu Prešov č. 26/2023 V. v. SR (návštevný poriadok TANAP): sedlá, hrebene a štíty vo Vysokých, Belianskych a Západných Tatrách nad chatami. Úseky k väčšine chát a k niektorým plesám pod nimi ostávajú otvorené. Výnimka podľa TANAP-u: žltá zo Žiarskej doliny na Baranec a Plačlivé ostáva otvorená.",
+      "trip_notes": {
+        "predne-solisko": "Chodník zo Štrbského Plesa je do 31. mája zatvorený. Na Predné Solisko sa dá ísť od Chaty pod Soliskom, hore lanovkou. Kedy premáva, si overte na vt.sk.",
+        "predne-solisko-byvala-vazecka-chata": "Chodník zo Štrbského Plesa je do 31. mája zatvorený. Na Predné Solisko sa dá ísť od Chaty pod Soliskom, hore lanovkou. Kedy premáva, si overte na vt.sk.",
+        "chata-pod-soliskom": "Chodník zo Štrbského Plesa je do 31. mája zatvorený. Na Chatu pod Soliskom sa dá ísť lanovkou. Kedy premáva, si overte na vt.sk.",
+        "chata-pod-soliskom-byvala-vazecka-chata": "Chodník zo Štrbského Plesa je do 31. mája zatvorený. Na Chatu pod Soliskom sa dá ísť lanovkou. Kedy premáva, si overte na vt.sk."
+      },
       "selector": {
         "bbox": [
           19.4,
@@ -509,6 +515,22 @@
             "to": "Bobrovecké sedlo",
             "usek": 40
           }
+        ],
+        "probes": [
+          "Pleso nad Skokom"
+        ],
+        "probes_note": "Pleso nad Skokom sits above vodopád Skok on the closed yellow 8853 (úsek 15), but a trip walks only ~350 m of it and the tarn is just over GOAL_ON_M off the line (drafts/02, 31 Oct 2026).",
+        "goal_exceptions": [
+          {
+            "goal": "Plačlivé",
+            "via": {
+              "ref": "8618",
+              "from": "Baranec",
+              "to": "Plačlivé"
+            },
+            "source_url": "https://www.tanap.sk/od-1-novembra-sa-v-tatranskom-narodnom-parku-zacina-sezonna-uzavera-9441/",
+            "note": "TANAP's notice of 30 Oct 2026: the yellow to Baranec stays open as far as Plačlivé. Plačlivé itself lies on the closed main ridge (úsek 30), so without this a trip coming up the yellow would close."
+          }
         ]
       }
     },
@@ -516,10 +538,10 @@
       "id": "tanap-juranova-dolina",
       "reason": "Sezónna uzávera v TANAP-e: Juráňova dolina cez sedlo Umrlá je zatvorená od 1. novembra do 30. apríla.",
       "kind": "rocna",
-      "starts_on": "2025-11-01",
-      "ends_on": "2026-04-30",
+      "starts_on": "2026-11-01",
+      "ends_on": "2027-04-30",
       "source_url": "https://www.minv.sk/swift_data/source/verejna_sprava/vestnik_vlady_sr_rok_2022-2023/2023/vyhlaska_26.pdf",
-      "verified_on": "2026-10-10",
+      "verified_on": "2026-10-31",
       "applies_to": "Úsek 41 z prílohy č. 3 vyhlášky OÚ Prešov č. 26/2023: Juráňova dolina od ústia cez sedlo Umrlá na rázcestie Pod Umrlou.",
       "selector": {
         "bbox": [
@@ -539,10 +561,10 @@
       "id": "tanap-symbolicky-cintorin",
       "reason": "Sezónna uzávera v TANAP-e: chodník k Symbolickému cintorínu pod Ostrvou je zatvorený od 15. decembra do 30. apríla.",
       "kind": "rocna",
-      "starts_on": "2025-12-15",
-      "ends_on": "2026-04-30",
+      "starts_on": "2026-12-15",
+      "ends_on": "2027-04-30",
       "source_url": "https://www.minv.sk/swift_data/source/verejna_sprava/vestnik_vlady_sr_rok_2022-2023/2023/vyhlaska_26.pdf",
-      "verified_on": "2026-10-10",
+      "verified_on": "2026-10-31",
       "applies_to": "Úsek 42 z prílohy č. 3 vyhlášky OÚ Prešov č. 26/2023: žltý chodník č. 8854 cez Symbolický cintorín pod Ostrvou, od rázcestia Popradská poľana po Popradské pleso, oba smery.",
       "selector": {
         "bbox": [

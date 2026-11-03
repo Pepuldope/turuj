@@ -991,7 +991,7 @@ class TripBuilder:
         # rules
         refs = {g.routes[i]["ref"] for w in e_way for i in w.routes if g.routes[i]["ref"]}
         tags = set().union(*(w.tags for w in e_way)) if e_way else set()
-        closure_ids = self.closures.match(rl, ro, refs, tags, (dest["lat"], dest["lon"]))
+        closure_ids = self.closures.match(rl, ro, refs, tags, (dest["lat"], dest["lon"]), dest.get("name"))
         fee_rule_ids = self.fees.match(rl, ro, refs, tags)
         fees = self._fees(dest, fee_rule_ids)
 
