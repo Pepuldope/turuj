@@ -1218,11 +1218,15 @@ function StartReminder() {
       root.setProperty("--startbar", "0px");
     };
   }, [away]);
-  if (!away) return null;
+  // Always there (off screen above) so it slides in and moves with the top bar by transform
+  // instead of popping up and jumping (Peter, 2026-11-03: "laggy/glitchy").
   return (
     <div
       ref={barRef}
-      className="fixed inset-x-0 top-[var(--topbar,0px)] z-30 bg-[var(--background)] px-3 pt-2 pb-1 transition-[top] duration-200 motion-reduce:transition-none lg:hidden"
+      aria-hidden={!away}
+      inert={!away}
+      style={{ transform: away ? "translateY(var(--topbar, 0px))" : "translateY(-110%)" }}
+      className="fixed inset-x-0 top-0 z-30 bg-[var(--background)] px-3 pt-2 pb-1 transition-transform duration-200 will-change-transform motion-reduce:transition-none lg:hidden"
     >
       <div className="mx-auto flex max-w-[640px] items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2 shadow-[var(--shadow-float)] md:max-w-[760px]">
         <span className="min-w-0 flex-1 leading-tight">
