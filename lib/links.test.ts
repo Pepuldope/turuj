@@ -73,7 +73,7 @@ describe("shared plan links", () => {
         "• 45 min chôdze, ľahká\n" +
         "• 9:41 späť pri aute\n" +
         "\n" +
-        "Celý plán a kedy vyraziť z tvojho miesta:\n" +
+        "Celý plán je na Túruj, aj kedy vyraziť z tvojho miesta:\n" +
         "https://turuj.sk/trasa/hucak"
     );
   });

@@ -288,6 +288,8 @@ export interface ClosureRule {
   verified_on: string;
   /** Plain-language note on which trips the rule covers. */
   applies_to: string;
+  /** An extra line under the closure on these trips (slug -> Slovak text), e.g. the lift around a closed path. */
+  trip_notes?: Record<string, string>;
   /** Read only by the pipeline. */
   selector?: unknown;
 }

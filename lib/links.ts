@@ -123,7 +123,7 @@ export function shareText(i: ShareTextInput, lang: Lang = "sk"): string {
     `• ${hhmm(i.end)} ${endWord}`,
     ...(i.inDaylight ? [] : [t("Pozor, z túry zídete až po západe slnka.")]),
     "",
-    t("Celý plán a kedy vyraziť z tvojho miesta:"),
+    t("Celý plán je na Túruj, aj kedy vyraziť z tvojho miesta:"),
     i.url,
   ].join("\n");
 }

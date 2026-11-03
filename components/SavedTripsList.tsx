@@ -216,7 +216,7 @@ function TripList({
                 onClick={() => went(trip)}
                 className={`rounded-xl px-4 py-2.5 text-sm font-bold ${past ? "bg-[var(--ok)] text-white" : "border border-[var(--border)] bg-[var(--card-bg)] hover:border-[var(--accent)]"}`}
               >
-                {t("Bol som tu")} ✓
+                {t("Už sme tu boli")} ✓
               </button>
               <button
                 type="button"

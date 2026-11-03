@@ -113,6 +113,7 @@ export function trailDetailFrom(t: TripSummary | TripDetail): TrailDetail {
     reason: r.reason,
     source_url: r.source_url,
     verified_on: r.verified_on,
+    ...(r.trip_notes?.[t.slug] ? { note: r.trip_notes[t.slug] } : {}),
   }));
   return {
     trail: toTrail(t),

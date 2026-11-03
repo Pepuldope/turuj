@@ -24,7 +24,7 @@ function monthDayValue({ month, day }: MonthDay): number {
  *
  * - `jednorazova`: plain calendar-date range comparison, year included.
  * - `rocna`: recurring annual range compared by month/day only, ignoring
- *   year. Handles ranges that wrap the new year (e.g. TANAP 1 Nov - 15 Jun).
+ *   year. Handles ranges that wrap the new year (e.g. TANAP 1 Nov - 31 May).
  */
 export function isClosureActive(closure: Closure, today: string): boolean {
   if (closure.kind === "jednorazova") {
@@ -40,7 +40,7 @@ export function isClosureActive(closure: Closure, today: string): boolean {
     // Normal range within one calendar year, e.g. 1 Apr - 30 Apr.
     return now >= start && now <= end;
   }
-  // Wraps the new year, e.g. 1 Nov - 15 Jun.
+  // Wraps the new year, e.g. 1 Nov - 31 May.
   return now >= start || now <= end;
 }
 

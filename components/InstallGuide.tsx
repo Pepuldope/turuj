@@ -170,8 +170,8 @@ export function InstallGuide() {
 
       <Section id="co-vie" icon={<UiIcon name="boot" size={22} />} title={t("Čo appka vie")}>
         <ul className="flex flex-col gap-2 !list-none !pl-0">
-          <li className="!mt-0"><b>{t("Už teraz:")}</b> {t("otvorí sa celá obrazovka ako appka, uložené výlety (plán, mapa aj trasa) fungujú bez signálu a výlet zdieľate jedným ťuknutím.")}</li>
-          <li><b>{t("Pripravujeme:")}</b> {t("kde práve ste na trase, pripomienku večer pred výletom a pred západom slnka, záznam vašej trasy s odoslaním do Stravy a denník výletov.")}</li>
+          <li className="!mt-0"><b>{t("Už teraz:")}</b> {t("otvorí sa celá obrazovka ako appka, uložené výlety (plán, mapa aj trasa) fungujú bez signálu, na trase vidíte, kde práve ste, pripomenieme vám návrat pred západom slnka a výlet zdieľate jedným ťuknutím.")}</li>
+          <li><b>{t("Pripravujeme:")}</b> {t("pripomienku večer pred výletom, uloženie trasy ako GPX a denník výletov.")}</li>
         </ul>
       </Section>
     </div>
