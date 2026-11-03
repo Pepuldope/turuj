@@ -15,6 +15,7 @@ export function pageMetadata({
   absoluteTitle = false,
   image = OG_IMAGE,
   lang = "sk",
+  english = true,
 }: {
   title: string;
   description: string;
@@ -25,13 +26,20 @@ export function pageMetadata({
   image?: { url: string; width: number; height: number; alt: string };
   /** The page's language; `path` is always the Slovak address ("/o-nas"), the English one is under /en. */
   lang?: Lang;
+  /** false = no English version offered to search engines (an English trip page not built ahead). */
+  english?: boolean;
 }): Metadata {
   const fullTitle = absoluteTitle ? title : `${title} | ${SITE_NAME}`;
   return {
     title: absoluteTitle ? { absolute: title } : title,
     description,
     // Each language is its own page; hreflang tells search engines which one to show whom.
-    alternates: { canonical: langPath(lang, path), languages: { sk: path, en: langPath("en", path), "x-default": path } },
+    alternates: {
+      canonical: langPath(lang, path),
+      ...(english ? { languages: { sk: path, en: langPath("en", path), "x-default": path } } : {}),
+    },
+    // An English page search engines aren't offered: people can open it, crawlers shouldn't list it.
+    ...(!english && lang === "en" ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       type: "website",
       locale: lang === "en" ? "en_GB" : "sk_SK",

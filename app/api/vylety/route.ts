@@ -7,16 +7,16 @@ import { getTowns } from "@/lib/trips";
 /**
  * GET /api/vylety?z=<town>&den=YYYY-MM-DD&limit=N -> { trips, zdroj, generated_at }
  *
- * The trip list from the database (static files when it is not loaded):
+ * The trip list from the deployed files:
  * with a start town (an id from data/towns.json, e.g. "zilina") nearest
  * first by drive there and back plus the walk, else best known first. `closed`
  * marks trips a closure rule covers on `den` (default today, at most
  * MAX_DAYS_AHEAD ahead).
  *
- * Every new answer reads the whole trip table (about 10,000 database rows,
- * whatever the limit), and the free plan has 5 million reads a day shared
- * with the trip pages and the counters. So: only real days near today, a few
- * fixed list lengths, our own pages, and a per-address limit on new answers.
+ * Every new answer works through the whole trip list (from the deployed files
+ * since 3 Nov: from the database it read about 17,000 rows each, and the free
+ * plan has 5 million a day). Still: only real days near today, a few fixed list
+ * lengths, and a per-address limit on new answers, for the Worker's CPU.
  */
 
 const MAX_LIMIT = 500;
