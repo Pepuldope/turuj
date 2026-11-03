@@ -332,9 +332,10 @@
           },
           {
             "ref": "5610",
-            "from": "Pod Smrekom",
+            "from": "Rázcestie pod Smrekom",
             "to": "Žiarske sedlo",
-            "usek": 24
+            "usek": 24,
+            "note": "Pinned to the guidepost in Jamnícka dolina: plain 'Pod Smrekom' took a place of that name on the Žiarska side, 2.5 km west, so the stretch ran down to Žiarska chata (wrongly closing Žiarske pleso, missing Kôpka). Checked with --rules-only, 3 Nov 2026."
           },
           {
             "ref": "5613",
