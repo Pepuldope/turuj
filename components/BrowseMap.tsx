@@ -155,6 +155,8 @@ const FEW_TRIPS = 300;
 const SQUARE_EARLY = 1;
 // Likewise for the overview's gap copy under the detailed lines (trip-lines-gap).
 const GAP_EARLY = 1;
+/** The overview and detailed trip lines overlap this many zoom levels each side of the area zoom, cross-fading. */
+const LINE_HANDOVER = 0.5;
 const SUN = "#ffb81c";
 const AREA_LINE = "#1769d1";
 const NIGHT = "#14233b";
@@ -446,20 +448,27 @@ export function BrowseMap({
             15, ["+", c + extra, ["*", 0.8, ["get", "p"]], ["case", ["==", ["get", "p"], 0], 0.4, 0]],
           ] as unknown as ExpressionSpecification;
         const layout: LineLayerSpecification["layout"] = { "line-cap": "round", "line-join": "round", "line-sort-key": ["get", "r"] };
+        // The overview and the detailed lines overlap by LINE_HANDOVER each side of areaZoom and
+        // cross-fade there: a hard switch showed nothing for a moment while the map cut the new
+        // source's first tiles, so the lines blinked when zooming in (Peter, 2026-11-04).
+        const fade = (op: ExpressionSpecification | number, src: string) =>
+          (src === "trip-lines"
+            ? ["interpolate", ["linear"], ["zoom"], areaZoom, op, areaZoom + LINE_HANDOVER, 0]
+            : ["interpolate", ["linear"], ["zoom"], areaZoom - LINE_HANDOVER, 0, areaZoom, op]) as unknown as ExpressionSpecification;
         for (const [src, range, tileMax] of [
-          ["trip-lines", { maxzoom: areaZoom }, Math.ceil(areaZoom)],
+          ["trip-lines", { maxzoom: areaZoom + LINE_HANDOVER }, Math.ceil(areaZoom + LINE_HANDOVER)],
           // A copy of the overview under the detailed lines, holding each trip only until its
           // detailed line is drawn, so zooming into an area for the first time never shows an
           // empty map for a moment. The overview itself stays whole for zooming back out.
-          ["trip-lines-gap", { minzoom: areaZoom }, Math.ceil(areaZoom)],
-          ["trip-lines-d", { minzoom: areaZoom }, LINE_TILE_MAX],
+          ["trip-lines-gap", { minzoom: areaZoom - LINE_HANDOVER }, Math.ceil(areaZoom)],
+          ["trip-lines-d", { minzoom: areaZoom - LINE_HANDOVER }, LINE_TILE_MAX],
         ] as [string, { maxzoom?: number; minzoom?: number }, number][]) {
           m.addSource(src, { type: "geojson", data: EMPTY, maxzoom: tileMax });
           // The best known trips get a thin white edge, like on the trail network before.
-          m.addLayer({ id: `${src}-top`, type: "line", source: src, ...range, filter: ["==", ["get", "p"], 4], layout, paint: { "line-color": POPULARITY_TOP_OUTLINE, "line-width": width(0.6, 1.4, 2.5, 1), "line-opacity": 0.9 } });
+          m.addLayer({ id: `${src}-top`, type: "line", source: src, ...range, filter: ["==", ["get", "p"], 4], layout, paint: { "line-color": POPULARITY_TOP_OUTLINE, "line-width": width(0.6, 1.4, 2.5, 1), "line-opacity": fade(0.9, src) } });
           // A thin dark thread under the two quietest (yellow) levels: on a white or pale road the yellow alone washes out.
-          m.addLayer({ id: `${src}-thread`, type: "line", source: src, ...range, filter: ["<=", ["get", "p"], 1], layout, paint: { "line-color": QUIET_THREAD, "line-width": width(0.6, 1.4, 2.5, 1.2), "line-opacity": 0.4 } });
-          m.addLayer({ id: `${src}-line`, type: "line", source: src, ...range, layout, paint: { "line-color": RAMP, "line-width": width(0.6, 1.4, 2.5), "line-opacity": ["case", ["==", ["get", "p"], 0], 1, 0.95], "line-dasharray": ["step", ["zoom"], ["literal", [1, 0]], QUIET_DASH_ZOOM, POPULARITY_DASH] as unknown as ExpressionSpecification } });
+          m.addLayer({ id: `${src}-thread`, type: "line", source: src, ...range, filter: ["<=", ["get", "p"], 1], layout, paint: { "line-color": QUIET_THREAD, "line-width": width(0.6, 1.4, 2.5, 1.2), "line-opacity": fade(0.4, src) } });
+          m.addLayer({ id: `${src}-line`, type: "line", source: src, ...range, layout, paint: { "line-color": RAMP, "line-width": width(0.6, 1.4, 2.5), "line-opacity": fade(["case", ["==", ["get", "p"], 0], 1, 0.95], src), "line-dasharray": ["step", ["zoom"], ["literal", [1, 0]], QUIET_DASH_ZOOM, POPULARITY_DASH] as unknown as ExpressionSpecification } });
           // Wide and invisible, so a thin line is easy to hit.
           m.addLayer({ id: `${src}-hit`, type: "line", source: src, ...range, paint: { "line-color": "#000", "line-width": 18, "line-opacity": 0 } });
         }
