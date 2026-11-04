@@ -196,7 +196,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                 </a>
               </>
             ) : (
-              <SeasonScene season={seasonOf(new Date())} width={460} height={220} seed={3} sunX={0.2} sunY={0.28} shade className="absolute inset-0 h-full w-full" />
+              <SeasonScene season={seasonOf(new Date())} width={460} height={220} seed={3} sunX={0.34} sunY={0.32} shade className="absolute inset-0 h-full w-full" />
             )}
             <nav aria-label={tr(lang, "Navigácia")} className="relative flex items-center justify-between gap-2 px-4 pt-4">
               <Link

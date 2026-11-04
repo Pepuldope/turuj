@@ -11,6 +11,8 @@ const MAX = 200;
 /** Where the page waits while the spinner turns. */
 const HOLD = 96;
 const RAYS = 12;
+/** Space kept clear above the sun at rest (px), so wide headers never crop it. */
+const EDGE = 4;
 
 interface Props {
   season: Season;
@@ -65,9 +67,13 @@ export function SunPull({ season, width, height, sunX, sunY, moveRef }: Props) {
       // viewBox units per pixel under "slice", and where the header's top edge falls in them.
       const s = Math.max(box.width / width, box.height / height) || 1;
       const top = (height - box.height / s) / 2;
+      // At rest the sun sits at sunY, but never so high that the crop of a wide header cuts it (Peter 2026-11-04).
+      const rest = Math.max(y0, top + sunR + (summer ? 10 : 6) + EDGE / s);
       const e = ease(Math.min(1, pull / READY));
       const x = x0 + (width / 2 - x0) * e;
-      const y = y0 + (top - (pull * 0.52) / s - y0) * e;
+      const y = rest + (top - (pull * 0.52) / s - rest) * e;
+      // The sky band would cover the rising sun while pulling.
+      document.documentElement.toggleAttribute("data-pull", pull > 0);
       sun.setAttribute("transform", `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
       const grow = Math.max(0, (Math.min(1, pull / READY) - 0.25) / 0.75);
       const turning = state === "refreshing";
@@ -135,6 +141,8 @@ export function SunPull({ season, width, height, sunX, sunY, moveRef }: Props) {
       release();
     };
 
+    draw();
+    window.addEventListener("resize", draw);
     // The browser's own pull-to-refresh would fight this one.
     const root = document.documentElement;
     const before = root.style.overscrollBehaviorY;
@@ -150,6 +158,8 @@ export function SunPull({ season, width, height, sunX, sunY, moveRef }: Props) {
       window.removeEventListener("touchmove", onMove);
       window.removeEventListener("touchend", onEnd);
       window.removeEventListener("touchcancel", onEnd);
+      window.removeEventListener("resize", draw);
+      document.documentElement.removeAttribute("data-pull");
       if (move) move.style.transform = "";
     };
   }, [moveRef, width, height, x0, y0, sunR, summer]);
@@ -160,7 +170,8 @@ export function SunPull({ season, width, height, sunX, sunY, moveRef }: Props) {
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+      // z-[2]: above the iPhone app's sky band (.sky-edge, z 1), so the band never covers the sun; under the sticky bars (z 10+).
+      className="pointer-events-none absolute inset-0 z-[2] h-full w-full overflow-visible"
     >
       <g ref={sunRef} transform={`translate(${x0} ${y0})`}>
         <circle r={sunR + 6} fill="#ffd36b" opacity={0.35} />

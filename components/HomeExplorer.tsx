@@ -11,7 +11,7 @@ import { TOWN_EXACT_KM, quickDriveMin, transitMinutes } from "@/lib/drive";
 import { DIFFICULTY_LABEL, GOAL_LABEL, GOAL_PLURAL, formatDurationShort } from "@/lib/format";
 import { kindSvg } from "@/lib/kindIcons";
 import { GOAL_COLOUR, POPULARITY_RAMP } from "@/lib/palette";
-import { seasonOf } from "@/lib/season";
+import { LAND, seasonOf } from "@/lib/season";
 import type { DestinationKind } from "@/lib/tripSchema";
 import { unpackList } from "@/lib/packedList";
 import type { PackedList } from "@/lib/packedList";
@@ -1034,9 +1034,10 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
     <main className="flex flex-1 flex-col lg:h-dvh lg:flex-none lg:flex-row lg:overflow-hidden">
       <div ref={columnRef} className="mx-auto flex w-full max-w-[640px] flex-col gap-5 px-4 pt-4 pb-6 md:max-w-[760px] lg:mx-0 lg:w-[440px] lg:max-w-none lg:shrink-0 relative lg:overflow-y-auto lg:overscroll-contain">
         <PullSky season={season} />
+        <SkyEdge colour={LAND[season].sky1} />
         <header className="relative -mx-4 -mt-4 flex shrink-0 flex-col sm:overflow-hidden sm:rounded-b-[24px] lg:overflow-visible lg:rounded-none">
-          <SeasonScene season={season} width={440} height={250} seed={11} sunX={HEADER_SUN_X} sunY={0.17} drop={0.2} noSun className="absolute inset-0 h-full w-full" />
-          <SunPull season={season} width={440} height={250} sunX={HEADER_SUN_X} sunY={0.17} moveRef={columnRef} />
+          <SeasonScene season={season} width={440} height={250} seed={11} sunX={HEADER_SUN_X} sunY={0.26} drop={0.2} noSun className="absolute inset-0 h-full w-full" />
+          <SunPull season={season} width={440} height={250} sunX={HEADER_SUN_X} sunY={0.26} moveRef={columnRef} />
           <nav aria-label={t("Hlavná navigácia")} className="relative flex items-center justify-between gap-3 px-4 pt-4">
             <LangLink href="/" aria-label="Túruj" className="block">
               {/* Name only: the seasonal mark blends into the header scene. The hero sky is light in both themes, so dark ink always. */}
@@ -1280,4 +1281,22 @@ function StartReminder() {
       </div>
     </div>
   );
+}
+
+/**
+ * iPhone home-screen app only (globals.css .sky-edge): iOS paints the strip behind the clock
+ * itself, in a colour it takes from what touches the top of the page, and fades it into the
+ * page. With nothing there it took the grey page colour and laid a haze over the sky (Peter,
+ * 2026-11-04; the page starts below the clock there, safe-area-inset-top is 0). A thin fixed
+ * band in the sky's own top colour gives it the right colour; gone once you scroll.
+ */
+function SkyEdge({ colour }: { colour: string }) {
+  const [top, setTop] = useState(true);
+  useEffect(() => {
+    const on = () => setTop(window.scrollY <= 0);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
+  return <div aria-hidden="true" className="sky-edge" style={{ background: `linear-gradient(${colour}, ${colour} 25%, transparent)`, opacity: top ? 1 : 0 }} />;
 }

@@ -484,3 +484,21 @@ h2,
     margin-top: 52px;
   }
 }
+
+/* Home page, iPhone home-screen app only: see SkyEdge in components/HomeExplorer.tsx. */
+.sky-edge {
+  display: none;
+}
+@media (display-mode: standalone) and (max-width: 1023.98px) {
+  .sky-edge {
+    display: block;
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 12px;
+    z-index: 1;
+    pointer-events: none;
+  }
+  :root[data-pull] .sky-edge {
+    visibility: hidden;
+  }
+}
