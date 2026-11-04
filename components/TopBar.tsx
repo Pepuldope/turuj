@@ -127,11 +127,6 @@ export function TopBar() {
   const initial = account ? (account.name ?? account.email).trim().charAt(0).toUpperCase() : null;
 
   return (
-    <>
-    {/* Home-screen app only (globals.css .status-strip): the area behind the clock in night blue,
-        so the white clock always reads, over the sky as over the white bar. Outside the bar:
-        it moves, and a fixed child of a moved box would move with it. */}
-    <div aria-hidden="true" className="status-strip" />
     <div
       ref={boxRef}
       style={{ transitionTimingFunction: visible ? EASE_IN : EASE_OUT }}
@@ -188,7 +183,6 @@ export function TopBar() {
         </div>
       )}
     </div>
-    </>
   );
 }
 

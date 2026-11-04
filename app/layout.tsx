@@ -48,10 +48,6 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image", images: [OG_IMAGE.url] },
   formatDetection: { telephone: false },
-  // Home-screen app on iPhone: a see-through status bar with a white clock over our own
-  // night-blue strip (StatusStrip in TopBar). With the default style iOS laid a white haze
-  // over the top of the page on first open (Peter, 2026-11-04).
-  appleWebApp: { capable: true, title: "Túruj", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

@@ -484,20 +484,3 @@ h2,
     margin-top: 52px;
   }
 }
-
-/* Behind the iPhone clock in the home-screen app (TopBar, appleWebApp black-translucent):
-   fixed, so it stays when the bar slides away. Browsers draw their own status bar: hidden there. */
-.status-strip {
-  display: none;
-}
-@media (display-mode: standalone) and (max-width: 1023.98px) {
-  .status-strip {
-    display: block;
-    position: fixed;
-    inset: 0 0 auto 0;
-    height: env(safe-area-inset-top);
-    background: #17213a;
-    pointer-events: none;
-    z-index: 50;
-  }
-}
