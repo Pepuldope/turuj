@@ -1036,8 +1036,8 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
         <PullSky season={season} />
         <SkyEdge colour={LAND[season].sky1} />
         <header className="relative -mx-4 -mt-4 flex shrink-0 flex-col sm:overflow-hidden sm:rounded-b-[24px] lg:overflow-visible lg:rounded-none">
-          <SeasonScene season={season} width={440} height={250} seed={11} sunX={HEADER_SUN_X} sunY={0.17} drop={0.2} noSun className="absolute inset-0 h-full w-full" />
-          <SunPull season={season} width={440} height={250} sunX={HEADER_SUN_X} sunY={0.17} moveRef={columnRef} />
+          <SeasonScene season={season} width={440} height={250} seed={11} sunX={HEADER_SUN_X} sunY={0.26} drop={0.2} noSun className="absolute inset-0 h-full w-full" />
+          <SunPull season={season} width={440} height={250} sunX={HEADER_SUN_X} sunY={0.26} moveRef={columnRef} />
           <nav aria-label={t("Hlavná navigácia")} className="relative flex items-center justify-between gap-3 px-4 pt-4">
             <LangLink href="/" aria-label="Túruj" className="block">
               {/* Name only: the seasonal mark blends into the header scene. The hero sky is light in both themes, so dark ink always. */}
@@ -1298,5 +1298,5 @@ function SkyEdge({ colour }: { colour: string }) {
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
   }, []);
-  return <div aria-hidden="true" className="sky-edge" style={{ background: colour, opacity: top ? 1 : 0 }} />;
+  return <div aria-hidden="true" className="sky-edge" style={{ background: `linear-gradient(${colour}, ${colour} 25%, transparent)`, opacity: top ? 1 : 0 }} />;
 }
