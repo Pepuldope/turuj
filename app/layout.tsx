@@ -66,6 +66,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${figtree.variable} ${bricolage.variable} ${barlowCondensed.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* TEMP iPhone app check, preview only (workers.dev): what the page sees at the top. Remove before merge. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){if(!/workers\.dev$/.test(location.hostname))return;addEventListener("load",function(){var p=document.createElement("div");p.style.cssText="position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top);visibility:hidden";document.body.appendChild(p);var d=document.createElement("div");d.style.cssText="position:fixed;left:8px;bottom:90px;z-index:99;background:#000c;color:#fff;font:12px monospace;padding:6px 8px;border-radius:8px;white-space:pre";var m=function(q){return matchMedia(q).matches};var f=function(){d.textContent="inset-top "+p.offsetHeight+"px\nstandalone "+m("(display-mode: standalone)")+" navStandalone "+!!navigator.standalone+"\nscreen "+screen.width+"x"+screen.height+" inner "+innerWidth+"x"+innerHeight+"\nscrollY "+Math.round(scrollY)+" dpr "+devicePixelRatio+"\nmeta-sb "+((document.querySelector('meta[name=apple-mobile-web-app-status-bar-style]')||{}).content||"none")};f();document.body.appendChild(d);addEventListener("scroll",f,{passive:true});addEventListener("resize",f)})})()`,
+          }}
+        />
         <ServiceWorkerRegister />
         <StaleCodeReload />
         <LangProvider>
