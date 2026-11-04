@@ -27,6 +27,8 @@ export const LINE_TILE_MAX = 14;
 export const DETAIL_ZOOM = 11;
 /** Detailed cells are fetched from this many zoom levels before they show. */
 const DETAIL_EARLY = 1;
+/** Overview and detail overlap this many zoom levels each side of DETAIL_ZOOM, cross-fading. */
+const HANDOVER = 0.5;
 /** The overview tiles' zooms and box: keep in step with scripts/line-tiles.mjs. */
 const NETWORK_TILE_MIN = 4;
 const NETWORK_TILE_MAX = 10;
@@ -108,13 +110,21 @@ export function attachTrailNetwork(
       ["+", z15 + extra, ["*", 0.8, ["get", "p"]]],
     ] as unknown as number;
   const width = widthAt(0.6, 1.4, 2.5);
-  const opacity = full ? 0.9 : 0.45;
+  const baseOpacity = full ? 0.9 : 0.45;
   const layout = { "line-cap": "round", "line-join": "round" } as const;
 
-  for (const [prefix, source, minzoom, maxzoom, tiled] of [
-    ["network", "network", 0, DETAIL_ZOOM, { "source-layer": "network" }],
-    ["network-detail", "network-detail", DETAIL_ZOOM, 24, {}],
+  // The overview and the detailed cells overlap by HANDOVER on each side of DETAIL_ZOOM and
+  // cross-fade there: a hard switch showed nothing for a moment while the map cut the detailed
+  // source's first tiles at the new zoom, so the trails blinked when zooming in (Peter, 2026-11-04).
+  const fade = (op: number, out: boolean) =>
+    (out
+      ? ["interpolate", ["linear"], ["zoom"], DETAIL_ZOOM, op, DETAIL_ZOOM + HANDOVER, 0]
+      : ["interpolate", ["linear"], ["zoom"], DETAIL_ZOOM - HANDOVER, 0, DETAIL_ZOOM, op]) as unknown as number;
+  for (const [prefix, source, minzoom, maxzoom, tiled, out] of [
+    ["network", "network", 0, DETAIL_ZOOM + HANDOVER, { "source-layer": "network" }, true],
+    ["network-detail", "network-detail", DETAIL_ZOOM - HANDOVER, 24, {}, false],
   ] as const) {
+    const opacity = fade(baseOpacity, out);
     if (full) {
       // A hairline halo under the busiest trails, so the reddest read as "the main ones".
       map.addLayer({
