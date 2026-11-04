@@ -516,8 +516,15 @@ export function BrowseMap({
           loadLines(m);
           handlers.current.onView(viewOf(m, shift));
         });
+        let lastZoomLoad = 0;
         m.on("zoom", () => {
           showAreas(m.getZoom());
+          // Mid-pinch too, so the detailed lines are there when the overview hands over (no blink).
+          const now = performance.now();
+          if (now - lastZoomLoad > 250) {
+            lastZoomLoad = now;
+            void loadLines(m);
+          }
           void feedGap(m);
           if (!squares.current.full && m.getZoom() >= SQUARE_MIN - shift - SQUARE_EARLY) pushSquares(m, shift);
         });
@@ -602,7 +609,7 @@ export function BrowseMap({
         meta = await loadOverview(m);
         if (!meta || cancelled) return;
       }
-      if (m.getZoom() < areaZoom - 0.5) return;
+      if (m.getZoom() < areaZoom - 1) return;
       const b = m.getBounds();
       const w = b.getEast() - b.getWest();
       const h = b.getNorth() - b.getSouth();

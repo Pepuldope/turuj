@@ -25,6 +25,8 @@ const BASE = "/data/trails";
 export const LINE_TILE_MAX = 14;
 /** From this zoom on, the detailed cells replace the overview. */
 export const DETAIL_ZOOM = 11;
+/** Detailed cells are fetched from this many zoom levels before they show. */
+const DETAIL_EARLY = 1;
 /** The overview tiles' zooms and box: keep in step with scripts/line-tiles.mjs. */
 const NETWORK_TILE_MIN = 4;
 const NETWORK_TILE_MAX = 10;
@@ -159,7 +161,7 @@ export function attachTrailNetwork(
   const addCell = lineFeeder(() => map.getSource("network-detail") as GeoJSONSource | undefined);
 
   async function loadVisibleCells() {
-    if (stopped || !meta || map.getZoom() < DETAIL_ZOOM - 0.5) return;
+    if (stopped || !meta || map.getZoom() < DETAIL_ZOOM - DETAIL_EARLY) return;
     const b = map.getBounds();
     const want = cellsInView(meta.grid, new Set(meta.cells), [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
     const todo = want.filter((k) => !loaded.has(k) && !pending.has(k));
@@ -177,6 +179,16 @@ export function attachTrailNetwork(
 
   const onMove = () => void loadVisibleCells();
   map.on("moveend", onMove);
+  // While a pinch is still going (no "moveend" yet), fetch the detailed cells on the way in,
+  // so the overview doesn't hand over to empty space at DETAIL_ZOOM: the trails blinked (Peter, 2026-11-03).
+  let lastZoomLoad = 0;
+  const onZoom = () => {
+    const now = performance.now();
+    if (now - lastZoomLoad < 250) return;
+    lastZoomLoad = now;
+    void loadVisibleCells();
+  };
+  map.on("zoom", onZoom);
 
   (async () => {
     meta = await getJson<TrailNetworkMeta>(`${BASE}/meta.json`);
@@ -187,5 +199,6 @@ export function attachTrailNetwork(
   return () => {
     stopped = true;
     map.off("moveend", onMove);
+    map.off("zoom", onZoom);
   };
 }
