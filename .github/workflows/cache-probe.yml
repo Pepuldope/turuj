@@ -1,0 +1,32 @@
+name: Page cache probe
+
+# Read-only check against the LIVE site that pages drawn on their first visit
+# (loops, routes) are kept in the edge cache (lib/pageCache.ts): the first request
+# draws the page, the next ones should come back much faster. Deploys nothing.
+
+on:
+  push:
+    branches: ["claude/project-thread-tenkmx"]
+    paths: [".github/workflows/cache-probe.yml"]
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Same page three times
+        run: |
+          UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36'
+          curl -sS -A "$UA" https://turuj.sk/sitemap.xml -o sm.xml || true
+          for f in $(grep -oE 'https://turuj.sk/sitemap[^<]*\.xml' sm.xml | head -20); do curl -sS -A "$UA" "$f" >> all.xml; done
+          cat sm.xml >> all.xml
+          echo "okruh urls in sitemap: $(grep -oE 'https://turuj.sk/trasa/[^<]*/okruh' all.xml | sort -u | wc -l)"
+          urls="$(grep -oE 'https://turuj.sk/trasa/[^<]*/okruh' all.xml | sort -u | shuf -n 3 --random-source=<(date +%s%N)) $(grep -oE 'https://turuj.sk/trasa/[^<]*/cesty' all.xml | sort -u | shuf -n 2)"
+          [ -z "${urls// }" ] && urls="https://turuj.sk/trasa/krivan/cesty"
+          for u in $urls https://turuj.sk/data/trails/t/6/35/22.pbf; do
+            echo "## $u"
+            for i in 1 2 3; do
+              curl -sS -o /dev/null -A "$UA" -w "  try $i: %{http_code} %{size_download} B in %{time_total}s (first byte %{time_starttransfer}s)\n" "$u"
+              sleep 1
+            done
+          done | tee -a "$GITHUB_STEP_SUMMARY"
