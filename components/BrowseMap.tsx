@@ -151,6 +151,10 @@ const SPACING = 54;
 const START_ZOOM_IN = 0.6;
 /** Up to this many trips (a filter on), every one gets a square even zoomed out, a little bigger. */
 const FEW_TRIPS = 300;
+// How many zoom levels before the first squares show the map gets all of them (time to hand them over mid-zoom).
+const SQUARE_EARLY = 1;
+// Likewise for the overview's gap copy under the detailed lines (trip-lines-gap).
+const GAP_EARLY = 1;
 const SUN = "#ffb81c";
 const AREA_LINE = "#1769d1";
 const NIGHT = "#14233b";
@@ -323,6 +327,16 @@ export function BrowseMap({
   const selShown = useRef(false);
   const altShown = useRef(false);
   const fewRef = useRef(false);
+  // Squares: every trip's square, but the map only gets them all once you zoom near the level where they show.
+  // Handing ~6,000 points to the map costs a second of a phone's main thread, for squares nobody sees yet.
+  const squares = useRef<{ all: GeoJSON.Feature[]; full: boolean; sel: string | null }>({ all: [], full: false, sel: null });
+  function pushSquares(map: MlMap, shift: number) {
+    const sq = squares.current;
+    // Far out only the big "few" squares and the chosen one can show.
+    sq.full = map.getZoom() >= SQUARE_MIN - shift - SQUARE_EARLY;
+    const features = sq.full ? sq.all : sq.all.filter((f) => f.properties?.f || (sq.sel && f.properties?.s === sq.sel));
+    (map.getSource("squares") as GeoJSONSource | undefined)?.setData({ type: "FeatureCollection", features });
+  }
   const userMarkers = useRef<Marker[]>([]);
   // The start the map last moved to; undefined until the first one is seen.
   const startKey = useRef<string | null | undefined>(undefined);
@@ -502,7 +516,11 @@ export function BrowseMap({
           loadLines(m);
           handlers.current.onView(viewOf(m, shift));
         });
-        m.on("zoom", () => showAreas(m.getZoom()));
+        m.on("zoom", () => {
+          showAreas(m.getZoom());
+          void feedGap(m);
+          if (!squares.current.full && m.getZoom() >= SQUARE_MIN - shift - SQUARE_EARLY) pushSquares(m, shift);
+        });
         showAreas(m.getZoom());
         handlers.current.onView(viewOf(m, shift));
         setCtx({ ml, map: m, shift });
@@ -522,11 +540,25 @@ export function BrowseMap({
     // overview line is not yet taken away (that waits until the detailed one is drawn).
     const overviewId = new Map<unknown, string | number>();
     const covered: unknown[] = [];
+    // The gap copy shows only from the area zoom on, so the map gets it only when you zoom
+    // towards it: one copy of the ~26,000 overview points fewer to hand over as the map opens.
+    let gapFeatures: GeoJSON.Feature[] | null = null;
+    let gapFed = false;
+    const dropped: (string | number)[] = [];
+    const gapSource = () => map?.getSource("trip-lines-gap") as GeoJSONSource | undefined;
     const dropCovered = () => {
       const m = map;
       if (!m || !covered.length) return;
       const ids = covered.splice(0).map((s) => overviewId.get(s)).filter((id) => id !== undefined);
-      if (ids.length) (m.getSource("trip-lines-gap") as GeoJSONSource | undefined)?.updateData({ remove: ids }, true);
+      if (!gapFed) dropped.push(...ids);
+      else if (ids.length) gapSource()?.updateData({ remove: ids }, true);
+    };
+    const feedGap = async (m: MlMap) => {
+      if (gapFed || !gapFeatures || m.getZoom() < areaZoom - GAP_EARLY) return;
+      gapFed = true;
+      // The same features in the same order as the overview, so each trip gets the same id.
+      await lineFeeder(gapSource, OVERVIEW_POINTS_PER_STEP)(gapFeatures);
+      if (dropped.length && !cancelled) gapSource()?.updateData({ remove: dropped.splice(0) }, true);
     };
     const getJson = async <T,>(url: string): Promise<T | null> => {
       try {
@@ -558,9 +590,9 @@ export function BrowseMap({
         const overview = await fetchLines(`${MAP_DATA}/overview.json?v=${got.generated_at}`);
         if (overview && !cancelled) {
           lineFeeder(() => m.getSource("trip-lines") as GeoJSONSource | undefined, OVERVIEW_POINTS_PER_STEP)(overview.features);
-          // The same features in the same order, so both sources give each trip the same id.
-          lineFeeder(() => m.getSource("trip-lines-gap") as GeoJSONSource | undefined, OVERVIEW_POINTS_PER_STEP)(overview.features);
           for (const f of overview.features) if (f.id !== undefined) overviewId.set(f.properties?.s, f.id);
+          gapFeatures = overview.features;
+          void feedGap(m);
           remember(overview.features, false);
         }
         return got;
@@ -815,14 +847,13 @@ export function BrowseMap({
     fewRef.current = few;
     // With every square showing, the area dots would only cover them.
     showDots(areaEls.current, !few && map.getZoom() < AREA_ZOOM - ctx.shift);
-    (map.getSource("squares") as GeoJSONSource | undefined)?.setData({
-      type: "FeatureCollection",
-      features: trips.map((t) => ({
-        type: "Feature",
-        properties: { s: t.slug, g: t.goal, r: t.rank, z: level.get(t.slug), d: !!t.dim, f: few && !t.dim },
-        geometry: { type: "Point", coordinates: [t.location.lon, t.location.lat] },
-      })),
-    });
+    squares.current.all = trips.map((t) => ({
+      type: "Feature",
+      properties: { s: t.slug, g: t.goal, r: t.rank, z: level.get(t.slug), d: !!t.dim, f: few && !t.dim },
+      geometry: { type: "Point", coordinates: [t.location.lon, t.location.lat] },
+    }));
+    squares.current.full = false;
+    pushSquares(map, ctx.shift);
   }, [ctx, trips]);
 
   // The chosen trip: dark line, start dot, yellow square.
@@ -838,6 +869,8 @@ export function BrowseMap({
       t ? { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [t.start.lon, t.start.lat] } } : EMPTY
     );
     map.setFilter("sq-active", ["==", ["get", "s"], selected ?? ""]);
+    squares.current.sel = selected;
+    if (!squares.current.full) pushSquares(map, ctx.shift);
   }, [ctx, selected, trips, linesVersion]);
 
   // The picked trip's other routes.

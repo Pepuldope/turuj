@@ -1,8 +1,8 @@
 // Every marked hiking trail in Slovakia as a map layer (data: pipeline/network.py,
-// public/data/trails). The country view draws a light overview file; zoomed in,
+// public/data/trails). The country view draws ready-cut tiles of the light overview; zoomed in,
 // the detailed file of each grid cell on screen is fetched once and added.
 import type { GeoJSONSource, Map as MlMap } from "maplibre-gl";
-import { lineFeeder, OVERVIEW_POINTS_PER_STEP } from "@/lib/mapFeed";
+import { lineFeeder } from "@/lib/mapFeed";
 import { fetchLines } from "@/lib/packedLines";
 import { POPULARITY_DASH } from "@/lib/palette";
 
@@ -25,6 +25,10 @@ const BASE = "/data/trails";
 export const LINE_TILE_MAX = 14;
 /** From this zoom on, the detailed cells replace the overview. */
 export const DETAIL_ZOOM = 11;
+/** The overview tiles' zooms and box: keep in step with scripts/line-tiles.mjs. */
+const NETWORK_TILE_MIN = 4;
+const NETWORK_TILE_MAX = 10;
+const NETWORK_BOUNDS: [number, number, number, number] = [16.8, 47.7, 22.6, 49.65];
 
 const EMPTY: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: [] };
 
@@ -72,7 +76,16 @@ export function attachTrailNetwork(
   let stopped = false;
   // Lines are cut into tiles only down to the zoom they are shown at (the detail
   // to 14, enlarged beyond): less work for the phone at each zoom step.
-  map.addSource("network", { type: "geojson", data: EMPTY, maxzoom: DETAIL_ZOOM });
+  // The country view comes as ready-cut tiles (scripts/line-tiles.mjs) that the map's worker
+  // fetches and reads itself: handed over as GeoJSON, its ~90,000 points froze a phone for
+  // about half a second as the map appeared (Peter, 2026-11-03).
+  map.addSource("network", {
+    type: "vector",
+    tiles: [`${window.location.origin}${BASE}/t/{z}/{x}/{y}.pbf`],
+    minzoom: NETWORK_TILE_MIN,
+    maxzoom: NETWORK_TILE_MAX,
+    bounds: NETWORK_BOUNDS,
+  });
   map.addSource("network-detail", { type: "geojson", data: EMPTY, maxzoom: LINE_TILE_MAX });
 
   const top = ramp.length - 1;
@@ -96,9 +109,9 @@ export function attachTrailNetwork(
   const opacity = full ? 0.9 : 0.45;
   const layout = { "line-cap": "round", "line-join": "round" } as const;
 
-  for (const [prefix, source, minzoom, maxzoom] of [
-    ["network", "network", 0, DETAIL_ZOOM],
-    ["network-detail", "network-detail", DETAIL_ZOOM, 24],
+  for (const [prefix, source, minzoom, maxzoom, tiled] of [
+    ["network", "network", 0, DETAIL_ZOOM, { "source-layer": "network" }],
+    ["network-detail", "network-detail", DETAIL_ZOOM, 24, {}],
   ] as const) {
     if (full) {
       // A hairline halo under the busiest trails, so the reddest read as "the main ones".
@@ -106,6 +119,7 @@ export function attachTrailNetwork(
         id: `${prefix}-top-outline`,
         type: "line",
         source,
+        ...tiled,
         minzoom,
         maxzoom,
         filter: ["==", ["get", "p"], top],
@@ -117,6 +131,7 @@ export function attachTrailNetwork(
         id: `${prefix}-quiet`,
         type: "line",
         source,
+        ...tiled,
         minzoom,
         maxzoom,
         filter: ["<=", ["get", "p"], 1],
@@ -128,6 +143,7 @@ export function attachTrailNetwork(
       id: `${prefix}-line`,
       type: "line",
       source,
+      ...tiled,
       minzoom,
       maxzoom,
       ...(full ? { filter: [">", ["get", "p"], 1] as unknown as boolean } : {}),
@@ -165,8 +181,6 @@ export function attachTrailNetwork(
   (async () => {
     meta = await getJson<TrailNetworkMeta>(`${BASE}/meta.json`);
     if (!meta || stopped) return;
-    const overview = await fetchLines(`${BASE}/overview.json?v=${meta.generated_at}`);
-    if (overview && !stopped) lineFeeder(() => map.getSource("network") as GeoJSONSource | undefined, OVERVIEW_POINTS_PER_STEP)(overview.features);
     loadVisibleCells();
   })();
 

@@ -15,8 +15,9 @@
   // Visit-day counter (lib/visitStore.ts). No database_id on purpose: the
   // first deploy creates the free D1 database and later deploys reuse it.
   "d1_databases": [{ "binding": "VISITS_DB", "database_name": "mountour-visits" }],
-  // Finished trip pages (lib/pageCache.ts), so the Worker doesn't draw them on
-  // every visit. No id on purpose: the first deploy creates the free KV store.
+  // Was the page cache until 3 Nov 2026; lib/pageCache.ts now uses the edge cache
+  // (KV's 1,000 free writes a day ran out every morning). Unused, kept so a
+  // rollback still works. No id on purpose: the first deploy created the free KV store.
   "kv_namespaces": [{ "binding": "PAGE_CACHE" }],
   // New routes per visitor a minute (lib/routeGuard.ts), so a script can't spend
   // the free OpenRouteService quota for everyone. Free; namespace_id is any number

@@ -65,3 +65,5 @@ public/data/photo-thumbs.json
 public/data/photo-keys.json
 public/data/home-list.json
 /layout-check/
+# Trail overview tiles, cut at build time (scripts/line-tiles.mjs)
+public/data/trails/t/
