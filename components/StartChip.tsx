@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { searchPlaces } from "@/lib/geocode";
 import type { Place } from "@/lib/geocode";
 import { TOWNS } from "@/lib/towns";
@@ -9,6 +9,9 @@ import { UiIcon } from "@/components/UiIcon";
 import { useT } from "@/lib/i18n";
 
 type SearchState = "idle" | "searching" | "results" | "empty" | "error";
+
+// The one-time "planning from somewhere else?" line under an automatic start has been shown.
+const HINT_KEY = "turuj-auto-start-hint";
 
 // Notes sit on a card.
 const note = "w-fit rounded-lg bg-[var(--card-bg)] px-2.5 py-1.5 text-xs font-medium";
@@ -20,7 +23,7 @@ const note = "w-fit rounded-lg bg-[var(--card-bg)] px-2.5 py-1.5 text-xs font-me
  * travel times and sorts by them.
  */
 export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Zmeniť štart"): always open, closed by this. */ onDone?: () => void } = {}) {
-  const { status, message, locate, start, setManualStart, setPicking } = useUserLocation();
+  const { status, message, locate, start, setManualStart, setPicking, auto } = useUserLocation();
   const t = useT();
   const [openState, setOpenState] = useState(false);
   const open = onDone ? true : openState;
@@ -30,7 +33,24 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
   const [search, setSearch] = useState<SearchState>("idle");
   const [results, setResults] = useState<Place[]>([]);
   const abortRef = useRef<AbortController | null>(null);
-  const expanded = open || !start;
+  // Finding the location on its own (allowed before): the short line waits instead of the open card.
+  const autoLoading = auto && status === "locating" && !start;
+  const expanded = open || (!start && !autoLoading);
+  const autoGps = auto && start?.source === "gps";
+  // The first automatic start says once that it can be changed (Peter, 2026-11-05: people
+  // planning from elsewhere might not notice it is their location).
+  const [hint, setHint] = useState(false);
+  useEffect(() => {
+    if (!autoGps || onDone) return;
+    try {
+      if (localStorage.getItem(HINT_KEY)) return;
+      localStorage.setItem(HINT_KEY, "1");
+    } catch {
+      // Storage blocked: show it anyway, harmless.
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHint(true);
+  }, [autoGps, onDone]);
 
   async function runSearch() {
     if (query.trim().length < 2) return;
@@ -61,14 +81,17 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
       data-start-chip={onDone ? undefined : ""}
       className={onDone ? "flex flex-col gap-2" : "flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] p-3.5 shadow-[var(--shadow-float)]"}
     >
-      {start && !open ? (
+      {(start || autoLoading) && !open ? (
         <div className="flex items-center gap-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-[var(--accent-soft)] text-[var(--accent)]">
             <UiIcon name="pin" size={18} />
           </span>
           <div className="min-w-0 flex-1">
-            <span className="block text-[12.5px] text-[var(--muted)]">{t("Vyrážate z")}</span>
-            <strong className="block truncate text-lg leading-tight">{t(start.label.split(",")[0])}</strong>
+            <span className="block text-[12.5px] text-[var(--muted)]">
+              {t("Vyrážate z")}
+              {start?.source === "gps" && ` · ${t("vaša poloha")}`}
+            </span>
+            <strong className="block truncate text-lg leading-tight">{start ? t(start.label.split(",")[0]) : t("Hľadáme vašu polohu…")}</strong>
           </div>
           <button type="button" onClick={() => setOpen(true)} aria-expanded={false} className="p-2 font-bold text-[var(--accent)]">
             {t("Zmeniť")}
@@ -86,6 +109,15 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
             </button>
           )}
         </div>
+      )}
+
+      {hint && autoGps && !open && (
+        <p className="text-[13px] text-[var(--muted)]">
+          {t("Plánujete odinakiaľ?")}{" "}
+          <button type="button" onClick={() => setOpen(true)} className="font-semibold text-[var(--accent)] underline underline-offset-2">
+            {t("Vybrať iné miesto")}
+          </button>
+        </p>
       )}
 
       {expanded && (
