@@ -135,8 +135,10 @@ export function parkingPlace(name: string | null, lang: Lang = "sk"): string {
   return own ? `na parkovisku ${own}` : "na parkovisku";
 }
 
-export function googleMapsUrl(to: LatLng): string {
-  return `https://www.google.com/maps/dir/?api=1&destination=${to.lat},${to.lon}&travelmode=driving`;
+/** Without `from`, Google starts from where the phone is (best for navigating from right here). */
+export function googleMapsUrl(to: LatLng, from: LatLng | null = null): string {
+  const origin = from ? `&origin=${from.lat},${from.lon}` : "";
+  return `https://www.google.com/maps/dir/?api=1${origin}&destination=${to.lat},${to.lon}&travelmode=driving`;
 }
 
 /** The walk itself, as the trip page hands it to a maps app: [lat, lon] points of the trail. */

@@ -6,6 +6,7 @@ import { googleMapsUrl, googleWalkUrl, mapyUrl, mapyWalkUrl } from "@/lib/links"
 import type { WalkRoute } from "@/lib/links";
 import type { LatLng } from "@/lib/types";
 import { useTripAccess } from "@/components/TripAccess";
+import { useUserLocation } from "@/lib/userLocation";
 import "@/lib/legacyStorage";
 import { useT } from "@/lib/i18n";
 
@@ -63,6 +64,9 @@ export function NavHandoff({
   walk: WalkRoute;
   join: LatLng | null;
 }) {
+  // A typed or picked start goes to Google as the origin; a GPS start is left out, so Google
+  // navigates from wherever the phone is then (Peter, 2026-11-05: it always used "your location").
+  const typed = useUserLocation().start?.source === "manual";
   // Without a parking lot the drive ends on the nearest road, not at a parking.
   const { parking } = useTripAccess();
   const t = useT();
@@ -86,7 +90,7 @@ export function NavHandoff({
       <div className="flex gap-2">
         {drive && (
           <a
-            href={google ? googleMapsUrl(drive) : mapyUrl(drive, start)}
+            href={google ? googleMapsUrl(drive, typed ? start : null) : mapyUrl(drive, start)}
             // Through track(), so our own counter (/statistiky, the monthly report) gets it too, not only Umami.
             onClick={() => track("nav_open", { app })}
             target="_blank"

@@ -6,6 +6,7 @@ import type { Place } from "@/lib/geocode";
 import { TOWNS } from "@/lib/towns";
 import { useUserLocation } from "@/lib/userLocation";
 import { UiIcon } from "@/components/UiIcon";
+import { PickStartMap } from "@/components/PickStartMap";
 import { useT } from "@/lib/i18n";
 
 type SearchState = "idle" | "searching" | "results" | "empty" | "error";
@@ -40,6 +41,8 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
   // The first automatic start says once that it can be changed (Peter, 2026-11-05: people
   // planning from elsewhere might not notice it is their location).
   const [hint, setHint] = useState(false);
+  // Pages without the browse map (the trip page) pick the point on a full-screen map instead.
+  const [pickOwn, setPickOwn] = useState(false);
   useEffect(() => {
     if (!autoGps || onDone) return;
     try {
@@ -196,22 +199,33 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
               </button>
             ))}
           </div>
-          {!onDone && (
+          {
             // Anywhere, not only places with an address: a cottage, a crossroads, a car park.
             <button
               type="button"
               onClick={() => {
+                const browse = document.querySelector("[data-browse-map]");
+                if (!browse || onDone) return setPickOwn(true);
                 setPicking(true);
                 setOpen(false);
-                document.querySelector("[data-browse-map]")?.scrollIntoView({ block: "center", behavior: "smooth" });
+                browse.scrollIntoView({ block: "center", behavior: "smooth" });
               }}
               className="flex h-10 items-center justify-center gap-2 rounded-[10px] border border-dashed border-[var(--border)] text-sm font-semibold text-[var(--accent)] hover:border-[var(--accent)]"
             >
               <UiIcon name="pin" size={16} />
               {t("Vybrať bod na mape")}
             </button>
-          )}
+          }
         </div>
+      )}
+
+      {pickOwn && (
+        <PickStartMap
+          onClose={(picked) => {
+            setPickOwn(false);
+            if (picked) setOpen(false);
+          }}
+        />
       )}
 
       {message && status !== "locating" && (
