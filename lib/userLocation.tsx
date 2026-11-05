@@ -37,6 +37,8 @@ interface UserLocationState {
   /** Slovak, user-facing; null when there is nothing to say. */
   message: string | null;
   locate: () => void;
+  /** The current GPS start came without a tap in this visit (found on its own, or kept from before). */
+  auto: boolean;
   /** "Vybrať bod na mape": the next tap on the home map sets the start there. */
   picking: boolean;
   setPicking: (on: boolean) => void;
@@ -102,6 +104,7 @@ const UserLocationContext = createContext<UserLocationState>({
   setManualStart: () => {},
   message: null,
   locate: () => {},
+  auto: false,
   picking: false,
   setPicking: () => {},
   pickPoint: () => {},
@@ -113,8 +116,9 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
   const [manual, setManual] = useState<Omit<StartPoint, "source"> | null>(null);
   const [ready, setReady] = useState(false);
   const [picking, setPicking] = useState(false);
+  const [auto, setAuto] = useState(false);
   // How the first start of this visit came about, for the "start_set" event.
-  const startHow = useRef<"gps" | "manual" | "remembered" | null>(null);
+  const startHow = useRef<"gps" | "manual" | "remembered" | "auto" | null>(null);
   const startSent = useRef(false);
 
   // Restore after hydration (browser storage doesn't exist on the server).
@@ -126,16 +130,18 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
     if (restored || cached) startHow.current = "remembered";
     if (cached) {
       setFix(cached);
+      setAuto(true);
       setStatus("ok");
     }
     setReady(true);
   }, []);
 
-  const locate = useCallback(() => {
+  const locate = useCallback((silent = false) => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
-      setStatus("unsupported");
+      if (!silent) setStatus("unsupported");
       return;
     }
+    setAuto(silent);
     setStatus("locating");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -145,7 +151,7 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
           accuracy: pos.coords.accuracy,
         };
         writeCached(next);
-        startHow.current = "gps";
+        startHow.current = silent ? "auto" : "gps";
         setFix(next);
         // Asking for GPS means "start from where I am": drop a typed place.
         writeManual(null);
@@ -161,10 +167,33 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
           })
           .catch(() => {});
       },
-      (err) => setStatus(err.code === err.PERMISSION_DENIED ? "denied" : "unavailable"),
+      // A silent try that fails says nothing: the card just asks as before.
+      (err) => {
+        setAuto(false);
+        setStatus(silent ? "idle" : err.code === err.PERMISSION_DENIED ? "denied" : "unavailable");
+      },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
     );
   }, []);
+
+  // Like a maps app: when this site may already use the location (allowed before, "Always allow"),
+  // find it on each visit without a tap. Never asks: with no permission yet nothing happens, and a
+  // typed start or this visit's fix wins (Peter, 2026-11-05).
+  useEffect(() => {
+    if (!ready || manual || fix || !navigator.permissions?.query) return;
+    let live = true;
+    navigator.permissions
+      .query({ name: "geolocation" })
+      .then((p) => {
+        if (live && p.state === "granted") locate(true);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+    // Once, after the stored start is restored.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
 
   const setManualStart = useCallback((place: Omit<StartPoint, "source"> | null) => {
     writeManual(place);
@@ -209,8 +238,8 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
   }, [start]);
 
   const value = useMemo<UserLocationState>(
-    () => ({ status, ready, fix, start, setManualStart, message: MESSAGES[status] ?? null, locate, picking, setPicking, pickPoint }),
-    [status, ready, fix, start, setManualStart, locate, picking, pickPoint]
+    () => ({ status, ready, fix, start, setManualStart, message: MESSAGES[status] ?? null, locate: () => locate(), auto, picking, setPicking, pickPoint }),
+    [status, ready, fix, start, setManualStart, locate, auto, picking, pickPoint]
   );
 
   return <UserLocationContext.Provider value={value}>{children}</UserLocationContext.Provider>;

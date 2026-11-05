@@ -1284,7 +1284,7 @@ function StartReminder() {
 }
 
 /**
- * iPhone home-screen app only (globals.css .sky-edge): iOS paints the strip behind the clock
+ * Phones (globals.css .sky-edge; the home-screen app and Safari alike): iOS paints the strip behind the clock
  * itself, in a colour it takes from what touches the top of the page, and fades it into the
  * page. With nothing there it took the grey page colour and laid a haze over the sky (Peter,
  * 2026-11-04; the page starts below the clock there, safe-area-inset-top is 0). A thin fixed
@@ -1293,10 +1293,17 @@ function StartReminder() {
 function SkyEdge({ colour }: { colour: string }) {
   const [top, setTop] = useState(true);
   useEffect(() => {
-    const on = () => setTop(window.scrollY <= 0);
+    // Same "top" as the phone top bar (8 px), so the band is back the moment the bar turns see-through.
+    const on = () => setTop(window.scrollY <= 8);
     on();
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
   }, []);
-  return <div aria-hidden="true" className="sky-edge" style={{ background: `linear-gradient(${colour}, ${colour} 25%, transparent)`, opacity: top ? 1 : 0 }} />;
+  // Scrolled away it turns the page colour instead of hiding: iOS keeps the last colour it read
+  // while scrolling, and with nothing at the top the strip stayed sky blue over the rest of the
+  // page (Peter, 2026-11-05). iOS reads it during the scroll, so the change reaches the strip.
+  const c = top ? colour : "var(--background)";
+  // At the top it lies over the (see-through) phone top bar, so iOS finds the sky there and not the
+  // bar; scrolled, under it, so the white bar coming in on the way up shows (Peter, 2026-11-05).
+  return <div aria-hidden="true" className="sky-edge" style={{ background: `linear-gradient(${c}, ${c} 25%, transparent)`, zIndex: top ? 41 : undefined }} />;
 }

@@ -29,6 +29,8 @@ export const DETAIL_ZOOM = 11;
 const DETAIL_EARLY = 1;
 /** Overview and detail overlap this many zoom levels each side of DETAIL_ZOOM, cross-fading. */
 const HANDOVER = 0.5;
+/** Past the hand-over the overview stays this faint under the detailed cells, as a stand-in. */
+const UNDER = 0.4;
 /** The overview tiles' zooms and box: keep in step with scripts/line-tiles.mjs. */
 const NETWORK_TILE_MIN = 4;
 const NETWORK_TILE_MAX = 10;
@@ -118,10 +120,13 @@ export function attachTrailNetwork(
   // source's first tiles at the new zoom, so the trails blinked when zooming in (Peter, 2026-11-04).
   const fade = (op: number, out: boolean) =>
     (out
-      ? ["interpolate", ["linear"], ["zoom"], DETAIL_ZOOM, op, DETAIL_ZOOM + HANDOVER, 0]
+      ? ["interpolate", ["linear"], ["zoom"], DETAIL_ZOOM, op, DETAIL_ZOOM + HANDOVER, op * UNDER]
       : ["interpolate", ["linear"], ["zoom"], DETAIL_ZOOM - HANDOVER, 0, DETAIL_ZOOM, op]) as unknown as number;
   for (const [prefix, source, minzoom, maxzoom, tiled, out] of [
-    ["network", "network", 0, DETAIL_ZOOM + HANDOVER, { "source-layer": "network" }, true],
+    // The overview stays on, faint, under the detailed cells at every zoom: wherever a cell is not
+    // drawn yet (a new area, a fast zoom on a big screen) the simple trails show instead of nothing
+    // (Peter, 2026-11-05: blinking on PC). Under a drawn cell the detailed line covers it.
+    ["network", "network", 0, 24, { "source-layer": "network" }, true],
     ["network-detail", "network-detail", DETAIL_ZOOM - HANDOVER, 24, {}, false],
   ] as const) {
     const opacity = fade(baseOpacity, out);
@@ -173,7 +178,10 @@ export function attachTrailNetwork(
   async function loadVisibleCells() {
     if (stopped || !meta || map.getZoom() < DETAIL_ZOOM - DETAIL_EARLY) return;
     const b = map.getBounds();
-    const want = cellsInView(meta.grid, new Set(meta.cells), [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
+    // One cell more on every side, so panning into a new area finds its trails already there
+    // instead of blank for a moment (Peter, 2026-11-05: blinking on PC). Cells are ~25 kB.
+    const { dx, dy } = meta.grid;
+    const want = cellsInView(meta.grid, new Set(meta.cells), [b.getWest() - dx, b.getSouth() - dy, b.getEast() + dx, b.getNorth() + dy]);
     const todo = want.filter((k) => !loaded.has(k) && !pending.has(k));
     await Promise.all(
       todo.map(async (k) => {
@@ -189,7 +197,7 @@ export function attachTrailNetwork(
 
   const onMove = () => void loadVisibleCells();
   map.on("moveend", onMove);
-  // While a pinch is still going (no "moveend" yet), fetch the detailed cells on the way in,
+  // While a pinch or a drag is still going (no "moveend" yet), fetch the detailed cells on the way,
   // so the overview doesn't hand over to empty space at DETAIL_ZOOM: the trails blinked (Peter, 2026-11-03).
   let lastZoomLoad = 0;
   const onZoom = () => {
@@ -198,7 +206,7 @@ export function attachTrailNetwork(
     lastZoomLoad = now;
     void loadVisibleCells();
   };
-  map.on("zoom", onZoom);
+  map.on("move", onZoom);
 
   (async () => {
     meta = await getJson<TrailNetworkMeta>(`${BASE}/meta.json`);
@@ -209,6 +217,6 @@ export function attachTrailNetwork(
   return () => {
     stopped = true;
     map.off("moveend", onMove);
-    map.off("zoom", onZoom);
+    map.off("move", onZoom);
   };
 }

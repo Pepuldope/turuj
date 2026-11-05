@@ -12,6 +12,7 @@ import { fetchLines } from "@/lib/packedLines";
 import { attachTrailNetwork, cellsInView, LINE_TILE_MAX } from "@/lib/trailNetwork";
 import { useUserLocation } from "@/lib/userLocation";
 import { FALLBACK_STYLE, SLOVAKIA, hideBasePois } from "@/components/TrailMap";
+import { PickPin } from "@/components/PickStartMap";
 import { pageLang, tr } from "@/lib/lang";
 
 type MapLibre = typeof import("maplibre-gl");
@@ -526,14 +527,17 @@ export function BrowseMap({
           handlers.current.onView(viewOf(m, shift));
         });
         let lastZoomLoad = 0;
-        m.on("zoom", () => {
-          showAreas(m.getZoom());
-          // Mid-pinch too, so the detailed lines are there when the overview hands over (no blink).
+        // Mid-pinch and mid-drag too, so the detailed lines are there when the overview hands over
+        // or a new area slides in (no blink; Peter 2026-11-05: worst on PC, bigger screen, faster wheel).
+        m.on("move", () => {
           const now = performance.now();
           if (now - lastZoomLoad > 250) {
             lastZoomLoad = now;
             void loadLines(m);
           }
+        });
+        m.on("zoom", () => {
+          showAreas(m.getZoom());
           void feedGap(m);
           if (!squares.current.full && m.getZoom() >= SQUARE_MIN - shift - SQUARE_EARLY) pushSquares(m, shift);
         });
@@ -1075,11 +1079,3 @@ export function BrowseMap({
 }
 
 /** The pin for picking a start; its tip is the bottom middle. */
-function PickPin() {
-  return (
-    <svg viewBox="0 0 32 44" width="32" height="44" className="drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]">
-      <path d="M16 43C16 43 2 26.5 2 16a14 14 0 0 1 28 0c0 10.5-14 27-14 27z" fill="var(--accent)" stroke="#fff" strokeWidth="2" />
-      <circle cx="16" cy="16" r="5" fill="#fff" />
-    </svg>
-  );
-}
