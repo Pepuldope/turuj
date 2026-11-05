@@ -529,7 +529,7 @@ export const EN: Record<string, string> = {
   "Odkiaľ vyrážate?": "Where are you starting from?",
   "Vyrážate z": "Starting from",
   "vaša poloha": "your location",
-  "Plánujete odinakiaľ?": "Planning from somewhere else?",
+  "Vyrážate z iného miesta?": "Starting from somewhere else?",
   "Vybrať iné miesto": "Pick another place",
   "Bez miesta štartu": "No starting point",
   "Vybrať štart": "Pick a start",

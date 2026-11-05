@@ -113,7 +113,7 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
 
       {hint && autoGps && !open && (
         <p className="text-[13px] text-[var(--muted)]">
-          {t("Plánujete odinakiaľ?")}{" "}
+          {t("Vyrážate z iného miesta?")}{" "}
           <button type="button" onClick={() => setOpen(true)} className="font-semibold text-[var(--accent)] underline underline-offset-2">
             {t("Vybrať iné miesto")}
           </button>
