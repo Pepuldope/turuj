@@ -498,7 +498,9 @@ h2,
     z-index: 1;
     pointer-events: none;
   }
+  /* While pulling to refresh: the colour of the sky now at the top of the screen (SunPull sets it),
+     so the strip behind the clock follows the sky (Peter, 2026-11-05). */
   :root[data-pull] .sky-edge {
-    visibility: hidden;
+    background: var(--pull-sky) !important;
   }
 }
