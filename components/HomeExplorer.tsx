@@ -1299,5 +1299,9 @@ function SkyEdge({ colour }: { colour: string }) {
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
   }, []);
-  return <div aria-hidden="true" className="sky-edge" style={{ background: `linear-gradient(${colour}, ${colour} 25%, transparent)`, opacity: top ? 1 : 0 }} />;
+  // Scrolled away it turns the page colour instead of hiding: iOS keeps the last colour it read
+  // while scrolling, and with nothing at the top the strip stayed sky blue over the rest of the
+  // page (Peter, 2026-11-05). iOS reads it during the scroll, so the change reaches the strip.
+  const c = top ? colour : "var(--background)";
+  return <div aria-hidden="true" className="sky-edge" style={{ background: `linear-gradient(${c}, ${c} 25%, transparent)` }} />;
 }
