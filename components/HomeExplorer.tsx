@@ -1303,5 +1303,7 @@ function SkyEdge({ colour }: { colour: string }) {
   // while scrolling, and with nothing at the top the strip stayed sky blue over the rest of the
   // page (Peter, 2026-11-05). iOS reads it during the scroll, so the change reaches the strip.
   const c = top ? colour : "var(--background)";
-  return <div aria-hidden="true" className="sky-edge" style={{ background: `linear-gradient(${c}, ${c} 25%, transparent)` }} />;
+  // At the top it lies over the (see-through) phone top bar, so iOS finds the sky there and not the
+  // bar; scrolled, under it, so the white bar coming in on the way up shows (Peter, 2026-11-05).
+  return <div aria-hidden="true" className="sky-edge" style={{ background: `linear-gradient(${c}, ${c} 25%, transparent)`, zIndex: top ? 41 : undefined }} />;
 }
