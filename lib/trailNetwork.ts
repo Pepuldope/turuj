@@ -173,7 +173,10 @@ export function attachTrailNetwork(
   async function loadVisibleCells() {
     if (stopped || !meta || map.getZoom() < DETAIL_ZOOM - DETAIL_EARLY) return;
     const b = map.getBounds();
-    const want = cellsInView(meta.grid, new Set(meta.cells), [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
+    // One cell more on every side, so panning into a new area finds its trails already there
+    // instead of blank for a moment (Peter, 2026-11-05: blinking on PC). Cells are ~25 kB.
+    const { dx, dy } = meta.grid;
+    const want = cellsInView(meta.grid, new Set(meta.cells), [b.getWest() - dx, b.getSouth() - dy, b.getEast() + dx, b.getNorth() + dy]);
     const todo = want.filter((k) => !loaded.has(k) && !pending.has(k));
     await Promise.all(
       todo.map(async (k) => {
@@ -189,7 +192,7 @@ export function attachTrailNetwork(
 
   const onMove = () => void loadVisibleCells();
   map.on("moveend", onMove);
-  // While a pinch is still going (no "moveend" yet), fetch the detailed cells on the way in,
+  // While a pinch or a drag is still going (no "moveend" yet), fetch the detailed cells on the way,
   // so the overview doesn't hand over to empty space at DETAIL_ZOOM: the trails blinked (Peter, 2026-11-03).
   let lastZoomLoad = 0;
   const onZoom = () => {
@@ -198,7 +201,7 @@ export function attachTrailNetwork(
     lastZoomLoad = now;
     void loadVisibleCells();
   };
-  map.on("zoom", onZoom);
+  map.on("move", onZoom);
 
   (async () => {
     meta = await getJson<TrailNetworkMeta>(`${BASE}/meta.json`);
@@ -209,6 +212,6 @@ export function attachTrailNetwork(
   return () => {
     stopped = true;
     map.off("moveend", onMove);
-    map.off("zoom", onZoom);
+    map.off("move", onZoom);
   };
 }

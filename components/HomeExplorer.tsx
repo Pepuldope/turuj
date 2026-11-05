@@ -1293,7 +1293,8 @@ function StartReminder() {
 function SkyEdge({ colour }: { colour: string }) {
   const [top, setTop] = useState(true);
   useEffect(() => {
-    const on = () => setTop(window.scrollY <= 0);
+    // Same "top" as the phone top bar (8 px), so the band is back the moment the bar turns see-through.
+    const on = () => setTop(window.scrollY <= 8);
     on();
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);

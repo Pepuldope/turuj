@@ -526,14 +526,17 @@ export function BrowseMap({
           handlers.current.onView(viewOf(m, shift));
         });
         let lastZoomLoad = 0;
-        m.on("zoom", () => {
-          showAreas(m.getZoom());
-          // Mid-pinch too, so the detailed lines are there when the overview hands over (no blink).
+        // Mid-pinch and mid-drag too, so the detailed lines are there when the overview hands over
+        // or a new area slides in (no blink; Peter 2026-11-05: worst on PC, bigger screen, faster wheel).
+        m.on("move", () => {
           const now = performance.now();
           if (now - lastZoomLoad > 250) {
             lastZoomLoad = now;
             void loadLines(m);
           }
+        });
+        m.on("zoom", () => {
+          showAreas(m.getZoom());
           void feedGap(m);
           if (!squares.current.full && m.getZoom() >= SQUARE_MIN - shift - SQUARE_EARLY) pushSquares(m, shift);
         });

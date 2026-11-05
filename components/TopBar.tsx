@@ -130,7 +130,9 @@ export function TopBar() {
     <div
       ref={boxRef}
       style={{ transitionTimingFunction: visible ? EASE_IN : EASE_OUT }}
-      className={`fixed inset-x-0 top-0 z-40 pt-[env(safe-area-inset-top)] transition-[translate,transform,background-color,box-shadow] duration-[280ms] motion-reduce:transition-none lg:inset-x-auto lg:top-3 lg:right-3 lg:translate-y-0 lg:bg-transparent lg:p-0 lg:shadow-none ${
+      // Back at the top the bar turns see-through at once, not over 280 ms: iOS reads the colour for the
+      // strip behind the clock while the page scrolls, and caught it still white (Peter, 2026-11-05).
+      className={`fixed inset-x-0 top-0 z-40 pt-[env(safe-area-inset-top)] ${solid || panel ? "transition-[translate,transform,background-color,box-shadow]" : "transition-[translate,transform]"} duration-[280ms] motion-reduce:transition-none lg:inset-x-auto lg:top-3 lg:right-3 lg:translate-y-0 lg:bg-transparent lg:p-0 lg:shadow-none ${
         visible ? "translate-y-0" : "-translate-y-full"
       } ${
         solid || panel
@@ -144,7 +146,7 @@ export function TopBar() {
           fills the top of the screen instead of leaving a gap (Peter, 2026-11-03). */}
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-x-0 bottom-full h-16 transition-colors duration-200 lg:hidden ${solid || panel ? "bg-[var(--card-bg)]" : "bg-transparent"}`}
+        className={`pointer-events-none absolute inset-x-0 bottom-full h-16 lg:hidden ${solid || panel ? "bg-[var(--card-bg)] transition-colors duration-200" : "bg-transparent"}`}
       />
       <div ref={rowRef} className={`flex h-[52px] items-center justify-between gap-2 px-3 lg:h-auto lg:justify-end lg:gap-1 lg:rounded-full lg:bg-[var(--card-bg)] lg:p-1 lg:shadow-[var(--shadow-float)]`}>
         {/* The name only once the page's own header (which shows it) has scrolled away. */}
