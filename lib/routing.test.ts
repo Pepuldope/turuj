@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { RateLimited, driveMatrix, driveRoute, dropDeadEnd, finishDrive, knownTail, simplifyLine, walkRoute } from "./routing";
+import { RateLimited, driveMatrix, driveRoute, dropDeadEnd, dropUTurns, finishDrive, knownTail, simplifyLine, walkRoute } from "./routing";
 import type { KnownTail, Pt } from "./routing";
 
 const road = { durationMin: 30, distanceM: 30000, points: [[48.0, 19.0], [49.0, 19.0]] as [number, number][] };
@@ -197,5 +197,41 @@ describe("driveMatrix", () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ durations: [[60]] }))));
     await expect(driveMatrix("key", [48.15, 17.11], [[49, 19], [48, 18]])).rejects.toThrow();
     vi.unstubAllGlobals();
+  });
+});
+
+describe("dropUTurns", () => {
+  it("cuts the out-and-back past a junction (Zvolen, road 16)", () => {
+    const pts: [number, number][] = [
+      [48.568756, 19.128935],
+      [48.568614, 19.128766],
+      [48.568569, 19.128381],
+      [48.568629, 19.127693],
+      [48.568588, 19.12664],
+      [48.568454, 19.12845],
+      [48.568302, 19.129467],
+    ];
+    const { points, cutM } = dropUTurns(pts);
+    expect(points).not.toContainEqual([48.568588, 19.12664]);
+    expect(cutM).toBeGreaterThan(150);
+    expect(points[0]).toEqual(pts[0]);
+    expect(points[points.length - 1]).toEqual(pts[pts.length - 1]);
+  });
+  it("keeps a hairpin bend whose legs run side by side", () => {
+    const pts: [number, number][] = [
+      [48.0, 19.0],
+      [48.001, 19.0],
+      [48.0, 19.0006],
+    ];
+    expect(dropUTurns(pts).points).toHaveLength(3);
+  });
+  it("keeps an ordinary bendy road", () => {
+    const pts: [number, number][] = [
+      [48.0, 19.0],
+      [48.001, 19.001],
+      [48.0, 19.002],
+      [48.001, 19.003],
+    ];
+    expect(dropUTurns(pts).points).toHaveLength(4);
   });
 });

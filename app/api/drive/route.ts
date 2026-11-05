@@ -1,7 +1,7 @@
 import { roundCoord } from "@/lib/drive";
 import { KEEP_FOR, edgeJson, withEdgeCache } from "@/lib/edgeCache";
 import { OTHER_SITE, fromOtherSite, overRouteLimit } from "@/lib/routeGuard";
-import { RateLimited, driveRoute, finishDrive, knownTail, lastStretch, simplifyLine } from "@/lib/routing";
+import { RateLimited, driveRoute, dropUTurns, finishDrive, knownTail, lastStretch, simplifyLine } from "@/lib/routing";
 import type { KnownTail, Pt, TailStore } from "@/lib/routing";
 
 /**
@@ -65,7 +65,8 @@ export async function GET(req: Request) {
       const store = tailStore(req);
       const ask = (a: Pt, b: Pt) => lastStretch(key, a, b, TAIL_SNAP_M);
       const full = await finishDrive(road, to, (a, b) => knownTail(a, b, ask, store), () => (partial = true));
-      const route = { ...full, points: simplifyLine(full.points, SHAPE_TOL_M) };
+      const clean = dropUTurns(full.points);
+      const route = { ...full, distanceM: full.distanceM - clean.cutM, points: simplifyLine(clean.points, SHAPE_TOL_M) };
       const keepS = partial ? PARTIAL_S : DAY_S;
       return Response.json(route, {
         headers: {
