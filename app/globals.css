@@ -489,7 +489,8 @@ h2,
 .sky-edge {
   display: none;
 }
-@media (display-mode: standalone) and (max-width: 1023.98px) {
+/* Phones, in the home-screen app and in the browser alike: Safari also paints the clock strip from the page top. */
+@media (max-width: 1023.98px) {
   .sky-edge {
     display: block;
     position: fixed;

@@ -37,7 +37,7 @@ interface UserLocationState {
   /** Slovak, user-facing; null when there is nothing to say. */
   message: string | null;
   locate: () => void;
-  /** The current GPS start was found on its own (location already allowed), not by a tap. */
+  /** The current GPS start came without a tap in this visit (found on its own, or kept from before). */
   auto: boolean;
   /** "Vybrať bod na mape": the next tap on the home map sets the start there. */
   picking: boolean;
@@ -130,6 +130,7 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
     if (restored || cached) startHow.current = "remembered";
     if (cached) {
       setFix(cached);
+      setAuto(true);
       setStatus("ok");
     }
     setReady(true);

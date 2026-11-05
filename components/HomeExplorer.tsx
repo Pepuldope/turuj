@@ -1284,7 +1284,7 @@ function StartReminder() {
 }
 
 /**
- * iPhone home-screen app only (globals.css .sky-edge): iOS paints the strip behind the clock
+ * Phones (globals.css .sky-edge; the home-screen app and Safari alike): iOS paints the strip behind the clock
  * itself, in a colour it takes from what touches the top of the page, and fades it into the
  * page. With nothing there it took the grey page colour and laid a haze over the sky (Peter,
  * 2026-11-04; the page starts below the clock there, safe-area-inset-top is 0). A thin fixed
