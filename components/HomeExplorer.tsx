@@ -1032,10 +1032,9 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
 
   return (
     <main className="flex flex-1 flex-col lg:h-dvh lg:flex-none lg:flex-row lg:overflow-hidden">
-      {/* Outside the column: the column moves down while pulling to refresh, the band stays at the top. */}
-      <SkyEdge colour={LAND[season].sky1} />
       <div ref={columnRef} className="mx-auto flex w-full max-w-[640px] flex-col gap-5 px-4 pt-4 pb-6 md:max-w-[760px] lg:mx-0 lg:w-[440px] lg:max-w-none lg:shrink-0 relative lg:overflow-y-auto lg:overscroll-contain">
         <PullSky season={season} />
+        <SkyEdge colour={LAND[season].sky1} />
         <header className="relative -mx-4 -mt-4 flex shrink-0 flex-col sm:overflow-hidden sm:rounded-b-[24px] lg:overflow-visible lg:rounded-none">
           <SeasonScene season={season} width={440} height={250} seed={11} sunX={HEADER_SUN_X} sunY={0.26} drop={0.2} noSun className="absolute inset-0 h-full w-full" />
           <SunPull season={season} width={440} height={250} sunX={HEADER_SUN_X} sunY={0.26} moveRef={columnRef} />

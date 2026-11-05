@@ -27,28 +27,6 @@ interface Props {
 
 const ease = (f: number) => 1 - Math.pow(1 - f, 3);
 
-/** PullSky's gradient (top to bottom), to read the colour at any height of it. */
-const PULL_SKY_STOPS: [number, string][] = [
-  [0, "#3f7fd0"],
-  [0.45, "#78aee6"],
-  [0.8, "#a9cdf0"],
-];
-const PULL_SKY_H = 420;
-const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
-/** The colour at f (0 top .. 1 bottom) of PullSky, whose bottom is the season's sky. */
-export function pullSkyAt(f: number, bottom: string): string {
-  const stops: [number, string][] = [...PULL_SKY_STOPS, [1, bottom]];
-  const k = Math.max(0, Math.min(1, f));
-  let i = 0;
-  while (i < stops.length - 2 && k > stops[i + 1][0]) i++;
-  const [f0, c0] = stops[i];
-  const [f1, c1] = stops[i + 1];
-  const t = (k - f0) / (f1 - f0 || 1);
-  const a = rgb(c0);
-  const b = rgb(c1);
-  return `rgb(${a.map((v, j) => Math.round(v + (b[j] - v) * t)).join(" ")})`;
-}
-
 /**
  * The header's sun, which doubles as pull-to-refresh on phones: pulling the
  * page down from the top shows the sky above the header, the sun rises to
@@ -94,10 +72,8 @@ export function SunPull({ season, width, height, sunX, sunY, moveRef }: Props) {
       const e = ease(Math.min(1, pull / READY));
       const x = x0 + (width / 2 - x0) * e;
       const y = rest + (top - (pull * 0.52) / s - rest) * e;
-      // The iPhone app's sky band (.sky-edge) takes the colour of the sky now at the top of the screen.
-      const root = document.documentElement;
-      root.toggleAttribute("data-pull", pull > 0);
-      if (pull > 0) root.style.setProperty("--pull-sky", pullSkyAt(1 - pull / PULL_SKY_H, land.sky1));
+      // The sky band would cover the rising sun while pulling.
+      document.documentElement.toggleAttribute("data-pull", pull > 0);
       sun.setAttribute("transform", `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
       const grow = Math.max(0, (Math.min(1, pull / READY) - 0.25) / 0.75);
       const turning = state === "refreshing";
@@ -184,10 +160,9 @@ export function SunPull({ season, width, height, sunX, sunY, moveRef }: Props) {
       window.removeEventListener("touchcancel", onEnd);
       window.removeEventListener("resize", draw);
       document.documentElement.removeAttribute("data-pull");
-      document.documentElement.style.removeProperty("--pull-sky");
       if (move) move.style.transform = "";
     };
-  }, [moveRef, width, height, x0, y0, sunR, summer, land.sky1]);
+  }, [moveRef, width, height, x0, y0, sunR, summer]);
 
   return (
     <svg
@@ -231,7 +206,7 @@ export function PullSky({ season }: { season: Season }) {
     <div
       aria-hidden="true"
       className="pointer-events-none absolute inset-x-0 bottom-full h-[420px] sm:hidden"
-      style={{ background: `linear-gradient(to bottom, ${PULL_SKY_STOPS.map(([f, c]) => `${c} ${f * 100}%`).join(", ")}, ${LAND[season].sky1})` }}
+      style={{ background: `linear-gradient(to bottom, #3f7fd0, #78aee6 45%, #a9cdf0 80%, ${LAND[season].sky1})` }}
     />
   );
 }
