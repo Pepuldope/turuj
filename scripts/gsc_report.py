@@ -35,7 +35,7 @@ PAGE = 25000
 MAX_INSPECT = 600
 SAMPLE_SITEMAP = 250
 WORKERS = 8
-MIN_GAP = 0.5  # seconds each worker waits between calls: at most ~960/min only if calls were instant; real calls take seconds
+MIN_GAP = 0.5  # seconds each worker waits between calls (calls themselves take ~5-9s)
 BUDGET = 20 * 60  # seconds for the whole inspection phase
 
 stats = {"rows": {}, "inspections": 0, "errors": 0, "status_codes": {}}
