@@ -2,7 +2,7 @@ import type { D1Like } from "@/lib/d1";
 
 // Hourly clean-up on the cron (worker.ts), so the database keeps only what /sukromie says it keeps:
 // email codes that stopped working, sessions past their end, and messages from "Napíšte nám" /
-// "Nahlásiť chybu" a year after they came. A table that doesn't exist yet is fine.
+// "Nahlásiť chybu" a year after they came, and the load test's made-up ratings. A table that doesn't exist yet is fine.
 
 export const FEEDBACK_KEEP_DAYS = 365;
 
@@ -12,6 +12,8 @@ export function cleanupStatements(now = Date.now()): string[] {
     `DELETE FROM login_code WHERE expires < ${now}`,
     `DELETE FROM account_session WHERE expires < ${now}`,
     `DELETE FROM feedback WHERE at < '${feedbackBefore}'`,
+    // Ratings the load test (scripts/load-test.mjs) left on the live site; real raters' ids never start so.
+    `DELETE FROM review WHERE reviewer LIKE 'loadtest-%'`,
   ];
 }
 

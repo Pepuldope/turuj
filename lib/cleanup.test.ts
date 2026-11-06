@@ -8,6 +8,7 @@ describe("hourly clean-up", () => {
     expect(s[0]).toBe(`DELETE FROM login_code WHERE expires < ${now}`);
     expect(s[1]).toBe(`DELETE FROM account_session WHERE expires < ${now}`);
     expect(s[2]).toBe("DELETE FROM feedback WHERE at < '2025-11-03T12:00:00.000Z'");
+    expect(s[3]).toBe("DELETE FROM review WHERE reviewer LIKE 'loadtest-%'");
   });
 
   it("carries on past a table that doesn't exist yet", async () => {
@@ -25,7 +26,7 @@ describe("hourly clean-up", () => {
       }),
       batch: async () => [],
     };
-    expect(await cleanup(db as never)).toBe(4);
-    expect(ran).toHaveLength(3);
+    expect(await cleanup(db as never)).toBe(6);
+    expect(ran).toHaveLength(4);
   });
 });
