@@ -137,8 +137,8 @@ def pick_sample(urls: list[str]) -> list[str]:
     """Deterministic, even sample that keeps /trasa/, town pages and the rest in proportion."""
     groups: dict[str, list[str]] = {}
     for u in sorted(set(urls)):
-        path = u.split("turuj.sk", 1)[-1]
-        key = "trasa" if path.startswith("/trasa/") else "mesto" if re.match(r"^/(mesto|obec|okolie)/", path) else "other"
+        path = re.sub(r"^/en(?=/|$)", "", u.split("turuj.sk", 1)[-1])
+        key = "trasa" if path.startswith("/trasa/") else "mesto" if path.startswith("/vylety-z") else "other"
         groups.setdefault(key, []).append(u)
     total = sum(len(v) for v in groups.values()) or 1
     out: list[str] = []
