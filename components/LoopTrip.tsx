@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
 import { trailDetailFrom } from "@/lib/data";
 import { getLoop, getTrip } from "@/lib/tripFiles";
@@ -24,7 +24,7 @@ export async function loopMetadata(slug: string, lang: Lang): Promise<Metadata> 
 export async function LoopTrip({ slug, lang }: { slug: string; lang: Lang }) {
   const loop = await loadLoop(slug);
   if (!loop) {
-    if (await getTrip(slug)) redirect(langPath(lang, `/trasa/${slug}`));
+    if (await getTrip(slug)) permanentRedirect(langPath(lang, `/trasa/${slug}`));
     notFound();
   }
   return <TripSheet trip={loop.trip} detail={loop.detail} loopBack={loop.back} lang={lang} />;

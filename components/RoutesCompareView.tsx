@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
 import { getRouteWalks, getTrip, withLoopRoutes } from "@/lib/tripFiles";
 import { UiIcon } from "@/components/UiIcon";
@@ -24,7 +24,7 @@ export async function RoutesCompareView({ slug, lang }: { slug: string; lang: La
   const trip = await loadTrip(slug);
   if (!trip) notFound();
   const base = trip.routes ?? [];
-  if (base.length < 2) redirect(langPath(lang, `/trasa/${slug}`));
+  if (base.length < 2) permanentRedirect(langPath(lang, `/trasa/${slug}`));
   // Loops are compared with the rest, each as its own route (Peter, 2026-10-24).
   const routes = await withLoopRoutes(base);
   const walks = await getRouteWalks(routes.map((r) => r.slug));

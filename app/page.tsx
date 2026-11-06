@@ -34,6 +34,7 @@ export default async function Home() {
               "@id": `${SITE_URL}/#website`,
               url: absoluteUrl("/"),
               name: SITE_NAME,
+              alternateName: ["Turuj", "turuj.sk"],
               description: SITE_DESCRIPTION,
               inLanguage: "sk",
               publisher: { "@id": `${SITE_URL}/#organization` },

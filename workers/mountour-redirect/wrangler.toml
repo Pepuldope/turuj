@@ -1,0 +1,6 @@
+# Redirects every path and query on the old mountour.* workers.dev address to https://turuj.sk (F23).
+# Deploy (Peter, by hand): npx wrangler deploy --config workers/mountour-redirect/wrangler.toml
+name = "mountour"
+main = "index.js"
+compatibility_date = "2025-01-01"
+workers_dev = true

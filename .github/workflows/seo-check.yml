@@ -23,6 +23,16 @@ jobs:
             curl -sS -D h.txt -A 'Mozilla/5.0 Chrome/141' "$P$u" -o p.html
             echo "$u -> $(grep -iE '^(x-turuj-fast|content-type)' h.txt | tr -d '\r' | tr '\n' ' ') $(grep -oE '<html[^>]{0,40}|<title>[^<]*' p.html | tr '\n' ' ')"
           done
+      - name: Regression guard on live trip pages (F1)
+        run: |
+          UA='Mozilla/5.0 Chrome/141'
+          curl -sS -A "$UA" https://turuj.sk/trasa/krivan -o a.html
+          curl -sS -A "$UA" https://turuj.sk/trasa/krivan-tri-studnicky-stara -o b.html
+          grep -q '>O výlete<' a.html || { echo '::error::/trasa/krivan has no "O výlete" heading in the server HTML'; exit 1; }
+          ta=$(grep -oE '<title>[^<]*</title>' a.html | head -1)
+          tb=$(grep -oE '<title>[^<]*</title>' b.html | head -1)
+          echo "krivan: $ta"; echo "krivan-tri-studnicky-stara: $tb"
+          [ -n "$ta" ] && [ "$ta" != "$tb" ] || { echo '::error::the two Kriváň pages share a <title> (or it is missing)'; exit 1; }
       - name: Lighthouse SEO on live pages
         run: |
           npm i -g lighthouse@12 >/dev/null 2>&1

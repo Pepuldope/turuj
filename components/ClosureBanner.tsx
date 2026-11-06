@@ -34,7 +34,7 @@ export function ClosureBanner({ closures }: Props) {
   // in local time). Don't guess from the server's clock: wait for it.
   if (!date) {
     return (
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4">
+      <div data-nosnippet className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4">
         <p className="font-semibold">{t("Overujeme uzávery…")}</p>
       </div>
     );

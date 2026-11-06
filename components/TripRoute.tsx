@@ -4,7 +4,7 @@ import { cache } from "react";
 import { routeWalk, trailDetailFrom } from "@/lib/data";
 import { pickWalk } from "@/lib/walkFacts";
 import { getTripLive } from "@/lib/tripDb";
-import { englishTripsAhead, getTripPhoto } from "@/lib/tripFiles";
+import { englishTripsAhead, getTripPhoto, shareImage } from "@/lib/tripFiles";
 import { formatDistance, formatDuration } from "@/lib/format";
 import { TripSheet } from "@/components/TripSheet";
 import { pageMetadata } from "@/lib/seo";
@@ -63,7 +63,7 @@ export async function tripMetadata(slug: string, lang: Lang): Promise<Metadata> 
     lang,
     english: (await englishTripsAhead()).has(trail.slug),
     // Shared links and search results show the place itself when Commons has a photo of it.
-    ...(photo ? { image: { url: photo.url, width: photo.w, height: photo.h, alt: trail.name } } : {}),
+    ...(photo ? { image: { ...shareImage(photo), alt: trail.name } } : {}),
   });
 }
 

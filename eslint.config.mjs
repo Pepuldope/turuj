@@ -15,6 +15,8 @@ const eslintConfig = defineConfig([
     // Cloudflare build output (OpenNext + wrangler):
     ".open-next/**",
     ".wrangler/**",
+    // Stand-alone redirect Worker, deployed by hand (not part of the app).
+    "workers/**",
   ]),
 ]);
 

@@ -56,9 +56,8 @@ export function aboutTrip({ trip, detail, town, driveMin }: AboutInput): string[
   // Where it is and what the walk passes.
   const place: string[] = [];
   if (trip.region_name) {
-    place.push(
-      `Výlet je v oblasti ${trip.region_name}${trip.protected_area ? `, cieľ leží v chránenom území ${trip.protected_area}` : ""}.`
-    );
+    // F12: no "cieľ leží v chránenom území X": the area came from a region bounding box, not a polygon test (wrong for e.g. Trenčiansky hrad).
+    place.push(`Výlet je v oblasti ${trip.region_name}.`);
   }
   const seen = new Set([trip.destination.name.toLowerCase()]);
   const passes: string[] = [];
