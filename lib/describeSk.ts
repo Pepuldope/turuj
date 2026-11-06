@@ -2,6 +2,7 @@ import { formatDistance, formatDuration, formatWalk, POI_LABEL } from "@/lib/for
 import type { Town, TripDetail } from "@/lib/tripSchema";
 import type { TrailDetail } from "@/lib/types";
 import { townGenitive } from "@/lib/townNames";
+import type { WalkFacts } from "@/lib/walkFacts";
 
 // "O výlete": a few Slovak sentences about one trip, written from its own facts (length, climb,
 // heights, what the walk passes, parking, bus or train, the drive from the nearest town). Every
@@ -31,16 +32,18 @@ export interface AboutInput {
   /** The trip's nearest town page, and the car minutes from it (null = not known). */
   town: Town | null;
   driveMin: number | null;
+  /** The walk as the page's facts and the meta description give it (from the default parking); null = the bare trail's numbers. */
+  walk: WalkFacts | null;
 }
 
 /** The "O výlete" paragraphs, each a few sentences; empty facts are left out. */
-export function aboutTrip({ trip, detail, town, driveMin }: AboutInput): string[] {
+export function aboutTrip({ trip, detail, town, driveMin, walk: facts }: AboutInput): string[] {
   const out: string[] = [];
   const loop = trip.route === "okruh";
 
   // The walk itself.
   const walk = [
-    `Je to ${DIFFICULTY[trip.difficulty]} túra${loop ? " (okruh)" : " tam a späť"}: ${formatDistance(trip.distance_m)} a ${trip.ascent_m} m stúpania, chôdza bez prestávok trvá asi ${formatDuration(trip.duration_min)}.`,
+    `Je to ${DIFFICULTY[trip.difficulty]} túra${loop ? " (okruh)" : " tam a späť"}: ${formatDistance(facts?.m ?? trip.distance_m)} a ${facts?.ascentM ?? trip.ascent_m} m stúpania, chôdza bez prestávok trvá asi ${formatDuration(facts?.min ?? trip.duration_min)}.`,
   ];
   const startEle = trip.start.ele_m;
   // The goal's own height wins over the terrain model's top, which can miss a sharp summit.

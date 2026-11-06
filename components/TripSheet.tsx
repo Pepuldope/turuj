@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { primaryTrailhead, sunLocation } from "@/lib/data";
+import { primaryTrailhead, routeWalk, sunLocation } from "@/lib/data";
+import { pickWalk } from "@/lib/walkFacts";
 import { gpxUrlFor } from "@/lib/gpx";
 import { GpxDownload } from "@/components/GpxDownload";
 import { getRouteWalks, getTownDrives, getTrip, getTripPhoto, photoSource, withLoopRoutes } from "@/lib/tripFiles";
@@ -134,7 +135,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
   // "O výlete": a few sentences from this trip's own facts, Slovak pages only (lib/describeSk.ts).
   const about =
     lang === "sk" && !loopBack
-      ? aboutTrip({ trip, detail, town, driveMin: town ? ((await getTownDrives(town.id))[trail.slug] ?? null) : null })
+      ? aboutTrip({ trip, detail, town, driveMin: town ? ((await getTownDrives(town.id))[trail.slug] ?? null) : null, walk: pickWalk(routeWalk(detail), false, parkingLots.length > 0) })
       : [];
   const description = loopBack
     ? tr(lang, "Okruh zo štartu {start}: hore po trase {up}, dole po trase {down}.", { start: trip.start.name, up: routeName(routes.find((r) => r.slug === trail.slug), lang), down: routeName(loopBack, lang) })
