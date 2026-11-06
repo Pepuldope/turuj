@@ -952,7 +952,7 @@ export const EN: Record<string, string> = {
   "{outside} ({months}) túru za svetla nestihnete": "{outside} ({months}) you cannot finish the hike in daylight",
   "{outside} ({months}) treba vyraziť najneskôr o {lo}": "{outside} ({months}) the latest start is {lo}",
   "{outside} ({months}) treba vyraziť najneskôr medzi {lo} a {hi} podľa mesiaca": "{outside} ({months}) the latest start is between {lo} and {hi}, depending on the month",
-  "v ({months}) túru za svetla nestihnete": "in ({months}) you cannot finish the hike in daylight",
+  "ale {months} túru za svetla nestihnete": "but in {months} you cannot finish the hike in daylight",
   "Pozor, na trase je hlásená uzávera {period}, pozrite časť Uzávery a poplatky.": "Warning: a closure is reported on this route, {period}; see Closures and fees.",
   "Mimo nej treba vyraziť: v {m1} {a}, v {m2} {b}.": "Outside it, set off: in {m1} {a}, in {m2} {b}.",
   "Každý mesiac tabuľky je uzavretý ({who}); čas vyrazenia neuvádzame.": "Every month in the table is closed ({who}); we give no start time.",

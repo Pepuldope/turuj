@@ -301,7 +301,7 @@ export function departureSentence(lang: Lang, rows: MonthRow[], closures: Closur
   const hi = ordered[ordered.length - 1];
   const months = monthSpan(lang, timed.map((r) => r.month));
   let text = tr(lang, lo === hi ? "{outside} ({months}) treba vyraziť najneskôr o {lo}" : "{outside} ({months}) treba vyraziť najneskôr medzi {lo} a {hi} podľa mesiaca", { outside, months, lo, hi });
-  if (untimed.length) text += ", " + tr(lang, "v ({months}) túru za svetla nestihnete", { months: monthSpan(lang, untimed.map((r) => r.month)) });
+  if (untimed.length) text += ", " + tr(lang, "ale {months} túru za svetla nestihnete", { months: monthSpan(lang, untimed.map((r) => r.month)) });
   return warn + text + (closedPart ? ";" + closedPart : ".");
 }
 
