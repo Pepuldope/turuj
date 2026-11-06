@@ -170,7 +170,7 @@ export function SunPull({ season, width, height, sunX, sunY, moveRef }: Props) {
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
-      // z-[2]: above the iPhone app's sky band (.sky-edge, z 1), so the band never covers the sun; under the sticky bars (z 10+).
+      // z-[2]: under the sticky bars (z 10+).
       className="pointer-events-none absolute inset-0 z-[2] h-full w-full overflow-visible"
     >
       <g ref={sunRef} transform={`translate(${x0} ${y0})`}>

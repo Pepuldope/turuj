@@ -485,26 +485,3 @@ h2,
   }
 }
 
-/* Home page, iPhone home-screen app only: see SkyEdge in components/HomeExplorer.tsx. */
-.sky-edge {
-  display: none;
-}
-/* Phones, in the home-screen app and in the browser alike: Safari also paints the clock strip from the page top. */
-@media (max-width: 1023.98px) {
-  .sky-edge {
-    display: block;
-    position: fixed;
-    inset: 0 0 auto 0;
-    height: 12px;
-    z-index: 1;
-    pointer-events: none;
-  }
-  /* While pulling to refresh it stays, taller, under the sun: hidden, iOS took the pale page colour
-     for the clock strip (fog over the pulled sky, Peter 2026-11-06); this way the strip keeps the
-     sky colour and fades into the deeper pulled sky. */
-  :root[data-pull] .sky-edge {
-    height: 56px !important;
-    background: linear-gradient(var(--edge, transparent), var(--edge, transparent) 25%, transparent) !important;
-    z-index: 1 !important;
-  }
-}

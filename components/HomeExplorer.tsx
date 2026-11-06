@@ -11,7 +11,7 @@ import { TOWN_EXACT_KM, quickDriveMin, transitMinutes } from "@/lib/drive";
 import { DIFFICULTY_LABEL, GOAL_LABEL, GOAL_PLURAL, formatDurationShort } from "@/lib/format";
 import { kindSvg } from "@/lib/kindIcons";
 import { GOAL_COLOUR, POPULARITY_RAMP } from "@/lib/palette";
-import { LAND, seasonOf } from "@/lib/season";
+import { seasonOf } from "@/lib/season";
 import type { DestinationKind } from "@/lib/tripSchema";
 import { unpackList } from "@/lib/packedList";
 import type { PackedList } from "@/lib/packedList";
@@ -1034,7 +1034,6 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
     <main className="flex flex-1 flex-col lg:h-dvh lg:flex-none lg:flex-row lg:overflow-hidden">
       <div ref={columnRef} className="mx-auto flex w-full max-w-[640px] flex-col gap-5 px-4 pt-4 pb-6 md:max-w-[760px] lg:mx-0 lg:w-[440px] lg:max-w-none lg:shrink-0 relative lg:overflow-y-auto lg:overscroll-contain">
         <PullSky season={season} />
-        <SkyEdge colour={LAND[season].sky1} lower={LAND[season].sky2} />
         <header className="relative -mx-4 -mt-4 flex shrink-0 flex-col sm:overflow-hidden sm:rounded-b-[24px] lg:overflow-visible lg:rounded-none">
           <SeasonScene season={season} width={440} height={250} seed={11} sunX={HEADER_SUN_X} sunY={0.26} drop={0.2} noSun className="absolute inset-0 h-full w-full" />
           <SunPull season={season} width={440} height={250} sunX={HEADER_SUN_X} sunY={0.26} moveRef={columnRef} />
@@ -1283,67 +1282,3 @@ function StartReminder() {
   );
 }
 
-/**
- * Phones (globals.css .sky-edge; the home-screen app and Safari alike): iOS paints the strip behind the clock
- * itself, in a colour it takes from what touches the top of the page, and fades it into the
- * page. With nothing there it took the grey page colour and laid a haze over the sky (Peter,
- * 2026-11-04; the page starts below the clock there, safe-area-inset-top is 0). A thin fixed
- * band in the sky's own top colour gives it the right colour; gone once you scroll.
- */
-function SkyEdge({ colour, lower }: { colour: string; lower: string }) {
-  // "over": right at the top, where the phone top bar is see-through; "sky": the band's colour.
-  const [state, setState] = useState({ over: true, sky: true, scrolled: false });
-  useEffect(() => {
-    let last = window.scrollY;
-    const on = () => {
-      const y = window.scrollY;
-      const dy = y - last;
-      last = y;
-      // On the way up the band turns sky a little before the bar turns see-through (48 px vs 8 px):
-      // iOS fades the clock strip in after a short delay, so starting early makes the two land
-      // together instead of bar first, strip after (Peter, 2026-11-06). On the way down: at 8 px.
-      setState((s) => {
-        const sky = y <= 8 || (dy < 0 ? y <= 48 : dy === 0 && s.sky && y <= 48);
-        const over = y <= 8;
-        const scrolled = s.scrolled || y > 48;
-        return s.sky === sky && s.over === over && s.scrolled === scrolled ? s : { over, sky, scrolled };
-      });
-    };
-    on();
-    window.addEventListener("scroll", on, { passive: true });
-    return () => window.removeEventListener("scroll", on);
-  }, []);
-  // Scrolled away it turns the page colour instead of hiding: iOS keeps the last colour it read
-  // while scrolling, and with nothing at the top the strip stayed sky blue over the rest of the
-  // page (Peter, 2026-11-05). iOS reads it even while under the bar.
-  const c = state.sky ? colour : "var(--background)";
-  // At the top it lies over the (see-through) phone top bar, so iOS finds the sky there and not the
-  // bar; scrolled, under it, so the white bar coming in on the way up shows (Peter, 2026-11-05).
-  return (
-    <div
-      aria-hidden="true"
-      className="sky-edge"
-      // Scrolled: a solid page-coloured box. Safari 26 skips its own top-edge blur (the fog that stayed
-      // over the list, Peter 2026-11-06) when a fixed full-width box with a plain background colour
-      // touches the top. At the top the gradient stays: solid there, the strip came out off-colour.
-      // Back at the top after a scroll: Safari keeps its blur from then on and lays it over the gradient,
-      // so the strip came out a paler blue than the sky (Peter, 2026-11-06). A solid sky box keeps the
-      // blur off there too; the first visit keeps the gradient, which already looks right.
-      style={
-        !state.sky
-          ? { backgroundColor: "var(--background)" }
-          : state.scrolled
-            ? // Still over the see-through bar (under it Safari took the bar and fell back to white), but only
-              // 6 px tall so it ends above the round buttons; a touch of the lower sky in it, to match the
-              // header just under the strip (Peter, 2026-11-06). While pulling, CSS turns it back into a fade.
-              ({
-                backgroundColor: `color-mix(in srgb, ${c} 85%, ${lower})`,
-                height: 6,
-                zIndex: state.over ? 41 : undefined,
-                "--edge": c,
-              } as React.CSSProperties)
-            : ({ background: `linear-gradient(${c}, ${c} 25%, transparent)`, zIndex: state.over ? 41 : undefined, "--edge": c } as React.CSSProperties)
-      }
-    />
-  );
-}
