@@ -16,6 +16,7 @@ import json
 import os
 import re
 import sys
+import threading
 import time
 import xml.etree.ElementTree as ET
 from datetime import date, timedelta
@@ -33,7 +34,8 @@ SCOPE = "https://www.googleapis.com/auth/webmasters.readonly"
 PAGE = 25000
 MAX_INSPECT = 600
 SAMPLE_SITEMAP = 250
-MIN_GAP = 0.2  # seconds between inspection starts: ~300/min, under the 600/min limit
+WORKERS = 8
+MIN_GAP = 0.5  # seconds each worker waits between calls: at most ~960/min only if calls were instant; real calls take seconds
 BUDGET = 20 * 60  # seconds for the whole inspection phase
 
 stats = {"rows": {}, "inspections": 0, "errors": 0, "status_codes": {}}
@@ -148,45 +150,63 @@ def pick_sample(urls: list[str]) -> list[str]:
     return out[:SAMPLE_SITEMAP + 30]
 
 
+def inspect_one(c: Client, u: str) -> tuple[dict, bool]:
+    """One URL Inspection call; returns (record, quota_hit). Never logs response data."""
+    try:
+        r = c.post(INSPECT, {"inspectionUrl": u, "siteUrl": SITE}, timeout=45)
+    except requests.RequestException:
+        return {"url": u, "error": "request failed"}, False
+    if r.status_code == 429:
+        return {"url": u, "error": "quota"}, True
+    if r.status_code != 200:
+        return {"url": u, "error": f"http {r.status_code}"}, False
+    res = r.json().get("inspectionResult", {}).get("indexStatusResult", {})
+    return {
+        "url": u,
+        "verdict": res.get("verdict"),
+        "coverageState": res.get("coverageState"),
+        "robotsTxtState": res.get("robotsTxtState"),
+        "indexingState": res.get("indexingState"),
+        "pageFetchState": res.get("pageFetchState"),
+        "googleCanonical": res.get("googleCanonical"),
+        "userCanonical": res.get("userCanonical"),
+        "lastCrawlTime": res.get("lastCrawlTime"),
+    }, False
+
+
 def inspect(c: Client, urls: list[str]) -> list:
+    """Calls take several seconds each, so run a few at once (still far under 600/min)."""
     results: list = []
-    quota_hit = False
     t0 = time.time()
-    for u in urls:
-        if stats["inspections"] >= MAX_INSPECT or quota_hit or time.time() - t0 > BUDGET:
-            break
-        time.sleep(MIN_GAP)
-        if (len(results) + 1) % 50 == 0:
-            log(f"inspection progress: {len(results)} tried, {int(time.time() - t0)}s")
-        try:
-            r = c.post(INSPECT, {"inspectionUrl": u, "siteUrl": SITE}, timeout=30)
-        except requests.RequestException:
-            results.append({"url": u, "error": "request failed"})
-            stats["errors"] += 1
-            continue
-        if r.status_code == 429:
-            quota_hit = True
-            results.append({"url": u, "error": "quota"})
-            stats["errors"] += 1
-            continue
-        if r.status_code != 200:
-            results.append({"url": u, "error": f"http {r.status_code}"})
-            stats["errors"] += 1
-            continue
-        res = r.json().get("inspectionResult", {}).get("indexStatusResult", {})
-        results.append({
-            "url": u,
-            "verdict": res.get("verdict"),
-            "coverageState": res.get("coverageState"),
-            "robotsTxtState": res.get("robotsTxtState"),
-            "indexingState": res.get("indexingState"),
-            "pageFetchState": res.get("pageFetchState"),
-            "googleCanonical": res.get("googleCanonical"),
-            "userCanonical": res.get("userCanonical"),
-            "lastCrawlTime": res.get("lastCrawlTime"),
-        })
-        stats["inspections"] += 1
-    log(f"inspections: {stats['inspections']} done, quota_hit={quota_hit}")
+    stop = threading.Event()
+    lock = threading.Lock()
+    it = iter(urls[:MAX_INSPECT])
+
+    def worker() -> None:
+        while not stop.is_set() and time.time() - t0 <= BUDGET:
+            with lock:
+                u = next(it, None)
+            if u is None:
+                return
+            rec, quota = inspect_one(c, u)
+            with lock:
+                results.append(rec)
+                if "error" in rec:
+                    stats["errors"] += 1
+                else:
+                    stats["inspections"] += 1
+                if len(results) % 50 == 0:
+                    log(f"inspection progress: {len(results)} tried, {int(time.time() - t0)}s")
+            if quota:
+                stop.set()
+            time.sleep(MIN_GAP)
+
+    threads = [threading.Thread(target=worker) for _ in range(WORKERS)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    log(f"inspections: {stats['inspections']} done, quota_hit={stop.is_set()}")
     return results
 
 
