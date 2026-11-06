@@ -1,0 +1,56 @@
+name: GSC report
+
+# Google Search Console performance, sitemap status and URL Inspection for
+# sc-domain:turuj.sk (scripts/gsc_report.py), for working out how to get found.
+# The repo is public, so NO readable GSC data may reach GitHub: the whole output
+# is encrypted with age to a public recipient key (the private key lives only on
+# Peter's Mac) and only the .age file is uploaded, kept 3 days. Logs and the job
+# summary carry counts and HTTP codes only. Fetch it with scripts/gsc-pull.sh,
+# which also deletes the artifact. Read-only: nothing is changed in Search Console.
+# Runs on the 2nd of each month, or by hand from the Actions tab.
+on:
+  schedule:
+    - cron: "23 4 2 * *"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Days for the long window"
+        required: false
+        default: "90"
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    env:
+      AGE_RECIPIENT: age1u6fpcg9504d5fufpauc09z0mgmn9jdas9ulcf32s3w4takczfers5h2tvg
+      DAYS: ${{ inputs.days || '90' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet google-auth requests
+      - run: sudo apt-get install -y -qq age
+
+      - name: Fetch from Search Console
+        env:
+          GSC_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if ! [[ "$DAYS" =~ ^[0-9]+$ ]]; then echo "days must be a number"; exit 1; fi
+          python scripts/gsc_report.py --out build/gsc --days "$DAYS"
+
+      - name: Encrypt
+        run: |
+          D=$(date -u +%F)
+          tar -C build -czf - gsc | age -r "$AGE_RECIPIENT" -o "gsc-report-$D.tar.gz.age"
+          rm -rf build/gsc
+          ls -l gsc-report-*.age | awk '{print $5, $9}'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gsc-report
+          path: gsc-report-*.tar.gz.age
+          retention-days: 3
