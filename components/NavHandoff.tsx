@@ -51,12 +51,15 @@ const navButton =
  * mode: drive to the parking, then walk the trail from the car (or the stop).
  */
 export function NavHandoff({
+  slug,
   drive,
   start,
   walkFrom,
   walk,
   join,
 }: {
+  /** The trip, so a navigation counts as a planned trip (plan_commit) once. */
+  slug?: string;
   /** Where the drive ends; null by train or bus (the timetable block hands that off). */
   drive: LatLng | null;
   start: LatLng | null;
@@ -92,7 +95,7 @@ export function NavHandoff({
           <a
             href={google ? googleMapsUrl(drive, typed ? start : null) : mapyUrl(drive, start)}
             // Through track(), so our own counter (/statistiky, the monthly report) gets it too, not only Umami.
-            onClick={() => track("nav_open", { app })}
+            onClick={() => track("nav_open", { app, ...(slug ? { trail: slug } : {}) })}
             target="_blank"
             rel="noopener noreferrer"
             className={navButton}
@@ -103,7 +106,7 @@ export function NavHandoff({
         {canWalk && (
           <a
             href={google ? googleWalkUrl(walkFrom, walk, join) : mapyWalkUrl(walkFrom, walk, join)}
-            onClick={() => track("nav_open", { app: `${app}-walk` })}
+            onClick={() => track("nav_open", { app: `${app}-walk`, ...(slug ? { trail: slug } : {}) })}
             target="_blank"
             rel="noopener noreferrer"
             className={navButton}

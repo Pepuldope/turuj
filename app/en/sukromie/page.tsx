@@ -33,7 +33,7 @@ export default function PrivacyPage() {
       <h2>Cookies and browser storage</h2>
       <p>Two strictly necessary cookies: <code>turuj_s</code> (signed in) and <code>turuj_g</code> (Google sign-in protection, 10 minutes). Saved trips, your start and settings stay in your browser’s storage and are never sent to us.</p>
       <h2>Statistics and how to switch them off</h2>
-      <p>Umami counts pages and a few steps without cookies; Cloudflare measures page speed; our own counter keeps only monthly totals. This button stops Umami and our counters in this browser (an ad blocker stops Cloudflare’s speed beacon):</p>
+      <p>Umami counts pages and a few steps without cookies (including the skippable “How did you hear about Túruj?” answer after your first saved trip); Cloudflare measures page speed; our own counter keeps only monthly totals. This button stops Umami and our counters in this browser (an ad blocker stops Cloudflare’s speed beacon):</p>
       <CountMeToggle />
       <h2>Your rights</h2>
       <p>Access, correction, erasure, restriction, portability, objection, and withdrawing consent (GDPR arts. 15–21, 7(3)). Write to info@turuj.sk, from the account’s address for account data; we answer within a month, free of charge. You can complain to the Slovak Office for Personal Data Protection, Galvaniho 7/B, 821 04 Bratislava, dataprotection.gov.sk.</p>

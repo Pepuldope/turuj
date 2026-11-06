@@ -59,7 +59,8 @@ export function StatsTables() {
         <>
           <h2>Plány</h2>
           <p className="text-sm">
-            Koľkokrát v mesiaci bol zadaný štart, výlet uložený, plán poslaný (z toho do 2 minút od príchodu), plán
+            <b>Naplánované</b> (hlavné číslo): výlety, ktoré niekto uložil, poslal, spustil k nim navigáciu alebo stiahol
+            GPX, každý výlet raz za otvorenie stránky (zbiera sa od novembra 2026). Ďalej koľkokrát v mesiaci bol zadaný štart, výlet uložený, plán poslaný (z toho do 2 minút od príchodu), plán
             otvorený kamarátom a spustená navigácia. Túruj+: kliknutia „Chcel by som to“ / „Za túto cenu nie“ na
             stránke /plus.
           </p>
@@ -67,6 +68,7 @@ export function StatsTables() {
             <thead>
               <tr className="border-b border-[var(--border)]">
                 <th className="py-2">Mesiac</th>
+                <th>Naplánované</th>
                 <th>Štart</th>
                 <th>Uložené</th>
                 <th>Poslané</th>
@@ -80,6 +82,7 @@ export function StatsTables() {
               {events.map((e) => (
                 <tr key={e.month} className="border-b border-[var(--border)]">
                   <td className="py-2">{e.month}</td>
+                  <td className="font-semibold">{e.planned}</td>
                   <td>{e.starts}</td>
                   <td>{e.saved}</td>
                   <td className="font-semibold">{e.sent}</td>
@@ -93,6 +96,25 @@ export function StatsTables() {
               ))}
             </tbody>
           </table>
+          {events.some((e) => Object.keys(e.heardFrom ?? {}).length > 0) && (
+            <>
+              <h3 className="font-semibold">Odkiaľ o nás vedia</h3>
+              <p className="text-sm">Odpovede na „Ako ste sa o nás dozvedeli?“ po prvom uložení výletu.</p>
+              <ul className="text-sm">
+                {events
+                  .filter((e) => Object.keys(e.heardFrom ?? {}).length > 0)
+                  .map((e) => (
+                    <li key={e.month}>
+                      <b>{e.month}:</b>{" "}
+                      {Object.entries(e.heardFrom)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([ch, n]) => `${ch} ${n}`)
+                        .join(", ")}
+                    </li>
+                  ))}
+              </ul>
+            </>
+          )}
         </>
       )}
       {accounts && (

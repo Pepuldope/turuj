@@ -70,7 +70,7 @@ export const PRIVACY_SK = [
   "",
   "Návštevnosť počítame tromi spôsobmi. Ani jeden nepoužíva cookies a ani jeden nás nevedie k tomu, kto ste.",
   "",
-  "- **Umami** počíta otvorené stránky a niekoľko krokov (napríklad uložený alebo poslaný plán). Jeho skript pri tom zistí typ prehliadača, veľkosť obrazovky a jazyk a jeho server vidí vašu IP adresu. Vidíme len súhrnné čísla.",
+  "- **Umami** počíta otvorené stránky a niekoľko krokov (napríklad uložený alebo poslaný plán) a odpoveď na otázku „Ako ste sa o Túruj dozvedeli?“, ktorú po prvom uloženom výlete môžete preskočiť. Jeho skript pri tom zistí typ prehliadača, veľkosť obrazovky a jazyk a jeho server vidí vašu IP adresu. Vidíme len súhrnné čísla.",
   "- **Cloudflare Web Analytics** meria, ako rýchlo sa stránka načítala, a počíta jej zobrazenia.",
   "- **Odtlačok návštevy:** aby sme vedeli, koľko ľudí sa k Túruju vracia, server si pri návšteve zapíše dátum a jednosmerný odtlačok (hash) z IP adresy a typu prehliadača s náhodným kľúčom, ktorý sa mení každý mesiac. IP adresu neukladáme. Po skončení mesiaca kľúč aj odtlačky zmažeme a ostanú len súhrnné čísla, napríklad „120 ľudí, z toho 15 aspoň 4 dni“. Pre niekoľko krokov si server navyše pripočíta jedna k mesačnému súčtu bez akýchkoľvek údajov o vás.",
   "",

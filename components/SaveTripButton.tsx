@@ -14,6 +14,7 @@ import type { TripPlan } from "@/lib/useTripPlan";
 import { useUserLocation } from "@/lib/userLocation";
 import { sinceArrival, track } from "@/lib/analytics";
 import { ShareButton } from "@/components/ShareButton";
+import { HeardFrom } from "@/components/HeardFrom";
 import type { ShareInfo } from "@/components/ShareButton";
 
 import { LangLink, useLang, useT } from "@/lib/i18n";
@@ -92,6 +93,8 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, ..
   const [status, setStatus] = useState<Status>("idle");
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [askShare, setAskShare] = useState(false);
+  // The first trip saved on this device: ask once how they heard of us (after the share offer).
+  const [askHeard, setAskHeard] = useState(false);
 
   const saved = trips.find((t) => t.slug === slug) ?? null;
   const changed =
@@ -108,6 +111,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, ..
     if (!date || !time || !sun || loading) return;
     setStatus("saving");
     track("trip_saved", { trail: slug, took: sinceArrival() });
+    if (trips.length === 0) setAskHeard(true);
     save({
       slug,
       name,
@@ -204,6 +208,8 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, ..
           </div>
         </div>
       )}
+
+      {saved && askHeard && !askShare && <HeardFrom onDone={() => setAskHeard(false)} />}
 
       {saved && !askShare && status !== "saving" && (
         <p className="text-sm">
