@@ -2,8 +2,7 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Hrad Súľov</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Hrad Súľov</name><desc>sulov</desc><trkseg>
-    <trkpt lat="49.166351" lon="18.578638"><ele>371</ele></trkpt>
-    <trkpt lat="49.166372" lon="18.578737"><ele>374</ele></trkpt>
+    <trkpt lat="49.166338" lon="18.578606"><ele>370</ele></trkpt>
     <trkpt lat="49.166475" lon="18.578808"><ele>378</ele></trkpt>
     <trkpt lat="49.166417" lon="18.579017"><ele>384</ele></trkpt>
     <trkpt lat="49.166564" lon="18.579220"><ele>391</ele></trkpt>
@@ -123,8 +122,7 @@
     <trkpt lat="49.166564" lon="18.579220"><ele>391</ele></trkpt>
     <trkpt lat="49.166417" lon="18.579017"><ele>384</ele></trkpt>
     <trkpt lat="49.166475" lon="18.578808"><ele>378</ele></trkpt>
-    <trkpt lat="49.166372" lon="18.578737"><ele>374</ele></trkpt>
-    <trkpt lat="49.166351" lon="18.578638"><ele>371</ele></trkpt>
+    <trkpt lat="49.166338" lon="18.578606"><ele>370</ele></trkpt>
   </trkseg></trk>
   <trk><name>Hrad Súľov</name><desc>sulov-hrabove</desc><trkseg>
     <trkpt lat="49.209685" lon="18.560704"><ele>311</ele></trkpt>

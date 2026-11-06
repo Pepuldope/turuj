@@ -14,11 +14,11 @@
     <trkpt lat="49.056000" lon="21.282615"><ele>303</ele></trkpt>
     <trkpt lat="49.057154" lon="21.282280"><ele>315</ele></trkpt>
     <trkpt lat="49.057811" lon="21.282157"><ele>321</ele></trkpt>
-    <trkpt lat="49.058152" lon="21.282189"><ele>323</ele></trkpt>
-    <trkpt lat="49.058828" lon="21.282338"><ele>327</ele></trkpt>
-    <trkpt lat="49.058846" lon="21.282371"><ele>327</ele></trkpt>
-    <trkpt lat="49.059066" lon="21.282352"><ele>328</ele></trkpt>
-    <trkpt lat="49.059367" lon="21.282263"><ele>331</ele></trkpt>
+    <trkpt lat="49.058821" lon="21.282307"><ele>327</ele></trkpt>
+    <trkpt lat="49.058832" lon="21.282365"><ele>327</ele></trkpt>
+    <trkpt lat="49.059030" lon="21.282354"><ele>328</ele></trkpt>
+    <trkpt lat="49.059522" lon="21.282241"><ele>332</ele></trkpt>
+    <trkpt lat="49.059530" lon="21.282131"><ele>332</ele></trkpt>
     <trkpt lat="49.059724" lon="21.281992"><ele>334</ele></trkpt>
     <trkpt lat="49.059849" lon="21.281990"><ele>335</ele></trkpt>
     <trkpt lat="49.060076" lon="21.281706"><ele>339</ele></trkpt>
@@ -170,11 +170,11 @@
     <trkpt lat="49.060076" lon="21.281706"><ele>339</ele></trkpt>
     <trkpt lat="49.059849" lon="21.281990"><ele>335</ele></trkpt>
     <trkpt lat="49.059724" lon="21.281992"><ele>334</ele></trkpt>
-    <trkpt lat="49.059367" lon="21.282263"><ele>331</ele></trkpt>
-    <trkpt lat="49.059066" lon="21.282352"><ele>328</ele></trkpt>
-    <trkpt lat="49.058846" lon="21.282371"><ele>327</ele></trkpt>
-    <trkpt lat="49.058828" lon="21.282338"><ele>327</ele></trkpt>
-    <trkpt lat="49.058152" lon="21.282189"><ele>323</ele></trkpt>
+    <trkpt lat="49.059530" lon="21.282131"><ele>332</ele></trkpt>
+    <trkpt lat="49.059522" lon="21.282241"><ele>332</ele></trkpt>
+    <trkpt lat="49.059030" lon="21.282354"><ele>328</ele></trkpt>
+    <trkpt lat="49.058832" lon="21.282365"><ele>327</ele></trkpt>
+    <trkpt lat="49.058821" lon="21.282307"><ele>327</ele></trkpt>
     <trkpt lat="49.057811" lon="21.282157"><ele>321</ele></trkpt>
     <trkpt lat="49.057154" lon="21.282280"><ele>315</ele></trkpt>
     <trkpt lat="49.056000" lon="21.282615"><ele>303</ele></trkpt>

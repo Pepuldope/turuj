@@ -750,7 +750,7 @@
     <trkpt lat="48.998365" lon="18.480927"><ele>439</ele></trkpt>
   </trkseg></trk>
   <trk><name>Ostrá Malenica</name><desc>ostra-malenica-slopna</desc><trkseg>
-    <trkpt lat="49.055774" lon="18.411203"><ele>307</ele></trkpt>
+    <trkpt lat="49.055791" lon="18.411232"><ele>307</ele></trkpt>
     <trkpt lat="49.055083" lon="18.411077"><ele>303</ele></trkpt>
     <trkpt lat="49.054955" lon="18.410972"><ele>302</ele></trkpt>
     <trkpt lat="49.054753" lon="18.410546"><ele>302</ele></trkpt>
@@ -1038,6 +1038,6 @@
     <trkpt lat="49.054753" lon="18.410546"><ele>302</ele></trkpt>
     <trkpt lat="49.054955" lon="18.410972"><ele>302</ele></trkpt>
     <trkpt lat="49.055083" lon="18.411077"><ele>303</ele></trkpt>
-    <trkpt lat="49.055774" lon="18.411203"><ele>307</ele></trkpt>
+    <trkpt lat="49.055791" lon="18.411232"><ele>307</ele></trkpt>
   </trkseg></trk>
 </gpx>

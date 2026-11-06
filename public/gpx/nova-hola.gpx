@@ -2,8 +2,10 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Nová hoľa</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Nová hoľa</name><desc>nova-hola</desc><trkseg>
-    <trkpt lat="48.878107" lon="19.224453"><ele>987</ele></trkpt>
-    <trkpt lat="48.878183" lon="19.224121"><ele>987</ele></trkpt>
+    <trkpt lat="48.878132" lon="19.224442"><ele>988</ele></trkpt>
+    <trkpt lat="48.878236" lon="19.224159"><ele>988</ele></trkpt>
+    <trkpt lat="48.878291" lon="19.224085"><ele>988</ele></trkpt>
+    <trkpt lat="48.878275" lon="19.224034"><ele>987</ele></trkpt>
     <trkpt lat="48.878903" lon="19.223505"><ele>986</ele></trkpt>
     <trkpt lat="48.878970" lon="19.223660"><ele>989</ele></trkpt>
     <trkpt lat="48.879081" lon="19.223754"><ele>990</ele></trkpt>
@@ -128,12 +130,16 @@
     <trkpt lat="48.879081" lon="19.223754"><ele>990</ele></trkpt>
     <trkpt lat="48.878970" lon="19.223660"><ele>989</ele></trkpt>
     <trkpt lat="48.878903" lon="19.223505"><ele>986</ele></trkpt>
-    <trkpt lat="48.878183" lon="19.224121"><ele>987</ele></trkpt>
-    <trkpt lat="48.878107" lon="19.224453"><ele>987</ele></trkpt>
+    <trkpt lat="48.878275" lon="19.224034"><ele>987</ele></trkpt>
+    <trkpt lat="48.878291" lon="19.224085"><ele>988</ele></trkpt>
+    <trkpt lat="48.878236" lon="19.224159"><ele>988</ele></trkpt>
+    <trkpt lat="48.878132" lon="19.224442"><ele>988</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Nová hoľa</name><desc>nova-hola-donovaly-rekreacne-ina-cesta</desc><trkseg>
-    <trkpt lat="48.878107" lon="19.224453"><ele>987</ele></trkpt>
-    <trkpt lat="48.878054" lon="19.224636"><ele>986</ele></trkpt>
+  <trk><name>Nová hoľa</name><desc>nova-hola-donovaly-centralna-ina-cesta</desc><trkseg>
+    <trkpt lat="48.878132" lon="19.224442"><ele>988</ele></trkpt>
+    <trkpt lat="48.878079" lon="19.224834"><ele>986</ele></trkpt>
+    <trkpt lat="48.878125" lon="19.224855"><ele>987</ele></trkpt>
+    <trkpt lat="48.878118" lon="19.224925"><ele>987</ele></trkpt>
     <trkpt lat="48.878063" lon="19.224902"><ele>987</ele></trkpt>
     <trkpt lat="48.877978" lon="19.225960"><ele>989</ele></trkpt>
     <trkpt lat="48.878430" lon="19.226908"><ele>993</ele></trkpt>
@@ -249,8 +255,10 @@
     <trkpt lat="48.878430" lon="19.226908"><ele>993</ele></trkpt>
     <trkpt lat="48.877978" lon="19.225960"><ele>989</ele></trkpt>
     <trkpt lat="48.878063" lon="19.224902"><ele>987</ele></trkpt>
-    <trkpt lat="48.878054" lon="19.224636"><ele>986</ele></trkpt>
-    <trkpt lat="48.878107" lon="19.224453"><ele>987</ele></trkpt>
+    <trkpt lat="48.878118" lon="19.224925"><ele>987</ele></trkpt>
+    <trkpt lat="48.878125" lon="19.224855"><ele>987</ele></trkpt>
+    <trkpt lat="48.878079" lon="19.224834"><ele>986</ele></trkpt>
+    <trkpt lat="48.878132" lon="19.224442"><ele>988</ele></trkpt>
   </trkseg></trk>
   <trk><name>Nová hoľa</name><desc>nova-hola-nizna-revuca</desc><trkseg>
     <trkpt lat="48.932768" lon="19.209756"><ele>654</ele></trkpt>

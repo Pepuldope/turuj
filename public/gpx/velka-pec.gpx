@@ -354,7 +354,7 @@
   </trkseg></trk>
   <trk><name>Veľká Pec</name><desc>velka-pec-vrbove</desc><trkseg>
     <trkpt lat="48.620845" lon="17.722738"><ele>191</ele></trkpt>
-    <trkpt lat="48.620033" lon="17.722292"><ele>189</ele></trkpt>
+    <trkpt lat="48.620020" lon="17.722277"><ele>189</ele></trkpt>
     <trkpt lat="48.620049" lon="17.722044"><ele>189</ele></trkpt>
     <trkpt lat="48.620100" lon="17.721974"><ele>188</ele></trkpt>
     <trkpt lat="48.619842" lon="17.721060"><ele>189</ele></trkpt>
@@ -596,7 +596,7 @@
     <trkpt lat="48.619842" lon="17.721060"><ele>189</ele></trkpt>
     <trkpt lat="48.620100" lon="17.721974"><ele>188</ele></trkpt>
     <trkpt lat="48.620049" lon="17.722044"><ele>189</ele></trkpt>
-    <trkpt lat="48.620033" lon="17.722292"><ele>189</ele></trkpt>
+    <trkpt lat="48.620020" lon="17.722277"><ele>189</ele></trkpt>
     <trkpt lat="48.620845" lon="17.722738"><ele>191</ele></trkpt>
   </trkseg></trk>
 </gpx>

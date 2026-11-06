@@ -150,9 +150,11 @@
     <trkpt lat="48.906929" lon="19.164180"><ele>709</ele></trkpt>
     <trkpt lat="48.907243" lon="19.164606"><ele>708</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Veterný vrch (Prašnica)</name><desc>veterny-vrch-vysna-revuca-donovaly-rekreacne</desc><trkseg>
-    <trkpt lat="48.878107" lon="19.224453"><ele>987</ele></trkpt>
-    <trkpt lat="48.878183" lon="19.224121"><ele>987</ele></trkpt>
+  <trk><name>Veterný vrch (Prašnica)</name><desc>veterny-vrch-vysna-revuca-donovaly-centralna</desc><trkseg>
+    <trkpt lat="48.878132" lon="19.224442"><ele>988</ele></trkpt>
+    <trkpt lat="48.878236" lon="19.224159"><ele>988</ele></trkpt>
+    <trkpt lat="48.878291" lon="19.224085"><ele>988</ele></trkpt>
+    <trkpt lat="48.878275" lon="19.224034"><ele>987</ele></trkpt>
     <trkpt lat="48.878903" lon="19.223505"><ele>986</ele></trkpt>
     <trkpt lat="48.878970" lon="19.223660"><ele>989</ele></trkpt>
     <trkpt lat="48.879081" lon="19.223754"><ele>990</ele></trkpt>
@@ -602,8 +604,10 @@
     <trkpt lat="48.879081" lon="19.223754"><ele>990</ele></trkpt>
     <trkpt lat="48.878970" lon="19.223660"><ele>989</ele></trkpt>
     <trkpt lat="48.878903" lon="19.223505"><ele>986</ele></trkpt>
-    <trkpt lat="48.878183" lon="19.224121"><ele>987</ele></trkpt>
-    <trkpt lat="48.878107" lon="19.224453"><ele>987</ele></trkpt>
+    <trkpt lat="48.878275" lon="19.224034"><ele>987</ele></trkpt>
+    <trkpt lat="48.878291" lon="19.224085"><ele>988</ele></trkpt>
+    <trkpt lat="48.878236" lon="19.224159"><ele>988</ele></trkpt>
+    <trkpt lat="48.878132" lon="19.224442"><ele>988</ele></trkpt>
   </trkseg></trk>
   <trk><name>Veterný vrch (Prašnica)</name><desc>veterny-vrch-vysna-revuca-salasky</desc><trkseg>
     <trkpt lat="48.852550" lon="19.090715"><ele>777</ele></trkpt>

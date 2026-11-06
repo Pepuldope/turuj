@@ -867,7 +867,7 @@
     <trkpt lat="48.813309" lon="18.087384"><ele>355</ele></trkpt>
   </trkseg></trk>
   <trk><name>Babky (Neporadza)</name><desc>babky-cernachovska-luka-petovka</desc><trkseg>
-    <trkpt lat="48.854573" lon="18.160700"><ele>364</ele></trkpt>
+    <trkpt lat="48.854568" lon="18.160697"><ele>364</ele></trkpt>
     <trkpt lat="48.854019" lon="18.161001"><ele>366</ele></trkpt>
     <trkpt lat="48.853999" lon="18.160900"><ele>367</ele></trkpt>
     <trkpt lat="48.854014" lon="18.160668"><ele>370</ele></trkpt>
@@ -1165,6 +1165,6 @@
     <trkpt lat="48.854014" lon="18.160668"><ele>370</ele></trkpt>
     <trkpt lat="48.853999" lon="18.160900"><ele>367</ele></trkpt>
     <trkpt lat="48.854019" lon="18.161001"><ele>366</ele></trkpt>
-    <trkpt lat="48.854573" lon="18.160700"><ele>364</ele></trkpt>
+    <trkpt lat="48.854568" lon="18.160697"><ele>364</ele></trkpt>
   </trkseg></trk>
 </gpx>

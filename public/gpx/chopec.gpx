@@ -655,12 +655,9 @@
     <trkpt lat="49.006716" lon="19.342718"><ele>1266</ele></trkpt>
     <trkpt lat="49.006509" lon="19.342748"><ele>1269</ele></trkpt>
     <trkpt lat="49.006310" lon="19.342890"><ele>1270</ele></trkpt>
-    <trkpt lat="49.006298" lon="19.342962"><ele>1271</ele></trkpt>
-    <trkpt lat="49.006254" lon="19.343008"><ele>1271</ele></trkpt>
-    <trkpt lat="49.006270" lon="19.343095"><ele>1272</ele></trkpt>
-    <trkpt lat="49.006209" lon="19.343132"><ele>1272</ele></trkpt>
-    <trkpt lat="49.006058" lon="19.343064"><ele>1271</ele></trkpt>
-    <trkpt lat="49.005942" lon="19.343171"><ele>1273</ele></trkpt>
+    <trkpt lat="49.006237" lon="19.343055"><ele>1272</ele></trkpt>
+    <trkpt lat="49.006181" lon="19.343095"><ele>1271</ele></trkpt>
+    <trkpt lat="49.005997" lon="19.343099"><ele>1271</ele></trkpt>
     <trkpt lat="49.005780" lon="19.343212"><ele>1277</ele></trkpt>
     <trkpt lat="49.005584" lon="19.343152"><ele>1283</ele></trkpt>
     <trkpt lat="49.005305" lon="19.342927"><ele>1281</ele></trkpt>
@@ -920,12 +917,9 @@
     <trkpt lat="49.005305" lon="19.342927"><ele>1281</ele></trkpt>
     <trkpt lat="49.005584" lon="19.343152"><ele>1283</ele></trkpt>
     <trkpt lat="49.005780" lon="19.343212"><ele>1277</ele></trkpt>
-    <trkpt lat="49.005942" lon="19.343171"><ele>1273</ele></trkpt>
-    <trkpt lat="49.006058" lon="19.343064"><ele>1271</ele></trkpt>
-    <trkpt lat="49.006209" lon="19.343132"><ele>1272</ele></trkpt>
-    <trkpt lat="49.006270" lon="19.343095"><ele>1272</ele></trkpt>
-    <trkpt lat="49.006254" lon="19.343008"><ele>1271</ele></trkpt>
-    <trkpt lat="49.006298" lon="19.342962"><ele>1271</ele></trkpt>
+    <trkpt lat="49.005997" lon="19.343099"><ele>1271</ele></trkpt>
+    <trkpt lat="49.006181" lon="19.343095"><ele>1271</ele></trkpt>
+    <trkpt lat="49.006237" lon="19.343055"><ele>1272</ele></trkpt>
     <trkpt lat="49.006310" lon="19.342890"><ele>1270</ele></trkpt>
     <trkpt lat="49.006509" lon="19.342748"><ele>1269</ele></trkpt>
     <trkpt lat="49.006716" lon="19.342718"><ele>1266</ele></trkpt>

@@ -233,7 +233,7 @@
     <trkpt lat="48.836570" lon="18.074154"><ele>334</ele></trkpt>
   </trkseg></trk>
   <trk><name>Chata pod Ostrým vrchom</name><desc>chata-pod-ostrym-vrchom-petovka</desc><trkseg>
-    <trkpt lat="48.854573" lon="18.160700"><ele>364</ele></trkpt>
+    <trkpt lat="48.854568" lon="18.160697"><ele>364</ele></trkpt>
     <trkpt lat="48.854019" lon="18.161001"><ele>366</ele></trkpt>
     <trkpt lat="48.853999" lon="18.160900"><ele>367</ele></trkpt>
     <trkpt lat="48.854014" lon="18.160668"><ele>370</ele></trkpt>
@@ -479,6 +479,6 @@
     <trkpt lat="48.854014" lon="18.160668"><ele>370</ele></trkpt>
     <trkpt lat="48.853999" lon="18.160900"><ele>367</ele></trkpt>
     <trkpt lat="48.854019" lon="18.161001"><ele>366</ele></trkpt>
-    <trkpt lat="48.854573" lon="18.160700"><ele>364</ele></trkpt>
+    <trkpt lat="48.854568" lon="18.160697"><ele>364</ele></trkpt>
   </trkseg></trk>
 </gpx>

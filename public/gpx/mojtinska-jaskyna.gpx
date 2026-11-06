@@ -77,7 +77,7 @@
     <trkpt lat="48.987019" lon="18.408984"><ele>654</ele></trkpt>
   </trkseg></trk>
   <trk><name>Mojtínska jaskyňa</name><desc>mojtinska-jaskyna-slopna</desc><trkseg>
-    <trkpt lat="49.055774" lon="18.411203"><ele>307</ele></trkpt>
+    <trkpt lat="49.055791" lon="18.411232"><ele>307</ele></trkpt>
     <trkpt lat="49.055083" lon="18.411077"><ele>303</ele></trkpt>
     <trkpt lat="49.054955" lon="18.410972"><ele>302</ele></trkpt>
     <trkpt lat="49.054753" lon="18.410546"><ele>302</ele></trkpt>
@@ -349,7 +349,7 @@
     <trkpt lat="49.054753" lon="18.410546"><ele>302</ele></trkpt>
     <trkpt lat="49.054955" lon="18.410972"><ele>302</ele></trkpt>
     <trkpt lat="49.055083" lon="18.411077"><ele>303</ele></trkpt>
-    <trkpt lat="49.055774" lon="18.411203"><ele>307</ele></trkpt>
+    <trkpt lat="49.055791" lon="18.411232"><ele>307</ele></trkpt>
   </trkseg></trk>
   <trk><name>Mojtínska jaskyňa</name><desc>mojtinska-jaskyna-trstie-iwa</desc><trkseg>
     <trkpt lat="49.037405" lon="18.436158"><ele>328</ele></trkpt>
