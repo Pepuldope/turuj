@@ -1322,7 +1322,14 @@ function SkyEdge({ colour }: { colour: string }) {
     <div
       aria-hidden="true"
       className="sky-edge"
-      style={{ background: `linear-gradient(${c}, ${c} 25%, transparent)`, zIndex: state.over ? 41 : undefined }}
+      // Scrolled: a solid page-coloured box. Safari 26 skips its own top-edge blur (the fog that stayed
+      // over the list, Peter 2026-11-06) when a fixed full-width box with a plain background colour
+      // touches the top. At the top the gradient stays: solid there, the strip came out off-colour.
+      style={
+        state.sky
+          ? { background: `linear-gradient(${c}, ${c} 25%, transparent)`, zIndex: state.over ? 41 : undefined }
+          : { backgroundColor: "var(--background)" }
+      }
     />
   );
 }
