@@ -1292,7 +1292,7 @@ function StartReminder() {
  */
 function SkyEdge({ colour }: { colour: string }) {
   // "over": right at the top, where the phone top bar is see-through; "sky": the band's colour.
-  const [state, setState] = useState({ over: true, sky: true });
+  const [state, setState] = useState({ over: true, sky: true, scrolled: false });
   useEffect(() => {
     let last = window.scrollY;
     const on = () => {
@@ -1305,7 +1305,8 @@ function SkyEdge({ colour }: { colour: string }) {
       setState((s) => {
         const sky = y <= 8 || (dy < 0 ? y <= 48 : dy === 0 && s.sky && y <= 48);
         const over = y <= 8;
-        return s.sky === sky && s.over === over ? s : { over, sky };
+        const scrolled = s.scrolled || y > 48;
+        return s.sky === sky && s.over === over && s.scrolled === scrolled ? s : { over, sky, scrolled };
       });
     };
     on();
@@ -1325,10 +1326,15 @@ function SkyEdge({ colour }: { colour: string }) {
       // Scrolled: a solid page-coloured box. Safari 26 skips its own top-edge blur (the fog that stayed
       // over the list, Peter 2026-11-06) when a fixed full-width box with a plain background colour
       // touches the top. At the top the gradient stays: solid there, the strip came out off-colour.
+      // Back at the top after a scroll: Safari keeps its blur from then on and lays it over the gradient,
+      // so the strip came out a paler blue than the sky (Peter, 2026-11-06). A solid sky box keeps the
+      // blur off there too; the first visit keeps the gradient, which already looks right.
       style={
-        state.sky
-          ? { background: `linear-gradient(${c}, ${c} 25%, transparent)`, zIndex: state.over ? 41 : undefined }
-          : { backgroundColor: "var(--background)" }
+        !state.sky
+          ? { backgroundColor: "var(--background)" }
+          : state.scrolled
+            ? { backgroundColor: c, zIndex: state.over ? 41 : undefined }
+            : { background: `linear-gradient(${c}, ${c} 25%, transparent)`, zIndex: state.over ? 41 : undefined }
       }
     />
   );
