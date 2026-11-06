@@ -3,6 +3,7 @@ import {
   closureSentence,
   departureSentence,
   durationSentence,
+  hasDatedClosure,
   howLongHeading,
   monthTable,
   startLines,
@@ -114,5 +115,61 @@ describe("headings and sentences", () => {
 
   it("says plainly when there is no stop", () => {
     expect(transitSentence("sk", [])).toBe("Pri tejto trase sme nenašli blízku zastávku autobusu ani vlaku.");
+  });
+});
+
+describe("month table under a seasonal closure", () => {
+  const tanap: Closure = {
+    id: "tanap-zimna",
+    trail_id: "x",
+    kind: "rocna",
+    starts_on: "2000-11-01",
+    ends_on: "2000-05-31",
+    reason: "Sezónna uzávera",
+    source_url: "https://example.org",
+    verified_on: "2026-10-01",
+  };
+  const rows = monthTable(TATRY, 4 * 60, [tanap]);
+
+  it("gives no time for a closed month, only the manager", () => {
+    for (const r of rows) {
+      const closed = r.month >= 11 || r.month <= 5;
+      expect(r.closedBy).toBe(closed ? "TANAP" : null);
+      if (closed) expect(r.latest).toBeNull();
+      else expect(r.latest).not.toBeNull();
+    }
+  });
+
+  it("never quotes a closed month in the sentence", () => {
+    const sk = departureSentence("sk", rows, [tanap]);
+    expect(sk).toMatch(/^Mimo sezónnej uzávery \(jún až október\) treba vyraziť najneskôr medzi \d\d:\d\d a \d\d:\d\d podľa mesiaca; od 1\. 11\. do 31\. 5\. je trasa uzavretá \(TANAP\)\.$/);
+    expect(sk).not.toMatch(/január|december|v júni/);
+    const en = departureSentence("en", rows, [tanap]);
+    expect(en).toContain("Outside the seasonal closure (June to October)");
+    expect(en).toContain("closed from");
+  });
+
+  it("is unchanged without a closure and ignores dated closures in the rows", () => {
+    const dated: Closure = { ...tanap, kind: "jednorazova", starts_on: "2026-03-01", ends_on: "2026-03-31" };
+    expect(monthTable(TATRY, 4 * 60, [dated])).toEqual(monthTable(TATRY, 4 * 60));
+    expect(hasDatedClosure([dated])).toBe(true);
+    expect(hasDatedClosure([tanap])).toBe(false);
+  });
+
+  it("names a closed-all-year trail plainly", () => {
+    const all: Closure = { ...tanap, starts_on: "2000-01-01", ends_on: "2000-12-31" };
+    expect(departureSentence("sk", monthTable(TATRY, 4 * 60, [all]), [all])).toBe("Trasa je uzavretá celý rok (TANAP).");
+  });
+});
+
+describe("transit wording", () => {
+  const stop = (mode: "vlak" | "autobus", name: string) => ({ id: "s", trailhead_id: "t", name, mode, location: TATRY, distance_m: 504, join: null, walk: null });
+  it("uses the stop's own kind", () => {
+    expect(transitSentence("sk", [stop("vlak", "Štrbské Pleso")])).toBe("Najbližšia železničná stanica je Štrbské Pleso, 504 m pešo od trasy.");
+    expect(transitSentence("sk", [stop("autobus", "Popradské Pleso")])).toContain("Najbližšia autobusová zastávka je Popradské Pleso");
+  });
+  it("is neutral for a kind we do not know", () => {
+    const odd = { ...stop("vlak", "X"), mode: "lanovka" as never };
+    expect(transitSentence("sk", [odd])).toBe("Najbližšia zastávka verejnej dopravy: X, 504 m pešo od trasy.");
   });
 });

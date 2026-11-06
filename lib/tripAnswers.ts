@@ -4,7 +4,7 @@
  * Pure functions, so the wording and the month table are unit tested. All of it is server HTML.
  */
 import { approachMin, planDay } from "@/lib/dayPlan";
-import { closureManager, closurePeriod } from "@/lib/closures";
+import { closureManager, closurePeriod, isClosureActive } from "@/lib/closures";
 import { formatDuration, formatWalk, stopLabel } from "@/lib/format";
 import { decimal, routeNameIn, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
@@ -130,19 +130,23 @@ export function parkingFeeNote(lang: Lang, p: ParkingLot): string | null {
   return null;
 }
 
+/** "Najbližšia {autobusová zastávka} je …": the stop's own kind. */
 const MODE_WORD: Record<TransitStop["mode"], string> = {
   autobus: "autobusová zastávka",
   elektricka: "zastávka električky",
-  vlak: "železničná stanica alebo zastávka",
+  vlak: "železničná stanica",
 };
 
-/** The nearest stop by walk to the trail, and the others by name. */
+/** The nearest stop by walk to the trail; a neutral form when its kind is not known. */
 export function transitSentence(lang: Lang, stops: TransitStop[]): string {
   if (stops.length === 0) return tr(lang, "Pri tejto trase sme nenašli blízku zastávku autobusu ani vlaku.");
   const s = stops[0];
   const m = s.join?.walk_m ?? s.distance_m;
   const walk = approachMin(m) > 0 ? tr(lang, "{m} pešo od trasy", { m: formatWalk(m, lang) }) : tr(lang, "priamo pri trase");
-  return tr(lang, "Najbližšia zastávka je {kind} {name}, {walk}.", { kind: tr(lang, MODE_WORD[s.mode]), name: stopLabel(s.name), walk });
+  const kind = MODE_WORD[s.mode];
+  return kind
+    ? tr(lang, "Najbližšia {kind} je {name}, {walk}.", { kind: tr(lang, kind), name: stopLabel(s.name), walk })
+    : tr(lang, "Najbližšia zastávka verejnej dopravy: {name}, {walk}.", { name: stopLabel(s.name), walk });
 }
 
 /** Up to three other stops, nearest first; null when there are none. */
@@ -165,6 +169,8 @@ export interface MonthRow {
   sunset: Date;
   /** The latest start that still ends the walk before sunset with the buffer; null when the day is too short for the walk. */
   latest: Date | null;
+  /** Who keeps the seasonal closure that covers the middle of this month; null when the trail is not closed then. A closed month never gets a time. */
+  closedBy: string | null;
 }
 
 /** A fixed, non-leap year: the table must not change with the day it is built. */
@@ -173,35 +179,79 @@ const FIVE_MIN = 5 * 60000;
 
 /**
  * Per month, the latest start so the walk ends SAFE_MARGIN_MIN (lib/dayPlan.ts) before sunset: the
- * 15th of the month, the sun where the trip is, Slovak clock time. Rounded down to 5 minutes.
+ * 15th of the month, the sun where the trip is, Slovak clock time. Rounded down to 5 minutes. A month
+ * whose 15th falls inside a yearly (seasonal) closure of the trip is "closed", with no time.
  */
-export function monthTable(at: LatLng, walkMin: number): MonthRow[] {
+export function monthTable(at: LatLng, walkMin: number, closures: Closure[] = []): MonthRow[] {
   const rows: MonthRow[] = [];
+  const seasonal = closures.filter((c) => c.kind === "rocna");
   for (let month = 1; month <= 12; month++) {
-    const plan = planDay({ date: `${TABLE_YEAR}-${String(month).padStart(2, "0")}-15`, start: "06:00", driveMin: null, hikeMin: walkMin, location: at });
+    const date = `${TABLE_YEAR}-${String(month).padStart(2, "0")}-15`;
+    const plan = planDay({ date, start: "06:00", driveMin: null, hikeMin: walkMin, location: at });
     if (!plan) continue;
+    const closed = seasonal.filter((c) => isClosureActive(c, date));
     const latest = new Date(Math.floor(plan.latestStart.getTime() / FIVE_MIN) * FIVE_MIN);
-    rows.push({ month, sunset: plan.sunset, latest: latest >= plan.sunrise ? latest : null });
+    rows.push({
+      month,
+      sunset: plan.sunset,
+      latest: closed.length === 0 && latest >= plan.sunrise ? latest : null,
+      closedBy: closed.length ? [...new Set(closed.map(closureManager))].join(", ") : null,
+    });
   }
   return rows;
 }
 
-/** "Vyrazte najneskôr o 17:05" or "túru za svetla nestihnete", for a month. */
+/** "jún až október" for consecutive months, else the names in a list. */
+function monthSpan(lang: Lang, months: number[]): string {
+  const sorted = [...months].sort((a, b) => a - b);
+  // Consecutive around the year's end too (Nov, Dec, Jan): rotate to start after the biggest gap.
+  let start = 0;
+  for (let i = 0; i < sorted.length; i++) if (((sorted[(i + 1) % sorted.length] - sorted[i] + 12) % 12) !== 1 && sorted.length > 1) start = (i + 1) % sorted.length;
+  const rotated = [...sorted.slice(start), ...sorted.slice(0, start)];
+  const consecutive = rotated.every((m, i) => i === 0 || (m - rotated[i - 1] + 12) % 12 === 1);
+  const name = (m: number) => monthName(lang, m);
+  if (consecutive && rotated.length > 2) return tr(lang, "{a} až {b}", { a: name(rotated[0]), b: name(rotated[rotated.length - 1]) });
+  return rotated.map(name).join(", ");
+}
+
+/** "najneskôr o 17:05" or "túru za svetla nestihnete", for a month. */
 function latestText(lang: Lang, row: MonthRow): string {
   return row.latest ? tr(lang, "najneskôr o {time}", { time: clock(row.latest) }) : tr(lang, "túru za svetla nestihnete");
 }
 
-/** "V júni treba vyraziť najneskôr o 17:05, v decembri najneskôr o 11:40." */
-export function departureSentence(lang: Lang, rows: MonthRow[]): string {
-  const june = rows.find((r) => r.month === 6);
-  const dec = rows.find((r) => r.month === 12);
-  if (!june || !dec) return tr(lang, "Kedy vyraziť, závisí od západu slnka v daný mesiac.");
-  return tr(lang, "V {m1} treba vyraziť {a}, v {m2} {b}.", {
-    m1: monthIn(lang, 6),
-    a: latestText(lang, june),
-    m2: monthIn(lang, 12),
-    b: latestText(lang, dec),
+/**
+ * The answer sentence. Without a closure: "V júni treba vyraziť …, v decembri …". With a seasonal closure
+ * it never quotes a closed month: it speaks for the open months and names the closure.
+ */
+export function departureSentence(lang: Lang, rows: MonthRow[], closures: Closure[] = []): string {
+  const open = rows.filter((r) => r.closedBy === null);
+  const closed = rows.filter((r) => r.closedBy !== null);
+  if (closed.length === 0) {
+    const june = rows.find((r) => r.month === 6);
+    const dec = rows.find((r) => r.month === 12);
+    if (!june || !dec) return tr(lang, "Kedy vyraziť, závisí od západu slnka v daný mesiac.");
+    return tr(lang, "V {m1} treba vyraziť {a}, v {m2} {b}.", { m1: monthIn(lang, 6), a: latestText(lang, june), m2: monthIn(lang, 12), b: latestText(lang, dec) });
+  }
+  const period = closures.filter((c) => c.kind === "rocna").map((c) => `${closurePeriod(c)}`).filter((p, i, all) => all.indexOf(p) === i).join("; ");
+  const who = [...new Set(closed.map((r) => r.closedBy as string))].join(", ");
+  const closedPart = tr(lang, "od {period} je trasa uzavretá ({who}).", { period, who });
+  const times = open.filter((r) => r.latest).map((r) => r.latest as Date);
+  if (open.length === 0) return tr(lang, "Trasa je uzavretá celý rok ({who}).", { who });
+  if (times.length === 0) return tr(lang, "Mimo sezónnej uzávery ({months}) túru za svetla nestihnete; {closed}", { months: monthSpan(lang, open.map((r) => r.month)), closed: closedPart });
+  const ordered = times.map((t) => clock(t)).sort();
+  const lo = ordered[0];
+  const hi = ordered[ordered.length - 1];
+  return tr(lang, lo === hi ? "Mimo sezónnej uzávery ({months}) treba vyraziť najneskôr o {lo}; {closed}" : "Mimo sezónnej uzávery ({months}) treba vyraziť najneskôr medzi {lo} a {hi} podľa mesiaca; {closed}", {
+    months: monthSpan(lang, open.map((r) => r.month)),
+    lo,
+    hi,
+    closed: closedPart,
   });
+}
+
+/** Under the table: dated closures are not months, the closure section has them. */
+export function hasDatedClosure(closures: Closure[]): boolean {
+  return closures.some((c) => c.kind === "jednorazova");
 }
 
 /** The one-line assumption under the table. */
