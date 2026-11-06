@@ -29,7 +29,9 @@ export async function tripMetadata(slug: string, lang: Lang): Promise<Metadata> 
   const photo = await getTripPhoto(trail.slug, trip.destination.osm);
   // The same walk as the page's facts (from the default parking), so search results don't show another number.
   const w = pickWalk(routeWalk(detail), false, detail.parkingLots.length > 0);
-  const facts = tr(lang, "{km}, +{up} m, {t} chôdze", { km: formatDistance(w?.m ?? trail.distance_m, lang), up: w?.ascentM ?? trail.ascent_m, t: formatDuration(w?.min ?? trail.duration_min) });
+  // One distance for the title and the description: the walk the page shows, not the bare trail's.
+  const km = formatDistance(w?.m ?? trail.distance_m, lang);
+  const facts = tr(lang, "{km}, +{up} m, {t} chôdze", { km, up: w?.ascentM ?? trail.ascent_m, t: formatDuration(w?.min ?? trail.duration_min) });
   const town = nearestTown(trip.start.location);
   return pageMetadata({
     // Most places have several routes, one page each: the other routes' pages carry their start in
@@ -39,8 +41,8 @@ export async function tripMetadata(slug: string, lang: Lang): Promise<Metadata> 
     title: fitTitle(
       trip.variant_of
         ? [
-            tr(lang, "{name} zo štartu {start} ({km}) – výlet", { name: trail.name, start: trip.start.name, km: formatDistance(trip.distance_m, lang) }),
-            tr(lang, "{name} zo štartu {start} ({km})", { name: trail.name, start: trip.start.name, km: formatDistance(trip.distance_m, lang) }),
+            tr(lang, "{name} zo štartu {start} ({km}) – výlet", { name: trail.name, start: trip.start.name, km }),
+            tr(lang, "{name} zo štartu {start} ({km})", { name: trail.name, start: trip.start.name, km }),
           ]
         : [
             ...(town
