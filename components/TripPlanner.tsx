@@ -268,7 +268,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
   return (
     <div className="flex flex-col gap-5">
       {/* First thing under the header: where the day is planned from, changeable without scrolling. */}
-      <div className="flex items-center gap-2">
+      <div data-nosnippet className="flex items-center gap-2">
         <StartPill />
       </div>
       {/* Three cards, so the eye takes one step at a time:
@@ -309,15 +309,18 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
         )}
 
         {/* In the order of the day: where from, how, which day and time. */}
-        <StartChip />
+        {/* F9: interactive planner chrome stays out of Google's snippets (data-nosnippet); `contents` keeps the layout. */}
+        <div data-nosnippet className="contents">
+          <StartChip />
 
-        <TravelSwitch roadMin={roadMin} trainMin={rail.status === "ok" ? driveMin : null} noCar={noCar} noBus={noBus} walkMin={walkThere} walking={walking} onWalk={setOnFoot} />
-        {transit && <TransitHandoff />}
+          <TravelSwitch roadMin={roadMin} trainMin={rail.status === "ok" ? driveMin : null} noCar={noCar} noBus={noBus} walkMin={walkThere} walking={walking} onWalk={setOnFoot} />
+          {transit && <TransitHandoff />}
 
-        {/* Kids along, in the plan itself (Peter 2026-10-22: the pill above the card went unnoticed on a phone). */}
-        <KidsRow />
+          {/* Kids along, in the plan itself (Peter 2026-10-22: the pill above the card went unnoticed on a phone). */}
+          <KidsRow />
+        </div>
 
-        <section aria-label={t("Deň a odchod")} className="flex flex-col gap-3">
+        <section data-nosnippet aria-label={t("Deň a odchod")} className="flex flex-col gap-3">
           <FilterChips variant="trip" activeDate={date} dayWeather={dayWeather} />
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm font-semibold">
@@ -364,7 +367,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
       )}
 
       {plan && (
-        <section aria-label={t("Priebeh dňa")} className={part}>
+        <section data-nosnippet aria-label={t("Priebeh dňa")} className={part}>
           {sun && (
             // Framed inside the card: its sky would otherwise blend into the page.
             <div className="overflow-hidden rounded-xl">
@@ -403,7 +406,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
       <section aria-label={t("Na mieste")} className={part}>
         {children}
 
-        <section aria-label={t("Uložiť a zdieľať")} className="flex flex-col gap-3">
+        <section data-nosnippet aria-label={t("Uložiť a zdieľať")} className="flex flex-col gap-3">
           <SaveTripButton gpxUrl={gpxUrl} bbox={bbox} sun={sun} tripPlan={tripPlan} profile={profile} trail={trail} {...trip} />
           <NavHandoff slug={trip.slug} drive={destination} start={start} walkFrom={walkStart} walk={walk} join={trailJoin} />
         </section>

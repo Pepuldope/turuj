@@ -1,0 +1,23 @@
+name: IndexNow
+
+# Tells Bing, Yandex and the other IndexNow engines about every URL in the live sitemaps (G2),
+# once a deploy to main has succeeded. The key file public/<key>.txt ships with the site.
+# Never runs on branches or previews; "Run workflow" does it by hand.
+
+on:
+  workflow_run:
+    workflows: [Deploy]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  indexnow:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: node scripts/indexnow.mjs

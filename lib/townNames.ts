@@ -1,7 +1,8 @@
 /**
  * Town names after "okolo" (genitive), e.g. "Výlety okolo Nitry". Hand-written:
  * Slovak town names don't decline by a rule. A town missing here falls back to
- * "mesta {name}".
+ * "mesta {name}". "Vysoké Tatry" is left out on purpose: bare "Z Vysokých Tatier" reads as the
+ * mountain range, so the town is always "mesta Vysoké Tatry".
  */
 const GENITIVE: Record<string, string> = {
   "banovce-nad-bebravou": "Bánoviec nad Bebravou",
@@ -138,7 +139,6 @@ const GENITIVE: Record<string, string> = {
   "vranov-nad-toplou": "Vranova nad Topľou",
   vrbove: "Vrbového",
   vrutky: "Vrútok",
-  "vysoke-tatry": "Vysokých Tatier",
   zarnovica: "Žarnovice",
   zeliezovce: "Želiezoviec",
   "ziar-nad-hronom": "Žiaru nad Hronom",

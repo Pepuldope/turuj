@@ -1,7 +1,10 @@
 import { formatDistance, formatDuration, formatWalk, POI_LABEL } from "@/lib/format";
 import type { Town, TripDetail } from "@/lib/tripSchema";
 import type { TrailDetail } from "@/lib/types";
-import { townGenitive } from "@/lib/townNames";
+import { townFrom } from "@/lib/townNames";
+import { regionGenitive } from "@/lib/regionNames";
+import { closurePeriod, closureManager } from "@/lib/closures";
+import type { WalkFacts } from "@/lib/walkFacts";
 
 // "O výlete": a few Slovak sentences about one trip, written from its own facts (length, climb,
 // heights, what the walk passes, parking, bus or train, the drive from the nearest town). Every
@@ -31,16 +34,18 @@ export interface AboutInput {
   /** The trip's nearest town page, and the car minutes from it (null = not known). */
   town: Town | null;
   driveMin: number | null;
+  /** The walk as the page's facts and the meta description give it (from the default parking); null = the bare trail's numbers. */
+  walk: WalkFacts | null;
 }
 
 /** The "O výlete" paragraphs, each a few sentences; empty facts are left out. */
-export function aboutTrip({ trip, detail, town, driveMin }: AboutInput): string[] {
+export function aboutTrip({ trip, detail, town, driveMin, walk: facts }: AboutInput): string[] {
   const out: string[] = [];
   const loop = trip.route === "okruh";
 
   // The walk itself.
   const walk = [
-    `Je to ${DIFFICULTY[trip.difficulty]} túra${loop ? " (okruh)" : " tam a späť"}: ${formatDistance(trip.distance_m)} a ${trip.ascent_m} m stúpania, chôdza bez prestávok trvá asi ${formatDuration(trip.duration_min)}.`,
+    `Je to ${DIFFICULTY[trip.difficulty]} túra${loop ? " (okruh)" : " tam a späť"}: ${formatDistance(facts?.m ?? trip.distance_m)} a ${facts?.ascentM ?? trip.ascent_m} m stúpania, chôdza bez prestávok trvá asi ${formatDuration(facts?.min ?? trip.duration_min)}.`,
   ];
   const startEle = trip.start.ele_m;
   // The goal's own height wins over the terrain model's top, which can miss a sharp summit.
@@ -55,17 +60,21 @@ export function aboutTrip({ trip, detail, town, driveMin }: AboutInput): string[
 
   // Where it is and what the walk passes.
   const place: string[] = [];
-  if (trip.region_name) {
-    place.push(
-      `Výlet je v oblasti ${trip.region_name}${trip.protected_area ? `, cieľ leží v chránenom území ${trip.protected_area}` : ""}.`
-    );
+  // G13: "v oblasti" takes the genitive; the catch-all region has no form, so no sentence.
+  const region = trip.region_name ? regionGenitive(trip.region_name) : null;
+  if (region) {
+    // F12: no "cieľ leží v chránenom území X": the area came from a region bounding box, not a polygon test (wrong for e.g. Trenčiansky hrad).
+    place.push(`Výlet je v oblasti ${region}.`);
   }
-  const seen = new Set([trip.destination.name.toLowerCase()]);
+  const goal = trip.destination.name.toLowerCase();
+  const seen = new Set([goal]);
   const passes: string[] = [];
   for (const p of detail.pois) {
     if (p.detour_min !== null || !p.name || p.kind === "obcerstvenie" || p.kind === "ihrisko") continue;
     const key = p.name.toLowerCase();
     if (seen.has(key)) continue;
+    // G13: the goal itself ("hrad Pajštún" for the goal "Hrad Pajštún") is not on the way to it.
+    if (key.length > 3 && (goal.includes(key) || key.includes(goal))) continue;
     seen.add(key);
     passes.push(`${POI_LABEL[p.kind].toLowerCase()} ${p.name}`);
     if (passes.length === 4) break;
@@ -78,7 +87,7 @@ export function aboutTrip({ trip, detail, town, driveMin }: AboutInput): string[
   // Getting there.
   const there: string[] = [];
   if (town && driveMin !== null && driveMin > 0) {
-    there.push(`Z ${townGenitive(town.id, town.name)} je to autom asi ${formatDuration(driveMin)}.`);
+    there.push(`${townFrom("sk", town.id, town.name).replace(/^z/, "Z")} je to autom asi ${formatDuration(driveMin)}.`);
   }
   const p = trip.parking;
   if (p) {
@@ -95,7 +104,12 @@ export function aboutTrip({ trip, detail, town, driveMin }: AboutInput): string[
     there.push(`${by}: ${stop} ${t.name} je ${formatWalk(t.walk_m)} od štartu.`);
   }
   if (detail.fees.some((f) => f.kind === "vstupne")) there.push("Na trase sa platí vstupné.");
-  if (detail.closures.length) there.push("Časť chodníkov je sezónne uzavretá, podrobnosti sú vyššie.");
+  // G4: the yearly rule itself (never today's status), so it is in the text crawlers read.
+  if (detail.closures.length) {
+    there.push(
+      `Sezónna uzávera: ${detail.closures.map((c) => `${closureManager(c)} každý rok od ${closurePeriod(c)}`).join("; ").replace(/\.?$/, ".")} Stav v deň výletu ukazuje upozornenie na tejto stránke.`
+    );
+  }
   if (there.length) out.push(there.join(" "));
 
   return out;
