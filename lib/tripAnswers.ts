@@ -272,7 +272,7 @@ function latestText(lang: Lang, row: MonthRow): string {
 export function departureSentence(lang: Lang, rows: MonthRow[], closures: Closure[] = [], asOf?: string): string {
   const dated = relevantDated(closures, asOf);
   const warn = dated.length
-    ? tr(lang, "Pozor, na trase je hlásená uzávera {period}, pozrite časť Uzávery a poplatky.", { period: dated.map(closurePeriod).filter((p, i, all) => all.indexOf(p) === i).join("; ") }) + " "
+    ? tr(lang, "Pozor, na trase je hlásená uzávera od {period}, pozrite časť Uzávery a poplatky.", { period: dated.map(closurePeriod).filter((p, i, all) => all.indexOf(p) === i).join("; ") }) + " "
     : "";
   const clear = rows.filter((r) => r.closedBy === null && r.partial === null);
   const closed = rows.filter((r) => r.closedBy !== null);
@@ -301,7 +301,7 @@ export function departureSentence(lang: Lang, rows: MonthRow[], closures: Closur
   const hi = ordered[ordered.length - 1];
   const months = monthSpan(lang, timed.map((r) => r.month));
   let text = tr(lang, lo === hi ? "{outside} ({months}) treba vyraziť najneskôr o {lo}" : "{outside} ({months}) treba vyraziť najneskôr medzi {lo} a {hi} podľa mesiaca", { outside, months, lo, hi });
-  if (untimed.length) text += ", " + tr(lang, "ale {months} túru za svetla nestihnete", { months: monthSpan(lang, untimed.map((r) => r.month)) });
+  if (untimed.length) text += ", " + tr(lang, "ale za svetla túru nestihnete ({months})", { months: monthSpan(lang, untimed.map((r) => r.month)) });
   return warn + text + (closedPart ? ";" + closedPart : ".");
 }
 

@@ -221,7 +221,7 @@ describe("month table: partly closed months and dated closures never show a bare
     expect(timed.length).toBeGreaterThan(0);
     expect(untimed.length).toBeGreaterThan(0);
     const sk = departureSentence("sk", long, [{ ...base, starts_on: "2000-11-01" }]);
-    expect(sk).toContain("túru za svetla nestihnete");
+    expect(sk).toContain("ale za svetla túru nestihnete (");
     expect(sk).not.toContain("podľa mesiaca; od");
     expect(sk).toMatch(/^Mimo sezónnej uzávery \((jún až \w+|[^)]+)\) treba vyraziť najneskôr/);
   });
@@ -235,7 +235,7 @@ describe("month table: partly closed months and dated closures never show a bare
       expect(x.latest === null).toBe(closed);
     }
     const sk = departureSentence("sk", r, [dated], "2026-11-06");
-    expect(sk).toMatch(/^Pozor, na trase je hlásená uzávera 1\. 6\. 2027 do 30\. 9\. 2027, pozrite časť Uzávery a poplatky\. Mimo uzávery /);
+    expect(sk).toMatch(/^Pozor, na trase je hlásená uzávera od 1\. 6\. 2027 do 30\. 9\. 2027, pozrite časť Uzávery a poplatky\. Mimo uzávery /);
     expect(sk).not.toMatch(/V júni/);
     expect(departureSentence("en", r, [dated], "2026-11-06")).toContain("Warning: a closure is reported");
   });
