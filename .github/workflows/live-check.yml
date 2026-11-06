@@ -1,0 +1,34 @@
+name: Live check
+
+# A real-browser check of the live site after a merge (scripts/live-check-*.mjs). Runs on a push
+# of the check to the research thread's branch, or by hand. Umami calls are answered locally.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Site to test
+        default: https://turuj.sk
+  push:
+    branches: ["claude/project-thread-5d44rh"]
+    paths: [".github/workflows/live-check.yml", "scripts/live-check-*.mjs"]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TARGET: ${{ inputs.target || 'https://turuj.sk' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: npm i --no-save playwright && npx playwright install --with-deps chromium
+      - run: node scripts/live-check-201.mjs
+      - if: always()
+        run: cat live-check/report.md >> "$GITHUB_STEP_SUMMARY" || true
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-check
+          path: live-check/
