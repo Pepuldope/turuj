@@ -8,6 +8,9 @@ on:
       target:
         description: Site to test
         default: https://turuj.sk
+      script:
+        description: Check to run (file in scripts/)
+        default: live-check-201.mjs
   push:
     branches: ["claude/project-thread-5d44rh"]
     paths: [".github/workflows/live-check.yml", "scripts/live-check-*.mjs"]
@@ -20,11 +23,17 @@ jobs:
       TARGET: ${{ inputs.target || 'https://turuj.sk' }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
       - uses: actions/setup-node@v7
         with:
           node-version: 22
       - run: npm i --no-save playwright && npx playwright install --with-deps chromium
-      - run: node scripts/live-check-201.mjs
+      # By hand: the chosen script. On a push: the check that push added or changed.
+      - run: |
+          SCRIPT="${{ inputs.script }}"
+          [ -z "$SCRIPT" ] && SCRIPT=$(git diff --name-only HEAD~1 HEAD -- 'scripts/live-check-*.mjs' | head -1 | xargs -r basename)
+          node "scripts/${SCRIPT:-live-check-201.mjs}"
       - if: always()
         run: cat live-check/report.md >> "$GITHUB_STEP_SUMMARY" || true
       - if: always()
