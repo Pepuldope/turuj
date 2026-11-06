@@ -1322,10 +1322,7 @@ function SkyEdge({ colour }: { colour: string }) {
     <div
       aria-hidden="true"
       className="sky-edge"
-      // A solid colour of its own (top 3 px), with the fade drawn by ::after: Safari takes the strip's
-      // colour from a fixed element's background colour, and from a gradient alone it made up a paler
-      // one, a visible break under the clock after scrolling back up (Peter, 2026-11-06).
-      style={{ backgroundColor: c, "--edge": c, zIndex: state.over ? 41 : undefined } as React.CSSProperties}
+      style={{ background: `linear-gradient(${c}, ${c} 25%, transparent)`, zIndex: state.over ? 41 : undefined }}
     />
   );
 }
