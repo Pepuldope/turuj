@@ -405,7 +405,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
 
         <section aria-label={t("Uložiť a zdieľať")} className="flex flex-col gap-3">
           <SaveTripButton gpxUrl={gpxUrl} bbox={bbox} sun={sun} tripPlan={tripPlan} profile={profile} trail={trail} {...trip} />
-          <NavHandoff drive={destination} start={start} walkFrom={walkStart} walk={walk} join={trailJoin} />
+          <NavHandoff slug={trip.slug} drive={destination} start={start} walkFrom={walkStart} walk={walk} join={trailJoin} />
         </section>
 
         {outro}

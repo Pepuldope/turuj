@@ -14,6 +14,8 @@ export const COUNTED: Record<string, readonly string[]> = {
   nav_open: [""],
   plus_want: [""],
   plus_no: [""],
+  plan_commit: ["save", "share", "nav", "gpx"],
+  heard_from: ["google", "ai", "facebook", "instagram", "tiktok", "kamarat", "skola", "klub", "ine"],
 };
 
 /** The detail stored for this action, or null when the pair isn't one we count. */
@@ -59,6 +61,10 @@ export interface MonthEvents {
   /** /plus price test: "Chcel by som to" and "Za túto cenu nie" taps. */
   plusWant: number;
   plusNo: number;
+  /** North Star: planned trips (one per trail per page load). */
+  planned: number;
+  /** "Ako ste sa o nás dozvedeli?" answers by channel. */
+  heardFrom: Record<string, number>;
 }
 
 /** Totals per month, newest first; null without the database. */
@@ -77,7 +83,7 @@ export async function monthlyEvents(): Promise<MonthEvents[] | null> {
   for (const r of rows) {
     const m =
       months.get(r.month) ??
-      { month: r.month, starts: 0, saved: 0, sent: 0, sentFast: 0, friendOpens: 0, navigations: 0, plusWant: 0, plusNo: 0 };
+      { month: r.month, starts: 0, saved: 0, sent: 0, sentFast: 0, friendOpens: 0, navigations: 0, plusWant: 0, plusNo: 0, planned: 0, heardFrom: {} };
     months.set(r.month, m);
     if (r.name === "start_set") m.starts += r.n;
     else if (r.name === "trip_saved") m.saved += r.n;
@@ -88,6 +94,8 @@ export async function monthlyEvents(): Promise<MonthEvents[] | null> {
     else if (r.name === "nav_open") m.navigations += r.n;
     else if (r.name === "plus_want") m.plusWant += r.n;
     else if (r.name === "plus_no") m.plusNo += r.n;
+    else if (r.name === "plan_commit") m.planned += r.n;
+    else if (r.name === "heard_from") m.heardFrom[r.detail] = (m.heardFrom[r.detail] ?? 0) + r.n;
   }
   return [...months.values()];
 }
