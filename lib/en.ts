@@ -963,6 +963,7 @@ export const EN: Record<string, string> = {
   "Kedy vyraziť, závisí od západu slnka v daný mesiac.": "When to set off depends on the sunset in each month.",
   "V {m1} treba vyraziť {a}, v {m2} {b}.": "In {m1} set off {a}, in {m2} {b}.",
   "Počítame s chôdzou {t} bez prestávok a rezervou {buffer} min pred západom slnka; 15. deň v mesiaci, slovenský čas.": "Assumes {t} of walking without breaks and a {buffer} min buffer before sunset; the 15th of each month, Slovak time.",
+  "Ďalšie výlety v okolí": "More trips nearby",
   "Fakty": "Facts",
   "Čas chôdze": "Walking time",
   "Prevýšenie": "Ascent",

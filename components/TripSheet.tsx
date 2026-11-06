@@ -3,7 +3,7 @@ import { primaryTrailhead, routeWalk, sunLocation } from "@/lib/data";
 import { pickWalk, stopsByWalk } from "@/lib/walkFacts";
 import { gpxUrlFor } from "@/lib/gpx";
 import { GpxDownload } from "@/components/GpxDownload";
-import { getRouteWalks, getTownDrives, getTrip, getTripIndex, getTripPhoto, photoSource, withLoopRoutes } from "@/lib/tripFiles";
+import { getAllTrips, getCarWalks, getRouteWalks, getTownDrives, getTrip, getTripIndex, getTripPhoto, photoSource, withLoopRoutes } from "@/lib/tripFiles";
 import type { PlacePhoto } from "@/lib/tripFiles";
 import { aboutTrip } from "@/lib/describeSk";
 import { buildProfile } from "@/lib/tripProfile";
@@ -18,6 +18,8 @@ import { PhoneTripMap } from "@/components/PhoneTripMap";
 import { PoiList } from "@/components/PoiList";
 import { StopsBlock } from "@/components/TransitBlock";
 import { ClosureBanner } from "@/components/ClosureBanner";
+import { NearbyTrips } from "@/components/NearbyTrips";
+import { nearestMainTrips } from "@/lib/nearbyTrips";
 import { ClosuresAndFees, TripAnswers, TripFakty } from "@/components/TripAnswers";
 import { TripPlanner } from "@/components/TripPlanner";
 import { TripReviews } from "@/components/TripReviews";
@@ -41,6 +43,9 @@ import { describeEn } from "@/lib/describeEn";
 import { describeTripEn } from "@/lib/tripJsonLdEn";
 import { markSigns } from "@/lib/markSigns";
 import { startLines, subtitle } from "@/lib/tripAnswers";
+
+/** How many neighbours the "Ďalšie výlety v okolí" block lists. */
+const NEARBY_COUNT = 7;
 
 /**
  * The photo as a schema.org ImageObject with the credit fields Google's image metadata reads (F17):
@@ -195,6 +200,10 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
     walk: ownWalk,
     fallback: { min: trail.duration_min, m: trail.distance_m, ascentM: trail.ascent_m },
   });
+  // C53: the nearest other places as plain links (lib/nearbyTrips.ts). The index holds main routes only.
+  const mains = await getAllTrips();
+  const nearby = nearestMainTrips(mains, trip.destination.location, trip.variant_of ?? trail.slug, NEARBY_COUNT);
+  const nearbyWalks = await getCarWalks();
   const updated = (await getTripIndex()).generated_at.slice(0, 10) || null;
 
   return (
@@ -370,6 +379,8 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
               {tr(lang, "Ďalšie výlety okolo {town}", { town: townOf(lang, town.id, town.name) })} →
             </Link>
           )}
+
+          <NearbyTrips lang={lang} items={nearby} walks={nearbyWalks} />
 
           {/* C2: something wrong on this trip (closed trail, car park, photo) goes straight to us. */}
           <Link
