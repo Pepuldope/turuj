@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accusative, directionTo } from "@/lib/slovakCase";
+import { accusative, directionTo, fromStart, genitiveFrom, zOrZo } from "@/lib/slovakCase";
 
 // Real names from the trip data (public/data/trips/index.json) and the kind the trip has.
 describe("accusative after na", () => {
@@ -66,5 +66,45 @@ describe("falls back when not confident", () => {
     expect(p.confident).toBe(false);
     expect(p.text).toBe(name);
     expect(directionTo(name, kind)).toBeNull();
+  });
+});
+
+describe("genitive after z / zo (where a route starts)", () => {
+  it.each([
+    ["Brezina", "z Breziny"],
+    ["Horná Dolina", "z Hornej Doliny"],
+    ["Nižná Revúca", "z Nižnej Revúce"],
+    ["Silická Brezová", "zo Silickej Brezovej"],
+    ["Valaská Dubová", "z Valaskej Dubovej"],
+    ["Zázrivá", "zo Zázrivej"],
+    ["Šiatorská Bukovinka", "zo Šiatorskej Bukovinky"],
+    ["Sklabiňa", "zo Sklabine"],
+    ["Vasiľovská hoľa, chata", "z Vasiľovskej hole, chata"],
+    ["Trangoška", "z Trangošky"],
+    ["Rača, amfiteáter", "z Rače, amfiteáter"],
+    ["Hamovanie", "z Hamovania"],
+    ["Horné Srnie,Rybníky", "z Horného Srnia, Rybníky"],
+    ["Plavecké Podhradie", "z Plaveckého Podhradia"],
+    ["Radošovo", "z Radošova"],
+    ["Košarisko", "z Košariska"],
+    ["Fačkov", "z Fačkova"],
+    ["Parkovisko", "z parkoviska"],
+    ["Tri Studničky (Stará horáreň)", "z Troch Studničiek (Stará horáreň)"],
+    ["Štefanová (bus)", "zo Štefanovej (bus)"],
+    ["Slanec", null], // masculine: Slanca? varies
+  ])("%s -> %s", (name, want) => {
+    expect(fromStart(name)).toBe(want ?? null);
+  });
+
+  it("is not confident about plurals, masculine nouns, prepositions and odd shapes", () => {
+    for (const n of ["Narcie", "Horné Vestenice", "Červený Kameň", "Zubák", "Pod tromi Tablami", "Kláštor pod Znievom", "Vrútky-Piatrová, hotel", "Dva stromy 35'", "Chata Vrátna", "Lúčky, Aqua - Vital park"]) {
+      const o = genitiveFrom(n);
+      expect(o.confident, n).toBe(false);
+      expect(o.text).toBe(n);
+    }
+  });
+
+  it("picks zo before s, z, š, ž", () => {
+    expect([zOrZo("Štrby"), zOrZo("Silickej"), zOrZo("Zázrivej"), zOrZo("Žiliny"), zOrZo("Breziny")]).toEqual(["zo", "zo", "zo", "zo", "z"]);
   });
 });

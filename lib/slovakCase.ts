@@ -75,6 +75,8 @@ const lower = (w: string) => w.toLocaleLowerCase("sk");
 const isPrep = (w: string) => PREPOSITIONS.has(lower(w));
 /** An adjective (or noun) in the feminine singular nominative: Veľká, Biela, Babia, Kráľova. */
 const FEM = /[aá]$/;
+/** A feminine adjective used as a modifier: Veľká, Babia, Biela, Kráľova. A feminine noun (Chata) is not one. */
+const ADJ_FEM = /(?:á|ia|ela|ova)$/;
 /** Looks like one word of letters (a hyphen inside is fine): no digits, no punctuation. */
 const PLAIN_WORD = /^\p{L}[\p{L}-]*$/u;
 /** Neuter plurals in -iská (Loviská, Uhliská): they end like a feminine adjective but do not change. */
@@ -131,7 +133,7 @@ function accusativeNa(words: string[]): string[] | null {
   if (!words.every((w) => PLAIN_WORD.test(w)) || words.some(isPrep)) return null;
   const last = words[words.length - 1];
   if (FEM.test(last)) {
-    if (!words.slice(0, -1).every((w) => FEM.test(w))) return null;
+    if (!words.slice(0, -1).every((w) => ADJ_FEM.test(w))) return null;
     return words.map(femAcc);
   }
   if (OTHER_CASE.test(last) || !SAME_FORM.test(last)) return null;
@@ -144,6 +146,7 @@ function genitiveDo(words: string[], heads: Record<string, string>): string[] | 
   const h = words.findIndex((w) => lower(w) in heads);
   if (h < 0) return null;
   const before = words.slice(0, h);
+  // A known noun follows, so a modifier in -a agrees with it (Vrátna dolina).
   if (!before.every((w) => FEM.test(w) && PLAIN_WORD.test(w))) return null;
   const head = heads[lower(words[h])];
   // The noun keeps a capital only inside a proper name ("Hradnej jaskyne"), not at the start ("do jaskyne Driny").
@@ -175,4 +178,94 @@ export function accusative(name: string, kind?: DestinationKind): Phrase {
 export function directionTo(name: string, kind?: DestinationKind): string | null {
   const p = accusative(name, kind);
   return p.confident && p.prep ? `${p.prep} ${p.text}` : null;
+}
+
+/** "z" before most words, "zo" before s, z, š, ž ("zo Štrby", "z Popradu"); also used for towns (lib/townNames.ts). */
+export function zOrZo(genitive: string): "z" | "zo" {
+  return /^[szšž]/i.test(genitive) ? "zo" : "z";
+}
+
+export interface Origin {
+  prep: "z" | "zo" | null;
+  /** The name in the genitive; the name as given when not confident. */
+  text: string;
+  confident: boolean;
+}
+
+/** Whole start names checked by hand, where the genitive plural or an alternation cannot be worked out. */
+const GENITIVE_OVERRIDES: Record<string, string> = {
+  "Tri Studničky": "Troch Studničiek",
+};
+
+/** Bare generic nouns a start is called ("Parkovisko"): lowercase after "z". */
+const GENERIC_STARTS = new Set(["Parkovisko", "Námestie", "Stanica", "Zastávka", "Rázcestie", "Kolónia"]);
+
+/** Consonants after which a feminine -a takes -e, not -y (ulica -> ulice, ruža -> ruže, jaskyňa -> jaskyne). */
+const SOFT_BEFORE_A = /(?:[cčšžňľťďj]|dz|dž)a$/i;
+
+/** Feminine singular noun in -a to genitive; null for shapes that are not safely feminine singular. */
+function femNounGenitive(w: string): string | null {
+  if (!w.endsWith("a") || NEUTER_PLURAL.test(w)) return null;
+  if (w.endsWith("ia")) return `${w.slice(0, -1)}e`;
+  if (!SOFT_BEFORE_A.test(w)) return `${w.slice(0, -1)}y`;
+  // ď, ť, ň, ľ lose their caron before e: jaskyňa -> jaskyne, hoľa -> hole.
+  const plain: Record<string, string> = { ď: "d", ť: "t", ň: "n", ľ: "l" };
+  const stem = w.slice(0, -1);
+  return `${stem.slice(0, -1)}${plain[stem.slice(-1)] ?? stem.slice(-1)}e`;
+}
+
+/** Genitive of a place name's words ("Suchá Hora" -> "Suchej Hory"), or null when not sure. */
+function genitiveWords(words: string[]): string[] | null {
+  if (isPrep(words[0]) || words.some(isPrep)) return null;
+  if (!words.every((w) => /^\p{L}+$/u.test(w))) return null;
+  const last = words[words.length - 1];
+  const before = words.slice(0, -1);
+  if (last.endsWith("á")) {
+    // An adjective used as a noun (Buková, Zázrivá): -á -> -ej; the words before agree with it.
+    if (!before.every((w) => ADJ_FEM.test(w))) return null;
+    return [...before.map(adjGen), `${last.slice(0, -1)}ej`];
+  }
+  const fem = femNounGenitive(last);
+  if (fem) {
+    if (!before.every((w) => ADJ_FEM.test(w))) return null;
+    return [...before.map(adjGen), fem];
+  }
+  // Neuter: -o -> -a, -nie -> -nia (Brezno, Hamovanie; other -ie names are often plurals: Narcie), the adjectives before it -é -> -ého; a lone -é is a neuter adjective-noun.
+  const neuter = /o$/.test(last) ? `${last.slice(0, -1)}a` : /(?:nie|radie|horie)$/.test(last) ? `${last.slice(0, -1)}a` : /é$/.test(last) && before.length === 0 ? `${last.slice(0, -1)}ého` : null;
+  if (neuter && !NEUTER_PLURAL.test(last)) {
+    if (!before.every((w) => /é$/.test(w))) return null;
+    return [...before.map((w) => `${w.slice(0, -1)}ého`), neuter];
+  }
+  // Masculine villages in -ov take -a (Prešov -> Prešova); other masculine endings vary (Poprad -> Popradu, Zvolen -> Zvolena).
+  if (before.length === 0 && /ov$/.test(last)) return [`${last}a`];
+  return null;
+}
+
+/**
+ * Where a route starts, as "z {start}" needs it: "Brezina" -> z Breziny, "Horná Dolina" -> z Hornej
+ * Doliny, "Tri Studničky (Stará horáreň)" -> zo Troch Studničiek (Stará horáreň). A ", tail" or a
+ * "(parenthesis)" after the name stays as written. Not sure -> `confident: false`, the name unchanged.
+ */
+export function genitiveFrom(name: string): Origin {
+  const unsure: Origin = { prep: null, text: name, confident: false };
+  const trimmed = name.trim();
+  const paren = /\s*\([^()]*\)\s*$/.exec(trimmed);
+  const noParen = paren ? trimmed.slice(0, paren.index) : trimmed;
+  const tailParen = paren ? ` ${paren[0].trim()}` : "";
+  const parts = noParen.split(/\s*,+\s*/);
+  const base = parts[0].trim();
+  const comma = parts.length > 1 ? `, ${parts.slice(1).join(", ")}` : "";
+  if (!base || /[()/&"„“–—:;]|\s-\s|\d/.test(base) || (comma && /[()]/.test(comma))) return unsure;
+  const known = GENITIVE_OVERRIDES[base];
+  const words = known ? known.split(/\s+/) : genitiveWords(base.split(/\s+/));
+  if (!words) return unsure;
+  let text = words.join(" ");
+  if (GENERIC_STARTS.has(base)) text = text.toLocaleLowerCase("sk");
+  return { prep: zOrZo(text), text: text + comma + tailParen, confident: true };
+}
+
+/** "z Breziny", "zo Štrby"; null when the genitive is not confident. */
+export function fromStart(name: string): string | null {
+  const o = genitiveFrom(name);
+  return o.confident && o.prep ? `${o.prep} ${o.text}` : null;
 }

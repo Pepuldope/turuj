@@ -10,6 +10,8 @@ import { TripSheet } from "@/components/TripSheet";
 import { pageMetadata } from "@/lib/seo";
 import { metaDescription } from "@/lib/describeSk";
 import { langPath, tr } from "@/lib/lang";
+import { getAllTrips } from "@/lib/tripFiles";
+import { isIndexedVariant, variantHeading } from "@/lib/variantTitles";
 import { hikeDirection } from "@/lib/tripAnswers";
 import type { DestinationKind } from "@/lib/tripSchema";
 import type { Lang } from "@/lib/lang";
@@ -38,7 +40,9 @@ export async function tripMetadata(slug: string, lang: Lang): Promise<Metadata> 
     // The main page is titled with the words people type: "túra na Kriváň, koľko trvá, kde parkovať"
     // (C42, Peter 2026-11-06), the tail shortened until it fits 60 characters.
     title: fitTitle(
-      trip.variant_of
+      trip.variant_of && lang === "sk" && isIndexedVariant(trip, await getAllTrips())
+        ? variantHeading(trail.name, trip.start.name, km).titles
+        : trip.variant_of
         ? [
             tr(lang, "{name} zo štartu {start} ({km}) – výlet", { name: trail.name, start: trip.start.name, km }),
             tr(lang, "{name} zo štartu {start} ({km})", { name: trail.name, start: trip.start.name, km }),
