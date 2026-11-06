@@ -71,7 +71,7 @@ export function RouteChoice({ slug, destination, routes, walks }: Props) {
       {/* Wider screens: every route as a card. */}
       <div className="hidden flex-col gap-2 lg:flex">
         <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-base font-bold">{t("Cesty k cieľu: {name}", { name: destination })}</h2>
+          <p className="text-base font-bold">{t("Cesty k cieľu: {name}", { name: destination })}</p>
           <LangLink href={compare} className="shrink-0 text-sm font-bold whitespace-nowrap text-[var(--accent)]">
             {t("Porovnať na mape")} ›
           </LangLink>
