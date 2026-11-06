@@ -36,7 +36,7 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
   const kids = listed.filter((t) => t.kids).length;
   const intro =
     lang === "sk" && nearest.length
-      ? `Najbližšie výlety z ${around}: ${nearest.map((t) => `${t.name} (${t.carMin} min autom)`).join(", ")}.` +
+      ? `Najbližšie výlety ${townFrom(lang, town.id, town.name)}: ${nearest.map((t) => `${t.name} (${t.carMin} min autom)`).join(", ")}.` +
         (kids ? ` Z výletov na tejto stránke sa ${kids === 1 ? "1 hodí" : kids < 5 ? `${kids} hodia` : `${kids} hodí`} aj pre rodiny s deťmi.` : "") +
         " Pri každom nájdete parkovanie, autobus či vlak a čas, kedy najneskôr vyraziť."
       : null;

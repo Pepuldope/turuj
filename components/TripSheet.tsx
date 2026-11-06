@@ -18,6 +18,7 @@ import { PhoneTripMap } from "@/components/PhoneTripMap";
 import { PoiList } from "@/components/PoiList";
 import { StopsBlock } from "@/components/TransitBlock";
 import { ClosureBanner } from "@/components/ClosureBanner";
+import { ClosureRules } from "@/components/ClosureRules";
 import { TripPlanner } from "@/components/TripPlanner";
 import { TripReviews } from "@/components/TripReviews";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -276,6 +277,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                 <RouteChoice slug={current} destination={trip.destination.name} routes={routes} walks={walks} />
                 {/* A real closure stays up top; "no data" is a quiet note under the map. */}
                 {closures.length > 0 && <ClosureBanner closures={closures} />}
+                <ClosureRules closures={closures} lang={lang} />
               </>
             }
             outro={

@@ -48,3 +48,19 @@ export function isClosureActive(closure: Closure, today: string): boolean {
 export function activeClosures(closures: Closure[], today: string): Closure[] {
   return closures.filter((c) => isClosureActive(c, today));
 }
+
+/** "1. 11. do 31. 5." for a yearly closure; with the year for a one-off one. */
+export function closurePeriod(c: Closure): string {
+  const short = (iso: string) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    return c.kind === "jednorazova" ? `${d}. ${m}. ${y}` : `${d}. ${m}.`;
+  };
+  return `${short(c.starts_on)} do ${short(c.ends_on)}`;
+}
+
+/** Who keeps the closure, from the rule id ("tanap-…" -> TANAP). Unknown prefix: the official source. */
+export function closureManager(c: Closure): string {
+  if (c.id.startsWith("tanap-")) return "TANAP";
+  if (c.id.startsWith("malafatra-")) return "NP Malá Fatra";
+  return "správca územia";
+}
