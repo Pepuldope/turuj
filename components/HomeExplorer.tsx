@@ -1333,10 +1333,16 @@ function SkyEdge({ colour, lower }: { colour: string; lower: string }) {
         !state.sky
           ? { backgroundColor: "var(--background)" }
           : state.scrolled
-            ? // Under the top bar (not over it like the gradient), so it never cuts the round buttons; and a
-              // touch of the lower sky in it, to match the header just under the strip (Peter, 2026-11-06).
-              { backgroundColor: `color-mix(in srgb, ${c} 85%, ${lower})` }
-            : { background: `linear-gradient(${c}, ${c} 25%, transparent)`, zIndex: state.over ? 41 : undefined }
+            ? // Still over the see-through bar (under it Safari took the bar and fell back to white), but only
+              // 6 px tall so it ends above the round buttons; a touch of the lower sky in it, to match the
+              // header just under the strip (Peter, 2026-11-06). While pulling, CSS turns it back into a fade.
+              ({
+                backgroundColor: `color-mix(in srgb, ${c} 85%, ${lower})`,
+                height: 6,
+                zIndex: state.over ? 41 : undefined,
+                "--edge": c,
+              } as React.CSSProperties)
+            : ({ background: `linear-gradient(${c}, ${c} 25%, transparent)`, zIndex: state.over ? 41 : undefined, "--edge": c } as React.CSSProperties)
       }
     />
   );

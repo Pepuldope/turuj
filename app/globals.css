@@ -503,7 +503,8 @@ h2,
      for the clock strip (fog over the pulled sky, Peter 2026-11-06); this way the strip keeps the
      sky colour and fades into the deeper pulled sky. */
   :root[data-pull] .sky-edge {
-    height: 56px;
+    height: 56px !important;
+    background: linear-gradient(var(--edge, transparent), var(--edge, transparent) 25%, transparent) !important;
     z-index: 1 !important;
   }
 }
