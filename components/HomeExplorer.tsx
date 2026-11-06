@@ -1291,19 +1291,38 @@ function StartReminder() {
  * band in the sky's own top colour gives it the right colour; gone once you scroll.
  */
 function SkyEdge({ colour }: { colour: string }) {
-  const [top, setTop] = useState(true);
+  // "over": right at the top, where the phone top bar is see-through; "sky": the band's colour.
+  const [state, setState] = useState({ over: true, sky: true });
   useEffect(() => {
-    // Same "top" as the phone top bar (8 px), so the band is back the moment the bar turns see-through.
-    const on = () => setTop(window.scrollY <= 8);
+    let last = window.scrollY;
+    const on = () => {
+      const y = window.scrollY;
+      const dy = y - last;
+      last = y;
+      // On the way up the band turns sky a little before the bar turns see-through (48 px vs 8 px):
+      // iOS fades the clock strip in after a short delay, so starting early makes the two land
+      // together instead of bar first, strip after (Peter, 2026-11-06). On the way down: at 8 px.
+      setState((s) => {
+        const sky = y <= 8 || (dy < 0 ? y <= 48 : dy === 0 && s.sky && y <= 48);
+        const over = y <= 8;
+        return s.sky === sky && s.over === over ? s : { over, sky };
+      });
+    };
     on();
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
   }, []);
   // Scrolled away it turns the page colour instead of hiding: iOS keeps the last colour it read
   // while scrolling, and with nothing at the top the strip stayed sky blue over the rest of the
-  // page (Peter, 2026-11-05). iOS reads it during the scroll, so the change reaches the strip.
-  const c = top ? colour : "var(--background)";
+  // page (Peter, 2026-11-05). iOS reads it even while under the bar.
+  const c = state.sky ? colour : "var(--background)";
   // At the top it lies over the (see-through) phone top bar, so iOS finds the sky there and not the
   // bar; scrolled, under it, so the white bar coming in on the way up shows (Peter, 2026-11-05).
-  return <div aria-hidden="true" className="sky-edge" style={{ background: `linear-gradient(${c}, ${c} 25%, transparent)`, zIndex: top ? 41 : undefined }} />;
+  return (
+    <div
+      aria-hidden="true"
+      className="sky-edge"
+      style={{ background: `linear-gradient(${c}, ${c} 25%, transparent)`, zIndex: state.over ? 41 : undefined }}
+    />
+  );
 }

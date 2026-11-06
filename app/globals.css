@@ -499,7 +499,11 @@ h2,
     z-index: 1;
     pointer-events: none;
   }
+  /* While pulling to refresh it stays, taller, under the sun: hidden, iOS took the pale page colour
+     for the clock strip (fog over the pulled sky, Peter 2026-11-06); this way the strip keeps the
+     sky colour and fades into the deeper pulled sky. */
   :root[data-pull] .sky-edge {
-    visibility: hidden;
+    height: 56px;
+    z-index: 1 !important;
   }
 }
