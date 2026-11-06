@@ -33,7 +33,8 @@ SCOPE = "https://www.googleapis.com/auth/webmasters.readonly"
 PAGE = 25000
 MAX_INSPECT = 600
 SAMPLE_SITEMAP = 250
-MIN_GAP = 0.15  # seconds between inspections: ~400/min, under the 600/min limit
+MIN_GAP = 0.2  # seconds between inspection starts: ~300/min, under the 600/min limit
+BUDGET = 20 * 60  # seconds for the whole inspection phase
 
 stats = {"rows": {}, "inspections": 0, "errors": 0, "status_codes": {}}
 
@@ -59,9 +60,9 @@ class Client:
             self.creds.refresh(Request())
         return {"Authorization": f"Bearer {self.creds.token}"}
 
-    def post(self, url: str, body: dict):
+    def post(self, url: str, body: dict, timeout: int = 60):
         for attempt in range(4):
-            r = self.session.post(url, json=body, headers=self.headers(), timeout=60)
+            r = self.session.post(url, json=body, headers=self.headers(), timeout=timeout)
             count_status(r.status_code)
             if r.status_code in (429, 500, 503) and attempt < 3:
                 time.sleep(5 * (attempt + 1))
@@ -150,11 +151,19 @@ def pick_sample(urls: list[str]) -> list[str]:
 def inspect(c: Client, urls: list[str]) -> list:
     results: list = []
     quota_hit = False
+    t0 = time.time()
     for u in urls:
-        if stats["inspections"] >= MAX_INSPECT or quota_hit:
+        if stats["inspections"] >= MAX_INSPECT or quota_hit or time.time() - t0 > BUDGET:
             break
         time.sleep(MIN_GAP)
-        r = c.post(INSPECT, {"inspectionUrl": u, "siteUrl": SITE})
+        if (len(results) + 1) % 50 == 0:
+            log(f"inspection progress: {len(results)} tried, {int(time.time() - t0)}s")
+        try:
+            r = c.post(INSPECT, {"inspectionUrl": u, "siteUrl": SITE}, timeout=30)
+        except requests.RequestException:
+            results.append({"url": u, "error": "request failed"})
+            stats["errors"] += 1
+            continue
         if r.status_code == 429:
             quota_hit = True
             results.append({"url": u, "error": "quota"})
@@ -214,10 +223,13 @@ def main() -> int:
         log(f"sitemaps: HTTP {r.status_code}")
         stats["errors"] += 1
 
-    impressed = [row["keys"][0] for row in pages]
+    # Top pages by impressions first (all of them when they fit), then the sitemap sample.
+    impressed = [row["keys"][0] for row in sorted(pages, key=lambda r: -r.get("impressions", 0))]
     sample = pick_sample(sitemap_urls())
     log(f"sitemap sample: {len(sample)} urls")
-    todo = list(dict.fromkeys(impressed + sample))[:MAX_INSPECT]
+    room = max(MAX_INSPECT - len(sample), 100)
+    todo = list(dict.fromkeys(impressed[:room] + sample))[:MAX_INSPECT]
+    log(f"inspection queue: {len(todo)} urls")
     save("inspection", inspect(c, todo))
 
     save("run_stats", stats)
