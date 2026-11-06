@@ -1034,7 +1034,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
     <main className="flex flex-1 flex-col lg:h-dvh lg:flex-none lg:flex-row lg:overflow-hidden">
       <div ref={columnRef} className="mx-auto flex w-full max-w-[640px] flex-col gap-5 px-4 pt-4 pb-6 md:max-w-[760px] lg:mx-0 lg:w-[440px] lg:max-w-none lg:shrink-0 relative lg:overflow-y-auto lg:overscroll-contain">
         <PullSky season={season} />
-        <SkyEdge colour={LAND[season].sky1} />
+        <SkyEdge colour={LAND[season].sky1} lower={LAND[season].sky2} />
         <header className="relative -mx-4 -mt-4 flex shrink-0 flex-col sm:overflow-hidden sm:rounded-b-[24px] lg:overflow-visible lg:rounded-none">
           <SeasonScene season={season} width={440} height={250} seed={11} sunX={HEADER_SUN_X} sunY={0.26} drop={0.2} noSun className="absolute inset-0 h-full w-full" />
           <SunPull season={season} width={440} height={250} sunX={HEADER_SUN_X} sunY={0.26} moveRef={columnRef} />
@@ -1290,7 +1290,7 @@ function StartReminder() {
  * 2026-11-04; the page starts below the clock there, safe-area-inset-top is 0). A thin fixed
  * band in the sky's own top colour gives it the right colour; gone once you scroll.
  */
-function SkyEdge({ colour }: { colour: string }) {
+function SkyEdge({ colour, lower }: { colour: string; lower: string }) {
   // "over": right at the top, where the phone top bar is see-through; "sky": the band's colour.
   const [state, setState] = useState({ over: true, sky: true, scrolled: false });
   useEffect(() => {
@@ -1333,7 +1333,9 @@ function SkyEdge({ colour }: { colour: string }) {
         !state.sky
           ? { backgroundColor: "var(--background)" }
           : state.scrolled
-            ? { backgroundColor: c, zIndex: state.over ? 41 : undefined }
+            ? // Under the top bar (not over it like the gradient), so it never cuts the round buttons; and a
+              // touch of the lower sky in it, to match the header just under the strip (Peter, 2026-11-06).
+              { backgroundColor: `color-mix(in srgb, ${c} 85%, ${lower})` }
             : { background: `linear-gradient(${c}, ${c} 25%, transparent)`, zIndex: state.over ? 41 : undefined }
       }
     />
