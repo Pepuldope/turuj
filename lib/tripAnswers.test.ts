@@ -149,9 +149,8 @@ describe("month table under a seasonal closure", () => {
     expect(en).toContain("closed from");
   });
 
-  it("is unchanged without a closure and ignores dated closures in the rows", () => {
+  it("hasDatedClosure tells dated from yearly", () => {
     const dated: Closure = { ...tanap, kind: "jednorazova", starts_on: "2026-03-01", ends_on: "2026-03-31" };
-    expect(monthTable(TATRY, 4 * 60, [dated])).toEqual(monthTable(TATRY, 4 * 60));
     expect(hasDatedClosure([dated])).toBe(true);
     expect(hasDatedClosure([tanap])).toBe(false);
   });
@@ -171,5 +170,115 @@ describe("transit wording", () => {
   it("is neutral for a kind we do not know", () => {
     const odd = { ...stop("vlak", "X"), mode: "lanovka" as never };
     expect(transitSentence("sk", [odd])).toBe("Najbližšia zastávka verejnej dopravy: X, 504 m pešo od trasy.");
+  });
+});
+
+describe("month table: partly closed months and dated closures never show a bare time", () => {
+  const base: Closure = { id: "tanap-x", trail_id: "x", kind: "rocna", starts_on: "2000-10-16", ends_on: "2000-05-31", reason: "r", source_url: "https://example.org", verified_on: "2026-10-01" };
+  const rows = monthTable(TATRY, 4 * 60, [base]);
+  const row = (m: number) => rows.find((r) => r.month === m)!;
+
+  it("yearly 16 Oct - 31 May: October is partial, no time", () => {
+    expect(row(10).latest).toBeNull();
+    expect(row(10).closedBy).toBeNull();
+    expect(row(10).partial).toEqual({ by: "TANAP", span: "16. 10.–31. 10." });
+    expect(row(11).closedBy).toBe("TANAP");
+    expect(row(5).closedBy).toBe("TANAP");
+    for (const m of [6, 7, 8, 9]) expect(row(m).latest).not.toBeNull();
+  });
+
+  it("yearly closure ending 14 Nov: November partial with its own span", () => {
+    const c = { ...base, starts_on: "2000-11-01", ends_on: "2000-11-14" };
+    const r = monthTable(TATRY, 4 * 60, [c]).find((x) => x.month === 11)!;
+    expect(r.latest).toBeNull();
+    expect(r.partial).toEqual({ by: "TANAP", span: "1. 11.–14. 11." });
+  });
+
+  it("sentence names only months that have a time and never the partial one", () => {
+    const sk = departureSentence("sk", rows, [base]);
+    expect(sk).toMatch(/^Mimo sezónnej uzávery \(jún až september\) treba vyraziť najneskôr medzi \d\d:\d\d a \d\d:\d\d podľa mesiaca; od 16\. 10\. do 31\. 5\. je trasa uzavretá \(TANAP\)\.$/);
+    expect(departureSentence("en", rows, [base])).toContain("(June to September)");
+  });
+
+  it("year-wrapping 1 Nov - 31 May stays: Nov-May closed, Jun-Oct times", () => {
+    const c = { ...base, starts_on: "2000-11-01" };
+    const r = monthTable(TATRY, 4 * 60, [c]);
+    for (const x of r) {
+      const closed = x.month >= 11 || x.month <= 5;
+      expect(x.closedBy).toBe(closed ? "TANAP" : null);
+      expect(x.partial).toBeNull();
+      expect(x.latest === null).toBe(closed);
+    }
+  });
+
+  it("names the months that cannot be done in daylight separately", () => {
+    const wrap = { ...base, starts_on: "2000-11-01" };
+    const walk = [600, 660, 720, 780].find((w) => { const t = monthTable(TATRY, w, [wrap]).filter((x) => !x.closedBy); return t.some((x) => x.latest) && t.some((x) => !x.latest); }) ?? 0;
+    expect(walk).toBeGreaterThan(0);
+    const long = monthTable(TATRY, walk, [wrap]);
+    const timed = long.filter((x) => x.latest);
+    const untimed = long.filter((x) => !x.latest && !x.closedBy);
+    expect(timed.length).toBeGreaterThan(0);
+    expect(untimed.length).toBeGreaterThan(0);
+    const sk = departureSentence("sk", long, [{ ...base, starts_on: "2000-11-01" }]);
+    expect(sk).toContain("túru za svetla nestihnete");
+    expect(sk).not.toContain("podľa mesiaca; od");
+    expect(sk).toMatch(/^Mimo sezónnej uzávery \((jún až \w+|[^)]+)\) treba vyraziť najneskôr/);
+  });
+
+  it("dated closure: sentence opens with the warning and months are marked", () => {
+    const dated: Closure = { ...base, id: "malafatra-1", kind: "jednorazova", starts_on: "2027-06-01", ends_on: "2027-09-30" };
+    const r = monthTable(TATRY, 4 * 60, [dated], "2026-11-06");
+    for (const x of r) {
+      const closed = x.month >= 6 && x.month <= 9;
+      expect(x.closedBy !== null).toBe(closed);
+      expect(x.latest === null).toBe(closed);
+    }
+    const sk = departureSentence("sk", r, [dated], "2026-11-06");
+    expect(sk).toMatch(/^Pozor, na trase je hlásená uzávera 1\. 6\. 2027 do 30\. 9\. 2027, pozrite časť Uzávery a poplatky\. Mimo uzávery /);
+    expect(sk).not.toMatch(/V júni/);
+    expect(departureSentence("en", r, [dated], "2026-11-06")).toContain("Warning: a closure is reported");
+  });
+
+  it("dated closure that starts mid-month gives a partial month", () => {
+    const dated: Closure = { ...base, kind: "jednorazova", starts_on: "2027-06-10", ends_on: "2027-06-20" };
+    const r = monthTable(TATRY, 4 * 60, [dated], "2026-11-06").find((x) => x.month === 6)!;
+    expect(r.latest).toBeNull();
+    expect(r.partial?.span).toBe("10. 6.–20. 6.");
+  });
+
+  it("an expired dated closure is ignored; a future one still warns", () => {
+    const old: Closure = { ...base, kind: "jednorazova", starts_on: "2025-06-01", ends_on: "2025-06-30" };
+    expect(monthTable(TATRY, 4 * 60, [old], "2026-11-06")).toEqual(monthTable(TATRY, 4 * 60));
+    expect(departureSentence("sk", monthTable(TATRY, 4 * 60, [old], "2026-11-06"), [old], "2026-11-06")).toMatch(/^V júni/);
+  });
+
+  it("all 12 months closed never quotes a time", () => {
+    const all: Closure = { ...base, starts_on: "2000-01-01", ends_on: "2000-12-31" };
+    const sk = departureSentence("sk", monthTable(TATRY, 4 * 60, [all]), [all]);
+    expect(sk).toBe("Trasa je uzavretá celý rok (TANAP).");
+    const dated: Closure = { ...all, kind: "jednorazova", starts_on: "2027-01-01", ends_on: "2027-12-31" };
+    const s2 = departureSentence("sk", monthTable(TATRY, 4 * 60, [dated], "2026-11-06"), [dated], "2026-11-06");
+    expect(s2).not.toMatch(/\d\d:\d\d/);
+  });
+
+  it("every month at least partly closed gives no time", () => {
+    const a: Closure = { ...base, starts_on: "2000-01-01", ends_on: "2000-06-30" };
+    const b: Closure = { ...base, id: "tanap-y", starts_on: "2000-07-05", ends_on: "2000-12-31" };
+    const r = monthTable(TATRY, 4 * 60, [a, b]);
+    expect(r.every((x) => x.latest === null)).toBe(true);
+    expect(departureSentence("sk", r, [a, b])).not.toMatch(/\d\d:\d\d/);
+  });
+
+  it("no closures and undefined arrays leave the table clean", () => {
+    const clean = monthTable(TATRY, 4 * 60);
+    expect(clean.every((x) => x.closedBy === null && x.partial === null && x.latest)).toBe(true);
+    expect(monthTable(TATRY, 4 * 60, undefined)).toEqual(clean);
+    expect(departureSentence("sk", clean, undefined)).toMatch(/^V júni treba vyraziť/);
+  });
+
+  it("DST months get a time like any other", () => {
+    const r = monthTable(TATRY, 4 * 60);
+    for (const m of [3, 4, 10, 11]) expect(r.find((x) => x.month === m)!.latest).not.toBeNull();
   });
 });

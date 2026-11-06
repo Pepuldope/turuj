@@ -126,7 +126,8 @@ interface AnswersProps {
 
 /** The five question sections: how long, parking, bus and train, closures and fees, when to leave. */
 export function TripAnswers({ lang, name, kind, startName, lines, loop, parking, stops, closures, fees, sunAt, walkMin }: AnswersProps) {
-  const months = sunAt ? monthTable(sunAt, walkMin, closures) : [];
+  const asOf = new Date().toISOString().slice(0, 10);
+  const months = sunAt ? monthTable(sunAt, walkMin, closures, asOf) : [];
   const feeOf = parking ? parkingFeeNote(lang, parking) : null;
   const more = otherStops(lang, stops);
   return (
@@ -179,7 +180,7 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
       {months.length > 0 && (
         <section className={SECTION}>
           <h2 className={H2}>{tr(lang, "Kedy najneskôr vyraziť")}</h2>
-          <p>{departureSentence(lang, months, closures)}</p>
+          <p>{departureSentence(lang, months, closures, asOf)}</p>
           <table className="w-full max-w-[420px] border-collapse text-left">
             <thead>
               <tr className="text-[var(--foreground)]">
@@ -200,13 +201,13 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
                   <th scope="row" className="py-0.5 pr-2 font-normal">
                     {monthName(lang, r.month)}
                   </th>
-                  <td className="font-data py-0.5 pr-2">{r.closedBy ? tr(lang, "uzavreté ({who})", { who: r.closedBy }) : r.latest ? clock(r.latest) : tr(lang, "nestihnete za svetla")}</td>
+                  <td className="font-data py-0.5 pr-2">{r.closedBy ? tr(lang, "uzavreté ({who})", { who: r.closedBy }) : r.partial ? tr(lang, "čiastočne uzavreté ({who}): {span}", { who: r.partial.by, span: r.partial.span }) : r.latest ? clock(r.latest) : tr(lang, "nestihnete za svetla")}</td>
                   <td className="font-data py-0.5">{clock(r.sunset)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {hasDatedClosure(closures) && <p className="text-xs">{tr(lang, "Niektoré uzávery platia len v určitých dňoch a tabuľka ich nezohľadňuje; pozrite časť Uzávery a poplatky.")}</p>}
+          {hasDatedClosure(closures) && <p className="text-xs">{tr(lang, "Niektoré uzávery platia len v určitých dňoch; tabuľka ich pripisuje mesiacom len podľa dňa v roku, presné dátumy sú v časti Uzávery a poplatky.")}</p>}
           <p className="text-xs">{departureNote(lang, walkMin, SAFE_MARGIN_MIN)}</p>
         </section>
       )}

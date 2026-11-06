@@ -167,35 +167,80 @@ export function closureSentence(lang: Lang, closures: Closure[]): string {
 export interface MonthRow {
   month: number;
   sunset: Date;
-  /** The latest start that still ends the walk before sunset with the buffer; null when the day is too short for the walk. */
+  /** The latest start that still ends the walk before sunset with the buffer; null when the day is too short for the walk, or when any day of the month is closed. */
   latest: Date | null;
-  /** Who keeps the seasonal closure that covers the middle of this month; null when the trail is not closed then. A closed month never gets a time. */
+  /** Who keeps the closure when EVERY day of this month is closed; null otherwise. A closed month never gets a time. */
   closedBy: string | null;
+  /** Some days of this month are closed: who, and which days ("16. 10.–31. 10."). Such a month never gets a time. */
+  partial: { by: string; span: string } | null;
 }
 
 /** A fixed, non-leap year: the table must not change with the day it is built. */
 const TABLE_YEAR = 2027;
 const FIVE_MIN = 5 * 60000;
+const DAY_MS = 86400000;
+const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+/** Dated (one-off) closures that are active now or still to come; with no `asOf`, all of them. */
+export function relevantDated(closures: Closure[] = [], asOf?: string): Closure[] {
+  return closures.filter((c) => c.kind === "jednorazova" && (!asOf || c.ends_on >= asOf));
+}
+
+/** The month/day keys (month*100+day) a dated closure covers within the 12 months from `asOf` (or from its own start). */
+function datedDays(c: Closure, asOf?: string): Set<number> {
+  const out = new Set<number>();
+  const from = asOf && asOf > c.starts_on ? asOf : c.starts_on;
+  let t = Date.parse(`${from}T00:00:00Z`);
+  const end = Math.min(Date.parse(`${c.ends_on}T00:00:00Z`), t + 365 * DAY_MS);
+  for (; t <= end; t += DAY_MS) {
+    const d = new Date(t);
+    out.add((d.getUTCMonth() + 1) * 100 + d.getUTCDate());
+  }
+  return out;
+}
 
 /**
  * Per month, the latest start so the walk ends SAFE_MARGIN_MIN (lib/dayPlan.ts) before sunset: the
- * 15th of the month, the sun where the trip is, Slovak clock time. Rounded down to 5 minutes. A month
- * whose 15th falls inside a yearly (seasonal) closure of the trip is "closed", with no time.
+ * 15th of the month, the sun where the trip is, Slovak clock time, rounded down to 5 minutes. EVERY day
+ * of the month is checked against the yearly closures and the dated ones (active or coming within a year
+ * of `asOf`, by month and day). A fully closed month has no time and a closedBy; a partly closed month has
+ * no time either, only the closed span in `partial`.
  */
-export function monthTable(at: LatLng, walkMin: number, closures: Closure[] = []): MonthRow[] {
+export function monthTable(at: LatLng, walkMin: number, closures: Closure[] = [], asOf?: string): MonthRow[] {
   const rows: MonthRow[] = [];
   const seasonal = closures.filter((c) => c.kind === "rocna");
+  const dated = relevantDated(closures, asOf).map((c) => ({ c, days: datedDays(c, asOf) }));
   for (let month = 1; month <= 12; month++) {
-    const date = `${TABLE_YEAR}-${String(month).padStart(2, "0")}-15`;
+    const mm = String(month).padStart(2, "0");
+    const date = `${TABLE_YEAR}-${mm}-15`;
     const plan = planDay({ date, start: "06:00", driveMin: null, hikeMin: walkMin, location: at });
     if (!plan) continue;
-    const closed = seasonal.filter((c) => isClosureActive(c, date));
+    const closedDays: number[] = [];
+    const who = new Set<string>();
+    for (let day = 1; day <= DAYS_IN_MONTH[month - 1]; day++) {
+      const iso = `${TABLE_YEAR}-${mm}-${String(day).padStart(2, "0")}`;
+      const by = [...seasonal.filter((c) => isClosureActive(c, iso)), ...dated.filter((d) => d.days.has(month * 100 + day)).map((d) => d.c)].map(closureManager);
+      if (by.length) {
+        closedDays.push(day);
+        by.forEach((w) => who.add(w));
+      }
+    }
+    const by = [...who].join(", ");
+    const full = closedDays.length === DAYS_IN_MONTH[month - 1];
+    const runs: string[] = [];
+    for (let i = 0; i < closedDays.length; ) {
+      let j = i;
+      while (j + 1 < closedDays.length && closedDays[j + 1] === closedDays[j] + 1) j++;
+      runs.push(i === j ? `${closedDays[i]}. ${month}.` : `${closedDays[i]}. ${month}.–${closedDays[j]}. ${month}.`);
+      i = j + 1;
+    }
     const latest = new Date(Math.floor(plan.latestStart.getTime() / FIVE_MIN) * FIVE_MIN);
     rows.push({
       month,
       sunset: plan.sunset,
-      latest: closed.length === 0 && latest >= plan.sunrise ? latest : null,
-      closedBy: closed.length ? [...new Set(closed.map(closureManager))].join(", ") : null,
+      latest: closedDays.length === 0 && latest >= plan.sunrise ? latest : null,
+      closedBy: full ? by : null,
+      partial: closedDays.length > 0 && !full ? { by, span: runs.join(", ") } : null,
     });
   }
   return rows;
@@ -220,33 +265,44 @@ function latestText(lang: Lang, row: MonthRow): string {
 }
 
 /**
- * The answer sentence. Without a closure: "V júni treba vyraziť …, v decembri …". With a seasonal closure
- * it never quotes a closed month: it speaks for the open months and names the closure.
+ * The answer sentence. Without a closure: "V júni treba vyraziť …, v decembri …". With a closure it never
+ * quotes a time for a closed or partly closed month: it speaks for the untouched months and names the
+ * closure. A dated closure (active or coming) opens the sentence with a warning.
  */
-export function departureSentence(lang: Lang, rows: MonthRow[], closures: Closure[] = []): string {
-  const open = rows.filter((r) => r.closedBy === null);
+export function departureSentence(lang: Lang, rows: MonthRow[], closures: Closure[] = [], asOf?: string): string {
+  const dated = relevantDated(closures, asOf);
+  const warn = dated.length
+    ? tr(lang, "Pozor, na trase je hlásená uzávera {period}, pozrite časť Uzávery a poplatky.", { period: dated.map(closurePeriod).filter((p, i, all) => all.indexOf(p) === i).join("; ") }) + " "
+    : "";
+  const clear = rows.filter((r) => r.closedBy === null && r.partial === null);
   const closed = rows.filter((r) => r.closedBy !== null);
-  if (closed.length === 0) {
+  if (clear.length === rows.length) {
     const june = rows.find((r) => r.month === 6);
     const dec = rows.find((r) => r.month === 12);
-    if (!june || !dec) return tr(lang, "Kedy vyraziť, závisí od západu slnka v daný mesiac.");
-    return tr(lang, "V {m1} treba vyraziť {a}, v {m2} {b}.", { m1: monthIn(lang, 6), a: latestText(lang, june), m2: monthIn(lang, 12), b: latestText(lang, dec) });
+    if (!june || !dec) return warn + tr(lang, "Kedy vyraziť, závisí od západu slnka v daný mesiac.");
+    return warn + tr(lang, warn ? "Mimo nej treba vyraziť: v {m1} {a}, v {m2} {b}." : "V {m1} treba vyraziť {a}, v {m2} {b}.", { m1: monthIn(lang, 6), a: latestText(lang, june), m2: monthIn(lang, 12), b: latestText(lang, dec) });
   }
-  const period = closures.filter((c) => c.kind === "rocna").map((c) => `${closurePeriod(c)}`).filter((p, i, all) => all.indexOf(p) === i).join("; ");
-  const who = [...new Set(closed.map((r) => r.closedBy as string))].join(", ");
-  const closedPart = tr(lang, "od {period} je trasa uzavretá ({who}).", { period, who });
-  const times = open.filter((r) => r.latest).map((r) => r.latest as Date);
-  if (open.length === 0) return tr(lang, "Trasa je uzavretá celý rok ({who}).", { who });
-  if (times.length === 0) return tr(lang, "Mimo sezónnej uzávery ({months}) túru za svetla nestihnete; {closed}", { months: monthSpan(lang, open.map((r) => r.month)), closed: closedPart });
-  const ordered = times.map((t) => clock(t)).sort();
+  const seasonal = closures.filter((c) => c.kind === "rocna");
+  const period = seasonal.map((c) => `${closurePeriod(c)}`).filter((p, i, all) => all.indexOf(p) === i).join("; ");
+  const who = [...new Set(rows.flatMap((r) => (r.closedBy ?? r.partial?.by ?? "").split(", ")).filter(Boolean))].join(", ");
+  const closedPart = seasonal.length ? " " + tr(lang, "od {period} je trasa uzavretá ({who}).", { period, who: [...new Set(seasonal.map(closureManager))].join(", ") }) : "";
+  if (clear.length === 0) {
+    if (closed.length === rows.length) {
+      return seasonal.length && !dated.length ? tr(lang, "Trasa je uzavretá celý rok ({who}).", { who }) : warn + tr(lang, "Každý mesiac tabuľky je uzavretý ({who}); čas vyrazenia neuvádzame.", { who });
+    }
+    return warn + tr(lang, "Každý mesiac je aspoň sčasti uzavretý ({who}), preto čas vyrazenia neuvádzame; pozrite tabuľku.", { who }) + closedPart;
+  }
+  const timed = clear.filter((r) => r.latest);
+  const untimed = clear.filter((r) => !r.latest);
+  const outside = tr(lang, dated.length ? "Mimo uzávery" : "Mimo sezónnej uzávery");
+  if (timed.length === 0) return warn + tr(lang, "{outside} ({months}) túru za svetla nestihnete", { outside, months: monthSpan(lang, untimed.map((r) => r.month)) }) + (closedPart ? ";" + closedPart : ".");
+  const ordered = timed.map((r) => clock(r.latest as Date)).sort();
   const lo = ordered[0];
   const hi = ordered[ordered.length - 1];
-  return tr(lang, lo === hi ? "Mimo sezónnej uzávery ({months}) treba vyraziť najneskôr o {lo}; {closed}" : "Mimo sezónnej uzávery ({months}) treba vyraziť najneskôr medzi {lo} a {hi} podľa mesiaca; {closed}", {
-    months: monthSpan(lang, open.map((r) => r.month)),
-    lo,
-    hi,
-    closed: closedPart,
-  });
+  const months = monthSpan(lang, timed.map((r) => r.month));
+  let text = tr(lang, lo === hi ? "{outside} ({months}) treba vyraziť najneskôr o {lo}" : "{outside} ({months}) treba vyraziť najneskôr medzi {lo} a {hi} podľa mesiaca", { outside, months, lo, hi });
+  if (untimed.length) text += ", " + tr(lang, "v ({months}) túru za svetla nestihnete", { months: monthSpan(lang, untimed.map((r) => r.month)) });
+  return warn + text + (closedPart ? ";" + closedPart : ".");
 }
 
 /** Under the table: dated closures are not months, the closure section has them. */
