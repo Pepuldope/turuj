@@ -251,7 +251,7 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
                 <th scope="col" className="py-1 pr-2 font-medium">
                   {tr(lang, "Najneskôr vyraziť")}
                 </th>
-                <th scope="col" className="py-1 text-right font-medium">
+                <th scope="col" className="whitespace-nowrap py-1 text-right font-medium">
                   {tr(lang, "Západ slnka")}
                 </th>
               </tr>
@@ -261,7 +261,7 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
                 if (g.kind === "closed") {
                   return (
                     <tr key={g.months[0]} data-months={g.months.join(" ")} className="border-t border-[var(--border)] text-sm data-[now=true]:bg-[var(--accent-soft)] data-[now=true]:text-[var(--foreground)]">
-                      <th scope="row" className="rounded-l-lg px-1 py-2.5 font-medium">
+                      <th scope="row" className="whitespace-nowrap rounded-l-lg px-1 py-2.5 font-medium">
                         {g.label}
                       </th>
                       <td colSpan={2} className="rounded-r-lg py-2.5 pr-1">
@@ -274,7 +274,7 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
                 const r = g.row;
                 return (
                   <tr key={r.month} data-months={r.month} className="border-t border-[var(--border)] data-[now=true]:bg-[var(--accent-soft)] data-[now=true]:text-[var(--foreground)]">
-                    <th scope="row" className="rounded-l-lg px-1 py-2 font-medium text-[var(--foreground)]">
+                    <th scope="row" className="whitespace-nowrap rounded-l-lg px-1 py-2 font-medium text-[var(--foreground)]">
                       {monthName(lang, r.month)}
                       {winter.has(r.month) ? "*" : ""}
                     </th>

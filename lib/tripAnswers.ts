@@ -388,41 +388,10 @@ export function departureTeaser(lang: Lang, rows: MonthRow[]): string | null {
   return tr(lang, "Záleží na mesiaci, pozrite tabuľku");
 }
 
-/** The first sentence of the description that is not the numbers sentence (km, m, time: the header has them), cut to fit a one-line teaser. */
+/** The first sentence of the description without numbers (km, m, time: the header has them), cut to fit a one-line teaser. */
 export function aboutTeaser(text: string, max = 110): string {
-  const sentences = text.split(/(?<=[.!?])\s+/).filter(Boolean);
-  const first = sentences.find((x, i) => !(i === 0 && /\d.*\bkm\b/.test(x) && sentences.length > 1)) ?? text;
+  // A sentence ends before a capital: "1347 m n. m." is not two sentences.
+  const sentences = text.split(/(?<=[.!?])\s+(?=[A-ZÁ-Ž])/).filter(Boolean);
+  const first = sentences.find((x) => !/\d/.test(x)) ?? sentences[0] ?? text;
   return first.length > max ? first.slice(0, max - 1).replace(/\s+\S*$/, "") + "…" : first;
-}
-
-/** What the month table shows: a plain month, or one row for a run of fully closed months. */
-export type MonthGroup = { kind: "month"; row: MonthRow } | { kind: "closed"; months: number[]; label: string; by: string };
-
-/**
- * Calendar order, but consecutive fully closed months with the same keeper become ONE row ("november – máj").
- * A run that wraps the year end (Nov to May) sits where its first calendar month is (at the top).
- */
-export function monthGroups(lang: Lang, rows: MonthRow[]): MonthGroup[] {
-  const closedBy = new Map(rows.filter((r) => r.closedBy).map((r) => [r.month, r.closedBy as string]));
-  const same = (a: number, b: number) => closedBy.has(a) && closedBy.get(a) === closedBy.get(b);
-  const next = (m: number) => (m % 12) + 1;
-  const prev = (m: number) => ((m + 10) % 12) + 1;
-  const out: MonthGroup[] = [];
-  const seen = new Set<number>();
-  for (const r of rows) {
-    if (seen.has(r.month)) continue;
-    if (!closedBy.has(r.month)) {
-      out.push({ kind: "month", row: r });
-      continue;
-    }
-    // Walk back to the start of the run, then forward over it.
-    let start = r.month;
-    for (let i = 0; i < 12 && same(prev(start), start) && prev(start) !== r.month; i++) start = prev(start);
-    const months = [start];
-    while (same(months[months.length - 1], next(months[months.length - 1])) && next(months[months.length - 1]) !== start) months.push(next(months[months.length - 1]));
-    months.forEach((m) => seen.add(m));
-    const label = months.length === 1 ? monthName(lang, months[0]) : `${monthName(lang, months[0])} – ${monthName(lang, months[months.length - 1])}`;
-    out.push({ kind: "closed", months, label, by: closedBy.get(r.month) as string });
-  }
-  return out;
 }
