@@ -34,6 +34,18 @@ DETOUR_SNAP_M = 300  # a side-trip sight this far from any way still counts, wal
 OFF_PATH = 1.5  # cross-country metres count this much more than a path
 VERY_FAMOUS = 12  # every Tatra peak has a few (Polish, German); this many is a household name
 SHORT_MAIN_KINDS = {"hrad", "jaskyna"}  # a show cave or castle: people drive to it, so the car-park visit can be the main route
+# A car park whose OSM name says nothing ("Parkovisko", "TANAP parking", "P") names no start: it is treated as unnamed.
+GENERIC_PARKING = re.compile(
+    r"^\s*(?:(?:tanap|platené|bezplatné|verejné|hlavné|veľké|malé|horné|dolné)\s+)?(?:parkovisko|parking|p)"
+    r"(?:\s+(?:tanap|zadarmo|pre návštevníkov))?\s*$", re.I)
+# A short visit's car park, by what you came to see (Peter, 7 Nov 2026: name the car park, not a bare "Parkovisko").
+KIND_PARKING = {"hrad": "Parkovisko pod hradom", "jaskyna": "Parkovisko pri jaskyni", "vodopad": "Parkovisko pri vodopáde",
+                "pleso": "Parkovisko pri plese", "vyhliadka": "Parkovisko pod vyhliadkou"}
+
+
+def is_generic_parking(name):
+    """True for no name or a name that only says "car park" ("Parkovisko", "TANAP parking")."""
+    return not (name or "").strip() or bool(GENERIC_PARKING.match(name))
 # A guidepost named for a junction or a walking time ("Odbočka na Urpín, vyhliadku", "Rázcestie Šindľovec",
 # "Hradište pod Vrátnom, rázc.", "Suchý vrch, odb. na vyhliadku", "Vyhliadka 8 min.", "Dva stromy 35'") says where
 # a path forks, not where people start: such a start is labelled by what is round it (start_label).
@@ -65,7 +77,7 @@ def start_label(parking, stops, places, parking_m=250, stop_m=150, place_m=800, 
     found = []
     for d, f in parking:
         nm = (f.name or "").strip()
-        if d <= parking_m and re.search(r"[^\W\d_]{3,}", nm) and not is_junction_name(nm):
+        if d <= parking_m and re.search(r"[^\W\d_]{3,}", nm) and not is_junction_name(nm) and not is_generic_parking(nm):
             found.append((d, nm if "park" in names.fold(nm) else f"{nm}, parkovisko"))
     for d, f in stops:
         nm = (f.name or "").strip()
@@ -775,9 +787,9 @@ class TripBuilder:
             if path is None or len(path) < 2 or float(g.edge_len[g.edges(path)].sum()) > max_m:
                 continue
             name = f.name
-            if not name:  # an unnamed car park: "Šášov, parkovisko", not a bare "Parkovisko" (it is a main route's start now)
+            if is_generic_parking(name):  # "Parkovisko pod hradom", not a bare "Parkovisko" (it is often a main route's start)
                 near = self._near(self.place_tree, getattr(self.osm, "places", []), f.lat, f.lon, 3000)
-                name = f"{near[0][1].name}, parkovisko" if near else f"{dest['name']}, parkovisko"
+                name = KIND_PARKING.get(dest["kind"]) or (f"{near[0][1].name}, parkovisko" if near else f"{dest['name']}, parkovisko")
             st = self.make_start(name, f.lat, f.lon, None, f.osm, node)
             trip = self.make_trip(st, dest, path, region, curated=False, slug=PENDING)
             if not trip or trip["duration_min"] > self.t.get("short_max_min", 45):

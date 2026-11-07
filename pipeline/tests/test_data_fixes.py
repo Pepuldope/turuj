@@ -4,7 +4,7 @@ from pipeline import osm as osm_mod
 from pipeline import redirects
 from pipeline.geo import slugify
 from pipeline.osm import Feature
-from pipeline.trips import TripBuilder, is_junction_name, start_label
+from pipeline.trips import TripBuilder, is_generic_parking, is_junction_name, start_label
 
 
 def f(name, mode=None, **tags):
@@ -104,3 +104,13 @@ def test_relation_goals_and_include_list(tmp_path):
     assert abs(castle[0].lat - 49.1008) < 0.01 and abs(castle[0].lon - 19.1008) < 0.01
     assert "node/5" in data.included and data.included["node/5"].name == "Dom Skúška"
     assert not any(f.osm == "node/5" for _, f in data.destinations)  # a hotel is no goal by its tags
+
+
+def test_generic_car_park_names_name_no_start():
+    for nm in ("Parkovisko", "parking", "P", "TANAP parking", "Parkovisko TANAP", "Platené parkovisko", "", None):
+        assert is_generic_parking(nm), nm
+    for nm in ("Parkovisko Štrbské Pleso", "Pri Heliose", "Parkovisko pod Pustým hradom", "Zverovka"):
+        assert not is_generic_parking(nm), nm
+    places = [(600.0, type("F", (), {"name": "Zverovka", "tags": {}})())]
+    gen = type("F", (), {"name": "TANAP parking", "tags": {}})()
+    assert start_label([(90.0, gen)], [], places) == "Zverovka"
