@@ -20,7 +20,7 @@ import type { UiIconName } from "@/lib/uiIcons";
 /** The text links the desktop pill shows before the account button (the menu keeps them too); the last only from xl, so the pill fits on one line at 1024px. */
 const DESKTOP_LINKS = [
   { href: "/ulozene", label: "Moje výlety", cls: "" },
-  { href: "/vylety-z", label: "Výlety z miest", cls: "" },
+  { href: "/vylety-z", label: "Výlety z miest", cls: "lg:hidden xl:block" },
   { href: "/aplikacia", label: "Získať appku", cls: "lg:hidden xl:block" },
 ] as const;
 

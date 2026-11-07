@@ -104,7 +104,7 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
           data-start-banner=""
           className="pointer-events-auto flex max-w-full items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--card-bg)] py-0.5 pr-1 pl-4 text-sm shadow-[var(--shadow-float)]"
         >
-          <span className="min-w-0 truncate">{t("Vyrážate z {town} (vaša poloha)", { town: t(banner.label.split(",")[0]) })}</span>
+          <span className="min-w-0 truncate">{t("Štart: {town} (vaša poloha)", { town: t(banner.label.split(",")[0]) })}</span>
           <span aria-hidden className="text-[var(--muted)]">·</span>
           <button type="button" onClick={() => setOpen(true)} className="min-h-10 shrink-0 rounded-full px-3 font-bold text-[var(--accent)]">
             {t("Zmeniť")}
