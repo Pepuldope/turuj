@@ -11,20 +11,20 @@ import type { Nearby } from "@/lib/nearbyTrips";
 /**
  * "Ďalšie výlety v okolí": plain links to the nearest other places, with the walk and how far it is
  * from here. Server HTML, so every trip page links to its neighbours without JavaScript (C53).
- * Same soft card and hairline rows as the question card above (components/TripAnswers.tsx).
+ * Same separate cards as the question cards above (components/TripAnswers.tsx).
  */
 export function NearbyTrips({ lang, items, walks }: { lang: Lang; items: Nearby[]; walks: Map<string, number> }) {
   if (items.length === 0) return null;
   return (
     <section className="flex flex-col gap-2">
       <h2 className="px-1 text-base font-semibold text-[var(--foreground)]">{tr(lang, "Ďalšie výlety v okolí")}</h2>
-      <ul className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--card-edge)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">
+      <ul className="flex flex-col gap-2.5">
         {items.map(({ trip, m }) => {
           // The yearly rule only (the page is built once), same mark as the town tiles.
           const closed = closedSeason(trip);
           return (
-            <li key={trip.slug} className="border-t border-[var(--border)] first:border-t-0">
-              <Link href={langPath(lang, `/trasa/${trip.slug}`)} className="flex min-h-14 items-center gap-3 px-4 py-3">
+            <li key={trip.slug} className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] hover:border-[var(--accent)]">
+              <Link href={langPath(lang, `/trasa/${trip.slug}`)} className="flex min-h-14 items-center gap-3 rounded-[var(--radius-card)] px-4 py-3">
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="text-base font-semibold leading-snug text-[var(--foreground)]">{trip.name}</span>
                   <span className="text-sm leading-snug text-[var(--muted)]">
