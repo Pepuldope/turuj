@@ -7,10 +7,10 @@ import { langPath, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 
 /** A town page tile: the place's photo (or its kind's colour and a hill), name, drive and walk. */
-export function TownTile({ tile, lang = "sk" }: { tile: Tile; lang?: Lang }) {
+export function TownTile({ tile, lang = "sk", townId }: { tile: Tile; lang?: Lang; /** The town page this tile is on: the trip page then starts from it (?z=) unless a start is already chosen. */ townId?: string }) {
   const colour = GOAL_COLOUR[tile.kind] ?? GOAL_COLOUR.ine;
   return (
-    <IntentLink href={langPath(lang, `/trasa/${tile.slug}`)} className="flex w-[150px] flex-none snap-start flex-col gap-1.5 text-inherit no-underline">
+    <IntentLink href={langPath(lang, `/trasa/${tile.slug}${townId ? `?z=${townId}` : ""}`)} className="flex w-[150px] flex-none snap-start flex-col gap-1.5 text-inherit no-underline">
       <span
         className="relative block aspect-square overflow-hidden rounded-2xl"
         style={{ background: `linear-gradient(170deg, ${colour}, ${colour}dd)` }}

@@ -31,6 +31,9 @@ import { UiIcon } from "@/components/UiIcon";
 import { AppBar } from "@/components/AppBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { LangLink, useLang, useT } from "@/lib/i18n";
+import { track } from "@/lib/analytics";
+import { townFrom } from "@/lib/townNames";
+import { suggestTowns } from "@/lib/townSuggest";
 import { decimal } from "@/lib/lang";
 import { StartChip } from "@/components/StartChip";
 import { TownButton } from "@/components/TownButton";
@@ -271,7 +274,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
   const [placeIndex, setPlaceIndex] = useState<PlaceSearch | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const transit = travel === "transit";
-  const { start, ready: startReady, picking } = useUserLocation();
+  const { start, ready: startReady, picking, setManualStart } = useUserLocation();
   const [selected, setSelected] = useState<string | null>(null);
   // The picked trip's other routes to the same place, from its own file.
   const [otherRoutes, setOtherRoutes] = useState<{ slug: string; lines: number[][][] } | null>(null);
@@ -587,6 +590,27 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
     return { ranges, trips, places };
   }, [words, areas, listedAll, matches, nameMatches, towns, placeResults]);
 
+  // A known town typed into the search offers "Vyrážam z …": a start, not only a move of the map.
+  const townMatch = useMemo(() => (plain(query).trim().length >= 3 ? (suggestTowns(query, towns, 1)[0] ?? null) : null), [query, towns]);
+  const townTracked = useRef(false);
+  useEffect(() => {
+    if (!townMatch) {
+      townTracked.current = false;
+      return;
+    }
+    if (townTracked.current) return;
+    townTracked.current = true;
+    track("trip_search_town");
+  }, [townMatch]);
+  // One "trip_search" per typed text, whether it came from Enter or from tapping a result.
+  const searchedFor = useRef("");
+  const noteSearch = (hit: boolean) => {
+    const q = plain(query).trim();
+    if (!q || q === searchedFor.current) return;
+    searchedFor.current = q;
+    track("trip_search", { result: hit ? "hit" : "miss" });
+  };
+
   const closeMenus = useCallback(() => {
     setSearchOpen(false);
     setFiltersOpen(false);
@@ -600,6 +624,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
   }, [closeMenus]);
 
   const showOnMap = (focusTo: Parameters<typeof moveMap>[0]) => {
+    noteSearch(true);
     setQuery("");
     closeMenus();
     setPreview(null);
@@ -775,7 +800,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
     <div ref={toolsRef} className="relative flex flex-col gap-2">
       <div className="flex gap-2">
         <label className="relative flex-1">
-          <span className="sr-only">{t("Hľadať výlet, pohorie alebo obec")}</span>
+          <span className="sr-only">{t("Hľadať výlet alebo pohorie")}</span>
           <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-[var(--muted)]">
             <UiIcon name="search" size={18} />
           </span>
@@ -791,6 +816,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
             onKeyDown={(e) => {
               if (e.key === "Escape") setSearchOpen(false);
               if (e.key === "Enter" && results) {
+                noteSearch(results.ranges.length + results.trips.length + results.places.length > 0);
                 const r = results.ranges[0];
                 const t = results.trips[0];
                 if (t) {
@@ -801,7 +827,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
                 (e.target as HTMLInputElement).blur();
               }
             }}
-            placeholder={t("Hľadať výlet, pohorie alebo obec")}
+            placeholder={t("Hľadať výlet alebo pohorie")}
             autoComplete="off"
             className="h-11 w-full rounded-full border border-[var(--border)] bg-[var(--card-bg)] pr-3 pl-10 text-[15px] shadow-[var(--shadow-float)] lg:shadow-none"
           />
@@ -825,6 +851,19 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
 
       {searchOpen && results && (
         <div role="listbox" aria-label={t("Výsledky hľadania")} className="absolute top-12 right-0 left-0 z-30 max-h-[60vh] overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-2 shadow-[var(--shadow-float)]">
+          {townMatch && (
+            <MenuRow
+              onClick={() => {
+                setManualStart({ lat: townMatch.location.lat, lon: townMatch.location.lon, label: townMatch.name }, "suggestion");
+                noteSearch(true);
+                setQuery("");
+                closeMenus();
+              }}
+              icon={<UiIcon name="pin" size={16} />}
+              title={t("Vyrážam {from}", { from: townFrom(lang, townMatch.id, townMatch.name) })}
+              note={t("Nastaviť ako štart a zoradiť výlety podľa cesty")}
+            />
+          )}
           {results.ranges.length > 0 && <MenuTitle>{t("Pohoria")}</MenuTitle>}
           {results.ranges.map((a) => (
             <MenuRow key={a.name} onClick={() => showOnMap({ kind: "box", bbox: a.bbox, maxZoom: 11 })} icon={<UiIcon name="up" size={16} />} title={a.name} note={t("Ukázať výlety v pohorí na mape")} />
@@ -834,6 +873,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
             <MenuRow
               key={detail.trail.slug}
               onClick={() => {
+                noteSearch(true);
                 setQuery("");
                 closeMenus();
                 goToTrip(detail.trail.slug);
@@ -847,7 +887,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
           {results.places.map((town) => (
             <MenuRow key={town.id} onClick={() => showOnMap({ kind: "point", location: town.location, zoom: 10.5 })} icon={<UiIcon name="pin" size={16} />} title={town.name} note={t("Ukázať výlety okolo na mape")} />
           ))}
-          {results.ranges.length + results.trips.length + results.places.length === 0 && (
+          {results.ranges.length + results.trips.length + results.places.length === 0 && !townMatch && (
             <p className="p-2 text-sm text-[var(--muted)]">{t("Nič sa nenašlo. Skúste názov vrchu, chaty, pohoria alebo obce.")}</p>
           )}
         </div>
