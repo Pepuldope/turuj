@@ -2,13 +2,14 @@
 
 import { track } from "@/lib/analytics";
 import { routeGpx } from "@/lib/gpx";
+import { UiIcon } from "@/components/UiIcon";
 import { useT } from "@/lib/i18n";
 
 /**
  * "Stiahnuť GPX trasu": a place's file holds every route to it, so this downloads only the
  * route on this page, as `<slug>.gpx`. Falls back to the whole file when it can't be cut.
  */
-export function GpxDownload({ gpxUrl, slug, name }: { gpxUrl: string; slug: string; name: string }) {
+export function GpxDownload({ gpxUrl, slug, name, row = false }: { gpxUrl: string; slug: string; name: string; row?: boolean }) {
   const file = gpxUrl.split("#")[0];
   const t = useT();
 
@@ -31,6 +32,24 @@ export function GpxDownload({ gpxUrl, slug, name }: { gpxUrl: string; slug: stri
     a.click();
     a.remove();
     if (gpx) setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  }
+
+  if (row) {
+    // The last row of the question card: same shape as the rows above it.
+    return (
+      <a href={file} download={`${slug}.gpx`} onClick={download} className="flex min-h-14 w-full rounded-[var(--radius-card)] items-center gap-3 px-4 py-3">
+        <span className="text-[var(--accent)]">
+          <UiIcon name="download" size={20} />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="text-base font-semibold leading-snug text-[var(--foreground)]">{t("Stiahnuť GPX trasu")}</span>
+          <span className="text-sm leading-snug text-[var(--muted)]">{t("na hodinky alebo do Mapy.com")}</span>
+        </span>
+        <span className="text-[var(--muted)]">
+          <UiIcon name="chev" size={16} />
+        </span>
+      </a>
+    );
   }
 
   return (

@@ -43,7 +43,7 @@ export interface TownTile {
 
 const dayMonth = (iso: string) => `${Number(iso.slice(8, 10))}.\u00a0${Number(iso.slice(5, 7))}.`;
 
-function closedSeason(trip: TripSummary): string | null {
+export function closedSeason(trip: TripSummary): string | null {
   const rule = closureRulesFor(trip).find((r) => r.kind === "rocna");
   return rule ? `${dayMonth(rule.starts_on)}–${dayMonth(rule.ends_on)}` : null;
 }
