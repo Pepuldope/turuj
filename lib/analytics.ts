@@ -22,7 +22,10 @@ export type AnalyticsEvent =
   | "app_installed" // Android install dialog accepted on /aplikacia
   | "on_trail" // "Kde som na trase?" tapped on a trip page
   | "plan_commit" // North Star: the first save, send, navigation or GPX for a trail in this page load (sent by track())
-  | "heard_from"; // one-tap "Ako ste sa o nás dozvedeli?" after the first saved trip on this device
+  | "heard_from" // one-tap "Ako ste sa o nás dozvedeli?" after the first saved trip on this device
+  | "day_pick" // a day chosen in the day picker: dnes / zajtra / so / ne / iny
+  | "trip_search" // a search on the home page was run: hit (something found) or miss
+  | "trip_search_town"; // a known town was typed into the trip search (the "Vyrážam z …" row showed)
 
 type EventData = Record<string, string | number | boolean>;
 
@@ -154,3 +157,6 @@ export function track(name: AnalyticsEvent, data?: EventData): void {
     // Analytics must never break the app.
   }
 }
+
+/** How a start came about, for start_set's `how`; never where. */
+export type StartHow = "suggestion" | "typed" | "town_button" | "map_pick" | "gps" | "remembered" | "town_page";
