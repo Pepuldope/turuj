@@ -42,8 +42,8 @@ export function GpxDownload({ gpxUrl, slug, name, row = false }: { gpxUrl: strin
           <UiIcon name="download" size={20} />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="text-[15px] font-semibold leading-snug text-[var(--foreground)]">{t("Stiahnuť GPX trasu")}</span>
-          <span className="text-[13px] leading-snug text-[var(--muted)]">{t("na hodinky alebo do Mapy.com")}</span>
+          <span className="text-base font-semibold leading-snug text-[var(--foreground)]">{t("Stiahnuť GPX trasu")}</span>
+          <span className="text-sm leading-snug text-[var(--muted)]">{t("na hodinky alebo do Mapy.com")}</span>
         </span>
         <span className="text-[var(--muted)]">
           <UiIcon name="chev" size={16} />

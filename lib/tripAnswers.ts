@@ -385,7 +385,7 @@ export function departureTeaser(lang: Lang, rows: MonthRow[]): string | null {
     const d = part(dec, false);
     return tr(lang, "V {month} najneskôr {time}", { month: monthIn(lang, 6), time: clock(june.latest) }) + (d ? `, ${d}` : "");
   }
-  return tr(lang, "Podľa mesiaca, pozrite tabuľku");
+  return tr(lang, "Záleží na mesiaci, pozrite tabuľku");
 }
 
 /** The first sentence of the description that is not the numbers sentence (km, m, time: the header has them), cut to fit a one-line teaser. */

@@ -5,6 +5,7 @@ import { SAFE_MARGIN_MIN } from "@/lib/dayPlan";
 import { feeText } from "@/lib/feeText";
 import { formatDateSk, formatDuration } from "@/lib/format";
 import { CurrentMonth } from "@/components/CurrentMonth";
+import { Nums } from "@/components/Nums";
 import { UiIcon } from "@/components/UiIcon";
 import { decimal, langPath, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
@@ -48,7 +49,7 @@ const BODY = "flex flex-col gap-2 px-4 pb-4 text-sm leading-relaxed text-[var(--
 
 /** The soft card all the rows live in. */
 function Card({ children }: { children: ReactNode }) {
-  return <div className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)]">{children}</div>;
+  return <div className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--card-edge)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">{children}</div>;
 }
 
 /** One question: the H2 and a one-line teaser answer in the summary, the full answer inside. */
@@ -57,8 +58,12 @@ function Row({ title, teaser, children }: { title: string; teaser: string | null
     <details className="group border-t border-[var(--border)] first:border-t-0">
       <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <h2 className="text-[15px] font-semibold leading-snug text-[var(--foreground)]">{title}</h2>
-          {teaser && <span className="line-clamp-2 text-[13px] leading-snug text-[var(--muted)]">{teaser}</span>}
+          <h2 className="text-base font-semibold leading-snug text-[var(--foreground)]">{title}</h2>
+          {teaser && (
+            <span className="line-clamp-2 text-sm leading-snug text-[var(--muted)]">
+              <Nums text={teaser} />
+            </span>
+          )}
         </span>
         <span className="text-[var(--muted)] motion-safe:transition-transform group-open:rotate-90">
           <UiIcon name="chev" size={16} />
@@ -121,7 +126,7 @@ export function TripHeaderFacts({ lang, walk, starts, parking, stops, closures, 
   ];
   return (
     <div className="flex flex-col gap-1.5">
-      <dl className="flex flex-col gap-1 text-[13px] text-[var(--muted)]">
+      <dl className="flex flex-col gap-1 text-sm text-[var(--muted)]">
         {walk && (
           <div className="sr-only">
             <dt>{tr(lang, "Dĺžka")}</dt>
@@ -141,7 +146,9 @@ export function TripHeaderFacts({ lang, walk, starts, parking, stops, closures, 
           <div key={it.label} className="flex items-start gap-2">
             <UiIcon name={it.icon} size={16} className="mt-px" />
             <dt className="sr-only">{it.label}</dt>
-            <dd className="min-w-0">{it.value}</dd>
+            <dd className="min-w-0">
+              <Nums text={it.value} />
+            </dd>
           </div>
         ))}
       </dl>
@@ -253,7 +260,7 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
               {groups.map((g) => {
                 if (g.kind === "closed") {
                   return (
-                    <tr key={g.months[0]} data-months={g.months.join(" ")} className="border-t border-[var(--border)] text-[13px] data-[now=true]:bg-[var(--accent-soft)] data-[now=true]:text-[var(--foreground)]">
+                    <tr key={g.months[0]} data-months={g.months.join(" ")} className="border-t border-[var(--border)] text-sm data-[now=true]:bg-[var(--accent-soft)] data-[now=true]:text-[var(--foreground)]">
                       <th scope="row" className="rounded-l-lg px-1 py-2.5 font-medium">
                         {g.label}
                       </th>
@@ -272,14 +279,14 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
                       {winter.has(r.month) ? "*" : ""}
                     </th>
                     {r.partial ? (
-                      <td className="py-2 pr-2 text-[13px]">
+                      <td className="py-2 pr-2 text-sm">
                         <UiIcon name="lock" size={13} className="mr-1 -mt-0.5 align-middle" />
                         {tr(lang, "čiastočne uzavreté ({who}): {span}", { who: r.partial.by, span: r.partial.span })}
                       </td>
                     ) : (
-                      <td className="font-data py-2 pr-2 text-[15px]">{r.latest ? clock(r.latest) : <span className="font-sans text-[13px] font-normal">{tr(lang, "nestihnete za svetla")}</span>}</td>
+                      <td className="font-data py-2 pr-2 text-[17px] text-[var(--time)]">{r.latest ? clock(r.latest) : <span className="font-sans text-sm font-normal text-[var(--muted)]">{tr(lang, "nestihnete za svetla")}</span>}</td>
                     )}
-                    <td className="font-data rounded-r-lg py-2 pr-1 text-right text-[15px]">{clock(r.sunset)}</td>
+                    <td className="font-data rounded-r-lg py-2 pr-1 text-right text-[17px]">{clock(r.sunset)}</td>
                   </tr>
                 );
               })}

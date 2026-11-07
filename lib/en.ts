@@ -989,7 +989,7 @@ export const EN: Record<string, string> = {
   "Zatvorené každý rok {period} ({who})": "Closed every year {period} ({who})",
   "V {month} najneskôr {time}": "In {month} by {time}",
   "v {month}": "in {month}",
-  "Podľa mesiaca, pozrite tabuľku": "Depends on the month, see the table",
+  "Záleží na mesiaci, pozrite tabuľku": "Depends on the month, see the table",
   "Správca: {who}": "Managed by: {who}",
   "parkovisko pri štarte": "car park at the start",
   "parkovisko pri trase": "car park by the route",
