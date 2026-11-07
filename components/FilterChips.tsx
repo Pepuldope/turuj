@@ -128,7 +128,8 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between text-[12.5px] font-bold text-[var(--muted)]">
             <span className="capitalize">{stripMonths(days.strip[0].iso, days.strip[days.strip.length - 1].iso, lang)}</span>
-            <span className="relative -my-2 py-2">
+            {/* The date input is invisible (opacity-0), so the label draws its focus ring. */}
+            <span className="relative -my-2 rounded-md py-2 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--accent)]">
               <span aria-hidden="true" className="inline-flex items-center gap-0.5 font-bold text-[var(--accent)]">
                 {t("Celý kalendár")} <UiIcon name="chev" size={13} />
               </span>
