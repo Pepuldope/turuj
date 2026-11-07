@@ -6,7 +6,7 @@ const base = { name: "Kriváň, Štrbské Pleso; Tatry", url: "https://turuj.sk/
 
 describe("ics", () => {
   it("escapes commas, semicolons, backslashes and line breaks", () => {
-    expect(icsEscape("a,b;c\\d\ne")).toBe("a\\,b\;c\\\\d\\ne");
+    expect(icsEscape("a,b;c\\d\ne")).toBe("a\\,b\\;c\\\\d\\ne");
   });
 
   it("folds at 75 octets without splitting a character", () => {
@@ -24,7 +24,7 @@ describe("ics", () => {
     expect(ics.split("\r\n").every((l) => !l.includes("\n"))).toBe(true);
     expect(ics).toContain("DTSTART:20261108T063000Z");
     expect(ics).toContain("DTEND:20261108T123000Z");
-    expect(ics).toContain("SUMMARY:Výlet: Kriváň\\, Štrbské Pleso\; Tatry");
+    expect(ics).toContain("SUMMARY:Výlet: Kriváň\\, Štrbské Pleso\\; Tatry");
     expect(ics).toContain("URL:https://turuj.sk/trasa/krivan");
     expect(ics.replace(/\r\n /g, "")).toContain("Časy sú odhad. Na horách rozhoduje počasie a vaše sily.");
     // 19:00 on the 7th to 07:30 on the 8th is 12.5 hours.

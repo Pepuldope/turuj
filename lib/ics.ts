@@ -26,7 +26,7 @@ const enc = new TextEncoder();
 
 /** Text values: backslash, semicolon, comma and line breaks escaped (RFC 5545 3.3.11). */
 export function icsEscape(s: string): string {
-  return s.replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  return s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
 }
 
 /** Lines longer than 75 octets continue on the next line after a space; never in the middle of a character. */
