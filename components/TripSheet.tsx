@@ -32,6 +32,7 @@ import { RouteChoice } from "@/components/RouteChoice";
 import { TripAccessProvider } from "@/components/TripAccess";
 import { JsonLd } from "@/components/JsonLd";
 import { TrackEvent } from "@/components/TrackEvent";
+import { TripSeenFlag } from "@/components/TripSeenFlag";
 import { absoluteUrl } from "@/lib/site";
 import type { RouteBrief, Town, TripDetail } from "@/lib/tripSchema";
 import type { TrailDetail } from "@/lib/types";
@@ -226,6 +227,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
       <main className="flex flex-1 flex-col bg-[var(--page-sunk)] lg:h-dvh lg:flex-none lg:flex-row lg:overflow-hidden">
         <JsonLd data={trailJsonLd(detail, photo, town, lang, about, lang === "en" ? describeTripEn(trip, detail) : null, loopBack ? null : updated)} />
         <TrackEvent name="trip_open" data={{ trail: trail.slug }} />
+        <TripSeenFlag />
         <div className="mx-auto flex w-full max-w-[640px] flex-col gap-5 px-4 pt-4 pb-6 md:max-w-[760px] lg:mx-0 lg:w-[460px] lg:max-w-none lg:shrink-0 relative lg:overflow-y-auto lg:overscroll-contain">
           <header className="relative -mx-4 -mt-4 flex min-h-[220px] shrink-0 flex-col justify-between sm:overflow-hidden sm:rounded-b-[24px] lg:overflow-visible lg:rounded-none">
             {photo ? (
