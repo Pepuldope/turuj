@@ -2,7 +2,7 @@
 
 import { useTripStops } from "@/lib/tripStops";
 import { useState } from "react";
-import type { BBox, LatLng } from "@/lib/types";
+import type { BBox, Closure, LatLng } from "@/lib/types";
 import type { TripProfile } from "@/lib/tripProfile";
 import { offlineMapUrls } from "@/lib/tiles";
 import { dayAfterNa } from "@/lib/days";
@@ -15,6 +15,7 @@ import { useUserLocation } from "@/lib/userLocation";
 import { sinceArrival, track } from "@/lib/analytics";
 import { ShareButton } from "@/components/ShareButton";
 import { HeardFrom } from "@/components/HeardFrom";
+import { EveReminder } from "@/components/EveReminder";
 import type { ShareInfo } from "@/components/ShareButton";
 
 import { LangLink, useLang, useT } from "@/lib/i18n";
@@ -28,6 +29,8 @@ interface Props extends ShareInfo {
   profile: TripProfile | null;
   /** The walk, kept with the saved trip for the trail screen. */
   trail?: SavedTrail;
+  /** The trail's closure rules, for the evening-before reminder (empty when none is known). */
+  closures?: Closure[];
 }
 
 type Status = "idle" | "saving" | "error";
@@ -80,7 +83,7 @@ const secondary =
  * device and stores it for offline use. Right after saving, one tap offers to
  * send the plan to the group.
  */
-export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, ...trip }: Props) {
+export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], ...trip }: Props) {
   const { slug, name } = trip;
   const { trips, save, patch, remove } = useSavedTrips();
   const { start } = useUserLocation();
@@ -128,6 +131,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, ..
       profile,
       stops,
       trail,
+      eve: saved?.eve,
       savedAt: new Date().toISOString(),
       offline: "pending",
     });
@@ -220,6 +224,8 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, ..
           </button>
         </p>
       )}
+
+      {saved && status !== "saving" && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} onChange={(eve) => patch(slug, { eve })} />}
 
       {status === "error" && (
         <p className="text-sm text-[var(--warn)]">

@@ -42,9 +42,9 @@ function writePlanned(v: Planned | null) {
   }
 }
 
-type Support = "ok" | "iphone-browser" | "no";
+export type Support = "ok" | "iphone-browser" | "no";
 
-function support(): Support {
+export function support(): Support {
   if (typeof window === "undefined") return "no";
   const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
   const installed = window.matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
@@ -52,12 +52,12 @@ function support(): Support {
   return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window ? "ok" : "no";
 }
 
-async function currentSub(): Promise<PushSubscription | null> {
+export async function currentSub(): Promise<PushSubscription | null> {
   const reg = await navigator.serviceWorker.ready;
   return reg.pushManager.getSubscription();
 }
 
-async function subscribe(): Promise<PushSubscription> {
+export async function subscribe(): Promise<PushSubscription> {
   const reg = await navigator.serviceWorker.ready;
   const old = await reg.pushManager.getSubscription();
   if (old) return old;
@@ -66,7 +66,7 @@ async function subscribe(): Promise<PushSubscription> {
   return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw });
 }
 
-async function post(body: Record<string, unknown>): Promise<boolean> {
+export async function post(body: Record<string, unknown>): Promise<boolean> {
   try {
     const res = await fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     return res.ok;
