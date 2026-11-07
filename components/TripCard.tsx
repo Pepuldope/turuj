@@ -191,7 +191,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
         {/* One row, always (A11, Peter 2026-10-27): a long region gives way with "…" so "pre deti" never wraps the card taller. */}
         <span className="flex items-center gap-x-1.5 text-[12.5px] whitespace-nowrap text-[var(--muted)]">
           {/* The kind as a filled chip: with a photo in place of the icon it must read on its own (Peter, 2026-10-22). */}
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-px text-[11.5px] font-bold text-white" style={{ background: colour }}>
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-px text-[11.5px] font-bold text-white" style={{ background: `color-mix(in oklab, ${colour} 88%, black)` }}>
             <span aria-hidden className="inline-flex" dangerouslySetInnerHTML={{ __html: kindSvg(goal, 12) }} />
             {t(GOAL_LABEL[goal])}
           </span>

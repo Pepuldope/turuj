@@ -115,7 +115,7 @@ export function FeedbackForm({ kind }: { kind: FeedbackKind }) {
           className="h-11 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 text-base outline-none focus:border-[var(--accent)]"
         />
       </div>
-      {state === "error" && <p className="text-[var(--warn)]">{t("Správu sa nepodarilo poslať. Skúste to znova o chvíľu.")}</p>}
+      {state === "error" && <p role="alert" className="text-[var(--warn)]">{t("Správu sa nepodarilo poslať. Skúste to znova o chvíľu.")}</p>}
       <button
         type="submit"
         disabled={!ready || state === "sending"}

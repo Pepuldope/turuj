@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayIndex, journeys, stationsNear } from "@/lib/rail";
+import { dayIndex, journeys, stationsNear, timetableChangeDay } from "@/lib/rail";
 import type { RailTimetable } from "@/lib/rail";
 
 const T = (h: number, m: number) => h * 60 + m;
@@ -43,5 +43,20 @@ describe("rail", () => {
     expect(sat[0].legs.map((l) => l.train)).toEqual(["R 1 Kriváň", "Os 3"]); // arrives 9:25, before the direct 10:30
     const sun = journeys(tt, 1, [{ station: 0, accessMin: 0 }], [{ station: 2, extraMin: 0 }], T(9, 30));
     expect(sun).toEqual([]);
+  });
+});
+
+describe("timetableChangeDay", () => {
+  const tt = { days: ["20261102", "20261212"], feed_end: "20261212" };
+  it("is null on or before the last valid day", () => {
+    expect(timetableChangeDay(tt, "2026-12-12")).toBeNull();
+    expect(timetableChangeDay(tt, "2026-11-20")).toBeNull();
+  });
+  it("names the day after the feed ends when the trip day is later", () => {
+    expect(timetableChangeDay(tt, "2026-12-13")).toBe("13. 12.");
+    expect(timetableChangeDay(tt, "2027-03-01")).toBe("13. 12.");
+  });
+  it("falls back to the last listed day and rolls over the year end", () => {
+    expect(timetableChangeDay({ days: ["20261231"] }, "2027-01-05")).toBe("1. 1.");
   });
 });

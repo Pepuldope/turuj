@@ -65,6 +65,20 @@ export function dayIndex(tt: RailTimetable, isoDate: string): number {
   return tt.days.indexOf(isoDate.replaceAll("-", ""));
 }
 
+/**
+ * The day the timetable changes ("13. 12.") when `isoDate` is after the file's last valid day, else null.
+ * The last day is the feed's own calendar end (feed_end, else the last day it lists); a later day has
+ * no real times, only the next timetable, which is not published yet.
+ */
+export function timetableChangeDay(tt: Pick<RailTimetable, "days" | "feed_end">, isoDate: string): string | null {
+  const last = tt.feed_end ?? tt.days[tt.days.length - 1];
+  if (!last || !/^\d{8}$/.test(last)) return null;
+  const day = isoDate.replaceAll("-", "");
+  if (day <= last) return null;
+  const next = new Date(Date.UTC(+last.slice(0, 4), +last.slice(4, 6) - 1, +last.slice(6, 8) + 1));
+  return `${next.getUTCDate()}. ${next.getUTCMonth() + 1}.`;
+}
+
 /** Stations within `maxM` of a point, nearest first. */
 export function stationsNear(tt: RailTimetable, p: LatLng, maxM: number, limit = 3): StationNear[] {
   const out: StationNear[] = [];

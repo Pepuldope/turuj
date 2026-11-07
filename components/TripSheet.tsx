@@ -375,7 +375,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
           </TripPlanner>
 
           {town && (
-            <Link href={langPath(lang, `/vylety-z/${town.id}`)} className="w-fit text-sm font-semibold text-[var(--accent)]">
+            <Link href={langPath(lang, `/vylety-z/${town.id}`)} className="accent-on-sunk w-fit text-sm font-semibold">
               {tr(lang, "Ďalšie výlety okolo {town}", { town: townOf(lang, town.id, town.name) })} →
             </Link>
           )}

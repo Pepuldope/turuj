@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteFooter } from "@/components/SiteFooter";
+import { ClosedSinks } from "@/components/ClosedSinks";
 import { TownTile } from "@/components/TownTile";
 import { getTown, getTownTrips } from "@/lib/townTrips";
 import { tripsCount } from "@/lib/format";
@@ -90,7 +91,9 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
           </h2>
           <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1.5 [scrollbar-width:none]">
             {row.tiles.map((tile) => (
-              <TownTile key={tile.slug} tile={tile} lang={lang} />
+              <ClosedSinks key={tile.slug} range={tile.closedRange}>
+                <TownTile tile={tile} lang={lang} />
+              </ClosedSinks>
             ))}
           </div>
         </section>

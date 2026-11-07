@@ -22,12 +22,13 @@ export type AnalyticsEvent =
   | "app_installed" // Android install dialog accepted on /aplikacia
   | "on_trail" // "Kde som na trase?" tapped on a trip page
   | "plan_commit" // North Star: the first save, send, navigation or GPX for a trail in this page load (sent by track())
+  | "list_empty" // the home trip list came back empty for the chosen filters (trackListEmpty)
   | "heard_from"; // one-tap "Ako ste sa o nás dozvedeli?" after the first saved trip on this device
 
 type EventData = Record<string, string | number | boolean>;
 
-/** Also added to our own monthly totals (app/api/event, lib/eventCounts.ts), since Umami's free plan has no export. */
-const KEPT: ReadonlySet<AnalyticsEvent> = new Set(["start_set", "trip_saved", "share_sent", "shared_open", "nav_open", "plus_want", "plus_no", "plan_commit", "heard_from"]);
+/** Also added to our own monthly totals (app/api/event, lib/eventCounts.ts; per month in event_month and per day in event_day), since Umami's free plan has no export. */
+const KEPT: ReadonlySet<AnalyticsEvent> = new Set(["start_set", "trip_saved", "share_sent", "shared_open", "nav_open", "plus_want", "plus_no", "plan_commit", "heard_from", "gpx_download", "on_trail", "list_empty"]);
 
 /**
  * The actions that mean "this trip is planned", and the name each gives in plan_commit's `via`.
@@ -129,11 +130,35 @@ function sendToUmami(name: string, data?: EventData): void {
   }, 500);
 }
 
-function keep(name: AnalyticsEvent, detail: string): void {
+function keep(name: string, detail: string): void {
   const body = JSON.stringify({ name, detail });
   if (!navigator.sendBeacon?.("/api/event", body)) {
     fetch("/api/event", { method: "POST", body, keepalive: true }).catch(() => {});
   }
+}
+
+let usedSent = false;
+
+/** Tells /api/visit that this visitor-day is a use day. Once per page load. */
+function markUsed(): void {
+  if (usedSent) return;
+  usedSent = true;
+  if (!navigator.sendBeacon?.("/api/visit?used=1")) {
+    fetch("/api/visit?used=1", { method: "POST", keepalive: true }).catch(() => {});
+  }
+}
+
+let lastEmpty = "";
+
+/**
+ * The home trip list is empty for the chosen filters. `filters` are the fixed filter choices only
+ * (kind, length, ...; never a typed place or coordinates). The same combination counts once in a row.
+ */
+export function trackListEmpty(filters: EventData): void {
+  const key = JSON.stringify(filters);
+  if (key === lastEmpty) return;
+  lastEmpty = key;
+  track("list_empty", filters);
 }
 
 /** Send one event. Silently does nothing when Umami isn't loaded or is blocked. */
@@ -148,8 +173,14 @@ export function track(name: AnalyticsEvent, data?: EventData): void {
     if (via && typeof trail === "string" && !committed.has(trail)) {
       committed.add(trail);
       sendToUmami("plan_commit", { via, trail, took: sinceArrival() });
-      if (counts) keep("plan_commit", via);
+      if (counts) {
+        keep("plan_commit", via);
+        // How long it took, for the two-minute goal over every planned trip (not only saved or sent ones).
+        keep("plan_took", sinceArrival());
+      }
     }
+    // A trip page opened or a trip saved makes this a "use day" (see /api/visit?used=1).
+    if (counts && (name === "trip_open" || name === "trip_saved")) markUsed();
   } catch {
     // Analytics must never break the app.
   }

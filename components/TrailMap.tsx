@@ -12,6 +12,7 @@ import { attachTrailNetwork } from "@/lib/trailNetwork";
 import type { NetworkMode } from "@/lib/trailNetwork";
 import { useUserLocation } from "@/lib/userLocation";
 import { pageLang, tr } from "@/lib/lang";
+import { mapLocale } from "@/lib/mapLocale";
 
 type MapLibre = typeof import("maplibre-gl");
 
@@ -274,6 +275,7 @@ export function TrailMap({
         style: MAP_STYLE_URL,
         ...(from ? { center: from.center, zoom: from.zoom } : { bounds: SLOVAKIA }),
         attributionControl: { compact: true },
+        locale: mapLocale(pageLang()),
         cooperativeGestures: false,
         dragRotate: false,
         pitchWithRotate: false,
