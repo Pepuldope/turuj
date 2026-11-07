@@ -7,7 +7,8 @@ import { getDb } from "@/lib/d1";
 
 /** The counted actions and the details each may carry ("" = none). */
 export const COUNTED: Record<string, readonly string[]> = {
-  start_set: ["gps", "manual", "remembered"],
+  // "manual" is the old name for a typed or picked start (before 8 Nov 2026); kept so older rows still read.
+  start_set: ["gps", "manual", "remembered", "suggestion", "typed", "town_button", "map_pick", "town_page"],
   trip_saved: ["0-2 min", "2-5 min", "5-15 min", "15+ min"],
   share_sent: ["0-2 min", "2-5 min", "5-15 min", "15+ min"],
   shared_open: [""],
@@ -18,6 +19,8 @@ export const COUNTED: Record<string, readonly string[]> = {
   gpx_download: [""],
   on_trail: [""],
   list_empty: [""],
+  day_pick: ["dnes", "zajtra", "so", "ne", "iny"],
+  trip_search: ["hit", "miss"],
   // How long a planned trip took after landing (every plan_commit, whatever the action).
   plan_took: ["0-2 min", "2-5 min", "5-15 min", "15+ min"],
   heard_from: ["google", "ai", "facebook", "instagram", "tiktok", "kamarat", "skola", "klub", "ine"],

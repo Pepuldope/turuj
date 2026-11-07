@@ -34,7 +34,7 @@ export type AnalyticsEvent =
 type EventData = Record<string, string | number | boolean>;
 
 /** Also added to our own monthly totals (app/api/event, lib/eventCounts.ts; per month in event_month and per day in event_day), since Umami's free plan has no export. */
-const KEPT: ReadonlySet<AnalyticsEvent> = new Set(["start_set", "trip_saved", "share_sent", "shared_open", "nav_open", "plus_want", "plus_no", "plan_commit", "heard_from", "gpx_download", "on_trail", "list_empty"]);
+const KEPT: ReadonlySet<AnalyticsEvent> = new Set(["start_set", "trip_saved", "share_sent", "shared_open", "nav_open", "plus_want", "plus_no", "plan_commit", "heard_from", "gpx_download", "on_trail", "list_empty", "day_pick", "trip_search"]);
 
 /**
  * The actions that mean "this trip is planned", and the name each gives in plan_commit's `via`.
@@ -173,7 +173,7 @@ export function track(name: AnalyticsEvent, data?: EventData): void {
   try {
     sendToUmami(name, data);
     const counts = countsHere();
-    if (KEPT.has(name) && counts) keep(name, String(data?.took ?? data?.how ?? data?.ch ?? ""));
+    if (KEPT.has(name) && counts) keep(name, String(data?.took ?? data?.how ?? data?.ch ?? data?.day ?? data?.result ?? ""));
     const via = COMMIT_VIA[name];
     const trail = data?.trail;
     if (via && typeof trail === "string" && !committed.has(trail)) {

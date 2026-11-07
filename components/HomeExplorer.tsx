@@ -31,7 +31,7 @@ import { UiIcon } from "@/components/UiIcon";
 import { AppBar } from "@/components/AppBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { LangLink, useLang, useT } from "@/lib/i18n";
-import { track } from "@/lib/analytics";
+import { track, trackListEmpty } from "@/lib/analytics";
 import { townFrom } from "@/lib/townNames";
 import { suggestTowns } from "@/lib/townSuggest";
 import { decimal } from "@/lib/lang";
@@ -633,6 +633,10 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
   };
 
   const filterCount = goalFilter.length + diffFilter.length + timeFilter.length + (farFilter !== null && start ? 1 : 0);
+  // C83: the list came back empty. Only fixed choices go out (why + how many filters), never typed text or places.
+  useEffect(() => {
+    if (visible.length === 0) trackListEmpty({ why: listedAll.length === 0 ? "filters" : "map", filters: filterCount });
+  }, [visible.length, listedAll.length, filterCount]);
 
   const zoomedIn = !!mapView && mapView.zoom >= mapView.areaZoom - 1;
   const heading = words.length > 0

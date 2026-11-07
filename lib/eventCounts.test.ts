@@ -16,6 +16,13 @@ describe("countedDetail", () => {
     expect(countedDetail("plan_took", "an hour")).toBeNull();
   });
 
+  it("counts the start methods, day picks and trip searches", () => {
+    for (const how of ["suggestion", "typed", "town_button", "map_pick", "town_page", "gps", "remembered"]) expect(countedDetail("start_set", how)).toBe(how);
+    expect(countedDetail("day_pick", "so")).toBe("so");
+    expect(countedDetail("trip_search", "miss")).toBe("miss");
+    expect(countedDetail("day_pick", "2026-11-14")).toBeNull();
+  });
+
   it("drops anything else, so the table stays a few rows a month", () => {
     expect(countedDetail("trip_open", "")).toBeNull();
     expect(countedDetail("start_set", "Bratislava")).toBeNull();
