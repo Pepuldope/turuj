@@ -994,7 +994,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
   };
 
   const list = (
-    <section className="flex flex-col gap-3">
+    <section id="vylety" tabIndex={-1} className="flex flex-col gap-3 outline-none">
       {/* Only the heading is read out when the list changes, not every card in it. */}
       <div className="flex flex-col" aria-live="polite">
         <h2 className="text-base font-bold">{heading}</h2>
