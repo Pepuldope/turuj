@@ -22,7 +22,10 @@ export type AnalyticsEvent =
   | "app_installed" // Android install dialog accepted on /aplikacia
   | "on_trail" // "Kde som na trase?" tapped on a trip page
   | "plan_commit" // North Star: the first save, send, navigation or GPX for a trail in this page load (sent by track())
-  | "heard_from"; // one-tap "Ako ste sa o nás dozvedeli?" after the first saved trip on this device
+  | "heard_from" // one-tap "Ako ste sa o nás dozvedeli?" after the first saved trip on this device
+  | "eve_planned" // the evening-before reminder was switched on for a saved trip (push)
+  | "eve_sent" // the evening-before reminder went out (counted in the worker log, not in Umami)
+  | "ics_download"; // "Pridať do kalendára" tapped
 
 type EventData = Record<string, string | number | boolean>;
 

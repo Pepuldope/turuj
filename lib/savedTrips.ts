@@ -46,6 +46,8 @@ export interface SavedTrip {
   reviewed?: boolean;
   /** The walk itself, for the trail screen ("Začať výlet"); missing on trips saved before it existed. */
   trail?: SavedTrail;
+  /** The evening-before reminder (push): true on, false switched off by the group, missing until first offered. */
+  eve?: boolean;
   /** Offline copy state: the page, GPX and map tiles. */
   offline: "ok" | "failed" | "pending";
 }

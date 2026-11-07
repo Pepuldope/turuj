@@ -7,9 +7,14 @@ import type { D1Like } from "@/lib/d1";
 import { clockShort } from "@/lib/zoned";
 import { newVapidKeys, sendPush } from "@/lib/webPush";
 import type { PushSub, VapidKeys } from "@/lib/webPush";
+import { EVE_MAX_AHEAD_MS, eveMessage } from "@/lib/eve";
+import type { EveJob } from "@/lib/eve";
+import { fetchForecast } from "@/lib/met";
 
 export type ReminderKind = "turn" | "sunset";
 export const REMINDER_KINDS: readonly ReminderKind[] = ["turn", "sunset"];
+/** The evening before the trip (lib/eve.ts): planned and cancelled on its own, apart from the walk's two. */
+const EVE = "eve";
 /** How long before sunset the sunset reminder comes. */
 export const SUNSET_LEAD_MIN = 45;
 /** A reminder further ahead than this is not about today's walk. */
@@ -97,7 +102,7 @@ export async function planReminders(db: D1Like, sub: PushSub, slug: string, name
   await ensure(db);
   const keep = items.filter((i) => REMINDER_KINDS.includes(i.kind) && i.at > now && i.at < now + MAX_AHEAD_MS).slice(0, REMINDER_KINDS.length);
   await db.batch([
-    db.prepare(`DELETE FROM push_plan WHERE endpoint = ? AND slug = ?`).bind(sub.endpoint, slug),
+    db.prepare(`DELETE FROM push_plan WHERE endpoint = ? AND slug = ? AND kind != ?`).bind(sub.endpoint, slug, EVE),
     ...keep.map((i) =>
       db
         .prepare(`INSERT OR REPLACE INTO push_plan (endpoint, slug, kind, at, sub, message) VALUES (?, ?, ?, ?, ?, ?)`)
@@ -111,7 +116,30 @@ export async function planReminders(db: D1Like, sub: PushSub, slug: string, name
 export async function cancelReminders(db: D1Like, endpoint: string, slug: string, kind?: ReminderKind) {
   await ensure(db);
   if (kind) await db.prepare(`DELETE FROM push_plan WHERE endpoint = ? AND slug = ? AND kind = ?`).bind(endpoint, slug, kind).run();
-  else await db.prepare(`DELETE FROM push_plan WHERE endpoint = ? AND slug = ?`).bind(endpoint, slug).run();
+  else await db.prepare(`DELETE FROM push_plan WHERE endpoint = ? AND slug = ? AND kind != ?`).bind(endpoint, slug, EVE).run();
+}
+
+/** The evening-before reminder for this phone and trip. The message column holds the job; the text is made when it is sent. */
+export async function planEve(db: D1Like, sub: PushSub, job: EveJob, at: number, now = Date.now()): Promise<boolean> {
+  await ensure(db);
+  await db.prepare(`DELETE FROM push_plan WHERE endpoint = ? AND slug = ? AND kind = ?`).bind(sub.endpoint, job.slug, EVE).run();
+  if (!(at > now && at < now + EVE_MAX_AHEAD_MS)) return false;
+  await db
+    .prepare(`INSERT OR REPLACE INTO push_plan (endpoint, slug, kind, at, sub, message) VALUES (?, ?, ?, ?, ?, ?)`)
+    .bind(sub.endpoint, job.slug, EVE, at, JSON.stringify(sub), JSON.stringify(job))
+    .run();
+  return true;
+}
+
+export async function cancelEve(db: D1Like, endpoint: string, slug: string) {
+  await ensure(db);
+  await db.prepare(`DELETE FROM push_plan WHERE endpoint = ? AND slug = ? AND kind = ?`).bind(endpoint, slug, EVE).run();
+}
+
+/** MET asks places at 2 decimals (~1 km, like /api/weather): nearby trips share one cached answer. */
+export async function eveText(job: EveJob): Promise<string> {
+  const forecast = await fetchForecast(job.lat.toFixed(2), job.lon.toFixed(2), "");
+  return JSON.stringify(eveMessage(job, forecast));
 }
 
 interface Row {
@@ -137,8 +165,20 @@ export async function sendDue(db: D1Like, now = Date.now()): Promise<{ sent: num
       dropped++;
       continue;
     }
-    const got = await sendPush(JSON.parse(r.sub) as PushSub, r.message, keys, now);
-    if (got === "ok") sent++;
+    let text = r.message;
+    if (r.kind === EVE) {
+      try {
+        text = await eveText(JSON.parse(r.message) as EveJob);
+      } catch {
+        dropped++;
+        continue;
+      }
+    }
+    const got = await sendPush(JSON.parse(r.sub) as PushSub, text, keys, now);
+    if (got === "ok") {
+      sent++;
+      if (r.kind === EVE) console.log("[push] eve sent");
+    }
     if (got === "gone") await db.prepare(`DELETE FROM push_plan WHERE endpoint = ?`).bind(r.endpoint).run();
   }
   return { sent, dropped };
