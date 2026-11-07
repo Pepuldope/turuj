@@ -57,11 +57,11 @@ def is_junction_name(name):
     return not name or not name.strip() or bool(JUNCTION_NAME.search(name))
 
 
-def start_label(parking, stops, places, parking_m=250, stop_m=150, place_m=800, fallback_m=5000):
+def start_label(parking, stops, places, parking_m=250, stop_m=150, place_m=800, fallback_m=12000):
     """A start's name when its guidepost is only a junction: the nearest of a named car park, a bus or
     rail stop within `stop_m`, or a place (village, town) within `place_m`. Each list holds
     (distance_m, Feature), nearest first. A last resort names the nearest place at any distance up
-    to `fallback_m` ("Tokaríny, okolie"), else a plain "Turistický chodník"."""
+    to `fallback_m` (12 km) ("Tokaríny, okolie"), else a plain "Turistický chodník"."""
     found = []
     for d, f in parking:
         nm = (f.name or "").strip()
@@ -232,7 +232,7 @@ class TripBuilder:
     def start_label(self, st):
         """Name for a start whose guidepost is a junction label (see start_label())."""
         t = self.t
-        places = self._near(self.place_tree, getattr(self.osm, "places", []), st.lat, st.lon, 5000)
+        places = self._near(self.place_tree, getattr(self.osm, "places", []), st.lat, st.lon, 12000)
         return start_label(st.parking, st.stops, places, t.get("start_label_parking_m", 250),
                            t.get("start_label_stop_m", 150), t.get("start_label_place_m", 800))
 
@@ -433,7 +433,7 @@ class TripBuilder:
                     break
                 # One place, two goals: a hut at a tarn, a viewpoint on a peak. A waterfall below a
                 # tarn is a place of its own (Vajanského vodopád).
-                near = next((n for r, la, lo, n, k in taken
+                near = None if c.included else next((n for r, la, lo, n, k in taken
                              if r == rid and haversine(c.feature.lat, c.feature.lon, la, lo) < self.t["dedupe_m"]
                              and _same_goal(k, c.kind)), None)
                 if near:
@@ -449,7 +449,7 @@ class TripBuilder:
                     self._reject("start already has enough trips")
                     continue
                 # A peak with its own Wikipedia article is a goal of its own, even one ridge away (Ostrý Roháč).
-                if self.fame(c.feature) < VERY_FAMOUS and any(
+                if not c.included and self.fame(c.feature) < VERY_FAMOUS and any(
                         _same_goal(x["destination"]["kind"], c.kind)
                         and abs(x["distance_m"] - trip["distance_m"]) < 0.1 * trip["distance_m"]
                         and haversine(x["destination"]["location"]["lat"], x["destination"]["location"]["lon"],
@@ -774,7 +774,11 @@ class TripBuilder:
             path = g.walk_from_source(pred, node, target) if np.isfinite(dist[target]) else None
             if path is None or len(path) < 2 or float(g.edge_len[g.edges(path)].sum()) > max_m:
                 continue
-            st = self.make_start(f.name or "Parkovisko", f.lat, f.lon, None, f.osm, node)
+            name = f.name
+            if not name:  # an unnamed car park: "Šášov, parkovisko", not a bare "Parkovisko" (it is a main route's start now)
+                near = self._near(self.place_tree, getattr(self.osm, "places", []), f.lat, f.lon, 3000)
+                name = f"{near[0][1].name}, parkovisko" if near else f"{dest['name']}, parkovisko"
+            st = self.make_start(name, f.lat, f.lon, None, f.osm, node)
             trip = self.make_trip(st, dest, path, region, curated=False, slug=PENDING)
             if not trip or trip["duration_min"] > self.t.get("short_max_min", 45):
                 continue
