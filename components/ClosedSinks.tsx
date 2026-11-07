@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import { inYearlyRange, todayMonthDay } from "@/lib/closedToday";
 
@@ -16,8 +16,21 @@ const useToday = () => useSyncExternalStore(noop, () => todayMonthDay(), () => n
 export function ClosedSinks({ range, children }: { range: { from: string; to: string } | null; children: ReactNode }) {
   const today = useToday();
   const closed = today !== null && range !== null && inYearlyRange(range.from, range.to, today);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // The row snaps (`snap-mandatory`), and the browser keeps the snapped tile in view when it moves:
+  // when the first tile sinks to the end, the row followed it and opened scrolled to the far right.
+  // Once the tiles have moved, put the row back at its start.
+  useEffect(() => {
+    if (!closed) return;
+    const row = ref.current?.parentElement;
+    if (!row) return;
+    const id = requestAnimationFrame(() => row.scrollTo({ left: 0, behavior: "instant" }));
+    return () => cancelAnimationFrame(id);
+  }, [closed]);
+
   return (
-    <div className="flex-none snap-start" style={closed ? { order: 1 } : undefined}>
+    <div ref={ref} className="flex-none snap-start" style={closed ? { order: 1 } : undefined}>
       {children}
     </div>
   );
