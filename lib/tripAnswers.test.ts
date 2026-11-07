@@ -331,7 +331,7 @@ describe("one-line teasers", () => {
 
   it("cuts the description to its first sentence", () => {
     expect(aboutTeaser("Prvá veta. Druhá veta.")).toBe("Prvá veta.");
-    expect(aboutTeaser("Je to túra: 18,4 km a 1126 m stúpania. Po modrej značke hore.")).toBe("Po modrej značke hore.");
+    expect(aboutTeaser("Je to túra: 18,4 km a 1126 m stúpania. Štart je vo výške 1347 m n. m. Po modrej značke hore.")).toBe("Po modrej značke hore.");
     expect(aboutTeaser("a ".repeat(100)).endsWith("…")).toBe(true);
   });
 });
