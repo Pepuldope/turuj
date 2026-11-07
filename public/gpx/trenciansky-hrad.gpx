@@ -2,6 +2,19 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Trenčiansky hrad</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Trenčiansky hrad</name><desc>trenciansky-hrad</desc><trkseg>
+    <trkpt lat="48.896032" lon="18.043334"><ele>219</ele></trkpt>
+    <trkpt lat="48.896054" lon="18.043731"><ele>220</ele></trkpt>
+    <trkpt lat="48.895870" lon="18.043874"><ele>222</ele></trkpt>
+    <trkpt lat="48.895756" lon="18.043718"><ele>222</ele></trkpt>
+    <trkpt lat="48.895629" lon="18.043369"><ele>221</ele></trkpt>
+    <trkpt lat="48.895331" lon="18.043575"><ele>222</ele></trkpt>
+    <trkpt lat="48.895629" lon="18.043369"><ele>221</ele></trkpt>
+    <trkpt lat="48.895756" lon="18.043718"><ele>222</ele></trkpt>
+    <trkpt lat="48.895870" lon="18.043874"><ele>222</ele></trkpt>
+    <trkpt lat="48.896054" lon="18.043731"><ele>220</ele></trkpt>
+    <trkpt lat="48.896032" lon="18.043334"><ele>219</ele></trkpt>
+  </trkseg></trk>
+  <trk><name>Trenčiansky hrad</name><desc>trenciansky-hrad-brezina</desc><trkseg>
     <trkpt lat="48.883386" lon="18.047540"><ele>341</ele></trkpt>
     <trkpt lat="48.883803" lon="18.047170"><ele>343</ele></trkpt>
     <trkpt lat="48.884088" lon="18.047019"><ele>340</ele></trkpt>
@@ -254,18 +267,5 @@
     <trkpt lat="48.883353" lon="18.047363"><ele>342</ele></trkpt>
     <trkpt lat="48.883359" lon="18.047579"><ele>341</ele></trkpt>
     <trkpt lat="48.883386" lon="18.047540"><ele>341</ele></trkpt>
-  </trkseg></trk>
-  <trk><name>Trenčiansky hrad</name><desc>trenciansky-hrad-od-auta</desc><trkseg>
-    <trkpt lat="48.896032" lon="18.043334"><ele>219</ele></trkpt>
-    <trkpt lat="48.896054" lon="18.043731"><ele>220</ele></trkpt>
-    <trkpt lat="48.895870" lon="18.043874"><ele>222</ele></trkpt>
-    <trkpt lat="48.895756" lon="18.043718"><ele>222</ele></trkpt>
-    <trkpt lat="48.895629" lon="18.043369"><ele>221</ele></trkpt>
-    <trkpt lat="48.895331" lon="18.043575"><ele>222</ele></trkpt>
-    <trkpt lat="48.895629" lon="18.043369"><ele>221</ele></trkpt>
-    <trkpt lat="48.895756" lon="18.043718"><ele>222</ele></trkpt>
-    <trkpt lat="48.895870" lon="18.043874"><ele>222</ele></trkpt>
-    <trkpt lat="48.896054" lon="18.043731"><ele>220</ele></trkpt>
-    <trkpt lat="48.896032" lon="18.043334"><ele>219</ele></trkpt>
   </trkseg></trk>
 </gpx>

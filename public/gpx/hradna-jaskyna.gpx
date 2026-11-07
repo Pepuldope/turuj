@@ -2,56 +2,56 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Hradná jaskyňa</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Hradná jaskyňa</name><desc>hradna-jaskyna</desc><trkseg>
-    <trkpt lat="48.331303" lon="18.084844"><ele>166</ele></trkpt>
-    <trkpt lat="48.330741" lon="18.084328"><ele>161</ele></trkpt>
-    <trkpt lat="48.330503" lon="18.084534"><ele>160</ele></trkpt>
-    <trkpt lat="48.330367" lon="18.084565"><ele>160</ele></trkpt>
-    <trkpt lat="48.328799" lon="18.084524"><ele>154</ele></trkpt>
-    <trkpt lat="48.326749" lon="18.085321"><ele>150</ele></trkpt>
-    <trkpt lat="48.326107" lon="18.085376"><ele>146</ele></trkpt>
-    <trkpt lat="48.325771" lon="18.085661"><ele>147</ele></trkpt>
-    <trkpt lat="48.325607" lon="18.085881"><ele>146</ele></trkpt>
-    <trkpt lat="48.324950" lon="18.086999"><ele>142</ele></trkpt>
-    <trkpt lat="48.323913" lon="18.088488"><ele>143</ele></trkpt>
-    <trkpt lat="48.323960" lon="18.088597"><ele>142</ele></trkpt>
-    <trkpt lat="48.323490" lon="18.087911"><ele>141</ele></trkpt>
-    <trkpt lat="48.323631" lon="18.087074"><ele>144</ele></trkpt>
-    <trkpt lat="48.323652" lon="18.086680"><ele>142</ele></trkpt>
-    <trkpt lat="48.319716" lon="18.085987"><ele>147</ele></trkpt>
+    <trkpt lat="48.319746" lon="18.087079"><ele>142</ele></trkpt>
+    <trkpt lat="48.319299" lon="18.087028"><ele>148</ele></trkpt>
+    <trkpt lat="48.319318" lon="18.086584"><ele>147</ele></trkpt>
+    <trkpt lat="48.319294" lon="18.086364"><ele>147</ele></trkpt>
+    <trkpt lat="48.319246" lon="18.086136"><ele>146</ele></trkpt>
     <trkpt lat="48.319078" lon="18.085648"><ele>148</ele></trkpt>
     <trkpt lat="48.318990" lon="18.085556"><ele>149</ele></trkpt>
     <trkpt lat="48.319078" lon="18.085648"><ele>148</ele></trkpt>
-    <trkpt lat="48.319716" lon="18.085987"><ele>147</ele></trkpt>
-    <trkpt lat="48.323652" lon="18.086680"><ele>142</ele></trkpt>
-    <trkpt lat="48.323631" lon="18.087074"><ele>144</ele></trkpt>
-    <trkpt lat="48.323490" lon="18.087911"><ele>141</ele></trkpt>
-    <trkpt lat="48.323960" lon="18.088597"><ele>142</ele></trkpt>
-    <trkpt lat="48.323913" lon="18.088488"><ele>143</ele></trkpt>
-    <trkpt lat="48.324950" lon="18.086999"><ele>142</ele></trkpt>
-    <trkpt lat="48.325607" lon="18.085881"><ele>146</ele></trkpt>
-    <trkpt lat="48.325771" lon="18.085661"><ele>147</ele></trkpt>
-    <trkpt lat="48.326107" lon="18.085376"><ele>146</ele></trkpt>
-    <trkpt lat="48.326749" lon="18.085321"><ele>150</ele></trkpt>
-    <trkpt lat="48.328799" lon="18.084524"><ele>154</ele></trkpt>
-    <trkpt lat="48.330367" lon="18.084565"><ele>160</ele></trkpt>
-    <trkpt lat="48.330503" lon="18.084534"><ele>160</ele></trkpt>
-    <trkpt lat="48.330741" lon="18.084328"><ele>161</ele></trkpt>
-    <trkpt lat="48.331303" lon="18.084844"><ele>166</ele></trkpt>
+    <trkpt lat="48.319246" lon="18.086136"><ele>146</ele></trkpt>
+    <trkpt lat="48.319294" lon="18.086364"><ele>147</ele></trkpt>
+    <trkpt lat="48.319318" lon="18.086584"><ele>147</ele></trkpt>
+    <trkpt lat="48.319299" lon="18.087028"><ele>148</ele></trkpt>
+    <trkpt lat="48.319746" lon="18.087079"><ele>142</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Hradná jaskyňa</name><desc>hradna-jaskyna-od-auta</desc><trkseg>
-    <trkpt lat="48.319746" lon="18.087079"><ele>142</ele></trkpt>
-    <trkpt lat="48.319299" lon="18.087028"><ele>148</ele></trkpt>
-    <trkpt lat="48.319318" lon="18.086584"><ele>147</ele></trkpt>
-    <trkpt lat="48.319294" lon="18.086364"><ele>147</ele></trkpt>
-    <trkpt lat="48.319246" lon="18.086136"><ele>146</ele></trkpt>
+  <trk><name>Hradná jaskyňa</name><desc>hradna-jaskyna-nitra-sindolka</desc><trkseg>
+    <trkpt lat="48.331303" lon="18.084844"><ele>166</ele></trkpt>
+    <trkpt lat="48.330741" lon="18.084328"><ele>161</ele></trkpt>
+    <trkpt lat="48.330503" lon="18.084534"><ele>160</ele></trkpt>
+    <trkpt lat="48.330367" lon="18.084565"><ele>160</ele></trkpt>
+    <trkpt lat="48.328799" lon="18.084524"><ele>154</ele></trkpt>
+    <trkpt lat="48.326749" lon="18.085321"><ele>150</ele></trkpt>
+    <trkpt lat="48.326107" lon="18.085376"><ele>146</ele></trkpt>
+    <trkpt lat="48.325771" lon="18.085661"><ele>147</ele></trkpt>
+    <trkpt lat="48.325607" lon="18.085881"><ele>146</ele></trkpt>
+    <trkpt lat="48.324950" lon="18.086999"><ele>142</ele></trkpt>
+    <trkpt lat="48.323913" lon="18.088488"><ele>143</ele></trkpt>
+    <trkpt lat="48.323960" lon="18.088597"><ele>142</ele></trkpt>
+    <trkpt lat="48.323490" lon="18.087911"><ele>141</ele></trkpt>
+    <trkpt lat="48.323631" lon="18.087074"><ele>144</ele></trkpt>
+    <trkpt lat="48.323652" lon="18.086680"><ele>142</ele></trkpt>
+    <trkpt lat="48.319716" lon="18.085987"><ele>147</ele></trkpt>
     <trkpt lat="48.319078" lon="18.085648"><ele>148</ele></trkpt>
     <trkpt lat="48.318990" lon="18.085556"><ele>149</ele></trkpt>
     <trkpt lat="48.319078" lon="18.085648"><ele>148</ele></trkpt>
-    <trkpt lat="48.319246" lon="18.086136"><ele>146</ele></trkpt>
-    <trkpt lat="48.319294" lon="18.086364"><ele>147</ele></trkpt>
-    <trkpt lat="48.319318" lon="18.086584"><ele>147</ele></trkpt>
-    <trkpt lat="48.319299" lon="18.087028"><ele>148</ele></trkpt>
-    <trkpt lat="48.319746" lon="18.087079"><ele>142</ele></trkpt>
+    <trkpt lat="48.319716" lon="18.085987"><ele>147</ele></trkpt>
+    <trkpt lat="48.323652" lon="18.086680"><ele>142</ele></trkpt>
+    <trkpt lat="48.323631" lon="18.087074"><ele>144</ele></trkpt>
+    <trkpt lat="48.323490" lon="18.087911"><ele>141</ele></trkpt>
+    <trkpt lat="48.323960" lon="18.088597"><ele>142</ele></trkpt>
+    <trkpt lat="48.323913" lon="18.088488"><ele>143</ele></trkpt>
+    <trkpt lat="48.324950" lon="18.086999"><ele>142</ele></trkpt>
+    <trkpt lat="48.325607" lon="18.085881"><ele>146</ele></trkpt>
+    <trkpt lat="48.325771" lon="18.085661"><ele>147</ele></trkpt>
+    <trkpt lat="48.326107" lon="18.085376"><ele>146</ele></trkpt>
+    <trkpt lat="48.326749" lon="18.085321"><ele>150</ele></trkpt>
+    <trkpt lat="48.328799" lon="18.084524"><ele>154</ele></trkpt>
+    <trkpt lat="48.330367" lon="18.084565"><ele>160</ele></trkpt>
+    <trkpt lat="48.330503" lon="18.084534"><ele>160</ele></trkpt>
+    <trkpt lat="48.330741" lon="18.084328"><ele>161</ele></trkpt>
+    <trkpt lat="48.331303" lon="18.084844"><ele>166</ele></trkpt>
   </trkseg></trk>
   <trk><name>Hradná jaskyňa</name><desc>hradna-jaskyna-podhorany-viadukt</desc><trkseg>
     <trkpt lat="48.373613" lon="18.125591"><ele>197</ele></trkpt>
