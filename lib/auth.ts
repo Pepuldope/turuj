@@ -21,6 +21,8 @@ export interface Account {
   id: string;
   email: string;
   name: string | null;
+  /** A team account: its browsers are left out of the visit counts (/statistiky). Only from currentAccount. */
+  team?: boolean;
 }
 
 const SCHEMA = [
@@ -31,7 +33,7 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS login_code (email TEXT PRIMARY KEY, code TEXT NOT NULL, expires INTEGER NOT NULL, sent INTEGER NOT NULL, tries INTEGER NOT NULL) WITHOUT ROWID`,
 ];
 // Columns added after the first tables; "duplicate column" on later runs is fine.
-const ADD = [`ALTER TABLE account ADD COLUMN pw TEXT`, `ALTER TABLE account ADD COLUMN pw_fails INTEGER NOT NULL DEFAULT 0`, `ALTER TABLE account ADD COLUMN pw_locked INTEGER NOT NULL DEFAULT 0`];
+const ADD = [`ALTER TABLE account ADD COLUMN pw TEXT`, `ALTER TABLE account ADD COLUMN pw_fails INTEGER NOT NULL DEFAULT 0`, `ALTER TABLE account ADD COLUMN pw_locked INTEGER NOT NULL DEFAULT 0`, `ALTER TABLE account ADD COLUMN team INTEGER NOT NULL DEFAULT 0`];
 let ready: Promise<unknown> | null = null;
 
 async function db(): Promise<D1Like | null> {
@@ -94,10 +96,17 @@ export async function currentAccount(req: Request): Promise<Account | null> {
   const d = await db();
   if (!d) return null;
   const row = await d
-    .prepare(`SELECT a.id, a.email, a.name FROM account_session s JOIN account a ON a.id = s.account WHERE s.token = ? AND s.expires > ?`)
+    .prepare(`SELECT a.id, a.email, a.name, a.team FROM account_session s JOIN account a ON a.id = s.account WHERE s.token = ? AND s.expires > ?`)
     .bind(await sha256(token), Date.now())
-    .first<Account>();
-  return row ?? null;
+    .first<Omit<Account, "team"> & { team: number }>();
+  return row ? { ...row, team: row.team === 1 } : null;
+}
+
+/** Marks the account as a team one (or not): its browsers stop being counted, see /statistiky. */
+export async function setTeam(accountId: string, team: boolean): Promise<void> {
+  const d = await db();
+  if (!d) throw new Error("no database");
+  await d.prepare(`UPDATE account SET team = ? WHERE id = ?`).bind(team ? 1 : 0, accountId).run();
 }
 
 export type SignInMethod = "google" | "email" | "password";

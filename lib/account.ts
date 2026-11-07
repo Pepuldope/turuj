@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
+import { setOptedOut } from "@/lib/analytics";
 
 // Who is signed in, for the browser (app/api/auth/me). Asked once per page load and shared by
 // every component; signing in or out updates them all.
@@ -8,6 +9,8 @@ import { useEffect, useSyncExternalStore } from "react";
 export interface MyAccount {
   email: string;
   name: string | null;
+  /** A team account: no browser of it is counted (set on /statistiky). */
+  team?: boolean;
 }
 
 type State = { loaded: boolean; account: MyAccount | null };
@@ -24,7 +27,11 @@ function set(next: State) {
 function ask() {
   asked ??= fetch("/api/auth/me", { credentials: "same-origin" })
     .then((r) => (r.ok ? r.json() : { account: null }))
-    .then((j: { account: MyAccount | null }) => set({ loaded: true, account: j.account ?? null }))
+    .then((j: { account: MyAccount | null }) => {
+      // A team account switches counting off in whatever browser it signs in on, as "?nepocitat=1" does.
+      if (j.account?.team) setOptedOut(true);
+      set({ loaded: true, account: j.account ?? null });
+    })
     .catch(() => set({ loaded: true, account: null }));
   return asked;
 }
@@ -43,7 +50,27 @@ export function useAccount(): State {
 }
 
 export function signedIn(account: MyAccount) {
+  if (account.team) setOptedOut(true);
   set({ loaded: true, account });
+}
+
+/** Resolves once we know who is signed in (the shared /api/auth/me answer), so a team browser is opted out before anything counts. */
+export function whenAccountKnown(): Promise<void> {
+  return ask();
+}
+
+/** Marks or unmarks the signed-in account as a team one, and the same on this browser; false when the server couldn't. */
+export async function setTeamAccount(team: boolean): Promise<boolean> {
+  const r = await fetch("/api/auth/team", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ team }),
+  }).catch(() => null);
+  if (!r?.ok) return false;
+  setOptedOut(team);
+  if (state.account) set({ loaded: true, account: { ...state.account, team } });
+  return true;
 }
 
 export async function signOut() {

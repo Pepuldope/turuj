@@ -20,7 +20,7 @@ import { StopsBlock } from "@/components/TransitBlock";
 import { ClosureBanner } from "@/components/ClosureBanner";
 import { isIndexedVariant, variantHeading } from "@/lib/variantTitles";
 import { NearbyTrips } from "@/components/NearbyTrips";
-import { nearestMainTrips } from "@/lib/nearbyTrips";
+import { nearestMainTrips, noYearlyClosure, withoutYearlyClosure } from "@/lib/nearbyTrips";
 import { TripAnswers, TripHeaderFacts } from "@/components/TripAnswers";
 import { TripPlanner } from "@/components/TripPlanner";
 import { TripReviews } from "@/components/TripReviews";
@@ -45,8 +45,13 @@ import { describeTripEn } from "@/lib/tripJsonLdEn";
 import { markSigns } from "@/lib/markSigns";
 import { startLines, subtitle } from "@/lib/tripAnswers";
 
-/** How many neighbours the "Ďalšie výlety v okolí" block lists. */
-const NEARBY_COUNT = 7;
+/**
+ * How many neighbours the "Ďalšie výlety v okolí" block holds in the HTML: the browser shows the first
+ * seven that are not closed today and folds the closed ones away (components/NearbyList.tsx).
+ */
+const NEARBY_COUNT = 14;
+/** Trips without a yearly closure the nearby list always has to offer (C70). */
+const NEARBY_OPEN = 7;
 
 /**
  * The photo as a schema.org ImageObject with the credit fields Google's image metadata reads (F17):
@@ -203,7 +208,14 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
   });
   // C53: the nearest other places as plain links (lib/nearbyTrips.ts). The index holds main routes only.
   const mains = await getAllTrips();
-  const nearby = nearestMainTrips(mains, trip.destination.location, trip.variant_of ?? trail.slug, NEARBY_COUNT);
+  const exclude = trip.variant_of ?? trail.slug;
+  const nearest = nearestMainTrips(mains, trip.destination.location, exclude, NEARBY_COUNT);
+  // C70: in a closed area (Kriváň in winter) most neighbours carry a yearly closure. Add the nearest trips that have
+  // none, so the list can always show NEARBY_OPEN alternatives. Date-independent: the client splits by today.
+  const nearby =
+    nearest.filter((n) => noYearlyClosure(n.trip)).length >= NEARBY_OPEN
+      ? nearest
+      : [...new Map([...nearest, ...nearestMainTrips(withoutYearlyClosure(mains), trip.destination.location, exclude, NEARBY_OPEN)].map((n) => [n.trip.slug, n])).values()].sort((a, b) => a.m - b.m);
   // C39: an indexed variant gets its own H1, "Kriváň z Troch Studničiek" (lib/variantTitles.ts).
   const h1 = !loopBack && lang === "sk" && isIndexedVariant(trip, mains) ? variantHeading(trail.name, trip.start.name, "").h1 : trail.name;
   const nearbyWalks = await getCarWalks();

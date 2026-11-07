@@ -131,3 +131,15 @@ describe("passwords", () => {
     expect(auth.okPassword(12345678)).toBe(false);
   });
 });
+
+describe("team accounts", () => {
+  it("are marked per account and read back with the session", async () => {
+    const a = await auth.accountFor("team@x.sk");
+    const token = await auth.startSession(a.id, "email");
+    expect((await auth.currentAccount(req(token)))?.team).toBe(false);
+    await auth.setTeam(a.id, true);
+    expect((await auth.currentAccount(req(token)))?.team).toBe(true);
+    await auth.setTeam(a.id, false);
+    expect((await auth.currentAccount(req(token)))?.team).toBe(false);
+  });
+});

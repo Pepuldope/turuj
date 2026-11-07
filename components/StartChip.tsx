@@ -11,8 +11,12 @@ import { useT } from "@/lib/i18n";
 
 type SearchState = "idle" | "searching" | "results" | "empty" | "error";
 
-// The one-time "planning from somewhere else?" line under an automatic start has been shown.
-const HINT_KEY = "turuj-auto-start-hint";
+// The "Vyrážate z … · Zmeniť" banner has been shown in this browser session.
+const BANNER_KEY = "turuj-auto-start-banner";
+/** How long the banner stays when nobody scrolls or taps. */
+const BANNER_MS = 6000;
+// Once per page load, whichever StartChip asks first (home, then a trip page without a reload).
+let bannerShown = false;
 
 // Notes sit on a card.
 const note = "w-fit rounded-lg bg-[var(--card-bg)] px-2.5 py-1.5 text-xs font-medium";
@@ -24,7 +28,7 @@ const note = "w-fit rounded-lg bg-[var(--card-bg)] px-2.5 py-1.5 text-xs font-me
  * travel times and sorts by them.
  */
 export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Zmeniť štart"): always open, closed by this. */ onDone?: () => void } = {}) {
-  const { status, message, locate, start, setManualStart, setPicking, auto } = useUserLocation();
+  const { status, message, locate, start, setManualStart, setPicking, picking, auto } = useUserLocation();
   const t = useT();
   const [openState, setOpenState] = useState(false);
   const open = onDone ? true : openState;
@@ -38,22 +42,35 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
   const autoLoading = auto && status === "locating" && !start;
   const expanded = open || (!start && !autoLoading);
   const autoGps = auto && start?.source === "gps";
-  // The first automatic start says once that it can be changed (Peter, 2026-11-05: people
-  // planning from elsewhere might not notice it is their location).
-  const [hint, setHint] = useState(false);
+  // An automatic start (the browser already lets us find the location) says on each visit, once, that it
+  // can be changed: people planning from elsewhere might not notice it is their location (Peter, 2026-11-05,
+  // reminder on every visit 2026-11-07). Never for a typed or picked start, never in a panel.
+  const [bannerOn, setBannerOn] = useState(false);
   // Pages without the browse map (the trip page) pick the point on a full-screen map instead.
   const [pickOwn, setPickOwn] = useState(false);
   useEffect(() => {
-    if (!autoGps || onDone) return;
+    if (!autoGps || onDone || bannerShown) return;
     try {
-      if (localStorage.getItem(HINT_KEY)) return;
-      localStorage.setItem(HINT_KEY, "1");
+      if (sessionStorage.getItem(BANNER_KEY)) return;
+      sessionStorage.setItem(BANNER_KEY, "1");
     } catch {
-      // Storage blocked: show it anyway, harmless.
+      // Storage blocked: the page-load flag still keeps it to once.
     }
+    bannerShown = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHint(true);
+    setBannerOn(true);
+    const hide = () => setBannerOn(false);
+    const timer = setTimeout(hide, BANNER_MS);
+    const onDown = (e: PointerEvent) => !(e.target as Element | null)?.closest?.("[data-start-banner]") && hide();
+    window.addEventListener("scroll", hide, { passive: true, once: true });
+    document.addEventListener("pointerdown", onDown, true);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("scroll", hide);
+      document.removeEventListener("pointerdown", onDown, true);
+    };
   }, [autoGps, onDone]);
+  const banner = bannerOn && autoGps && !onDone && !expanded && !pickOwn && !picking && start;
 
   async function runSearch() {
     if (query.trim().length < 2) return;
@@ -79,6 +96,22 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
   }
 
   return (
+    <>
+    {banner && (
+      <div className="pointer-events-none fixed inset-x-0 top-[calc(var(--topbar,0px)+0.5rem)] z-30 flex justify-center px-3">
+        <div
+          role="status"
+          data-start-banner=""
+          className="pointer-events-auto flex max-w-full items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--card-bg)] py-0.5 pr-1 pl-4 text-sm shadow-[var(--shadow-float)]"
+        >
+          <span className="min-w-0 truncate">{t("Štart: {town} (vaša poloha)", { town: t(banner.label.split(",")[0]) })}</span>
+          <span aria-hidden className="text-[var(--muted)]">·</span>
+          <button type="button" onClick={() => setOpen(true)} className="min-h-10 shrink-0 rounded-full px-3 font-bold text-[var(--accent)]">
+            {t("Zmeniť")}
+          </button>
+        </div>
+      </div>
+    )}
     <section
       aria-label={t("Odkiaľ vyrážate")}
       data-start-chip={onDone ? undefined : ""}
@@ -112,15 +145,6 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
             </button>
           )}
         </div>
-      )}
-
-      {hint && autoGps && !open && (
-        <p className="text-[13px] text-[var(--muted)]">
-          {t("Vyrážate z iného miesta?")}{" "}
-          <button type="button" onClick={() => setOpen(true)} className="font-semibold text-[var(--accent)] underline underline-offset-2">
-            {t("Vybrať iné miesto")}
-          </button>
-        </p>
       )}
 
       {expanded && (
@@ -234,5 +258,6 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
         </p>
       )}
     </section>
+    </>
   );
 }
