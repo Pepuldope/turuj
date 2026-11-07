@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { searchPlaces } from "@/lib/geocode";
+import { getTowns } from "@/lib/trips";
+import { suggestTowns } from "@/lib/townSuggest";
+import type { StartHow } from "@/lib/analytics";
 import type { Place } from "@/lib/geocode";
 import { TOWNS } from "@/lib/towns";
 import { useUserLocation } from "@/lib/userLocation";
@@ -38,6 +41,26 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
   const [search, setSearch] = useState<SearchState>("idle");
   const [results, setResults] = useState<Place[]>([]);
   const abortRef = useRef<AbortController | null>(null);
+  // Instant suggestions from the towns the site ships; Nominatim waits for Enter.
+  const listId = useId();
+  const allTowns = useMemo(() => getTowns(), []);
+  const suggestions = useMemo(() => suggestTowns(query, allTowns, 6), [query, allTowns]);
+  const [active, setActive] = useState(-1);
+  const [listShut, setListShut] = useState(false);
+  const listOpen = suggestions.length > 0 && !listShut && search !== "results";
+  const activeId = listOpen && active >= 0 && active < suggestions.length ? `${listId}-${active}` : undefined;
+  const n = suggestions.length;
+  const liveText = !listOpen && !(search === "searching" || search === "empty")
+    ? ""
+    : search === "searching"
+      ? t("Hľadáme miesto…")
+      : search === "empty"
+        ? t("Nič sme nenašli")
+        : n === 1
+          ? t("{n} návrh", { n })
+          : n < 5
+            ? t("{n} návrhy", { n })
+            : t("{n} návrhov", { n });
   // Finding the location on its own (allowed before): the short line waits instead of the open card.
   const autoLoading = auto && status === "locating" && !start;
   const expanded = open || (!start && !autoLoading);
@@ -87,12 +110,38 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
     }
   }
 
-  function choose(place: Place) {
-    setManualStart(place);
+  function choose(place: Place, how: StartHow) {
+    setManualStart(place, how);
     setResults([]);
     setSearch("idle");
     setQuery("");
+    setActive(-1);
+    setListShut(false);
     setOpen(false);
+  }
+
+  function chooseTown(i: number) {
+    const town = suggestions[i];
+    if (town) choose({ lat: town.location.lat, lon: town.location.lon, label: town.name }, "suggestion");
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      if (!suggestions.length) return;
+      e.preventDefault();
+      setListShut(false);
+      const step = e.key === "ArrowDown" ? 1 : -1;
+      setActive((a) => (a < 0 ? (step > 0 ? 0 : n - 1) : (a + step + n) % n));
+    } else if (e.key === "Enter" && listOpen && active >= 0) {
+      // A picked suggestion; with none picked, Enter still runs the Nominatim search.
+      e.preventDefault();
+      chooseTown(active);
+    } else if (e.key === "Escape" && listOpen) {
+      // Closes the list only, not the panel around it.
+      e.stopPropagation();
+      setListShut(true);
+      setActive(-1);
+    }
   }
 
   return (
@@ -169,15 +218,56 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
               enterKeyHint="search"
               placeholder={t("Napíšte mesto alebo obec")}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="min-w-0 flex-1 bg-transparent text-base outline-none"
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setActive(-1);
+                setListShut(false);
+                // Results of an earlier search no longer fit the text.
+                if (search !== "idle") {
+                  abortRef.current?.abort();
+                  setSearch("idle");
+                  setResults([]);
+                }
+              }}
+              onKeyDown={onKeyDown}
+              role="combobox"
+              aria-expanded={listOpen}
+              aria-controls={listId}
+              aria-autocomplete="list"
+              aria-activedescendant={activeId}
+              autoComplete="off"
+              className="min-w-0 flex-1 rounded bg-transparent text-base focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"
             />
             {query.trim().length >= 2 && (
-              <button type="submit" className="text-sm font-bold text-[var(--accent)]">
+              <button type="submit" className="min-h-10 px-1 text-sm font-bold text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]">
                 {t("Hľadať")}
               </button>
             )}
           </form>
+          <p role="status" className="sr-only">
+            {liveText}
+          </p>
+          {listOpen && (
+            <ul id={listId} role="listbox" aria-label={t("Návrhy miest")} className="flex flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card-bg)]">
+              {suggestions.map((town, i) => (
+                <li
+                  key={town.id}
+                  id={`${listId}-${i}`}
+                  role="option"
+                  aria-selected={i === active}
+                  // Keep the input focused while tapping.
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => chooseTown(i)}
+                  className={`flex min-h-11 cursor-pointer items-center gap-2 border-b border-[var(--border)] px-3 text-sm font-semibold last:border-b-0 ${
+                    i === active ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "hover:bg-[var(--background)]"
+                  }`}
+                >
+                  <UiIcon name="pin" size={14} />
+                  {town.name}
+                </li>
+              ))}
+            </ul>
+          )}
           {search === "searching" && <p className={`${note} text-[var(--muted)]`}>{t("Hľadáme miesto…")}</p>}
           {search === "empty" && <p className={`${note} text-[var(--warn)]`}>{t("Také miesto sme nenašli.")}</p>}
           {search === "error" && <p className={`${note} text-[var(--warn)]`}>{t("Toto sa nenačítalo. Skúste to znova.")}</p>}
@@ -187,7 +277,7 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
                 <li key={`${p.lat},${p.lon}`} className="border-b border-[var(--border)] last:border-b-0">
                   <button
                     type="button"
-                    onClick={() => choose(p)}
+                    onClick={() => choose(p, "typed")}
                     className="w-full px-3 py-2 text-left text-sm hover:bg-[var(--background)]"
                   >
                     {p.label}
@@ -214,7 +304,7 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
               <button
                 key={town.label}
                 type="button"
-                onClick={() => choose(town)}
+                onClick={() => choose(town, "town_button")}
                 className={`h-11 truncate rounded-[10px] border bg-[var(--segment-bg)] px-3 text-left font-semibold hover:border-[var(--accent)] ${
                   start?.label === town.label ? "border-[var(--accent)]" : "border-[var(--border)]"
                 }`}

@@ -4,12 +4,15 @@
  * Usage policy: max 1 request/s and NO search-as-you-type autocomplete, so we
  * only search when the user submits. https://operations.osmfoundation.org/policies/nominatim/
  */
+import { haversineM } from "@/lib/geo";
 
 export interface Place {
   lat: number;
   lon: number;
   /** Short Slovak label, e.g. "Pezinok, okres Pezinok". */
   label: string;
+  /** Country as Nominatim names it (the last part of its address), when known. */
+  country?: string;
 }
 
 interface NominatimResult {
@@ -29,7 +32,7 @@ export async function searchPlaces(query: string, signal?: AbortSignal): Promise
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`nominatim ${res.status}`);
   const rows = (await res.json()) as NominatimResult[];
-  return rows.map((r) => {
+  return tidyPlaces(rows.map((r) => {
     const parts = r.display_name.split(", ");
     const head = r.name || parts[0];
     const rest = parts.filter((p) => p !== head).slice(0, 2);
@@ -37,8 +40,9 @@ export async function searchPlaces(query: string, signal?: AbortSignal): Promise
       lat: Number(r.lat),
       lon: Number(r.lon),
       label: [head, ...rest].join(", "),
+      country: parts.length > 1 ? parts[parts.length - 1] : undefined,
     };
-  });
+  }));
 }
 
 interface NominatimReverse {
@@ -57,4 +61,23 @@ export async function reverseTown(lat: number, lon: number, signal?: AbortSignal
   if (!res.ok) return null;
   const { address: a } = (await res.json()) as NominatimReverse;
   return a?.city ?? a?.town ?? a?.village ?? a?.municipality ?? null;
+}
+
+const COUNTRY_RANK = (c?: string) => (c === "Slovensko" || c === "Slovakia" ? 0 : 1);
+
+/**
+ * The search results as people want them: the same place listed twice (Nominatim often returns a
+ * town and its municipality) collapses to one when it has the same name and region within 2 km, and
+ * Slovakia comes before the neighbours. Keeps Nominatim's order otherwise.
+ */
+export function tidyPlaces(places: Place[]): Place[] {
+  const kept: Place[] = [];
+  for (const p of places) {
+    const twin = kept.some((k) => k.label === p.label && haversineM(k, p) < 2000);
+    if (!twin) kept.push(p);
+  }
+  return kept
+    .map((p, i) => ({ p, i }))
+    .sort((a, b) => COUNTRY_RANK(a.p.country) - COUNTRY_RANK(b.p.country) || a.i - b.i)
+    .map((x) => x.p);
 }
