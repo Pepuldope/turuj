@@ -565,7 +565,6 @@ export const EN: Record<string, string> = {
   "Iné mesto alebo obec": "Another town or village",
   "Iné mesto alebo obec, napr. Pezinok": "Another town or village, e.g. Pezinok",
   "Mesto sa nenašlo": "Town not found",
-  "Nič sme nenašli": "Nothing found",
   "{n} návrh": "{n} suggestion",
   "{n} návrhy": "{n} suggestions",
   "{n} návrhov": "{n} suggestions",

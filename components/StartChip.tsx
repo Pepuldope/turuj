@@ -50,13 +50,12 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
   const listOpen = suggestions.length > 0 && !listShut && search !== "results";
   const activeId = listOpen && active >= 0 && active < suggestions.length ? `${listId}-${active}` : undefined;
   const n = suggestions.length;
-  const liveText = !listOpen && !(search === "searching" || search === "empty")
+  // Errors ("nothing found", "didn't load", location problems) are role="alert" lines below, so they are not repeated here.
+  const liveText = !listOpen && search !== "searching"
     ? ""
     : search === "searching"
       ? t("Hľadáme miesto…")
-      : search === "empty"
-        ? t("Nič sme nenašli")
-        : n === 1
+      : n === 1
           ? t("{n} návrh", { n })
           : n < 5
             ? t("{n} návrhy", { n })
@@ -269,8 +268,8 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
             </ul>
           )}
           {search === "searching" && <p className={`${note} text-[var(--muted)]`}>{t("Hľadáme miesto…")}</p>}
-          {search === "empty" && <p className={`${note} text-[var(--warn)]`}>{t("Také miesto sme nenašli.")}</p>}
-          {search === "error" && <p className={`${note} text-[var(--warn)]`}>{t("Toto sa nenačítalo. Skúste to znova.")}</p>}
+          {search === "empty" && <p role="alert" className={`${note} text-[var(--warn)]`}>{t("Také miesto sme nenašli.")}</p>}
+          {search === "error" && <p role="alert" className={`${note} text-[var(--warn)]`}>{t("Toto sa nenačítalo. Skúste to znova.")}</p>}
           {search === "results" && (
             <ul className="flex flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card-bg)]">
               {results.map((p) => (
@@ -343,7 +342,7 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
       )}
 
       {message && status !== "locating" && (
-        <p role="status" className={`${note} text-[var(--warn)]`}>
+        <p role="alert" className={`${note} text-[var(--warn)]`}>
           {t(message)}
         </p>
       )}
