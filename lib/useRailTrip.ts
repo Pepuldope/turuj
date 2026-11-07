@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { dayIndex, journeys, loadRailTimetable, stationsNear } from "@/lib/rail";
+import { dayIndex, journeys, loadRailTimetable, stationsNear, timetableChangeDay } from "@/lib/rail";
 import type { RailJourney, RailTimetable, StationNear } from "@/lib/rail";
 import type { LatLng } from "@/lib/types";
 
@@ -37,6 +37,8 @@ export interface RailTrip {
   accessMin: number;
   /** All of the day's connections from early morning (for "vyrazte najneskôr"), with their access minutes. */
   day: { dep: number; arr: number; leave: number }[];
+  /** "13. 12." when the trip day is after the timetable file ends (status "no-day"), else null. */
+  changeDay: string | null;
 }
 
 const NONE: Omit<RailTrip, "chooseThere" | "chooseBack"> = {
@@ -48,6 +50,7 @@ const NONE: Omit<RailTrip, "chooseThere" | "chooseBack"> = {
   homeStation: null,
   accessMin: 0,
   day: [],
+  changeDay: null,
 };
 
 /** Minutes after midnight from "HH:MM". */
@@ -138,7 +141,7 @@ export function useRailTrip(
 
   if (!active) return { ...NONE, chooseThere, chooseBack };
   if (tt === undefined) return { ...NONE, status: "loading", chooseThere, chooseBack };
-  if (there && there.day < 0) return { ...NONE, status: "no-day", chooseThere, chooseBack };
+  if (there && there.day < 0) return { ...NONE, status: "no-day", changeDay: date && tt ? timetableChangeDay(tt, date) : null, chooseThere, chooseBack };
   if (!chosen) return { ...NONE, chooseThere, chooseBack };
-  return { status: "ok", there: there!.list, back, thereChoice, backChoice, chooseThere, chooseBack, homeStation, accessMin, day: allDay };
+  return { status: "ok", there: there!.list, back, thereChoice, backChoice, chooseThere, chooseBack, homeStation, accessMin, day: allDay, changeDay: null };
 }

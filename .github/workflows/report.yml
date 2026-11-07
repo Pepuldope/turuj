@@ -49,10 +49,11 @@ jobs:
         run: |
           mkdir -p build
           npx wrangler d1 execute "$DB" --remote --json --command "
-            SELECT month, visitors, visitors_2plus_days, visitors_4plus_days, avg_days FROM visit_month;
+            SELECT month, visitors, visitors_2plus_days, visitors_4plus_days, avg_days, visitors_4plus_use_days FROM visit_month;
             SELECT month, COUNT(*) AS visitors, SUM(days >= 2) AS visitors_2plus_days,
-                   SUM(days >= 4) AS visitors_4plus_days, ROUND(AVG(days), 2) AS avg_days
-            FROM (SELECT substr(day, 1, 7) AS month, visitor, COUNT(*) AS days FROM visit_day GROUP BY 1, 2)
+                   SUM(days >= 4) AS visitors_4plus_days, ROUND(AVG(days), 2) AS avg_days,
+                   SUM(use_days >= 4) AS visitors_4plus_use_days
+            FROM (SELECT substr(day, 1, 7) AS month, visitor, COUNT(*) AS days, SUM(used) AS use_days FROM visit_day GROUP BY 1, 2)
             GROUP BY month" > build/visits.json
           npx wrangler d1 execute "$DB" --remote --json \
             --command "SELECT month, name, detail, n FROM event_month" > build/events.json

@@ -15,6 +15,11 @@ export const COUNTED: Record<string, readonly string[]> = {
   plus_want: [""],
   plus_no: [""],
   plan_commit: ["save", "share", "nav", "gpx"],
+  gpx_download: [""],
+  on_trail: [""],
+  list_empty: [""],
+  // How long a planned trip took after landing (every plan_commit, whatever the action).
+  plan_took: ["0-2 min", "2-5 min", "5-15 min", "15+ min"],
   heard_from: ["google", "ai", "facebook", "instagram", "tiktok", "kamarat", "skola", "klub", "ine"],
 };
 
@@ -26,26 +31,64 @@ export function countedDetail(name: unknown, detail: unknown): string | null {
 }
 
 const SCHEMA = `CREATE TABLE IF NOT EXISTS event_month (month TEXT NOT NULL, name TEXT NOT NULL, detail TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (month, name, detail)) WITHOUT ROWID`;
+// The same counters per day (the last weeks for /statistiky; the monthly table stays the long record).
+const DAY_SCHEMA = `CREATE TABLE IF NOT EXISTS event_day (day TEXT NOT NULL, name TEXT NOT NULL, detail TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, name, detail)) WITHOUT ROWID`;
 let ready: Promise<unknown> | null = null;
 
-export async function countEvent(month: string, name: string, detail: string): Promise<void> {
+/** Adds one to the day's and the month's counter ("2026-11-07" -> month "2026-11"). */
+export async function countEvent(day: string, name: string, detail: string): Promise<void> {
+  const month = day.slice(0, 7);
   const db = await getDb();
   if (!db) return;
   ready ??= db
-    .prepare(SCHEMA)
-    .run()
+    .batch([db.prepare(SCHEMA), db.prepare(DAY_SCHEMA)])
     .catch((err) => {
       ready = null;
       throw err;
     });
   await ready;
-  await db
-    .prepare(
-      `INSERT INTO event_month (month, name, detail, n) VALUES (?1, ?2, ?3, 1)
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO event_month (month, name, detail, n) VALUES (?1, ?2, ?3, 1)
        ON CONFLICT (month, name, detail) DO UPDATE SET n = n + 1`
-    )
-    .bind(month, name, detail)
-    .run();
+      )
+      .bind(month, name, detail),
+    db
+      .prepare(
+        `INSERT INTO event_day (day, name, detail, n) VALUES (?1, ?2, ?3, 1)
+       ON CONFLICT (day, name, detail) DO UPDATE SET n = n + 1`
+      )
+      .bind(day, name, detail),
+  ]);
+}
+
+export interface DayEvents {
+  day: string;
+  /** Count per action name, details summed. */
+  counts: Record<string, number>;
+}
+
+/** The last `days` days with any counted action, newest first; [] without the table or database. */
+export async function recentDayEvents(days = 14): Promise<DayEvents[]> {
+  const db = await getDb();
+  if (!db) return [];
+  try {
+    const since = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+    const { results } = await db
+      .prepare(`SELECT day, name, SUM(n) AS n FROM event_day WHERE day >= ?1 GROUP BY day, name ORDER BY day DESC`)
+      .bind(since)
+      .all<{ day: string; name: string; n: number }>();
+    const byDay = new Map<string, DayEvents>();
+    for (const r of results) {
+      const d = byDay.get(r.day) ?? { day: r.day, counts: {} };
+      d.counts[r.name] = r.n;
+      byDay.set(r.day, d);
+    }
+    return [...byDay.values()];
+  } catch {
+    return []; // Table not created yet.
+  }
 }
 
 export interface MonthEvents {
@@ -63,6 +106,13 @@ export interface MonthEvents {
   plusNo: number;
   /** North Star: planned trips (one per trail per page load). */
   planned: number;
+  /** Planned trips with a recorded time since landing, and those within two minutes (plan_took). */
+  plannedTimed: number;
+  plannedFast: number;
+  /** Actions counted since this was added; list_empty = a home list came back empty. */
+  gpx: number;
+  onTrail: number;
+  listEmpty: number;
   /** "Ako ste sa o nás dozvedeli?" answers by channel. */
   heardFrom: Record<string, number>;
 }
@@ -83,7 +133,7 @@ export async function monthlyEvents(): Promise<MonthEvents[] | null> {
   for (const r of rows) {
     const m =
       months.get(r.month) ??
-      { month: r.month, starts: 0, saved: 0, sent: 0, sentFast: 0, friendOpens: 0, navigations: 0, plusWant: 0, plusNo: 0, planned: 0, heardFrom: {} };
+      { month: r.month, starts: 0, saved: 0, sent: 0, sentFast: 0, friendOpens: 0, navigations: 0, plusWant: 0, plusNo: 0, planned: 0, plannedTimed: 0, plannedFast: 0, gpx: 0, onTrail: 0, listEmpty: 0, heardFrom: {} };
     months.set(r.month, m);
     if (r.name === "start_set") m.starts += r.n;
     else if (r.name === "trip_saved") m.saved += r.n;
@@ -95,6 +145,12 @@ export async function monthlyEvents(): Promise<MonthEvents[] | null> {
     else if (r.name === "plus_want") m.plusWant += r.n;
     else if (r.name === "plus_no") m.plusNo += r.n;
     else if (r.name === "plan_commit") m.planned += r.n;
+    else if (r.name === "plan_took") {
+      m.plannedTimed += r.n;
+      if (r.detail === "0-2 min") m.plannedFast += r.n;
+    } else if (r.name === "gpx_download") m.gpx += r.n;
+    else if (r.name === "on_trail") m.onTrail += r.n;
+    else if (r.name === "list_empty") m.listEmpty += r.n;
     else if (r.name === "heard_from") m.heardFrom[r.detail] = (m.heardFrom[r.detail] ?? 0) + r.n;
   }
   return [...months.values()];

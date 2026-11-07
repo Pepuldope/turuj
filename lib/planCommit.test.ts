@@ -42,3 +42,27 @@ describe("plan_commit", () => {
     vi.useRealTimers();
   });
 });
+
+describe("use day and list_empty", () => {
+  it("marks the day as used once per page load, by a trip view or a save", async () => {
+    const beacons: string[] = [];
+    vi.stubGlobal("window", { umami: { track: () => {} }, location: { host: "turuj.sk", pathname: "/" } });
+    vi.stubGlobal("navigator", { webdriver: false, sendBeacon: (url: string) => (beacons.push(url), true) });
+    vi.stubGlobal("localStorage", { getItem: () => null });
+    const { track } = await import("./analytics");
+    track("start_set", { how: "gps" });
+    expect(beacons.filter((u) => u.includes("used=1"))).toEqual([]);
+    track("trip_open", { trail: "a" });
+    track("trip_saved", { trail: "a" });
+    expect(beacons.filter((u) => u.includes("used=1"))).toEqual(["/api/visit?used=1"]);
+  });
+
+  it("sends list_empty once for the same filters in a row", async () => {
+    const { sent } = await setup();
+    const { trackListEmpty } = await import("./analytics");
+    trackListEmpty({ kind: "hrad" });
+    trackListEmpty({ kind: "hrad" });
+    trackListEmpty({ kind: "vrchol" });
+    expect(sent.filter(([n]) => n === "list_empty").map(([, d]) => d)).toEqual([{ kind: "hrad" }, { kind: "vrchol" }]);
+  });
+});

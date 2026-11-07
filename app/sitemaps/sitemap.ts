@@ -9,7 +9,7 @@ import { SITEMAP_GROUPS, type SitemapGroup } from "@/lib/sitemapGroups";
 // trips appear without touching this file and the Worker never re-reads the index for it.
 export const dynamic = "force-static";
 
-const INFO_PAGES = ["/ako-to-funguje", "/aplikacia", "/o-nas", "/napiste-nam", "/nahlasit-chybu", "/zdroje", "/sukromie", "/podmienky", "/upozornenie", "/uzavery", "/uzavery/tanap"];
+const INFO_PAGES = ["/ako-to-funguje", "/aplikacia", "/o-nas", "/napiste-nam", "/nahlasit-chybu", "/zdroje", "/sukromie", "/pristupnost", "/podmienky", "/upozornenie", "/uzavery", "/uzavery/tanap"];
 
 /**
  * Every page in Slovak and in English (/en), each pointing to the other (hreflang). English trip

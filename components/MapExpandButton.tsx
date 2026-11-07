@@ -12,7 +12,7 @@ export function MapExpandButton({ full, onClick, side = "right" }: { full: boole
       onClick={onClick}
       className={`absolute top-2.5 ${side === "left" ? "left-2.5" : "right-2.5"} z-[6] inline-flex h-12 items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--card-bg)] px-3.5 text-[15px] font-bold shadow-[var(--shadow-float)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]`}
       style={full ? { top: "calc(10px + env(safe-area-inset-top))" } : undefined}
-      aria-label={full ? t("Zavrieť mapu") : t("Mapa na celú obrazovku")}
+      aria-label={full ? t("Zavrieť mapu") : t("Celá mapa na celú obrazovku")}
     >
       {full ? <UiIcon name="close" size={16} /> : <UiIcon name="expand" size={20} />}
       {full ? t("Zavrieť") : t("Celá mapa")}

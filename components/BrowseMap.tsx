@@ -14,6 +14,7 @@ import { useUserLocation } from "@/lib/userLocation";
 import { FALLBACK_STYLE, SLOVAKIA, hideBasePois } from "@/components/TrailMap";
 import { PickPin } from "@/components/PickStartMap";
 import { pageLang, tr } from "@/lib/lang";
+import { mapLocale } from "@/lib/mapLocale";
 
 type MapLibre = typeof import("maplibre-gl");
 type Box = [number, number, number, number];
@@ -398,6 +399,7 @@ export function BrowseMap({
         style: MAP_STYLE_URL,
         ...(start ? { center: start.center, zoom: start.zoom } : { bounds: SLOVAKIA }),
         attributionControl: { compact: true },
+        locale: mapLocale(pageLang()),
         dragRotate: false,
         pitchWithRotate: false,
         // Flat only: a two-finger drag on phones tilted the map into 3D by accident (Peter, 2026-10-24).

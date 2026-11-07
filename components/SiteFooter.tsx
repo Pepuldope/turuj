@@ -30,6 +30,7 @@ const GROUPS: { title: string; links: FooterLink[] }[] = [
       { href: "/ako-to-funguje", label: "Ako to funguje", icon: "list" },
       { href: "/o-nas", label: "O nás", icon: "person" },
       { href: "/sukromie", label: "Súkromie", icon: "lock" },
+      { href: "/pristupnost", label: "Prístupnosť", icon: "list" },
       { href: "/podmienky", label: "Podmienky", icon: "list" },
       { href: "/upozornenie", label: "Upozornenie", icon: "warn" },
       { href: "/uzavery", label: "Uzávery", icon: "warn" },
@@ -63,7 +64,7 @@ export function SiteFooter() {
           </picture>
           <p className="text-[13px]">
             {t("Neplánuj.")}{" "}
-            <strong className="text-[var(--accent)]">{t("Turuj.")}</strong>
+            <strong className="accent-on-sunk">{t("Turuj.")}</strong>
           </p>
           <a
             href={TESTER_FORM_URL}
@@ -94,7 +95,7 @@ export function SiteFooter() {
               {g.title === "Kontakt" && (
                 <a
                   href={`mailto:${CONTACT_EMAIL}`}
-                  className="flex min-w-0 items-center gap-2 py-1 font-semibold break-all text-[var(--accent)] hover:underline"
+                  className="flex min-w-0 items-center gap-2 py-1 accent-on-sunk font-semibold break-all hover:underline"
                 >
                   <UiIcon name="mail" size={16} />
                   <span className="min-w-0">{CONTACT_EMAIL}</span>

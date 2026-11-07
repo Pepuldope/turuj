@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Map as MlMap } from "maplibre-gl";
+import { pageLang } from "@/lib/lang";
+import { mapLocale } from "@/lib/mapLocale";
 import { MAP_STYLE_URL, mapPixelRatio } from "@/lib/mapLayers";
 import { keepInSlovakia } from "@/lib/slovakia";
 import { useUserLocation } from "@/lib/userLocation";
@@ -46,6 +48,7 @@ export function PickStartMap({ onClose }: { onClose: (picked: boolean) => void }
         style: MAP_STYLE_URL,
         pixelRatio: mapPixelRatio(),
         attributionControl: { compact: true },
+        locale: mapLocale(pageLang()),
         ...(s ? { center: [s.lon, s.lat] as [number, number], zoom: 11 } : { bounds: SLOVAKIA }),
       });
       detach = keepInSlovakia(m);
