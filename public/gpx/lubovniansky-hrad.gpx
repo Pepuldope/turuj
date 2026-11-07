@@ -2,6 +2,13 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Ľubovniansky hrad</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Ľubovniansky hrad</name><desc>lubovniansky-hrad</desc><trkseg>
+    <trkpt lat="49.314247" lon="20.698593"><ele>631</ele></trkpt>
+    <trkpt lat="49.314327" lon="20.698377"><ele>632</ele></trkpt>
+    <trkpt lat="49.314447" lon="20.698255"><ele>634</ele></trkpt>
+    <trkpt lat="49.314327" lon="20.698377"><ele>632</ele></trkpt>
+    <trkpt lat="49.314247" lon="20.698593"><ele>631</ele></trkpt>
+  </trkseg></trk>
+  <trk><name>Ľubovniansky hrad</name><desc>lubovniansky-hrad-stara-lubovna</desc><trkseg>
     <trkpt lat="49.307465" lon="20.685827"><ele>526</ele></trkpt>
     <trkpt lat="49.307820" lon="20.684761"><ele>523</ele></trkpt>
     <trkpt lat="49.307851" lon="20.684792"><ele>524</ele></trkpt>
@@ -95,13 +102,6 @@
     <trkpt lat="49.307851" lon="20.684792"><ele>524</ele></trkpt>
     <trkpt lat="49.307820" lon="20.684761"><ele>523</ele></trkpt>
     <trkpt lat="49.307465" lon="20.685827"><ele>526</ele></trkpt>
-  </trkseg></trk>
-  <trk><name>Ľubovniansky hrad</name><desc>lubovniansky-hrad-od-auta</desc><trkseg>
-    <trkpt lat="49.314247" lon="20.698593"><ele>631</ele></trkpt>
-    <trkpt lat="49.314327" lon="20.698377"><ele>632</ele></trkpt>
-    <trkpt lat="49.314447" lon="20.698255"><ele>634</ele></trkpt>
-    <trkpt lat="49.314327" lon="20.698377"><ele>632</ele></trkpt>
-    <trkpt lat="49.314247" lon="20.698593"><ele>631</ele></trkpt>
   </trkseg></trk>
   <trk><name>Ľubovniansky hrad</name><desc>lubovniansky-hrad-udol</desc><trkseg>
     <trkpt lat="49.293026" lon="20.797908"><ele>537</ele></trkpt>

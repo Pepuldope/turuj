@@ -155,7 +155,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # Lay the fresh files on top of the branch as it is now, so a newer
           # data commit or code push never conflicts: the new build replaces it.
-          OUT="public/data/trips public/data/drive public/data/map public/data/search.json data/towns.json data/trip-variants.json data/pipeline-report.md public/gpx pipeline/slugs.json"
+          OUT="public/data/trips public/data/drive public/data/map public/data/search.json data/towns.json data/trip-variants.json data/slug-redirects.json data/pipeline-report.md public/gpx pipeline/slugs.json"
           for attempt in 1 2 3; do
             rm -rf "$RUNNER_TEMP/out" && mkdir -p "$RUNNER_TEMP/out"
             tar cf "$RUNNER_TEMP/out/new.tar" $OUT

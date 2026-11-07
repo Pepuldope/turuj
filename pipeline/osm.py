@@ -2,9 +2,12 @@
 
 Two passes over the file: hiking route relations first (relations come last in
 the file, and we need them to know which ways are marked), then nodes and ways
-with locations. A third, optional pass assembles the country border to keep
-only Slovak towns and trailheads.
+with locations. A short pass after that places the goals mapped as relations (a castle
+drawn as a multipolygon, Strečno) at the centre of their member ways. A last, optional pass
+assembles the country border to keep only Slovak towns and trailheads.
 """
+
+from types import SimpleNamespace
 
 from dataclasses import dataclass, field
 
@@ -60,6 +63,7 @@ class OsmData:
     pois: list = field(default_factory=list)  # (kind, Feature)
     towns: list = field(default_factory=list)
     places: list = field(default_factory=list)  # villages and towns near trails (how well known a start is)
+    included: dict = field(default_factory=dict)  # osm ref -> Feature, for the config `include:` list (any kind of object)
     others: list = field(default_factory=list)  # well-known named features that are no goal kind (report only)
     probes: dict = field(default_factory=dict)  # name -> [(lat, lon)]
     named: list = field(default_factory=list)  # (name, plain name, lat, lon) whose plain name holds a name_keys entry
@@ -218,9 +222,12 @@ class _Boxes:
         return any(lon0 <= e and lon1 >= w and lat0 <= n and lat1 >= s for w, s, e, n in self.b)
 
 
-def load(path, boxes, probe_names=(), border_relation=14296, name_keys=()):
+def load(path, boxes, probe_names=(), border_relation=14296, name_keys=(), include=()):
     """Read everything inside `boxes` ([w,s,e,n] list), plus towns and probes anywhere. Named features
-    inside the boxes whose plain() name contains one of `name_keys` go to `named` (closure sections)."""
+    inside the boxes whose plain() name contains one of `name_keys` go to `named` (closure sections).
+    `include` is the config list of hand-picked objects ({osm: "way/65383743", kind, ...}); each one found
+    inside the boxes ends in `data.included`, whatever its tags say."""
+    include = {e["osm"]: e for e in include}
     data = OsmData()
     feature_box = _Boxes(boxes, 0.03)
     way_box = _Boxes(boxes, 0.05)
@@ -229,6 +236,7 @@ def load(path, boxes, probe_names=(), border_relation=14296, name_keys=()):
 
     # pass 1: hiking routes
     way_routes = {}
+    rel_goals = {}  # goals mapped as a relation (a castle as a multipolygon): placed after pass 2
     for r in osmium.FileProcessor(path, osmium.osm.RELATION):
         t = r.tags
         if t.get("type") == "route" and t.get("route") in ("hiking", "foot"):
@@ -237,13 +245,21 @@ def load(path, boxes, probe_names=(), border_relation=14296, name_keys=()):
             for m in r.members:
                 if m.type == "w":
                     way_routes.setdefault(m.ref, []).append(idx)
+        elif t.get("type") in ("multipolygon", "site") and (
+                (t.get("name") and destination_kind(dict(t))) or f"relation/{r.id}" in include):
+            site = t.get("type") == "site"
+            rel_goals[r.id] = dict(
+                tags=dict(t),
+                ways=[m.ref for m in r.members if m.type == "w" and (site or m.role in ("outer", ""))],
+                nodes=[m.ref for m in r.members if m.type == "n" and m.role in ("label", "admin_centre")],
+            )
 
     # pass 2: nodes and ways
     def add_feature(o, lat, lon, osm_ref, extra=None):
         t = dict(o.tags)
         if extra:
             t.update(extra)
-        name = clean_name(t)
+        name = clean_name(t) or (include.get(osm_ref) or {}).get("name")
         if t.get("name") in probe_names or name in probe_names:
             data.probes.setdefault(name, []).append((lat, lon))
         if name and name_keys and (lat, lon) in feature_box:
@@ -258,6 +274,9 @@ def load(path, boxes, probe_names=(), border_relation=14296, name_keys=()):
         if (lat, lon) not in feature_box:
             return
         f = Feature(osm_ref, name, lat, lon, t)
+        if osm_ref in include:
+            data.included[osm_ref] = f
+            return
         if t.get("tourism") == "information" and t.get("information") == "guidepost":
             data.guideposts.append(f)
             return
@@ -327,6 +346,33 @@ def load(path, boxes, probe_names=(), border_relation=14296, name_keys=()):
                 seg = _line_m(lats, lons)
                 extra = {"_len_m": seg, "_ends": ((float(lats[0]), float(lons[0])), (float(lats[-1]), float(lons[-1])))}
             add_feature(o, float(lats.mean()), float(lons.mean()), f"way/{o.id}", extra)
+
+    # pass 3: where the relation goals are (the centre of their member ways, or their label node)
+    if rel_goals:
+        want_ways = {w for g in rel_goals.values() for w in g["ways"]}
+        want_nodes = {n for g in rel_goals.values() for n in g["nodes"]}
+        way_mid, node_at = {}, {}
+        fp3 = (
+            osmium.FileProcessor(path, osmium.osm.NODE | osmium.osm.WAY)
+            .with_locations()
+            .with_filter(osmium.filter.IdFilter(list(want_ways | want_nodes)))
+        )
+        for o in fp3:
+            if o.is_node():
+                if o.id in want_nodes:
+                    node_at[o.id] = (o.location.lat, o.location.lon)
+            elif o.id in want_ways:
+                try:
+                    pts = [(n.lat, n.lon) for n in o.nodes]
+                except osmium.InvalidLocationError:
+                    continue
+                if pts:
+                    way_mid[o.id] = (sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
+        for rid, g in rel_goals.items():
+            pts = [node_at[n] for n in g["nodes"] if n in node_at] or [way_mid[w] for w in g["ways"] if w in way_mid]
+            if pts:
+                lat, lon = sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
+                add_feature(SimpleNamespace(tags=g["tags"]), lat, lon, f"relation/{rid}")
 
     if border_relation:
         data.border = _border(path, border_relation)
