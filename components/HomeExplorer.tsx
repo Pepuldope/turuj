@@ -750,6 +750,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
 
   const map = (
     <div className="relative h-full w-full" onPointerDownCapture={dropMapHint} onWheelCapture={dropMapHint}>
+      <p className="sr-only">{t("Mapa ukazuje tie isté výlety ako zoznam výletov.")}</p>
       <BrowseMap
         trips={mapTrips}
         areas={areas}

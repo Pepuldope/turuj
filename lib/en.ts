@@ -4,6 +4,7 @@
 
 export const EN: Record<string, string> = {
   "Preskočiť na výlety": "Skip to trips",
+  "Mapa ukazuje tie isté výlety ako zoznam výletov.": "The map shows the same trips as the trip list.",
   "Polohu si neukladáme, použijeme ju len na výpočet cesty.": "We don't store your location; we only use it to work out the journey.",
   "Napíšte mesto alebo obec": "Type a town or village",
   "Mesto alebo obec": "Town or village",
