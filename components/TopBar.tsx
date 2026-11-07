@@ -109,6 +109,20 @@ export function TopBar() {
     return () => clearTimeout(id);
   }, []);
 
+  // A page we come back to (back/forward, a link to a route Next kept in memory) must not show the panel
+  // as we left it: state kept with the path would match again. Close on every path change and bfcache restore.
+  const lastPath = useRef(path);
+  useEffect(() => {
+    if (lastPath.current === path) return;
+    lastPath.current = path;
+    setOpened({ kind: null, path });
+  }, [path]);
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => e.persisted && setOpened((o) => ({ ...o, kind: null }));
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, []);
+
   useEffect(() => {
     if (!panel) return;
     const onDown = (e: PointerEvent) => {
@@ -180,7 +194,10 @@ export function TopBar() {
         </span>
       </div>
       {panel && (
-        <div className="absolute inset-x-3 top-[calc(100%+6px)] max-h-[calc(100dvh-80px)] overflow-y-auto rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] p-2 shadow-[var(--shadow-float)] lg:inset-x-auto lg:right-0 lg:w-80">
+        <div className="absolute inset-x-3 top-[calc(100%+6px)] max-h-[calc(100dvh-80px)] overflow-y-auto rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] p-2 shadow-[var(--shadow-float)] lg:inset-x-auto lg:right-0 lg:w-80"
+          // A tapped link closes the panel before the navigation, so it is never left open behind it.
+          onClick={(e) => (e.target as Element).closest("a") && setOpened((o) => ({ ...o, kind: null }))}
+        >
           {panel === "menu" ? <MenuList /> : <AccountPanel notice={notice} code={noticeCode} onDone={() => setNotice(null)} />}
         </div>
       )}
