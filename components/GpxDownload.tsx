@@ -37,7 +37,7 @@ export function GpxDownload({ gpxUrl, slug, name, row = false }: { gpxUrl: strin
   if (row) {
     // The last row of the question card: same shape as the rows above it.
     return (
-      <a href={file} download={`${slug}.gpx`} onClick={download} className="flex min-h-14 w-full items-center gap-3 px-4 py-3">
+      <a href={file} download={`${slug}.gpx`} onClick={download} className="flex min-h-14 w-full rounded-[var(--radius-card)] items-center gap-3 px-4 py-3">
         <span className="text-[var(--accent)]">
           <UiIcon name="download" size={20} />
         </span>

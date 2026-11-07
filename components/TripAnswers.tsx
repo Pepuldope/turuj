@@ -47,16 +47,19 @@ import type { DestinationKind, Fee } from "@/lib/tripSchema";
 
 const BODY = "flex flex-col gap-2 px-4 pb-4 text-sm leading-relaxed text-[var(--muted)]";
 
-/** The soft card all the rows live in. */
+/** The stack the question cards live in: each one its own card, a small gap between (no shadow: that is for the big trip-page cards). */
 function Card({ children }: { children: ReactNode }) {
-  return <div className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--card-edge)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">{children}</div>;
+  return <div className="flex flex-col gap-2.5">{children}</div>;
 }
+
+/** The card look of one expandable row (same as ParkingBlock and TransitBlock). */
+const CARD = "rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)]";
 
 /** One question: the H2 and a one-line teaser answer in the summary, the full answer inside. */
 function Row({ title, teaser, children }: { title: string; teaser: string | null; children: ReactNode }) {
   return (
-    <details className="group border-t border-[var(--border)] first:border-t-0">
-      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+    <details className={`group ${CARD}`}>
+      <summary className="flex min-h-14 cursor-pointer rounded-[var(--radius-card)] list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <h2 className="text-base font-semibold leading-snug text-[var(--foreground)]">{title}</h2>
           {teaser && (
@@ -307,7 +310,7 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
         </Row>
       )}
 
-      {gpx && <div className="border-t border-[var(--border)] text-sm">{gpx}</div>}
+      {gpx && <div className={`${CARD} text-sm hover:border-[var(--accent)]`}>{gpx}</div>}
     </Card>
   );
 }
