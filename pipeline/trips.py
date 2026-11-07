@@ -252,6 +252,7 @@ class TripBuilder:
             if is_junction_name(f.name):
                 st.guidepost = f.name
                 st.name = self.start_label(st)
+                self.report.setdefault("start_labels", {})[f.osm] = (f.name, st.name)
             near_stop = any(d <= self.t["trailhead_needs_stop_max_m"] for d, _ in st.stops)
             if st.parking or near_stop:
                 out[node] = st
@@ -1121,8 +1122,7 @@ class TripBuilder:
             destination=dict(name=dest["name"], kind=dest["kind"], location=_loc(dest["lat"], dest["lon"]),
                              ele_m=_int(dest["ele"] or (float(ele[k]) if have_dem else None)), osm=dest["osm"]),
             start=dict(name=st.name, location=_loc(st.lat, st.lon),
-                       ele_m=_int(st.ele or (float(ele[0]) if have_dem else None)), osm=st.osm,
-                       **({"guidepost": st.guidepost} if st.guidepost else {})),
+                       ele_m=_int(st.ele or (float(ele[0]) if have_dem else None)), osm=st.osm),
             parking=parking[0] if parking else None,
             transit=stops[0] if stops else None,
             route="okruh" if back_path else "tam-a-spat",

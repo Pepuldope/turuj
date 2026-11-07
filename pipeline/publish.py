@@ -233,6 +233,12 @@ def _report(trips, rep, now, osm_at, drive):
         L += ["", "## Well-known places by a marked trail that are no trip (no goal kind for them)", "",
               "| Wikipedia languages | Name | OSM tag | Region | OSM |", "|---|---|---|---|---|"]
         L += [f"| {fm} | {n} | {tag} | {r} | {o} |" for fm, n, tag, r, o in rep["unused"]]
+    labels = rep.get("start_labels") or {}
+    used = sorted({(t["start"]["osm"], t["start"]["name"]) for t in trips if t["start"]["osm"] in labels}, key=lambda x: x[1])
+    if used:
+        L += ["", "## Starts named by what is round them (the guidepost is only a junction)", "",
+              "| Guidepost | Start name | OSM |", "|---|---|---|"]
+        L += [f"| {labels[o][0]} | {n} | {o} |" for o, n in used]
     L += ["", "## Rejected candidates", ""] + [f"- {k}: {v}" for k, v in sorted(rep["rejected"].items())]
     if rep.get("unresolved"):
         L += ["", "## Rule place names not found in OSM (check spelling in the rule files)", ""]

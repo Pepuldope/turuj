@@ -25,7 +25,7 @@ binding on Cloudflare, the disk elsewhere). Small bundled data: `lib/trips.ts`.
 
 ## What a trip is
 
-A walk from a **start** (a KST guidepost with public parking or a stop nearby; a guidepost that is only a junction or a walking time, "Odbočka …", "Rázcestie …", "… 8 min.", is named by the nearest named car park, stop or village instead, and keeps its own name in `start.guidepost`) to a
+A walk from a **start** (a KST guidepost with public parking or a stop nearby; a guidepost that is only a junction or a walking time, "Odbočka …", "Rázcestie …", "… 8 min.", is named by the nearest named car park, stop or village instead, and the report lists the guidepost's own name next to it) to a
 **destination** (named peak, viewpoint, castle, hut, tarn, waterfall) and back. Usually
 the same way back (`route: "tam-a-spat"`); a loop (`"okruh"`) when a path is one-way,
 like the gorges in Slovenský raj.
