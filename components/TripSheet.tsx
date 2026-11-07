@@ -45,8 +45,11 @@ import { describeTripEn } from "@/lib/tripJsonLdEn";
 import { markSigns } from "@/lib/markSigns";
 import { startLines, subtitle } from "@/lib/tripAnswers";
 
-/** How many neighbours the "Ďalšie výlety v okolí" block lists. */
-const NEARBY_COUNT = 7;
+/**
+ * How many neighbours the "Ďalšie výlety v okolí" block holds in the HTML: the browser shows the first
+ * seven that are not closed today and folds the closed ones away (components/NearbyList.tsx).
+ */
+const NEARBY_COUNT = 14;
 
 /**
  * The photo as a schema.org ImageObject with the credit fields Google's image metadata reads (F17):

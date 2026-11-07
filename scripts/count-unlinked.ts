@@ -8,7 +8,8 @@ import { getAllTrails, getAllTrips } from "@/lib/tripFiles";
 import { getTowns } from "@/lib/trips";
 import { nearestMainTrips } from "@/lib/nearbyTrips";
 
-const NEARBY_COUNT = 7;
+// Same as TripSheet: the HTML holds 14, the browser shows 7 and folds closed ones away.
+const NEARBY_COUNT = 14;
 const HOME_FIRST = 30;
 
 const mains = await getAllTrips();

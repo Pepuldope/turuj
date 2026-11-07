@@ -521,7 +521,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
         const th = primaryTrailhead(detail);
         if (!at) return [];
         const dim = !fitsDay(item);
-        return [{ slug: detail.trail.slug, goal: detail.trail.goal ?? "ine", rank: detail.trail.rank ?? 0, location: at, start: th?.location ?? at, dim }];
+        return [{ slug: detail.trail.slug, goal: detail.trail.goal ?? "ine", rank: detail.trail.rank ?? 0, location: at, start: th?.location ?? at, dim, closed: item.closed }];
       }),
     [listedAll]
   );

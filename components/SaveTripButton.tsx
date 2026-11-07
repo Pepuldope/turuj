@@ -209,7 +209,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, ..
         </div>
       )}
 
-      {saved && askHeard && !askShare && <HeardFrom onDone={() => setAskHeard(false)} />}
+      {saved && askHeard && <HeardFrom onDone={() => setAskHeard(false)} />}
 
       {saved && !askShare && status !== "saving" && (
         <p className="text-sm">
