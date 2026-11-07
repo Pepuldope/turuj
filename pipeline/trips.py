@@ -457,7 +457,7 @@ class TripBuilder:
                     continue
                 others = trip.pop("_others")
                 same_start = [x for x in chosen if x["start"]["osm"] == trip["start"]["osm"]]
-                if len(same_start) >= self.t["max_trips_per_start"] and self.fame(c.feature) < FAMOUS:
+                if len(same_start) >= self.t["max_trips_per_start"] and self.fame(c.feature) < FAMOUS and not c.included:
                     self._reject("start already has enough trips")
                     continue
                 # A peak with its own Wikipedia article is a goal of its own, even one ridge away (Ostrý Roháč).
