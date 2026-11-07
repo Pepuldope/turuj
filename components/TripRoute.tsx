@@ -11,6 +11,7 @@ import { pageMetadata } from "@/lib/seo";
 import { metaDescription } from "@/lib/describeSk";
 import { langPath, tr } from "@/lib/lang";
 import { nearestTown } from "@/lib/trips";
+import { redirectTarget } from "@/lib/slugRedirects";
 import { townFrom } from "@/lib/townNames";
 import type { Lang } from "@/lib/lang";
 
@@ -95,6 +96,9 @@ function plainSlug(slug: string): string {
 export async function TripRoute({ slug, lang }: { slug: string; lang: Lang }) {
   const loaded = await loadTrip(slug);
   if (!loaded) {
+    // A renamed or retired trip (data/slug-redirects.json): only to a trip that exists, never to a 404.
+    const moved = redirectTarget(slug);
+    if (moved && (await loadTrip(moved))) permanentRedirect(langPath(lang, `/trasa/${moved}`));
     // A typed or pasted name ("Kriváň", "velky choc") still finds the trip.
     const plain = plainSlug(slug);
     if (plain !== slug && (await loadTrip(plain))) permanentRedirect(langPath(lang, `/trasa/${plain}`));

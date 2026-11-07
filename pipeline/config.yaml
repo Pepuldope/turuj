@@ -146,11 +146,36 @@ trips:
   parking_road_max_m: 150
   # guideposts never used as a start (by exact name): hotel-only roads OSRM still treats as public
   exclude_starts: ["Sliezsky dom"]
+  # a guidepost that is only a junction ("Odbočka ...", "Rázcestie ...") is a start named by what is round it:
+  # the nearest of a named car park, a stop, a village (pipeline/trips.py start_label)
+  start_label_parking_m: 250
+  start_label_stop_m: 150
+  start_label_place_m: 800
   poi_max_m: 150
   # viewpoints, castles, huts and food off the walk, at most this many minutes there and back (Peter 2026-10-23)
   detour_max_min: 30
   detour_view_max_min: 40  # viewpoints and castles
   detour_max: 6
+
+# Hand-picked goals the kind rules in pipeline/osm.py do not give a trip (a hotel that is a mountain hut, a ruined
+# monastery). Each is read by OSM id wherever it sits in the regions and becomes a candidate of the given kind
+# (chata, hrad, vyhliadka, vrchol, vodopad, pleso, jaskyna, roklina, ine), skipping the "known enough" checks.
+# Optional `limits:` raise or lower trip limits for that place only (max_duration_min, min_round_trip_m, ...).
+# Left out on purpose (Peter 2026-11-07): Slavkovský štít, Bystrá lávka, until the closure is over in May.
+include:
+  - {osm: way/65383743, kind: chata, name: Sliezsky dom}   # tourism=hotel above Tatranská Polianka
+  - {osm: way/73167805, kind: ine, name: Kláštorisko}      # amenity=monastery, ruins=yes
+
+# The main route of a place starts at this guidepost (when the place has a route from it); the other routes stay
+# as they are. dest = the goal's OSM id, start = the guidepost's OSM id.
+main_start:
+  - {dest: node/7264260978, start: node/443412639}  # Šarišský hrad from Veľký Šariš, not the rail halt at Šarišské Michaľany
+
+# Slugs to re-point (old: new). Every pinned slug of the place and of its other routes (`<old>-<start>`) changes, and the
+# old addresses redirect to the new ones (data/slug-redirects.json, pipeline/redirects.py).
+slug_renames:
+  volovec-woowiec: volovec-zapadne-tatry  # the slug was made from "Volovec / Wołowiec" before the ł was handled
+  ostredok-kralova-studna-hotel: ostredok-velka-fatra  # was named after the start; `ostredok` is the Tatra one
 
 # Well-known places people expect to find. Every weekly report says what became of each one
 # (a trip, merged, or why it was left out), so a missing favourite is noticed and fixed.

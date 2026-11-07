@@ -183,13 +183,14 @@ def test_end_to_end(tmp_path):
     assert main["gpx_url"] == f"/gpx/{main['slug']}.gpx" and other["gpx_url"] == f"/gpx/{main['slug']}.gpx#{other['slug']}"
     gpx = (tmp_path / "public" / "gpx" / f"{main['slug']}.gpx").read_text()
     assert gpx.count("<trk>") == 3 and gpx.index(f"<desc>{main['slug']}</desc>") < gpx.index(f"<desc>{other['slug']}</desc>")
-    # the castle: the hike from the village is the main route, the car park by the walls a short option
+    # the castle: the car park by the walls is the main route (a castle people drive to), the hike from the village another
     castle = [t for t in index["trips"] + variants if t["destination"]["name"] == "Hrad Skúška"]
     c_main = next(t for t in castle if not t.get("variant_of"))
-    short = next(t for t in castle if t.get("route_label") == "Krátko od auta")
-    assert c_main["start"]["name"] == "Podhradie" and c_main["duration_min"] >= 60
-    assert short["slug"] == f"{c_main['slug']}-od-auta" and short["duration_min"] <= 45
-    assert short["parking"]["name"] == "Parkovisko pod hradom"
+    hike = next(t for t in castle if t.get("variant_of"))
+    assert c_main["start"]["name"] == "Parkovisko pod hradom" and c_main["duration_min"] <= 45
+    assert c_main["parking"]["name"] == "Parkovisko pod hradom"
+    assert hike["start"]["name"] == "Podhradie" and hike["duration_min"] >= 60 and hike["variant_of"] == c_main["slug"]
+    assert not any(t.get("route_label") == "Krátko od auta" for t in castle)
     # each route's file lists all of them, main first, with its way up, so the trip page reads only that file
     for t in (main, other, alt):
         routes = json.loads((tmp_path / "public" / "data" / "trips" / f"{t['slug']}.json").read_text())["routes"]

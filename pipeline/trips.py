@@ -33,6 +33,11 @@ VIEW_KINDS = {"vyhliadka", "hrad"}
 DETOUR_SNAP_M = 300  # a side-trip sight this far from any way still counts, walked cross-country
 OFF_PATH = 1.5  # cross-country metres count this much more than a path
 VERY_FAMOUS = 12  # every Tatra peak has a few (Polish, German); this many is a household name
+SHORT_MAIN_KINDS = {"hrad", "jaskyna"}  # a show cave or castle: people drive to it, so the car-park visit can be the main route
+# A guidepost named for a junction or a walking time ("Odbočka na Urpín, vyhliadku", "Rázcestie Šindľovec",
+# "Hradište pod Vrátnom, rázc.", "Suchý vrch, odb. na vyhliadku", "Vyhliadka 8 min.", "Dva stromy 35'") says where
+# a path forks, not where people start: such a start is labelled by what is round it (start_label).
+JUNCTION_NAME = re.compile(r"\b(rázcestie|rázc\b\.?|odbočka|odb\.)|\d+\s?min\.?\s*$|\d+['\u2019\u2032]\s*$", re.I)
 
 
 @dataclass
@@ -45,6 +50,36 @@ class Start:
     node: int
     parking: list = field(default_factory=list)  # (walk_m, Feature)
     stops: list = field(default_factory=list)
+    guidepost: str | None = None  # the guidepost's own name, when `name` is a label made from what is round it
+
+
+def is_junction_name(name):
+    return not name or not name.strip() or bool(JUNCTION_NAME.search(name))
+
+
+def start_label(parking, stops, places, parking_m=250, stop_m=150, place_m=800, fallback_m=5000):
+    """A start's name when its guidepost is only a junction: the nearest of a named car park, a bus or
+    rail stop within `stop_m`, or a place (village, town) within `place_m`. Each list holds
+    (distance_m, Feature), nearest first. A last resort names the nearest place at any distance up
+    to `fallback_m` ("Tokaríny, okolie"), else a plain "Turistický chodník"."""
+    found = []
+    for d, f in parking:
+        nm = (f.name or "").strip()
+        if d <= parking_m and re.search(r"[^\W\d_]{3,}", nm) and not is_junction_name(nm):
+            found.append((d, nm if "park" in names.fold(nm) else f"{nm}, parkovisko"))
+    for d, f in stops:
+        nm = (f.name or "").strip()
+        if d <= stop_m and nm and not is_junction_name(nm):
+            rail = f.tags.get("_mode") == "vlak" and not re.search(r"stani|zel|zast", names.fold(nm))
+            found.append((d, f"{nm}, stanica" if rail else nm))
+    places = [(d, f) for d, f in places if f.name and not is_junction_name(f.name)]
+    for d, f in places:
+        if d <= place_m:
+            found.append((d, f.name))
+    if found:
+        return min(found, key=lambda x: x[0])[1]
+    near = next(((d, f) for d, f in places if d <= fallback_m), None)
+    return f"{near[1].name}, okolie" if near else "Turistický chodník"
 
 
 @dataclass
@@ -54,6 +89,8 @@ class Candidate:
     region: dict
     node: int
     score: float
+    limits: dict | None = None  # per-place limits from the config `include:` list
+    included: bool = False  # hand-picked in `include:`: skips the fame and valley checks
 
 
 class TripBuilder:
@@ -76,6 +113,9 @@ class TripBuilder:
         # Well-known places (config `watch`): the report says what became of each one.
         self.watch = {names.fold(n): n for n in cfg.get("watch", [])}
         self.report["watch_names"] = list(cfg.get("watch", []))
+        # Places whose main route is a named start (config `main_start:`): destination osm id -> start guidepost osm id.
+        self.main_start = {e["dest"]: e["start"] for e in cfg.get("main_start") or []}
+        self._village_names = None
         self._current = None  # name of the destination being built, for _reject
 
         def tree(feats):
@@ -189,6 +229,13 @@ class TripBuilder:
         ]
         return st
 
+    def start_label(self, st):
+        """Name for a start whose guidepost is a junction label (see start_label())."""
+        t = self.t
+        places = self._near(self.place_tree, getattr(self.osm, "places", []), st.lat, st.lon, 5000)
+        return start_label(st.parking, st.stops, places, t.get("start_label_parking_m", 250),
+                           t.get("start_label_stop_m", 150), t.get("start_label_place_m", 800))
+
     # -------------------------------------------------------- trailheads --
     def trailheads(self):
         out = {}
@@ -202,6 +249,9 @@ class TripBuilder:
             if node is None or node in out:
                 continue
             st = self.make_start(f.name, f.lat, f.lon, _num(f.tags.get("ele")), f.osm, node)
+            if is_junction_name(f.name):
+                st.guidepost = f.name
+                st.name = self.start_label(st)
             near_stop = any(d <= self.t["trailhead_needs_stop_max_m"] for d, _ in st.stops)
             if st.parking or near_stop:
                 out[node] = st
@@ -211,7 +261,17 @@ class TripBuilder:
     # ------------------------------------------------------ destinations --
     def candidates(self):
         out = []
-        for kind, f in self.osm.destinations:
+        goals = {f.osm: (kind, f) for kind, f in self.osm.destinations}
+        hand = {}  # osm ref -> its entry in the config `include:` list
+        for e in self.cfg.get("include") or []:
+            f = getattr(self.osm, "included", {}).get(e["osm"])
+            if f is None:
+                self.log(f"include: {e['osm']} not found in the OSM data (outside the regions, or deleted)")
+                self.report.setdefault("include_missing", []).append(e["osm"])
+                continue
+            goals[f.osm] = (e["kind"], f)
+            hand[f.osm] = e
+        for kind, f in goals.values():
             self._note(f.name, f"found in OSM as {kind} ({f.osm}, Wikipedia in {self.fame(f)} languages)")
             if f.name.strip().lower() in GENERIC_NAMES or names.is_junk(f.name):
                 continue
@@ -222,15 +282,16 @@ class TripBuilder:
             if region is None or not self.in_country(f.lat, f.lon):
                 self._note(f.name, "outside Slovakia or every region")
                 continue
+            e = hand.get(f.osm)
             top = self._gorge_top(f) if f.tags.get("_ends") else None
-            if kind == "roklina" and not osm_mod.GORGE_WORDS.search(f.name) and (
+            if e is None and kind == "roklina" and not osm_mod.GORGE_WORDS.search(f.name) and (
                     (top or 0) > GORGE_TOP_MAX_ELE
                     or self.fame(f) < (GORGE_VALLEY_FAME if "dolin" in f.name.lower() else 2)):
                 # a high-mountain valley is a glacial one (Velická dolina, Meďodoly), not a gorge; lower down
                 # only the known gorge-like ones (Suchá Belá, Sokolia dolina, Prosiecka dolina)
                 self._note(f.name, "left out: a valley, not a known gorge")
                 continue
-            if kind == "ine" and self.fame(f) < 2:
+            if e is None and kind == "ine" and self.fame(f) < 2:
                 self._note(f.name, "left out: a sight not known enough")
                 continue
             # A castle, waterfall or lake is a sight you see from the trail; a peak you stand on.
@@ -239,7 +300,7 @@ class TripBuilder:
             if node is None:
                 self._note(f.name, f"no marked trail within {snap_m} m")
                 continue
-            out.append(Candidate(kind, f, region, node, self.score(kind, f)))
+            out.append(Candidate(kind, f, region, node, self.score(kind, f), (e or {}).get("limits"), e is not None))
         out.sort(key=lambda c: -c.score)
         self._famous_first(out)
         self.log(f"destination candidates near marked trails: {len(out)}")
@@ -511,15 +572,26 @@ class TripBuilder:
             # A tower or viewpoint in a town is a sight you go straight to, not a trip (UFO).
             self.report.setdefault("town", []).append((dest["name"], c.kind, "in town", "", 0))
             return self._reject("sight in a town")
-        routes, why = self.routes_to(c.node, dest, c.region, ths, th_nodes)
+        routes, why = self.routes_to(c.node, dest, c.region, ths, th_nodes, limits=c.limits)
         if not routes:
             return self._reject(why)
-        main = self._pick_main(routes)
+        main = self._pick_main(routes, self.main_start.get(dest["osm"]))
+        hike = main
+        if c.kind in SHORT_MAIN_KINDS:
+            # A castle or show cave people drive to: the visit from the car park by it is the main route,
+            # the hike stays as another route (Gombasecká jaskyňa came with a 9 km walk from the next village).
+            short = self.short_visit(main, routes, c.node, dest, c.region)
+            if short:
+                short["_known"] = main["_known"]
+                routes = routes + [short]
+                main = short
         st = main["start"]
-        self._set_slug(main, self._slug(f"{dest['osm'] or dest['name']}|{st['osm'] or st['name']}", dest["name"], st["name"]))
+        self._set_slug(main, self._slug(f"{dest['osm'] or dest['name']}|{st['osm'] or st['name']}", dest["name"],
+                                        self._collision_tag(dest, c.region)))
         main["_score"] = c.score
         others = [r for r in routes if r is not main]
-        main["_others"] = others + self._alternatives_for(main, others, c.node, dest, c.region, routes)
+        main["_others"] = others + self._alternatives_for(hike, [r for r in others if r is not hike], c.node, dest,
+                                                          c.region, routes, c.limits)
         return main
 
     def routes_to(self, target, dest, region, ths, th_nodes, known=(), limits=None):
@@ -648,10 +720,14 @@ class TripBuilder:
         p = g.proj.xy([lat], [lon])[0]
         return [int(g.marked_nodes[i]) for i in g.marked_tree.query_ball_point(p, radius)]
 
-    def _pick_main(self, routes):
+    def _pick_main(self, routes, prefer_start=None):
         """The route most people would take: the best-known start, unless it is a lot longer.
         By car the main route needs parking, so a start with only a bus stop is never it
-        when another route has parking."""
+        when another route has parking. `prefer_start` (config `main_start:`, a guidepost's OSM id)
+        names the start of the main route for one place, when the place has a route from it."""
+        chosen = next((r for r in routes if prefer_start and r["start"]["osm"] == prefer_start), None)
+        if chosen:
+            return chosen
         with_parking = [r for r in routes if r["parking"]] or routes
         shortest = min(r["duration_min"] for r in with_parking)
         # A big car park at an aquapark must not send people on a walk two hours longer (Veľký Choč).
@@ -1032,7 +1108,7 @@ class TripBuilder:
         stops = stops[:3] + [s for s in stops[3:] if s["mode"] == "vlak"][:1]
 
         key = f"{dest['osm'] or dest['name']}|{st.osm or st.name}"
-        slug = slug or self._slug(key, dest["name"], st.name)
+        slug = slug or self._slug(key, dest["name"], slugify(st.name, 24))
         name = name or dest["name"]
         lats_all, lons_all = np.asarray(lat), np.asarray(lon)
         trip = dict(
@@ -1045,7 +1121,8 @@ class TripBuilder:
             destination=dict(name=dest["name"], kind=dest["kind"], location=_loc(dest["lat"], dest["lon"]),
                              ele_m=_int(dest["ele"] or (float(ele[k]) if have_dem else None)), osm=dest["osm"]),
             start=dict(name=st.name, location=_loc(st.lat, st.lon),
-                       ele_m=_int(st.ele or (float(ele[0]) if have_dem else None)), osm=st.osm),
+                       ele_m=_int(st.ele or (float(ele[0]) if have_dem else None)), osm=st.osm,
+                       **({"guidepost": st.guidepost} if st.guidepost else {})),
             parking=parking[0] if parking else None,
             transit=stops[0] if stops else None,
             route="okruh" if back_path else "tam-a-spat",
@@ -1098,8 +1175,17 @@ class TripBuilder:
                              source_url=r["source_url"], rule_id=rid))
         return fees
 
-    def _slug(self, key, dest_name, start_name):
-        """Stable slug per destination: a new start for the same destination keeps the URL."""
+    def _collision_tag(self, dest, region):
+        """What tells two places of one name apart in a slug: the nearest village, else the region
+        (not the start's name: "ostredok-kralova-studna-hotel")."""
+        if self._village_names is None:
+            self._village_names = names.Places(getattr(self.osm, "places", []))
+        village = self._village_names.nearest(dest["lat"], dest["lon"], avoid=dest["name"])
+        return slugify(village, 24) if village else region["id"]
+
+    def _slug(self, key, dest_name, tag):
+        """Stable slug per destination: a new start for the same destination keeps the URL.
+        On a name collision the slug gets `tag` (see _collision_tag)."""
         dest_key = key.split("|")[0]
         known = self.slugs.get(dest_key) or next(
             (v for k, v in self.slugs.items() if k.split("|")[0] == dest_key and v not in self.used_slugs), None)
@@ -1110,7 +1196,7 @@ class TripBuilder:
             s = base
             taken = set(self.slugs.values()) | self.used_slugs
             if s in taken:
-                s = f"{base}-{slugify(start_name, 24)}"
+                s = f"{base}-{tag}"
             n = 2
             while s in taken:
                 s = f"{base}-{n}"
@@ -1133,7 +1219,8 @@ class TripBuilder:
             "jaskyna": f"Výlet k jaskyni: {n}.",
             "roklina": f"Výlet do doliny: {n}." if "dolin" in n.lower() else f"Výlet do rokliny: {n}.",
         }.get(dest["kind"], f"Výlet: {n}.")
-        second = f"Štart: {st.name}, " + ("okruh." if loop else "späť rovnakou cestou.")
+        # The loop is a property of the route, not part of the start's name: "Štart: X (okruh)."
+        second = f"Štart: {st.name} (okruh)." if loop else f"Štart: {st.name}, späť rovnakou cestou."
         third = ""
         if marking:
             cols = [COLOUR_SK[c] for c in marking[:3]]
