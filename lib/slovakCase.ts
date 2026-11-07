@@ -86,6 +86,17 @@ const SAME_FORM = /(?:[bcčdfghjklľĺmnňpqrŕsštvwxzž]|[oeiyýíéó])$/i;
 
 const capitalise = (w: string) => w.charAt(0).toLocaleUpperCase("sk") + w.slice(1);
 
+/**
+ * True when the leading generic word only describes a following proper name ("Hrad Sitno" -> "hrad Sitno")
+ * and so is written lowercase after the preposition. When the name itself starts with the generic word and
+ * a lowercase phrase follows ("Pleso nad Skokom", "Chata pod Rysmi"), the capital stays.
+ */
+export function lowersLeadingGeneric(words: string[], headIndex: number): boolean {
+  if (headIndex !== 0 || words.length < 2) return false;
+  const first = words[1].charAt(0);
+  return first !== first.toLocaleLowerCase("sk");
+}
+
 /** Splits "Name (Town)" into the name and its parenthesis, which stays as written. */
 function splitParen(name: string): { base: string; tail: string } | null {
   const trimmed = name.trim();
@@ -119,12 +130,12 @@ function accusativeNa(words: string[]): string[] | null {
       if (!before.every((w) => FEM.test(w))) return null;
       const out = [...before.map(femAcc), femAcc(words[h]), ...words.slice(h + 1)];
       // "Hoľa" alone is the mountain's name; "Chata Magura" is a noun and a name.
-      if (h === 0 && words.length > 1) out[0] = lower(out[0]);
+      if (lowersLeadingGeneric(words, h)) out[0] = lower(out[0]);
       return out;
     }
     // Masculine inanimate and neuter: the nominative is the accusative.
     const out = [...words];
-    if (h === 0 && words.length > 1) out[0] = lower(out[0]);
+    if (lowersLeadingGeneric(words, h)) out[0] = lower(out[0]);
     return out;
   }
   // No known noun: the last word decides, the others must be words of a plain name.

@@ -26,6 +26,13 @@ describe("accusative after na", () => {
     ["Biela skala (Trenčianske Teplice)", "vyhliadka", "na Bielu skalu (Trenčianske Teplice)"],
     ["Lúčanský vodopád", "vodopad", "na Lúčanský vodopád"],
     ["Predajnianske vodopády", "vodopad", "na Predajnianske vodopády"],
+    ["Hrad Sitno", "hrad", "na hrad Sitno"],
+    ["Vodopád Skok", "vodopad", "na vodopád Skok"],
+    ["Hrad Strečno", "hrad", "na hrad Strečno"],
+    ["Pleso nad Skokom", "pleso", "na Pleso nad Skokom"],
+    ["Chata pod Rysmi", "chata", "na Chatu pod Rysmi"],
+    ["Sedlo pod Svišťovkou", "vrchol", "na Sedlo pod Svišťovkou"],
+    ["Zelené pleso", "pleso", "na Zelené pleso"],
     ["Plavecký hrad z Plaveckého Podhradia", "hrad", "na Plavecký hrad z Plaveckého Podhradia"],
   ];
   it.each(cases)("%s -> %s", (name, kind, want) => {
@@ -52,6 +59,7 @@ describe("falls back when not confident", () => {
   it.each([
     ["Nad Černovou", "vrchol"], // starts with a preposition
     ["Pri Bielej studničke", "vrchol"],
+    ["Téryho chata", "chata"], // same: the name keeps its capital on the "Túra: {name}" fallback
     ["Holubyho chata", "chata"], // genitive modifier in front of a feminine noun
     ["Loviská", "vrchol"], // neuter plural that ends like a feminine adjective
     ["Jarabinský prielom", "roklina"], // a gorge noun we have no genitive for

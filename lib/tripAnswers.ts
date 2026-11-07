@@ -314,3 +314,13 @@ export function hasDatedClosure(closures: Closure[]): boolean {
 export function departureNote(lang: Lang, walkMin: number, bufferMin: number): string {
   return tr(lang, "Počítame s chôdzou {t} bez prestávok a rezervou {buffer} min pred západom slnka; 15. deň v mesiaci, slovenský čas.", { t: formatDuration(walkMin), buffer: bufferMin });
 }
+
+/** Months (November to March) whose row shows a time, i.e. is not closed: the walking times are summer values there. */
+export function winterTimedMonths(rows: MonthRow[]): Set<number> {
+  return new Set(rows.filter((r) => (r.month >= 11 || r.month <= 3) && !r.closedBy && !r.partial).map((r) => r.month));
+}
+
+/** The line under the table when any winter month is not closed. */
+export function winterNote(lang: Lang): string {
+  return tr(lang, "Časy platia pre letné podmienky. V zime (sneh, ľad, kratší deň) počítajte s dlhšou chôdzou a vyrazte skôr.");
+}
