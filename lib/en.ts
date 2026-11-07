@@ -739,6 +739,7 @@ export const EN: Record<string, string> = {
   "Nájdete to v": "You'll find it in",
   "Mojich výletoch": "My trips",
   "Moje výlety": "My trips",
+  "Môj účet": "My account",
   "Ukladám aj na cestu bez signálu... ({done}/{total})": "Saving for offline use… ({done}/{total})",
   "Výlet je uložený, ale kópia bez signálu sa nepodarila. Skúste to znova so signálom.": "The trip is saved, but the offline copy failed. Try again when you have signal.",
   "Uložené len v tomto zariadení. Pri každom výlete vidíte, či funguje aj bez signálu.": "Saved on this device only. Each trip shows whether it works offline.",

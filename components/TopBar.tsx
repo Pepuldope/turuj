@@ -17,6 +17,13 @@ import type { UiIconName } from "@/lib/uiIcons";
 // right corner, over the map.
 
 /** The menu's links, in order. Peter adds more here. */
+/** The text links the desktop pill shows before the account button (the menu keeps them too); the last only from xl, so the pill fits on one line at 1024px. */
+const DESKTOP_LINKS = [
+  { href: "/ulozene", label: "Moje výlety", cls: "" },
+  { href: "/vylety-z", label: "Výlety z miest", cls: "" },
+  { href: "/aplikacia", label: "Získať appku", cls: "lg:hidden xl:block" },
+] as const;
+
 const MENU: { href: string; label: string; icon: UiIconName }[] = [
   { href: "/ulozene", label: "Moje výlety", icon: "list" },
   { href: "/vylety-z", label: "Výlety z miest", icon: "peak" },
@@ -162,7 +169,7 @@ export function TopBar() {
         aria-hidden="true"
         className={`pointer-events-none absolute inset-x-0 bottom-full h-16 lg:hidden ${solid || panel ? "bg-[var(--card-bg)] transition-colors duration-200" : "bg-transparent"}`}
       />
-      <div ref={rowRef} className={`flex h-[52px] items-center justify-between gap-2 px-3 lg:h-auto lg:justify-end lg:gap-1 lg:rounded-full lg:bg-[var(--card-bg)] lg:p-1 lg:shadow-[var(--shadow-float)]`}>
+      <div ref={rowRef} className={`flex h-[52px] items-center justify-between gap-2 px-3 lg:h-auto lg:justify-end lg:gap-1 lg:rounded-full lg:bg-[var(--card-bg)] lg:p-1.5 lg:shadow-[var(--shadow-float)]`}>
         {/* The name only once the page's own header (which shows it) has scrolled away. */}
         <LangLink href="/" aria-label="Túruj" className={`block lg:hidden ${solid || panel ? "" : "invisible"}`}>
           <picture>
@@ -170,13 +177,37 @@ export function TopBar() {
             <img src="/brand/turuj-wordmark.svg" alt="Túruj" width={56} height={24} className="h-6 w-auto" />
           </picture>
         </LangLink>
-        <span className="pointer-events-auto flex items-center gap-2 lg:gap-1">
+        <span className="pointer-events-auto flex items-center gap-2 lg:gap-1 lg:pl-1">
+          <nav aria-label={t("Menu")} className="hidden items-center lg:flex">
+            {DESKTOP_LINKS.map((l) => {
+              const here = skPath(path) === l.href || skPath(path).startsWith(`${l.href}/`);
+              return (
+                <LangLink
+                  key={l.href}
+                  href={l.href}
+                  aria-current={here ? "page" : undefined}
+                  className={`${l.cls} rounded-full px-3 py-2.5 text-[15px] font-semibold text-[var(--foreground)] hover:bg-[var(--segment-bg)] focus-visible:outline-2 focus-visible:outline-[var(--accent)] aria-[current=page]:text-[var(--accent)]`}
+                >
+                  {t(l.label)}
+                </LangLink>
+              );
+            })}
+          </nav>
+          <button
+            type="button"
+            onClick={() => toggle("account")}
+            aria-expanded={panel === "account"}
+            className="mx-1 hidden h-[42px] items-center gap-2 rounded-full border-[1.5px] border-[var(--accent)] px-4 text-[15px] font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] lg:flex"
+          >
+            <UiIcon name="person" size={18} />
+            <span className="max-w-[10rem] truncate">{account ? (account.name?.trim().split(/\s+/)[0] ?? t("Môj účet")) : t("Prihlásiť sa")}</span>
+          </button>
           <button
             type="button"
             onClick={() => toggle("account")}
             aria-expanded={panel === "account"}
             aria-label={account ? t("Účet") : t("Prihlásiť sa")}
-            className={`grid h-10 w-10 place-items-center rounded-full border text-[15px] font-bold lg:h-9 lg:w-9 lg:border-0 ${
+            className={`grid h-10 w-10 place-items-center rounded-full border text-[15px] font-bold lg:hidden ${
               initial ? "border-transparent bg-[var(--accent)] text-[var(--accent-contrast)]" : "border-[var(--border)] bg-[var(--card-bg)] hover:bg-[var(--segment-bg)]"
             }`}
           >
@@ -187,7 +218,7 @@ export function TopBar() {
             onClick={() => toggle("menu")}
             aria-expanded={panel === "menu"}
             aria-label={t("Menu")}
-            className="grid h-10 w-10 place-items-center rounded-full border border-[var(--border)] bg-[var(--card-bg)] hover:bg-[var(--segment-bg)] lg:h-9 lg:w-9 lg:border-0"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[var(--border)] bg-[var(--card-bg)] hover:bg-[var(--segment-bg)] lg:h-[42px] lg:w-[42px] lg:border-0"
           >
             <UiIcon name={panel === "menu" ? "close" : "menu"} size={20} />
           </button>
