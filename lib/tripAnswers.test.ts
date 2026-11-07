@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   aboutTeaser,
+  monthGroups,
   closureSentence,
   closureTeaser,
   departureTeaser,
@@ -148,11 +149,11 @@ describe("month table under a seasonal closure", () => {
 
   it("never quotes a closed month in the sentence", () => {
     const sk = departureSentence("sk", rows, [tanap]);
-    expect(sk).toMatch(/^Mimo sezónnej uzávery \(jún až október\) treba vyraziť najneskôr medzi \d\d:\d\d a \d\d:\d\d podľa mesiaca; od 1\. 11\. do 31\. 5\. je trasa uzavretá \(TANAP\)\.$/);
+    expect(sk).toMatch(/^Jún – október: najneskôr medzi \d\d:\d\d a \d\d:\d\d podľa mesiaca\.$/);
     expect(sk).not.toMatch(/január|december|v júni/);
     const en = departureSentence("en", rows, [tanap]);
-    expect(en).toContain("Outside the seasonal closure (June to October)");
-    expect(en).toContain("closed from");
+    expect(en).toContain("June – October: between");
+    expect(sk).not.toContain("TANAP");
   });
 
   it("hasDatedClosure tells dated from yearly", () => {
@@ -202,8 +203,8 @@ describe("month table: partly closed months and dated closures never show a bare
 
   it("sentence names only months that have a time and never the partial one", () => {
     const sk = departureSentence("sk", rows, [base]);
-    expect(sk).toMatch(/^Mimo sezónnej uzávery \(jún až september\) treba vyraziť najneskôr medzi \d\d:\d\d a \d\d:\d\d podľa mesiaca; od 16\. 10\. do 31\. 5\. je trasa uzavretá \(TANAP\)\.$/);
-    expect(departureSentence("en", rows, [base])).toContain("(June to September)");
+    expect(sk).toMatch(/^Jún – september: najneskôr medzi \d\d:\d\d a \d\d:\d\d podľa mesiaca\.$/);
+    expect(departureSentence("en", rows, [base])).toContain("June – September");
   });
 
   it("year-wrapping 1 Nov - 31 May stays: Nov-May closed, Jun-Oct times", () => {
@@ -229,7 +230,7 @@ describe("month table: partly closed months and dated closures never show a bare
     const sk = departureSentence("sk", long, [{ ...base, starts_on: "2000-11-01" }]);
     expect(sk).toContain("ale za svetla túru nestihnete (");
     expect(sk).not.toContain("podľa mesiaca; od");
-    expect(sk).toMatch(/^Mimo sezónnej uzávery \((jún až \w+|[^)]+)\) treba vyraziť najneskôr/);
+    expect(sk).toMatch(/^[^:]+: najneskôr/);
   });
 
   it("dated closure: sentence opens with the warning and months are marked", () => {
@@ -330,6 +331,19 @@ describe("one-line teasers", () => {
 
   it("cuts the description to its first sentence", () => {
     expect(aboutTeaser("Prvá veta. Druhá veta.")).toBe("Prvá veta.");
+    expect(aboutTeaser("Je to túra: 18,4 km a 1126 m stúpania. Po modrej značke hore.")).toBe("Po modrej značke hore.");
     expect(aboutTeaser("a ".repeat(100)).endsWith("…")).toBe(true);
+  });
+});
+
+describe("month groups", () => {
+  const tanap = { id: "tanap-x", trail_id: "x", kind: "rocna", starts_on: "2000-11-01", ends_on: "2000-05-31", reason: "r", source_url: "https://example.org", verified_on: "2026-10-01" } as Closure;
+  it("merges the closed run over the year end into one row at the top", () => {
+    const g = monthGroups("sk", monthTable(TATRY, 4 * 60, [tanap]));
+    expect(g[0]).toMatchObject({ kind: "closed", months: [11, 12, 1, 2, 3, 4, 5], label: "november – máj", by: "TANAP" });
+    expect(g.slice(1).map((x) => (x.kind === "month" ? x.row.month : 0))).toEqual([6, 7, 8, 9, 10]);
+  });
+  it("is twelve plain months with no closure", () => {
+    expect(monthGroups("sk", monthTable(TATRY, 4 * 60)).every((x) => x.kind === "month")).toBe(true);
   });
 });
