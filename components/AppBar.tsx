@@ -6,32 +6,31 @@ import { useInstalled } from "@/lib/installApp";
 import { useSavedTrips } from "@/lib/savedTrips";
 import { LangLink, useT } from "@/lib/i18n";
 import { UiIcon } from "@/components/UiIcon";
-import { TRIP_SEEN_KEY } from "@/lib/tripSeen";
 
 const KEY = "turuj-app-bar";
+const NUDGE_AFTER_SAVES = 2;
 
 /** Phone home page: a bar at the bottom pointing to /aplikacia, until closed once (Peter, 2026-10-28).
- *  Only once the visitor has opened a trip page or saved a trip in this browser: the first look at the
- *  site stays clean (research 2026-10-31, C86 2026-11-07). */
+ *  Only at the right moment (C92, 2026-11-07): after the 2nd saved trip or a "Bol som tu", never on a
+ *  first look at the site (research 2026-10-31). Revert C92 to show it after the first opened trip (C86). */
 export function AppBar({ hidden }: { hidden?: boolean }) {
   const t = useT();
   const installed = useInstalled();
   const { trips } = useSavedTrips();
   const [show, setShow] = useState(false);
-  const saved = trips.length > 0;
+  // C92: the nudge comes when the app has proved useful: a second saved trip, or "Bol som tu" on one.
+  const proven = trips.length >= NUDGE_AFTER_SAVES || trips.some((trip) => trip.doneAt);
 
   useEffect(() => {
     let closed = false;
-    let opened = false;
     try {
       closed = localStorage.getItem(KEY) === "closed";
-      opened = localStorage.getItem(TRIP_SEEN_KEY) === "1";
     } catch {}
-    if (closed || !(saved || opened)) return;
+    if (closed || !proven) return;
     // A few seconds in, so the first look at the page stays clean.
     const id = setTimeout(() => setShow(true), 3000);
     return () => clearTimeout(id);
-  }, [saved]);
+  }, [proven]);
 
   function close() {
     setShow(false);
