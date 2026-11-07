@@ -833,7 +833,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
             }}
             placeholder={t("Hľadať výlet alebo pohorie")}
             autoComplete="off"
-            className="h-11 w-full rounded-full border border-[var(--border)] bg-[var(--card-bg)] pr-3 pl-10 text-[15px] shadow-[var(--shadow-float)] lg:shadow-none"
+            className="h-11 w-full rounded-full border border-[var(--border)] bg-[var(--card-bg)] pr-2 pl-9 text-[14px] shadow-[var(--shadow-float)] min-[400px]:pr-3 min-[400px]:pl-10 min-[400px]:text-[15px] lg:shadow-none"
           />
         </label>
         <button
@@ -848,7 +848,13 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
           }`}
         >
           <UiIcon name="filter" size={16} />
-          {filterCount ? `${t("Filtre")} · ${filterCount}` : t("Filtre")}
+          {/* Under 380 px the word gives its room to the search placeholder; it is still read out. */}
+          <span className="max-[379px]:sr-only">{filterCount ? `${t("Filtre")} · ${filterCount}` : t("Filtre")}</span>
+          {filterCount ? (
+            <span aria-hidden="true" className="min-[380px]:hidden">
+              {filterCount}
+            </span>
+          ) : null}
         </button>
       </div>
 
