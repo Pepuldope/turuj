@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { primaryTrailhead, routeWalk, sunLocation } from "@/lib/data";
-import { pickWalk } from "@/lib/walkFacts";
+import { pickWalk, stopsByWalk } from "@/lib/walkFacts";
 import { gpxUrlFor } from "@/lib/gpx";
 import { GpxDownload } from "@/components/GpxDownload";
-import { getRouteWalks, getTownDrives, getTrip, getTripPhoto, photoSource, withLoopRoutes } from "@/lib/tripFiles";
+import { getAllTrips, getCarWalks, getRouteWalks, getTownDrives, getTrip, getTripIndex, getTripPhoto, photoSource, withLoopRoutes } from "@/lib/tripFiles";
 import type { PlacePhoto } from "@/lib/tripFiles";
 import { aboutTrip } from "@/lib/describeSk";
 import { buildProfile } from "@/lib/tripProfile";
@@ -13,13 +13,15 @@ import { GOAL_COLOUR, POI_COLOUR, ROUTE_COLOURS } from "@/lib/palette";
 import { seasonOf } from "@/lib/season";
 import { SeasonScene } from "@/components/SeasonScene";
 import { UiIcon } from "@/components/UiIcon";
-import { FeeBlock } from "@/components/FeeBlock";
 import { ParkingBlock } from "@/components/ParkingBlock";
 import { PhoneTripMap } from "@/components/PhoneTripMap";
 import { PoiList } from "@/components/PoiList";
 import { StopsBlock } from "@/components/TransitBlock";
 import { ClosureBanner } from "@/components/ClosureBanner";
-import { ClosureRules } from "@/components/ClosureRules";
+import { isIndexedVariant, variantHeading } from "@/lib/variantTitles";
+import { NearbyTrips } from "@/components/NearbyTrips";
+import { nearestMainTrips } from "@/lib/nearbyTrips";
+import { TripAnswers, TripHeaderFacts } from "@/components/TripAnswers";
 import { TripPlanner } from "@/components/TripPlanner";
 import { TripReviews } from "@/components/TripReviews";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -41,6 +43,10 @@ import type { Lang } from "@/lib/lang";
 import { describeEn } from "@/lib/describeEn";
 import { describeTripEn } from "@/lib/tripJsonLdEn";
 import { markSigns } from "@/lib/markSigns";
+import { startLines, subtitle } from "@/lib/tripAnswers";
+
+/** How many neighbours the "Ďalšie výlety v okolí" block lists. */
+const NEARBY_COUNT = 7;
 
 /**
  * The photo as a schema.org ImageObject with the credit fields Google's image metadata reads (F17):
@@ -58,13 +64,17 @@ function photoImage(photo: PlacePhoto) {
 }
 
 /** schema.org data: the trail as a place to visit + breadcrumbs (all trips > the nearest town's page > this one). */
-function trailJsonLd(detail: TrailDetail, photo: PlacePhoto | null, town: Town | null, lang: Lang, about: string[], enDescription: string | null) {
+function trailJsonLd(detail: TrailDetail, photo: PlacePhoto | null, town: Town | null, lang: Lang, about: string[], enDescription: string | null, updated: string | null) {
   const { trail } = detail;
   const url = absoluteUrl(langPath(lang, `/trasa/${trail.slug}`));
   const start = primaryTrailhead(detail)?.location;
   return {
     "@context": "https://schema.org",
     "@graph": [
+      // dateModified belongs to the page (a Place has none): the day the trip data was built, never the day of the request.
+      ...(updated
+        ? [{ "@type": "WebPage", "@id": `${url}#page`, url, name: trail.name, inLanguage: lang, dateModified: updated, mainEntity: { "@id": `${url}#trail` } }]
+        : []),
       {
         "@type": "TouristAttraction",
         "@id": `${url}#trail`,
@@ -183,10 +193,26 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
   const ownLabel = routes.length > 1 ? routes.find((r) => r.slug === trail.slug)?.route_label : null;
   const gpxName = ownLabel ? `${trail.name} (${ownLabel})` : trail.name;
 
+  // The question sections (lib/tripAnswers.ts): the main page of a place and its start pages, not the loop.
+  const ownWalk = pickWalk(routeWalk(detail), false, parkingLots.length > 0);
+  const lines = startLines(lang, routes, walks, {
+    slug: trail.slug,
+    startName: trip.start.name,
+    walk: ownWalk,
+    fallback: { min: trail.duration_min, m: trail.distance_m, ascentM: trail.ascent_m },
+  });
+  // C53: the nearest other places as plain links (lib/nearbyTrips.ts). The index holds main routes only.
+  const mains = await getAllTrips();
+  const nearby = nearestMainTrips(mains, trip.destination.location, trip.variant_of ?? trail.slug, NEARBY_COUNT);
+  // C39: an indexed variant gets its own H1, "Kriváň z Troch Studničiek" (lib/variantTitles.ts).
+  const h1 = !loopBack && lang === "sk" && isIndexedVariant(trip, mains) ? variantHeading(trail.name, trip.start.name, "").h1 : trail.name;
+  const nearbyWalks = await getCarWalks();
+  const updated = (await getTripIndex()).generated_at.slice(0, 10) || null;
+
   return (
     <TripAccessProvider slug={trail.slug} parkingLots={parkingLots} transitStops={transitStops} trailStart={trailStart} trail={trailNumbers}>
       <main className="flex flex-1 flex-col bg-[var(--page-sunk)] lg:h-dvh lg:flex-none lg:flex-row lg:overflow-hidden">
-        <JsonLd data={trailJsonLd(detail, photo, town, lang, about, lang === "en" ? describeTripEn(trip, detail) : null)} />
+        <JsonLd data={trailJsonLd(detail, photo, town, lang, about, lang === "en" ? describeTripEn(trip, detail) : null, loopBack ? null : updated)} />
         <TrackEvent name="trip_open" data={{ trail: trail.slug }} />
         <div className="mx-auto flex w-full max-w-[640px] flex-col gap-5 px-4 pt-4 pb-6 md:max-w-[760px] lg:mx-0 lg:w-[460px] lg:max-w-none lg:shrink-0 relative lg:overflow-y-auto lg:overscroll-contain">
           <header className="relative -mx-4 -mt-4 flex min-h-[220px] shrink-0 flex-col justify-between sm:overflow-hidden sm:rounded-b-[24px] lg:overflow-visible lg:rounded-none">
@@ -240,7 +266,8 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                   </Badge>
                 )}
               </div>
-              <h1 className={`${trail.name.length > 30 ? "text-[1.85rem]" : "text-[2.4rem]"} leading-none font-extrabold tracking-tight [text-shadow:0_1px_3px_rgba(0,0,0,.45),0_1px_14px_rgba(0,0,0,.3)]`}>{trail.name}</h1>
+              <h1 className={`${h1.length > 30 ? "text-[1.85rem]" : "text-[2.4rem]"} break-words leading-none font-extrabold tracking-tight [text-shadow:0_1px_3px_rgba(0,0,0,.45),0_1px_14px_rgba(0,0,0,.3)]`}>{h1}</h1>
+              {!loopBack && <p className="text-[15px] leading-tight font-bold [text-shadow:0_1px_2px_rgba(0,0,0,.6),0_0_10px_rgba(0,0,0,.45)]">{subtitle(lang, trail.name, trip.destination.kind)}</p>}
               <p className="text-[13.5px] font-semibold [text-shadow:0_1px_2px_rgba(0,0,0,.6),0_0_10px_rgba(0,0,0,.45)]">
                 {[trail.region_name, trip ? tr(lang, "štart {name}", { name: trip.start.name }) : null].filter(Boolean).join(" · ")}
               </p>
@@ -276,28 +303,39 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                   <TripReviews slug={trail.slug} name={trail.name} />
                 </div>
                 <RouteChoice slug={current} destination={trip.destination.name} routes={routes} walks={walks} />
-                {/* A real closure stays up top; "no data" is a quiet note under the map. */}
+                {!loopBack && (
+                  <TripHeaderFacts
+                    lang={lang}
+                    walk={ownWalk}
+                    starts={[...new Set(lines.map((l) => l.label))]}
+                    parking={parkingLots[0] ?? null}
+                    stops={stopsByWalk(transitStops)}
+                    closures={closures}
+                    updated={updated}
+                  />
+                )}
+                {/* A real closure stays up top; "no data" is a quiet note under the map. The closure rule itself is in the "Uzávery a poplatky" section below. */}
                 {closures.length > 0 && <ClosureBanner closures={closures} />}
-                <ClosureRules closures={closures} lang={lang} />
               </>
             }
             outro={
-              <>
-                {about.length > 0 && (
-                  <section className="flex flex-col gap-1.5 text-sm text-[var(--muted)]">
-                    <h2 className="text-base font-bold text-[var(--foreground)]">{tr(lang, "O výlete")}</h2>
-                    {about.map((p) => (
-                      <p key={p}>{p}</p>
-                    ))}
-                  </section>
-                )}
-                {gpxUrl && (
-                  <section className="flex flex-col gap-1 text-sm">
-                    <h2 className="text-base font-bold">{tr(lang, "Na túru")}</h2>
-                    <GpxDownload gpxUrl={gpxUrl} slug={trail.slug} name={gpxName} />
-                  </section>
-                )}
-              </>
+              <TripAnswers
+                lang={lang}
+                name={trail.name}
+                kind={trip.destination.kind}
+                startName={trip.start.name}
+                lines={lines}
+                loop={trip.route === "okruh"}
+                parking={parkingLots[0] ?? null}
+                stops={stopsByWalk(transitStops)}
+                closures={closures}
+                fees={fees}
+                sunAt={sun}
+                walkMin={ownWalk?.min ?? trail.duration_min}
+                closuresOnly={!!loopBack}
+                about={about}
+                gpx={gpxUrl ? <GpxDownload gpxUrl={gpxUrl} slug={trail.slug} name={gpxName} row /> : null}
+              />
             }
             trail={{
               path: trip.path.map(([lon, lat, ele]) => [+lon.toFixed(5), +lat.toFixed(5), ele === null ? null : Math.round(ele)]),
@@ -320,8 +358,6 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
 
             {closures.length === 0 && <ClosureBanner closures={closures} />}
 
-            {fees.length > 0 && <FeeBlock fees={fees} />}
-
             <PoiList pois={detail.pois} slug={trail.slug} loop={trip.route === "okruh"} />
           </TripPlanner>
 
@@ -330,6 +366,8 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
               {tr(lang, "Ďalšie výlety okolo {town}", { town: townOf(lang, town.id, town.name) })} →
             </Link>
           )}
+
+          <NearbyTrips lang={lang} items={nearby} walks={nearbyWalks} />
 
           {/* C2: something wrong on this trip (closed trail, car park, photo) goes straight to us. */}
           <Link

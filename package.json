@@ -10,6 +10,7 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
+    "count-unlinked": "vite-node --config vitest.config.ts scripts/count-unlinked.ts",
     "list-joins": "vite-node --config vitest.config.ts scripts/list-joins.ts",
     "cf:build": "opennextjs-cloudflare build && node scripts/fast-pages.mjs",
     "cf:preview": "npm run cf:build && opennextjs-cloudflare preview",

@@ -10,8 +10,10 @@ import { TripSheet } from "@/components/TripSheet";
 import { pageMetadata } from "@/lib/seo";
 import { metaDescription } from "@/lib/describeSk";
 import { langPath, tr } from "@/lib/lang";
-import { nearestTown } from "@/lib/trips";
-import { townFrom } from "@/lib/townNames";
+import { getAllTrips } from "@/lib/tripFiles";
+import { isIndexedVariant, variantHeading } from "@/lib/variantTitles";
+import { hikeDirection } from "@/lib/tripAnswers";
+import type { DestinationKind } from "@/lib/tripSchema";
 import type { Lang } from "@/lib/lang";
 
 /** One database read per request, shared by the metadata and the page. */
@@ -32,35 +34,28 @@ export async function tripMetadata(slug: string, lang: Lang): Promise<Metadata> 
   // One distance for the title and the description: the walk the page shows, not the bare trail's.
   const km = formatDistance(w?.m ?? trail.distance_m, lang);
   const facts = tr(lang, "{km}, +{up} m, {t} chôdze", { km, up: w?.ascentM ?? trail.ascent_m, t: formatDuration(w?.min ?? trail.duration_min) });
-  const town = nearestTown(trip.start.location);
   return pageMetadata({
     // Most places have several routes, one page each: the other routes' pages carry their start in
     // the title, so search results tell them apart (6,200 of 6,466 pages shared a title before).
-    // People search "výlet na Devín", "výlety z Bratislavy": the place, then the nearest town
-    // (Peter 2026-10-30). The longest wording that fits 60 characters (Ahrefs 2 Nov).
+    // The main page is titled with the words people type: "túra na Kriváň, koľko trvá, kde parkovať"
+    // (C42, Peter 2026-11-06), the tail shortened until it fits 60 characters.
     title: fitTitle(
-      trip.variant_of
+      trip.variant_of && lang === "sk" && isIndexedVariant(trip, await getAllTrips())
+        ? variantHeading(trail.name, trip.start.name, km).titles
+        : trip.variant_of
         ? [
             tr(lang, "{name} zo štartu {start} ({km}) – výlet", { name: trail.name, start: trip.start.name, km }),
             tr(lang, "{name} zo štartu {start} ({km})", { name: trail.name, start: trip.start.name, km }),
           ]
-        : [
-            ...(town
-              ? [
-                  tr(lang, "{name} – výlet {from}: túra, parkovanie", { name: trail.name, from: townFrom(lang, town.id, town.name) }),
-                  tr(lang, "{name} – výlet {from}", { name: trail.name, from: townFrom(lang, town.id, town.name) }),
-                ]
-              : []),
-            tr(lang, "{name} – výlet a túra", { name: trail.name }),
-          ]
+        : mainTitles(lang, trail.name, trip.destination.kind)
     ),
     description:
       lang === "sk"
         ? metaDescription(trip, facts)
         : tr(lang, "{name}: {facts}. Kde zaparkovať, kedy najneskôr vyraziť a stihnúť návrat za svetla.", { name: trail.name, facts }),
     path: `/trasa/${trail.slug}`,
-    // No " | Túruj": search results show the site name on their own, and the place names are long
-    // enough already (Ahrefs 2 Nov: 999 titles over its 60-character mark).
+    // The title is complete as written (the " | Túruj" is part of it where it fits): place names are long
+    // (Ahrefs 2 Nov: 999 titles over its 60-character mark).
     absoluteTitle: true,
     lang,
     english: (await englishTripsAhead()).has(trail.slug),
@@ -70,6 +65,15 @@ export async function tripMetadata(slug: string, lang: Lang): Promise<Metadata> 
 }
 
 const MAX_TITLE = 60;
+
+/** "Túra na Kriváň: koľko trvá, kde parkovať | Túruj", longest first; a name we cannot put in the accusative gets "{name}: túra, …". */
+export function mainTitles(lang: Lang, name: string, kind: DestinationKind): string[] {
+  if (lang === "en") return [`${name} hike: how long, where to park, closures`, `${name} hike: how long, where to park`, `${name} hike: how long`, `${name} hike`];
+  const to = hikeDirection(lang, name, kind);
+  return to
+    ? [`Túra ${to}: koľko trvá, kde parkovať | Túruj`, `Túra ${to}: koľko trvá | Túruj`, `Túra ${to} | Túruj`]
+    : [`${name}: túra, koľko trvá, kde parkovať | Túruj`, `${name}: túra, koľko trvá | Túruj`, `${name}: túra | Túruj`, `${name} | Túruj`];
+}
 
 /** The first title that fits search results' width, else the shortest (the last). */
 function fitTitle(candidates: string[]): string {

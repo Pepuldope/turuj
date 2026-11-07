@@ -1,3 +1,4 @@
+import { zOrZo } from "@/lib/slovakCase";
 /**
  * Town names after "okolo" (genitive), e.g. "Výlety okolo Nitry". Hand-written:
  * Slovak town names don't decline by a rule. A town missing here falls back to
@@ -156,7 +157,7 @@ export function townGenitive(id: string, name: string): string {
 export function townFrom(lang: "sk" | "en", id: string, name: string): string {
   if (lang === "en") return `from ${name}`;
   const gen = townGenitive(id, name);
-  return `${/^[szšž]/i.test(gen) ? "zo" : "z"} ${gen}`;
+  return `${zOrZo(gen)} ${gen}`;
 }
 
 /** The town as "okolo {town}" needs it: genitive in Slovak, the plain name in English. */
