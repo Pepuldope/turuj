@@ -18,7 +18,7 @@ import { PhoneTripMap } from "@/components/PhoneTripMap";
 import { PoiList } from "@/components/PoiList";
 import { StopsBlock } from "@/components/TransitBlock";
 import { ClosureBanner } from "@/components/ClosureBanner";
-import { ClosuresAndFees, TripAnswers, TripFakty } from "@/components/TripAnswers";
+import { TripAnswers, TripHeaderFacts } from "@/components/TripAnswers";
 import { TripPlanner } from "@/components/TripPlanner";
 import { TripReviews } from "@/components/TripReviews";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -292,13 +292,13 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                 </div>
                 <RouteChoice slug={current} destination={trip.destination.name} routes={routes} walks={walks} />
                 {!loopBack && (
-                  <TripFakty
+                  <TripHeaderFacts
                     lang={lang}
                     walk={ownWalk}
                     starts={[...new Set(lines.map((l) => l.label))]}
-                    loop={trip.route === "okruh"}
-                    familyFriendly={trail.family_friendly}
-                    region={trail.region_name ?? null}
+                    parking={parkingLots[0] ?? null}
+                    stops={stopsByWalk(transitStops)}
+                    closures={closures}
                     updated={updated}
                   />
                 )}
@@ -307,39 +307,23 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
               </>
             }
             outro={
-              <>
-                {!loopBack && (
-                  <TripAnswers
-                    lang={lang}
-                    name={trail.name}
-                    kind={trip.destination.kind}
-                    startName={trip.start.name}
-                    lines={lines}
-                    loop={trip.route === "okruh"}
-                    parking={parkingLots[0] ?? null}
-                    stops={stopsByWalk(transitStops)}
-                    closures={closures}
-                    fees={fees}
-                    sunAt={sun}
-                    walkMin={ownWalk?.min ?? trail.duration_min}
-                  />
-                )}
-                {loopBack && <ClosuresAndFees lang={lang} closures={closures} fees={fees} />}
-                {about.length > 0 && (
-                  <section className="flex flex-col gap-1.5 text-sm text-[var(--muted)]">
-                    <h2 className="text-base font-bold text-[var(--foreground)]">{tr(lang, "O výlete")}</h2>
-                    {about.map((p) => (
-                      <p key={p}>{p}</p>
-                    ))}
-                  </section>
-                )}
-                {gpxUrl && (
-                  <section className="flex flex-col gap-1 text-sm">
-                    <p className="text-base font-bold">{tr(lang, "Na túru")}</p>
-                    <GpxDownload gpxUrl={gpxUrl} slug={trail.slug} name={gpxName} />
-                  </section>
-                )}
-              </>
+              <TripAnswers
+                lang={lang}
+                name={trail.name}
+                kind={trip.destination.kind}
+                startName={trip.start.name}
+                lines={lines}
+                loop={trip.route === "okruh"}
+                parking={parkingLots[0] ?? null}
+                stops={stopsByWalk(transitStops)}
+                closures={closures}
+                fees={fees}
+                sunAt={sun}
+                walkMin={ownWalk?.min ?? trail.duration_min}
+                closuresOnly={!!loopBack}
+                about={about}
+                gpx={gpxUrl ? <GpxDownload gpxUrl={gpxUrl} slug={trail.slug} name={gpxName} /> : null}
+              />
             }
             trail={{
               path: trip.path.map(([lon, lat, ele]) => [+lon.toFixed(5), +lat.toFixed(5), ele === null ? null : Math.round(ele)]),

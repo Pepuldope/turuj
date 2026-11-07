@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  aboutTeaser,
   closureSentence,
+  closureTeaser,
+  departureTeaser,
+  parkingTeaser,
+  transitTeaser,
   departureSentence,
   durationSentence,
   hasDatedClosure,
@@ -293,5 +298,38 @@ describe("winter note", () => {
   it("is empty when Nov-Mar are all closed", () => {
     const rows = [11, 12, 1, 2, 3, 6].map((m) => row(m, m === 6 ? {} : { closedBy: "TANAP" }));
     expect(winterTimedMonths(rows).size).toBe(0);
+  });
+});
+
+describe("one-line teasers", () => {
+  const tanap: Closure = {
+    id: "tanap-test",
+    kind: "rocna",
+    starts_on: "2026-11-01",
+    ends_on: "2026-05-31",
+    reason: "Zimná uzávera",
+    source_url: "https://example.org",
+    verified_on: "2026-10-01",
+  } as Closure;
+
+  it("always states the yearly closure rule, and never calls an unknown trail open", () => {
+    expect(closureTeaser("sk", [tanap])).toBe("Zatvorené každý rok 1. 11.–31. 5. (TANAP)");
+    const none = closureTeaser("sk", []);
+    expect(none).toBe("Stav chodníka neoverený");
+    expect(none.toLowerCase()).not.toContain("otvoren");
+  });
+
+  it("says no car park and no stop plainly", () => {
+    expect(parkingTeaser("sk", null)).toBe("Bez parkoviska");
+    expect(transitTeaser("sk", [])).toBe("Zastávku sme nenašli");
+  });
+
+  it("names the June start from the month table", () => {
+    expect(departureTeaser("sk", monthTable(TATRY, 4 * 60))).toMatch(/^V júni najneskôr \d\d:\d\d, v decembri \d\d:\d\d$/);
+  });
+
+  it("cuts the description to its first sentence", () => {
+    expect(aboutTeaser("Prvá veta. Druhá veta.")).toBe("Prvá veta.");
+    expect(aboutTeaser("a ".repeat(100)).endsWith("…")).toBe(true);
   });
 });

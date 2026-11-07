@@ -324,3 +324,68 @@ export function winterTimedMonths(rows: MonthRow[]): Set<number> {
 export function winterNote(lang: Lang): string {
   return tr(lang, "Časy platia pre letné podmienky. V zime (sneh, ľad, kratší deň) počítajte s dlhšou chôdzou a vyrazte skôr.");
 }
+
+// One-line answers shown under each question while its row is closed (and as the header facts). Pure
+// functions of the same data as the sentences above. A closure teaser always states the yearly rule,
+// never today's status (that is the client-side ClosureBanner), and never "open".
+
+const upFirst = (s: string) => s.charAt(0).toLocaleUpperCase("sk") + s.slice(1);
+
+/** "1. 11. do 31. 5." as "1. 11.–31. 5." */
+const spanShort = (c: Closure) => closurePeriod(c).replace(" do ", "–");
+
+/** "8 h 30 min zo štartu Liečebný dom Solisko"; several starts: "od 3 h do 4 h podľa štartu". */
+export function durationTeaser(lang: Lang, lines: StartLine[]): string {
+  const mins = lines.map((l) => l.min);
+  const a = Math.min(...mins);
+  const b = Math.max(...mins);
+  if (lines.length > 1 && a !== b) return tr(lang, "od {a} do {b} podľa štartu", { a: formatDuration(a), b: formatDuration(b) });
+  const own = lines.find((l) => l.current) ?? lines[0];
+  return own ? tr(lang, "{t} zo štartu {start}", { t: formatDuration(own.min), start: own.label }) : "";
+}
+
+/** "Pri štarte, spoplatnené"; no car park: "Bez parkoviska". */
+export function parkingTeaser(lang: Lang, p: ParkingLot | null): string {
+  if (!p) return upFirst(tr(lang, "bez parkoviska"));
+  const near = (p.join ? p.join.walk_m : p.walk_m) < 150;
+  const where = near ? tr(lang, p.join ? "pri trase" : "pri štarte") : tr(lang, p.join ? "{m} k trase" : "{m} k štartu", { m: formatWalk(p.join?.walk_m ?? p.walk_m, lang) });
+  const fee = p.fee === true ? tr(lang, "spoplatnené") : p.fee === false ? tr(lang, "zadarmo") : null;
+  return upFirst([where, fee].filter(Boolean).join(", "));
+}
+
+const MODE_TEASER: Record<TransitStop["mode"], string> = { autobus: "Autobus", elektricka: "Električka", vlak: "Vlak" };
+
+/** "Vlak: Štrbské Pleso, 504 m od štartu". */
+export function transitTeaser(lang: Lang, stops: TransitStop[]): string {
+  if (stops.length === 0) return tr(lang, "Zastávku sme nenašli");
+  const s = stops[0];
+  const m = s.join?.walk_m ?? s.distance_m;
+  const mode = MODE_TEASER[s.mode];
+  return tr(lang, "{mode}: {name}, {m} od štartu", { mode: mode ? tr(lang, mode) : tr(lang, "Zastávka"), name: stopLabel(s.name), m: formatWalk(m, lang) });
+}
+
+/** The yearly rule ("Zatvorené každý rok 1. 11.–31. 5. (TANAP)"); no rule at all is "Stav chodníka neoverený". */
+export function closureTeaser(lang: Lang, closures: Closure[]): string {
+  if (closures.length === 0) return tr(lang, "Stav chodníka neoverený");
+  return closures
+    .map((c) => tr(lang, c.kind === "jednorazova" ? "Uzávera {period} ({who})" : "Zatvorené každý rok {period} ({who})", { period: spanShort(c), who: closureManager(c) }))
+    .join("; ");
+}
+
+/** "V júni najneskôr 11:45, v decembri 08:20"; null when the table has nothing plain to say. */
+export function departureTeaser(lang: Lang, rows: MonthRow[]): string | null {
+  const june = rows.find((r) => r.month === 6);
+  const dec = rows.find((r) => r.month === 12);
+  const part = (r: MonthRow | undefined, first: boolean) => (r?.latest && !r.closedBy && !r.partial ? `${first ? "" : tr(lang, "v {month}", { month: monthIn(lang, r.month) }) + " "}${clock(r.latest)}` : null);
+  if (june?.latest && !june.closedBy && !june.partial) {
+    const d = part(dec, false);
+    return tr(lang, "V {month} najneskôr {time}", { month: monthIn(lang, 6), time: clock(june.latest) }) + (d ? `, ${d}` : "");
+  }
+  return tr(lang, "Podľa mesiaca, pozrite tabuľku");
+}
+
+/** The first sentence of the description, cut to fit a one-line teaser. */
+export function aboutTeaser(text: string, max = 110): string {
+  const first = text.split(/(?<=[.!?])\s/)[0] ?? text;
+  return first.length > max ? first.slice(0, max - 1).replace(/\s+\S*$/, "") + "…" : first;
+}
