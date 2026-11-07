@@ -115,7 +115,7 @@ export const EN: Record<string, string> = {
   "Cesta tam": "Way there",
   "Cesta vlakom": "By train",
   "Cesta vlakom a autobusom": "By train and bus",
-  "Cestovný poriadok sa mení {day}. Spoj si overte na cp.sk.": "The timetable changes on {day} Check the connection on cp.sk.",
+  "Cestovný poriadok sa mení {day} Spoj si overte na cp.sk.": "The timetable changes on {day} Check the connection on cp.sk.",
   "Cestovný poriadok vlakov na tento deň ešte nemáme. Čas je odhad podľa cesty autom.": "We don't have the train timetable for this day yet. The time is estimated from the drive.",
   "Cestu autom teraz odhadujeme podľa vzdialenosti (~{t}).": "For now the drive is estimated from the distance (~{t}).",
   "Čas je odhad podľa cesty autom s rezervou na zastávky a čakanie. Presný spoj nájdete v Google Mapách vyššie.": "This is estimated from the drive, with extra time for stops and waiting. Find the exact connection in Google Maps above.",

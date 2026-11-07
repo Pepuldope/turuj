@@ -280,7 +280,7 @@ export function TransitLegs({ plan, rail }: { plan: DayPlan; rail: RailTrip }) {
               ? t("Hľadáme vlaky…")
               : rail.status === "no-day"
                 ? rail.changeDay
-                  ? t("Cestovný poriadok sa mení {day}. Spoj si overte na cp.sk.", { day: rail.changeDay })
+                  ? t("Cestovný poriadok sa mení {day} Spoj si overte na cp.sk.", { day: rail.changeDay })
                   : t("Cestovný poriadok vlakov na tento deň ešte nemáme. Čas je odhad podľa cesty autom.")
                 : t("Čas je odhad podľa cesty autom s rezervou na zastávky a čakanie. Presný spoj nájdete v Google Mapách vyššie.")}
           </p>
