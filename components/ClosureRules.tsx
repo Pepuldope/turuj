@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { Closure } from "@/lib/types";
 import type { Lang } from "@/lib/lang";
 import { tr } from "@/lib/lang";
@@ -12,16 +13,19 @@ export function ClosureRules({ closures, lang }: { closures: Closure[]; lang: La
   return (
     <>
       {closures.map((c) => (
-        <p key={c.id}>
-          {tr(lang, c.reason)}{" "}
-          {tr(lang, c.kind === "jednorazova" ? "Platí od {period}" : "Platí každý rok od {period}", { period: closurePeriod(c) }).replace(/\.?$/, ".")}{" "}
-          {tr(lang, "Správca: {who}.", { who: closureManager(c) })}{" "}
-          <a href={c.source_url} target="_blank" rel="noopener noreferrer" className="underline">
-            {tr(lang, "Zdroj informácie")}
-          </a>
-          {" · "}
-          {tr(lang, "Overené: {date}", { date: formatDateSk(c.verified_on, lang) })}
-        </p>
+        <Fragment key={c.id}>
+          <p>
+            {tr(lang, c.reason)}{" "}
+            {tr(lang, c.kind === "jednorazova" ? "Platí od {period}" : "Platí každý rok od {period}", { period: closurePeriod(c) }).replace(/\.?$/, ".")}{" "}
+            {tr(lang, "Správca: {who}.", { who: closureManager(c) })}{" "}
+            <a href={c.source_url} target="_blank" rel="noopener noreferrer" className="underline">
+              {tr(lang, "Zdroj informácie")}
+            </a>
+            {" · "}
+            {tr(lang, "Overené: {date}", { date: formatDateSk(c.verified_on, lang) })}
+          </p>
+          {c.note && <p>{tr(lang, c.note)}</p>}
+        </Fragment>
       ))}
     </>
   );

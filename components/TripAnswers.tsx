@@ -21,6 +21,8 @@ import {
   pinUrl,
   startLineText,
   transitSentence,
+  winterNote,
+  winterTimedMonths,
 } from "@/lib/tripAnswers";
 import type { StartLine } from "@/lib/tripAnswers";
 import { clock } from "@/lib/zoned";
@@ -128,6 +130,7 @@ interface AnswersProps {
 export function TripAnswers({ lang, name, kind, startName, lines, loop, parking, stops, closures, fees, sunAt, walkMin }: AnswersProps) {
   const asOf = new Date().toISOString().slice(0, 10);
   const months = sunAt ? monthTable(sunAt, walkMin, closures, asOf) : [];
+  const winter = winterTimedMonths(months);
   const feeOf = parking ? parkingFeeNote(lang, parking) : null;
   const more = otherStops(lang, stops);
   return (
@@ -200,6 +203,7 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
                 <tr key={r.month} className="border-t border-[var(--border)]">
                   <th scope="row" className="py-0.5 pr-2 font-normal">
                     {monthName(lang, r.month)}
+                    {winter.has(r.month) ? "*" : ""}
                   </th>
                   <td className="font-data py-0.5 pr-2">{r.closedBy ? tr(lang, "uzavreté ({who})", { who: r.closedBy }) : r.partial ? tr(lang, "čiastočne uzavreté ({who}): {span}", { who: r.partial.by, span: r.partial.span }) : r.latest ? clock(r.latest) : tr(lang, "nestihnete za svetla")}</td>
                   <td className="font-data py-0.5">{clock(r.sunset)}</td>
@@ -207,6 +211,7 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
               ))}
             </tbody>
           </table>
+          {winter.size > 0 && <p className="text-xs">* {winterNote(lang)}</p>}
           {hasDatedClosure(closures) && <p className="text-xs">{tr(lang, "Niektoré uzávery platia len v určitých dňoch; tabuľka ich pripisuje mesiacom len podľa dňa v roku, presné dátumy sú v časti Uzávery a poplatky.")}</p>}
           <p className="text-xs">{departureNote(lang, walkMin, SAFE_MARGIN_MIN)}</p>
         </section>

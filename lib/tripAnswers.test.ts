@@ -10,7 +10,8 @@ import {
   subtitle,
   transitSentence,
 } from "@/lib/tripAnswers";
-import type { StartLine } from "@/lib/tripAnswers";
+import { winterTimedMonths } from "@/lib/tripAnswers";
+import type { MonthRow, StartLine } from "@/lib/tripAnswers";
 import type { Closure } from "@/lib/types";
 import { clock } from "@/lib/zoned";
 
@@ -280,5 +281,17 @@ describe("month table: partly closed months and dated closures never show a bare
   it("DST months get a time like any other", () => {
     const r = monthTable(TATRY, 4 * 60);
     for (const m of [3, 4, 10, 11]) expect(r.find((x) => x.month === m)!.latest).not.toBeNull();
+  });
+});
+
+describe("winter note", () => {
+  const row = (month: number, extra: Partial<MonthRow> = {}): MonthRow => ({ month, latest: null, sunset: new Date(0), closedBy: null, partial: null, ...extra });
+  it("marks open winter months only", () => {
+    const rows = [1, 2, 3, 4, 11, 12].map((m) => row(m, m === 2 ? { closedBy: "TANAP" } : m === 3 ? { partial: { by: "TANAP", span: "1. 3." } } : {}));
+    expect([...winterTimedMonths(rows)].sort((a, b) => a - b)).toEqual([1, 11, 12]);
+  });
+  it("is empty when Nov-Mar are all closed", () => {
+    const rows = [11, 12, 1, 2, 3, 6].map((m) => row(m, m === 6 ? {} : { closedBy: "TANAP" }));
+    expect(winterTimedMonths(rows).size).toBe(0);
   });
 });

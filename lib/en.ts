@@ -984,4 +984,5 @@ export const EN: Record<string, string> = {
   "Najneskôr vyraziť": "Set off by",
   "Západ slnka": "Sunset",
   "nestihnete za svetla": "not in daylight",
+  "Časy platia pre letné podmienky. V zime (sneh, ľad, kratší deň) počítajte s dlhšou chôdzou a vyrazte skôr.": "Times assume summer conditions. In winter (snow, ice, shorter days) expect a longer walk and set off earlier.",
 };
