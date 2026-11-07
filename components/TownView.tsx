@@ -92,7 +92,7 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
           <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1.5 [scrollbar-width:none]">
             {row.tiles.map((tile) => (
               <ClosedSinks key={tile.slug} range={tile.closedRange}>
-                <TownTile tile={tile} lang={lang} />
+                <TownTile tile={tile} lang={lang} townId={town.id} />
               </ClosedSinks>
             ))}
           </div>

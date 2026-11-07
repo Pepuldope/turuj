@@ -57,7 +57,7 @@ export function SavedTripsList() {
 
   function open(trip: SavedTrip) {
     update({ date: trip.date, time: trip.time, ...(trip.travel ? { travel: trip.travel } : {}), ...(trip.withKids !== undefined ? { withKids: trip.withKids } : {}) });
-    if (trip.start) setManualStart(trip.start);
+    if (trip.start) setManualStart(trip.start, "remembered");
     setTripStops(trip.slug, trip.stops ?? []);
     const href = langPath(lang, `/trasa/${trip.slug}`);
     // Offline, a full page load lets the service worker serve the saved copy
