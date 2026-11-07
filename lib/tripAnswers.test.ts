@@ -344,6 +344,6 @@ describe("month groups", () => {
     expect(g.slice(1).map((x) => (x.kind === "month" ? x.row.month : 0))).toEqual([6, 7, 8, 9, 10]);
   });
   it("is twelve plain months with no closure", () => {
-    expect(monthGroups("sk", monthTable(TATRY, 4 * 60)).every((x) => x.kind === "month")).toBe(true);
+    expect(monthGroups("sk", monthTable(TATRY, 4 * 60)).every((x: { kind: string }) => x.kind === "month")).toBe(true);
   });
 });
