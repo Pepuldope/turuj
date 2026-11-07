@@ -104,6 +104,52 @@ function ClosuresBody({ lang, closures, fees }: { lang: Lang; closures: Closure[
   );
 }
 
+/** Regions whose trip pages get the mountain-rescue row (research report 05 #6). Add Malá Fatra, Slovenský raj, ... here. */
+const HZS_REGIONS = new Set(["Tatry", "Nízke Tatry"]);
+/** When the HZS facts below were last read on hzs.sk and app.hzs.sk. */
+const HZS_CHECKED = "2026-11-07";
+
+/** "Pred túrou: horská služba" body: the rescue number, the HZS app's trip log, insurance, the avalanche forecast. */
+function HzsBody({ lang }: { lang: Lang }) {
+  return (
+    <>
+      <p>
+        {tr(lang, "V núdzi volajte Horskú záchrannú službu na")}{" "}
+        <a href="tel:18300" className="whitespace-nowrap font-semibold text-[var(--foreground)] underline">
+          18&nbsp;300
+        </a>{" "}
+        {tr(lang, "alebo tiesňovú linku")}{" "}
+        <a href="tel:112" className="font-semibold text-[var(--foreground)] underline">
+          112
+        </a>
+        .
+      </p>
+      <p>
+        {tr(lang, "Trasu si pred túrou zapíšte do Knihy vychádzok a túr v")}{" "}
+        <a href="https://app.hzs.sk" target="_blank" rel="noopener noreferrer" className="underline">
+          {tr(lang, "aplikácii HZS")}
+        </a>
+        . {tr(lang, "Večer pred túrou vám pošle výstrahy pre oblasť, a keď sa po návrate neozvete, záchranári vám prídu na pomoc.")}
+      </p>
+      <p>{tr(lang, "Poistenie do hôr preplatí zásah horskej služby, uzavriete ho aj v aplikácii.")}</p>
+      <p>
+        {tr(lang, "Ak idete v zime nad hranicu lesa, pozrite si lavínovú predpoveď na")}{" "}
+        <a href="https://laviny.sk" target="_blank" rel="noopener noreferrer" className="underline">
+          laviny.sk
+        </a>
+        .
+      </p>
+      <p className="text-xs">
+        {tr(lang, "Zdroj")}:{" "}
+        <a href="https://www.hzs.sk" target="_blank" rel="noopener noreferrer" className="underline">
+          hzs.sk
+        </a>{" "}
+        · {tr(lang, "Overené: {date}", { date: formatDateSk(HZS_CHECKED, lang) })}
+      </p>
+    </>
+  );
+}
+
 interface HeaderProps {
   lang: Lang;
   /** Walking time, length and climb of the walk from the default parking (or stop). */
@@ -182,10 +228,12 @@ interface AnswersProps {
   about: string[];
   /** The GPX download, shown as the last row of the card. */
   gpx?: ReactNode;
+  /** The trip's region ("Tatry"); Tatra regions get the mountain-rescue row. */
+  region?: string | null;
 }
 
-/** The question rows of the trip page in ONE card: how long, parking, bus and train, closures and fees, when to leave, about. */
-export function TripAnswers({ lang, name, kind, startName, lines, loop, parking, stops, closures, fees, sunAt, walkMin, closuresOnly = false, about, gpx }: AnswersProps) {
+/** The question rows of the trip page in ONE card: how long, parking, bus and train, closures and fees, when to leave, mountain rescue (Tatras), about. */
+export function TripAnswers({ lang, name, kind, startName, lines, loop, parking, stops, closures, fees, sunAt, walkMin, closuresOnly = false, about, gpx, region }: AnswersProps) {
   const asOf = new Date().toISOString().slice(0, 10);
   const months = !closuresOnly && sunAt ? monthTable(sunAt, walkMin, closures, asOf) : [];
   const winter = winterTimedMonths(months);
@@ -299,6 +347,12 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
           {winter.size > 0 && <p className="text-xs">* {winterNote(lang)}</p>}
           {hasDatedClosure(closures) && <p className="text-xs">{tr(lang, "Niektoré uzávery platia len v určitých dňoch; tabuľka ich pripisuje mesiacom len podľa dňa v roku, presné dátumy sú v časti Uzávery a poplatky.")}</p>}
           <p className="text-xs">{departureNote(lang, walkMin, SAFE_MARGIN_MIN)}</p>
+        </Row>
+      )}
+
+      {region && HZS_REGIONS.has(region) && (
+        <Row title={tr(lang, "Pred túrou: horská služba")} teaser={tr(lang, "Záchranári 18 300 · aplikácia HZS a kniha túr")}>
+          <HzsBody lang={lang} />
         </Row>
       )}
 

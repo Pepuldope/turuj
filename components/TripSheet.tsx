@@ -334,6 +334,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                 walkMin={ownWalk?.min ?? trail.duration_min}
                 closuresOnly={!!loopBack}
                 about={about}
+                region={trail.region_name}
                 gpx={gpxUrl ? <GpxDownload gpxUrl={gpxUrl} slug={trail.slug} name={gpxName} row /> : null}
               />
             }
