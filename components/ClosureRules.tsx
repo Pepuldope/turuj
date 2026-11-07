@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import type { Closure } from "@/lib/types";
 import type { Lang } from "@/lib/lang";
 import { tr } from "@/lib/lang";
-import { closureManager, closurePeriod } from "@/lib/closures";
+import { closureManager } from "@/lib/closures";
 import { formatDateSk } from "@/lib/format";
 
 // G4/F19: the yearly closure rule as plain server HTML, so crawlers that don't run JavaScript read
@@ -14,10 +14,11 @@ export function ClosureRules({ closures, lang }: { closures: Closure[]; lang: La
     <>
       {closures.map((c) => (
         <Fragment key={c.id}>
-          <p>
-            {tr(lang, c.reason)}{" "}
-            {tr(lang, c.kind === "jednorazova" ? "Platí od {period}" : "Platí každý rok od {period}", { period: closurePeriod(c) }).replace(/\.?$/, ".")}{" "}
-            {tr(lang, "Správca: {who}.", { who: closureManager(c) })}{" "}
+          {/* The reason already carries the dates: say the rule once, the rest is one small line. */}
+          <p>{tr(lang, c.reason)}</p>
+          <p className="text-xs">
+            {tr(lang, "Správca: {who}", { who: closureManager(c) })}
+            {" · "}
             <a href={c.source_url} target="_blank" rel="noopener noreferrer" className="underline">
               {tr(lang, "Zdroj informácie")}
             </a>

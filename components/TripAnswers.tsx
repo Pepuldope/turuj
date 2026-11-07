@@ -21,6 +21,7 @@ import {
   hasDatedClosure,
   durationSentence,
   howLongHeading,
+  monthGroups,
   monthName,
   monthTable,
   otherStops,
@@ -72,8 +73,7 @@ function Row({ title, teaser, children }: { title: string; teaser: string | null
 function ClosuresBody({ lang, closures, fees }: { lang: Lang; closures: Closure[]; fees: Fee[] }) {
   return (
     <>
-      <p>{closureSentence(lang, closures)}</p>
-      <ClosureRules closures={closures} lang={lang} />
+      {closures.length === 0 ? <p>{closureSentence(lang, closures)}</p> : <ClosureRules closures={closures} lang={lang} />}
       {closures.length > 0 && <p>{tr(lang, "Mimo týchto dátumov stav chodníka neručíme, pred výletom ho overte u správcu územia.")}</p>}
       {fees.length > 0 ? (
         <>
@@ -114,8 +114,7 @@ interface HeaderProps {
  * Length, climb and time are already in the header above; they are repeated here hidden, as plain text.
  */
 export function TripHeaderFacts({ lang, walk, starts, parking, stops, closures, updated }: HeaderProps) {
-  const items: { label: string; value: string; icon: "pin" | "car" | "train" | "bus" | "lock" | "warn" }[] = [
-    { label: tr(lang, starts.length > 1 ? "Štarty" : "Štart"), value: starts.join("; "), icon: "pin" },
+  const items: { label: string; value: string; icon: "car" | "train" | "bus" | "lock" | "warn" }[] = [
     { label: tr(lang, "Parkovanie"), value: parkingTeaser(lang, parking), icon: "car" },
     { label: tr(lang, "Vlak/autobus"), value: transitTeaser(lang, stops), icon: stops[0]?.mode === "vlak" ? "train" : "bus" },
     { label: tr(lang, "Sezónna uzávera"), value: closureTeaser(lang, closures), icon: closures.length > 0 ? "lock" : "warn" },
@@ -133,6 +132,11 @@ export function TripHeaderFacts({ lang, walk, starts, parking, stops, closures, 
             <dd>{formatDuration(walk.min)}</dd>
           </div>
         )}
+        {/* The hero and the route chooser show the start; crawlers still get it as a labelled fact. */}
+        <div className="sr-only">
+          <dt>{tr(lang, starts.length > 1 ? "Štarty" : "Štart")}</dt>
+          <dd>{starts.join("; ")}</dd>
+        </div>
         {items.map((it) => (
           <div key={it.label} className="flex items-start gap-2">
             <UiIcon name={it.icon} size={16} className="mt-px" />
@@ -175,6 +179,7 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
   const asOf = new Date().toISOString().slice(0, 10);
   const months = !closuresOnly && sunAt ? monthTable(sunAt, walkMin, closures, asOf) : [];
   const winter = winterTimedMonths(months);
+  const groups = monthGroups(lang, months);
   const feeOf = parking ? parkingFeeNote(lang, parking) : null;
   const more = otherStops(lang, stops);
   return (
@@ -245,22 +250,35 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
               </tr>
             </thead>
             <tbody>
-              {months.map((r) => {
-                const shut = r.closedBy || r.partial;
+              {groups.map((g) => {
+                if (g.kind === "closed") {
+                  return (
+                    <tr key={g.months[0]} data-months={g.months.join(" ")} className="border-t border-[var(--border)] text-[13px] data-[now=true]:bg-[var(--accent-soft)] data-[now=true]:text-[var(--foreground)]">
+                      <th scope="row" className="rounded-l-lg px-1 py-2.5 font-medium">
+                        {g.label}
+                      </th>
+                      <td colSpan={2} className="rounded-r-lg py-2.5 pr-1">
+                        <UiIcon name="lock" size={13} className="mr-1 -mt-0.5 align-middle" />
+                        {tr(lang, "uzavreté ({who})", { who: g.by })}
+                      </td>
+                    </tr>
+                  );
+                }
+                const r = g.row;
                 return (
-                  <tr
-                    key={r.month}
-                    data-month={r.month}
-                    className={`border-t border-[var(--border)] data-[now=true]:bg-[var(--accent-soft)] data-[now=true]:text-[var(--foreground)] ${shut ? "opacity-80" : ""}`}
-                  >
+                  <tr key={r.month} data-months={r.month} className="border-t border-[var(--border)] data-[now=true]:bg-[var(--accent-soft)] data-[now=true]:text-[var(--foreground)]">
                     <th scope="row" className="rounded-l-lg px-1 py-2 font-medium text-[var(--foreground)]">
                       {monthName(lang, r.month)}
                       {winter.has(r.month) ? "*" : ""}
                     </th>
-                    <td className={`font-data py-2 pr-2 ${shut ? "text-[13px] font-medium" : "text-[15px]"}`}>
-                      {shut && <UiIcon name="lock" size={13} className="mr-1 -mt-0.5 align-middle" />}
-                      {r.closedBy ? tr(lang, "uzavreté ({who})", { who: r.closedBy }) : r.partial ? tr(lang, "čiastočne uzavreté ({who}): {span}", { who: r.partial.by, span: r.partial.span }) : r.latest ? clock(r.latest) : tr(lang, "nestihnete za svetla")}
-                    </td>
+                    {r.partial ? (
+                      <td className="py-2 pr-2 text-[13px]">
+                        <UiIcon name="lock" size={13} className="mr-1 -mt-0.5 align-middle" />
+                        {tr(lang, "čiastočne uzavreté ({who}): {span}", { who: r.partial.by, span: r.partial.span })}
+                      </td>
+                    ) : (
+                      <td className="font-data py-2 pr-2 text-[15px]">{r.latest ? clock(r.latest) : <span className="font-sans text-[13px] font-normal">{tr(lang, "nestihnete za svetla")}</span>}</td>
+                    )}
                     <td className="font-data rounded-r-lg py-2 pr-1 text-right text-[15px]">{clock(r.sunset)}</td>
                   </tr>
                 );
@@ -282,7 +300,7 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
         </Row>
       )}
 
-      {gpx && <div className="flex min-h-14 items-center border-t border-[var(--border)] px-4 py-3 text-sm">{gpx}</div>}
+      {gpx && <div className="border-t border-[var(--border)] text-sm">{gpx}</div>}
     </Card>
   );
 }

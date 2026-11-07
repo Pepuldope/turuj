@@ -295,14 +295,18 @@ export function departureSentence(lang: Lang, rows: MonthRow[], closures: Closur
   const timed = clear.filter((r) => r.latest);
   const untimed = clear.filter((r) => !r.latest);
   const outside = tr(lang, dated.length ? "Mimo uzávery" : "Mimo sezónnej uzávery");
-  if (timed.length === 0) return warn + tr(lang, "{outside} ({months}) túru za svetla nestihnete", { outside, months: monthSpan(lang, untimed.map((r) => r.month)) }) + (closedPart ? ";" + closedPart : ".");
+  if (timed.length === 0) return warn + tr(lang, "{outside} ({months}) túru za svetla nestihnete", { outside, months: monthSpan(lang, untimed.map((r) => r.month)) }) + ".";
   const ordered = timed.map((r) => clock(r.latest as Date)).sort();
   const lo = ordered[0];
   const hi = ordered[ordered.length - 1];
   const months = monthSpan(lang, timed.map((r) => r.month));
-  let text = tr(lang, lo === hi ? "{outside} ({months}) treba vyraziť najneskôr o {lo}" : "{outside} ({months}) treba vyraziť najneskôr medzi {lo} a {hi} podľa mesiaca", { outside, months, lo, hi });
+  // The closure rule and its dates are in the closures row and the table, not repeated here.
+  const lead = dated.length ? tr(lang, "{outside} ({months})", { outside, months }) : upFirst(months.replace(" až ", " – ").replace(" to ", " – "));
+  let text = dated.length
+    ? tr(lang, lo === hi ? "{lead} treba vyraziť najneskôr o {lo}" : "{lead} treba vyraziť najneskôr medzi {lo} a {hi} podľa mesiaca", { lead, lo, hi })
+    : tr(lang, lo === hi ? "{lead}: najneskôr o {lo}" : "{lead}: najneskôr medzi {lo} a {hi} podľa mesiaca", { lead, lo, hi });
   if (untimed.length) text += ", " + tr(lang, "ale za svetla túru nestihnete ({months})", { months: monthSpan(lang, untimed.map((r) => r.month)) });
-  return warn + text + (closedPart ? ";" + closedPart : ".");
+  return warn + text + ".";
 }
 
 /** Under the table: dated closures are not months, the closure section has them. */
@@ -344,11 +348,11 @@ export function durationTeaser(lang: Lang, lines: StartLine[]): string {
   return own ? tr(lang, "{t} zo štartu {start}", { t: formatDuration(own.min), start: own.label }) : "";
 }
 
-/** "Pri štarte, spoplatnené"; no car park: "Bez parkoviska". */
+/** "Parkovisko pri štarte, spoplatnené"; no car park: "Bez parkoviska". */
 export function parkingTeaser(lang: Lang, p: ParkingLot | null): string {
   if (!p) return upFirst(tr(lang, "bez parkoviska"));
   const near = (p.join ? p.join.walk_m : p.walk_m) < 150;
-  const where = near ? tr(lang, p.join ? "pri trase" : "pri štarte") : tr(lang, p.join ? "{m} k trase" : "{m} k štartu", { m: formatWalk(p.join?.walk_m ?? p.walk_m, lang) });
+  const where = near ? tr(lang, p.join ? "parkovisko pri trase" : "parkovisko pri štarte") : tr(lang, p.join ? "parkovisko {m} od trasy" : "parkovisko {m} od štartu", { m: formatWalk(p.join?.walk_m ?? p.walk_m, lang) });
   const fee = p.fee === true ? tr(lang, "spoplatnené") : p.fee === false ? tr(lang, "zadarmo") : null;
   return upFirst([where, fee].filter(Boolean).join(", "));
 }
@@ -384,8 +388,41 @@ export function departureTeaser(lang: Lang, rows: MonthRow[]): string | null {
   return tr(lang, "Podľa mesiaca, pozrite tabuľku");
 }
 
-/** The first sentence of the description, cut to fit a one-line teaser. */
+/** The first sentence of the description that is not the numbers sentence (km, m, time: the header has them), cut to fit a one-line teaser. */
 export function aboutTeaser(text: string, max = 110): string {
-  const first = text.split(/(?<=[.!?])\s/)[0] ?? text;
+  const sentences = text.split(/(?<=[.!?])\s+/).filter(Boolean);
+  const first = sentences.find((x, i) => !(i === 0 && /\d.*\bkm\b/.test(x) && sentences.length > 1)) ?? text;
   return first.length > max ? first.slice(0, max - 1).replace(/\s+\S*$/, "") + "…" : first;
+}
+
+/** What the month table shows: a plain month, or one row for a run of fully closed months. */
+export type MonthGroup = { kind: "month"; row: MonthRow } | { kind: "closed"; months: number[]; label: string; by: string };
+
+/**
+ * Calendar order, but consecutive fully closed months with the same keeper become ONE row ("november – máj").
+ * A run that wraps the year end (Nov to May) sits where its first calendar month is (at the top).
+ */
+export function monthGroups(lang: Lang, rows: MonthRow[]): MonthGroup[] {
+  const closedBy = new Map(rows.filter((r) => r.closedBy).map((r) => [r.month, r.closedBy as string]));
+  const same = (a: number, b: number) => closedBy.has(a) && closedBy.get(a) === closedBy.get(b);
+  const next = (m: number) => (m % 12) + 1;
+  const prev = (m: number) => ((m + 10) % 12) + 1;
+  const out: MonthGroup[] = [];
+  const seen = new Set<number>();
+  for (const r of rows) {
+    if (seen.has(r.month)) continue;
+    if (!closedBy.has(r.month)) {
+      out.push({ kind: "month", row: r });
+      continue;
+    }
+    // Walk back to the start of the run, then forward over it.
+    let start = r.month;
+    for (let i = 0; i < 12 && same(prev(start), start) && prev(start) !== r.month; i++) start = prev(start);
+    const months = [start];
+    while (same(months[months.length - 1], next(months[months.length - 1])) && next(months[months.length - 1]) !== start) months.push(next(months[months.length - 1]));
+    months.forEach((m) => seen.add(m));
+    const label = months.length === 1 ? monthName(lang, months[0]) : `${monthName(lang, months[0])} – ${monthName(lang, months[months.length - 1])}`;
+    out.push({ kind: "closed", months, label, by: closedBy.get(r.month) as string });
+  }
+  return out;
 }
