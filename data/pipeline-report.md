@@ -1,12 +1,12 @@
 # Trip pipeline report
 
-Run: 2026-11-07T10:55:05+00:00 · OSM data: 2026-11-05T21:23:02Z
+Run: 2026-11-07T11:31:34+00:00 · OSM data: 2026-11-05T21:23:02Z
 
-**6482 trips**
+**6486 trips**
 
 | Region | Trips | Family | Candidates |
 |---|---|---|---|
-| tatry | 452 | 72 | 352 |
+| tatry | 456 | 72 | 352 |
 | slovensky-raj | 159 | 34 | 71 |
 | mala-fatra | 228 | 30 | 94 |
 | male-karpaty | 558 | 220 | 205 |
@@ -47,7 +47,7 @@ Flag ⚠ when off by more than 15 %.
 
 ## Places with more than one route
 
-1918 of 2148 places have other routes; 4338 other routes in all, 1105 of them another way from a start the place already has.
+1919 of 2149 places have other routes; 4341 other routes in all, 1106 of them another way from a start the place already has.
 
 | Place | Main route (start, time) | Other routes |
 |---|---|---|
@@ -921,7 +921,7 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 | Muráň | found in OSM as vrchol (node/380648416, Wikipedia in 8 languages); no marked trail within 150 m; found in OSM as vrchol (node/2659360927, Wikipedia in 0 languages); found in OSM as vrchol (node/5449347500, Wikipedia in 0 languages); found in OSM as vrchol (node/5657427811, Wikipedia in 0 languages); found in OSM as vrchol (node/5657428103, Wikipedia in 2 languages); found in OSM as vrchol (node/5657428730, Wikipedia in 0 languages); found in OSM as vrchol (node/5657432259, Wikipedia in 0 languages); found in OSM as vyhliadka (node/14133773487, Wikipedia in 0 languages); found in OSM as hrad (relation/1561764, Wikipedia in 11 languages); trip muran-muranska-lehota; trip muran |
 | Tomášovský výhľad | found in OSM as vyhliadka (node/457875377, Wikipedia in 1 languages); trip tomasovsky-vyhlad |
 | Kláštorisko | found in OSM as ine (way/73167805, Wikipedia in 1 languages); trip klastorisko |
-| Sliezsky dom | found in OSM as chata (way/65383743, Wikipedia in 1 languages); left out: start already has enough trips |
+| Sliezsky dom | found in OSM as chata (way/65383743, Wikipedia in 1 languages); trip sliezsky-dom |
 | Prielom Hornádu | found in OSM as roklina (way/1375795628, Wikipedia in 7 languages); trip prielom-hornadu |
 | Suchá Belá | found in OSM as roklina (way/593444110, Wikipedia in 5 languages); trip sucha-bela |
 | Sokolia dolina | found in OSM as roklina (way/593444124, Wikipedia in 6 languages); trip sokolia-dolina |
@@ -1206,8 +1206,8 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 | Buková, rázcestie | Buková | node/33101054 |
 | Cigeľka, rázcestie | Cigeľka,,osada | node/1493609325 |
 | Krajné, rázcestie | Dobrá Mera | node/672812261 |
-| Odbočka k Dobrovodskému hradu | Dobrá Voda, okolie | node/269311174 |
 | Mariáš, rázc. pod hradom | Dobrá Voda, okolie | node/303826857 |
+| Odbočka k Dobrovodskému hradu | Dobrá Voda, okolie | node/269311174 |
 | Domaša, odbočka k hrádzi | Domaša,,priehrada | node/12070301067 |
 | Doľany, rázcestie | Doľany | node/13068135866 |
 | Odbočka do Nemečiek | Duchonka | node/282779143 |
@@ -1228,8 +1228,8 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 | Kamenica, rázc. | Kamenica, Pomykal | node/9524614825 |
 | Kečovo, rázcestie Aggtelek | Kečovo, okolie | node/459557945 |
 | Dva stromy 35' | Komjatná, okolie | node/13326035934 |
-| Rázcestie pod Holým vrchom | Konská, okolie | node/1856181334 |
 | Odbočka na Baranec a Plačlivé | Konská, okolie | node/496004526 |
+| Rázcestie pod Holým vrchom | Konská, okolie | node/1856181334 |
 | Vysoká, rázc. Pod Haviarskym vrchom | Kopanice - Dômky, okolie | node/37971989 |
 | Odbočka do Korytnice | Korytnica-kúpele, okolie | node/8779693039 |
 | Pod hotelom, rázc. | Kyslinky, okolie | node/293204074 |
@@ -1250,8 +1250,8 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 | Nová Bystrica, odbočka do Veľkého Potoka | Nová Bystrica, Cadrikovia | node/1447936905 |
 | Šport Chata, rázcestie | Nová Lehota, okolie | node/303174329 |
 | Majdan, rázcestie | Olejníkov, okolie | node/281326148 |
-| Rázcestie pod Čistým Grúňom | Oravice | node/1705795303 |
 | Rázcestie Oravice | Oravice | node/5736009562 |
+| Rázcestie pod Čistým Grúňom | Oravice | node/1705795303 |
 | Rázcestie Zverovka | Oravice, okolie | node/244881275 |
 | Rázcestie Šindľovec | Oravice, okolie | node/1888793050 |
 | Biela Farma, rázcestie | Oravská Polhora, okolie | node/5791978002 |
@@ -1291,8 +1291,8 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 | Odbočka na Hradisko | Záturčie, okolie | node/312934226 |
 | Rázc. Gola | Červená Voda, okolie | node/11052516888 |
 | Štefanov, rázc. | Štefanov nad Oravou | node/7913906566 |
-| Rázcestie pred Heliosom | Štrbské Pleso | node/281108101 |
 | Odbočka pri Heliose | Štrbské Pleso | node/306246045 |
+| Rázcestie pred Heliosom | Štrbské Pleso | node/281108101 |
 
 ## Rejected candidates
 
@@ -1302,7 +1302,7 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 - one-way path without a way back: 4
 - sight in a city centre: 9
 - sight in a town: 8
-- start already has enough trips: 48
+- start already has enough trips: 47
 - too flat (city walk): 10
 - too long: 45
 - trailheads too close: 1
@@ -1313,7 +1313,7 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 |---|---|---|---|
 | malafatra-jarna-uzavera | 5 | 1590 | velky-rozsutec (1590), velky-rozsutec-biely-potok-ina-cesta (1590), velky-rozsutec-stefanova-bus-ina-cesta (1590), velky-rozsutec-biely-potok (1591), velky-rozsutec-petrova-janosikov-dvor (1591) |
 | tanap-juranova-dolina | 5 | 932 | vodopad-juranovho-potoka (932), juranova-dolina (939), vodopad-juranovho-potoka-brestova-nad-skanzenom (956), juranova-dolina-brestova-nad-skanzenom (1008), vodopad-juranovho-potoka-razcestie-pod-cistym-ina-cesta (1008) |
-| tanap-sezonna-uzavera | 162 | 1136 | horica (1136), ostry-grun (1185), ostry-grun-kobyli-potok-razcestie (1185), tiesnava-branka (1215), latana-dolina (1252) |
+| tanap-sezonna-uzavera | 164 | 1136 | horica (1136), ostry-grun (1185), ostry-grun-kobyli-potok-razcestie (1185), tiesnava-branka (1215), latana-dolina (1252) |
 | tanap-symbolicky-cintorin | 2 | 1519 | popradske-pleso-hola-uboc (1519), ostrva-hola-uboc (1936) |
 
 Stretches of tanap-sezonna-uzavera:
@@ -6878,6 +6878,10 @@ Stretches of tanap-symbolicky-cintorin:
 | velke-rohacske-pleso-razcestie-sindlovec-ina-cesta | tatry | Oravice, okolie | 13.2 | 914 | 6:45 | tazka | tanap-sezonna-uzavera |
 | vysne-rackovo-pleso | tatry | Úzka dolina, ústie | 17.0 | 845 | 6:45 | tazka | tanap-sezonna-uzavera |
 | ziarske-pleso-ziarska-dolina-ustie | tatry | Žiarska dolina (ústie) | 8.1 | 337 | 3:00 | lahka |  |
+| sliezsky-dom | tatry | Starý Smokovec (pozemná lanovka) | 12.0 | 657 | 5:15 | stredna |  |
+| sliezsky-dom-tatranska-polianka | tatry | Tatranská polianka | 9.1 | 670 | 4:45 | stredna |  |
+| sliezsky-dom-tatranska-polianka-ina-cesta | tatry | Tatranská polianka | 17.6 | 760 | 6:30 | tazka | tanap-sezonna-uzavera |
+| sliezsky-dom-vysne-hagy | tatry | Vyšné Hágy | 17.0 | 1047 | 7:45 | tazka | tanap-sezonna-uzavera |
 | lomne | tatry | Veľké Borové | 10.9 | 593 | 4:45 | stredna |  |
 | lomne-kalameny-jazierko | tatry | Kalameny, jazierko | 16.5 | 1049 | 7:45 | tazka |  |
 | lomne-kvacany | tatry | Kvačany | 16.1 | 1022 | 7:30 | tazka |  |
@@ -7875,4 +7879,4 @@ Stretches of tanap-symbolicky-cintorin:
 | vystrkov-podhajska-belek | zahorie-podunajsko | Podhájska, Belek | 10.3 | 196 | 3:15 | stredna |  |
 | vystrkov-podhajska-belek-ina-cesta | zahorie-podunajsko | Podhájska, Belek | 15.5 | 270 | 4:45 | stredna |  |
 
-Drive table: 141 towns x 2148 main trips, 0 pairs without a route.
+Drive table: 141 towns x 2149 main trips, 0 pairs without a route.
