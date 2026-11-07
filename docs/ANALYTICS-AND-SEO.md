@@ -102,3 +102,12 @@ within a minute.
 Before the domain exists you can already test link previews: paste a trip link into Messenger or
 WhatsApp, or use https://www.opengraph.xyz, and check structured data at
 https://search.google.com/test/rich-results.
+
+## Search Console report (`gsc-report.yml`)
+
+`.github/workflows/gsc-report.yml` (monthly on the 2nd, or by hand) pulls Search Console data for
+`sc-domain:turuj.sk` with `scripts/gsc_report.py`: queries, pages, daily totals, devices, countries,
+sitemaps and URL Inspection on a sample. The repo is public, so the output is encrypted with `age`
+to a public recipient key and only the `.age` artifact is uploaded (kept 3 days); logs and the job
+summary hold counts only. On the Mac, `scripts/gsc-pull.sh <dir> [run-id]` downloads, decrypts with
+`~/.config/turuj-gsc/key.txt` and deletes the artifact from GitHub. Needs the `GSC_SERVICE_ACCOUNT_JSON` secret.
