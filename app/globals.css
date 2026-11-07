@@ -416,17 +416,7 @@ h2,
   background: color-mix(in srgb, var(--kind) 12%, transparent);
 }
 @media (prefers-color-scheme: dark) {
-  /* Accent as text on the trip page's --page-sunk grey: plain --accent is 4.47:1 there, this 5.4:1. Dark mode keeps --accent (8.4:1). */
-.accent-on-sunk {
-  color: color-mix(in oklab, var(--accent) 88%, black);
-}
-@media (prefers-color-scheme: dark) {
-  .accent-on-sunk {
-    color: var(--accent);
-  }
-}
-
-.kind-ink {
+  .kind-ink {
     color: color-mix(in oklab, var(--kind) 55%, #fff);
   }
   .kind-chip {
