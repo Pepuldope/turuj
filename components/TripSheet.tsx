@@ -3,7 +3,7 @@ import { primaryTrailhead, routeWalk, sunLocation } from "@/lib/data";
 import { pickWalk, stopsByWalk } from "@/lib/walkFacts";
 import { gpxUrlFor } from "@/lib/gpx";
 import { GpxDownload } from "@/components/GpxDownload";
-import { getRouteWalks, getTownDrives, getTrip, getTripIndex, getTripPhoto, photoSource, withLoopRoutes } from "@/lib/tripFiles";
+import { getAllTrips, getCarWalks, getRouteWalks, getTownDrives, getTrip, getTripIndex, getTripPhoto, photoSource, withLoopRoutes } from "@/lib/tripFiles";
 import type { PlacePhoto } from "@/lib/tripFiles";
 import { aboutTrip } from "@/lib/describeSk";
 import { buildProfile } from "@/lib/tripProfile";
@@ -18,6 +18,9 @@ import { PhoneTripMap } from "@/components/PhoneTripMap";
 import { PoiList } from "@/components/PoiList";
 import { StopsBlock } from "@/components/TransitBlock";
 import { ClosureBanner } from "@/components/ClosureBanner";
+import { isIndexedVariant, variantHeading } from "@/lib/variantTitles";
+import { NearbyTrips } from "@/components/NearbyTrips";
+import { nearestMainTrips } from "@/lib/nearbyTrips";
 import { TripAnswers, TripHeaderFacts } from "@/components/TripAnswers";
 import { TripPlanner } from "@/components/TripPlanner";
 import { TripReviews } from "@/components/TripReviews";
@@ -41,6 +44,9 @@ import { describeEn } from "@/lib/describeEn";
 import { describeTripEn } from "@/lib/tripJsonLdEn";
 import { markSigns } from "@/lib/markSigns";
 import { startLines, subtitle } from "@/lib/tripAnswers";
+
+/** How many neighbours the "Ďalšie výlety v okolí" block lists. */
+const NEARBY_COUNT = 7;
 
 /**
  * The photo as a schema.org ImageObject with the credit fields Google's image metadata reads (F17):
@@ -195,6 +201,12 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
     walk: ownWalk,
     fallback: { min: trail.duration_min, m: trail.distance_m, ascentM: trail.ascent_m },
   });
+  // C53: the nearest other places as plain links (lib/nearbyTrips.ts). The index holds main routes only.
+  const mains = await getAllTrips();
+  const nearby = nearestMainTrips(mains, trip.destination.location, trip.variant_of ?? trail.slug, NEARBY_COUNT);
+  // C39: an indexed variant gets its own H1, "Kriváň z Troch Studničiek" (lib/variantTitles.ts).
+  const h1 = !loopBack && lang === "sk" && isIndexedVariant(trip, mains) ? variantHeading(trail.name, trip.start.name, "").h1 : trail.name;
+  const nearbyWalks = await getCarWalks();
   const updated = (await getTripIndex()).generated_at.slice(0, 10) || null;
 
   return (
@@ -254,7 +266,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                   </Badge>
                 )}
               </div>
-              <h1 className={`${trail.name.length > 30 ? "text-[1.85rem]" : "text-[2.4rem]"} leading-none font-extrabold tracking-tight [text-shadow:0_1px_3px_rgba(0,0,0,.45),0_1px_14px_rgba(0,0,0,.3)]`}>{trail.name}</h1>
+              <h1 className={`${h1.length > 30 ? "text-[1.85rem]" : "text-[2.4rem]"} break-words leading-none font-extrabold tracking-tight [text-shadow:0_1px_3px_rgba(0,0,0,.45),0_1px_14px_rgba(0,0,0,.3)]`}>{h1}</h1>
               {!loopBack && <p className="text-[15px] leading-tight font-bold [text-shadow:0_1px_2px_rgba(0,0,0,.6),0_0_10px_rgba(0,0,0,.45)]">{subtitle(lang, trail.name, trip.destination.kind)}</p>}
               <p className="text-[13.5px] font-semibold [text-shadow:0_1px_2px_rgba(0,0,0,.6),0_0_10px_rgba(0,0,0,.45)]">
                 {[trail.region_name, trip ? tr(lang, "štart {name}", { name: trip.start.name }) : null].filter(Boolean).join(" · ")}
@@ -354,6 +366,8 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
               {tr(lang, "Ďalšie výlety okolo {town}", { town: townOf(lang, town.id, town.name) })} →
             </Link>
           )}
+
+          <NearbyTrips lang={lang} items={nearby} walks={nearbyWalks} />
 
           {/* C2: something wrong on this trip (closed trail, car park, photo) goes straight to us. */}
           <Link
