@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLang, useT } from "@/lib/i18n";
 import { langPath } from "@/lib/lang";
-import { closedUntilFor, eveWanted } from "@/lib/eve";
+import { EVE_MAX_AHEAD_MS, closedUntilFor, eveAtFor, eveWanted } from "@/lib/eve";
 import type { EveJob } from "@/lib/eve";
 import { buildIcs } from "@/lib/ics";
 import { track } from "@/lib/analytics";
@@ -158,6 +158,17 @@ export function EveReminder({
 
   const on = trip.eve === true;
   const showSwitch = can === "ok" && job !== null;
+  // A day the reminder can't reach (19:00 the day before has passed, or more than 8 days ahead): the switch
+  // stays, washed out and explained, instead of quietly missing (design brief: impossible choices are shown).
+  const evening = eveAtFor(trip.date);
+  const offReason =
+    can !== "ok" || job !== null || evening === null
+      ? null
+      : evening <= now
+        ? t("Pripomienka chodí o 19:00 deň pred výletom, na tento deň je už neskoro. Pridajte si výlet do kalendára.")
+        : evening >= now + EVE_MAX_AHEAD_MS
+          ? t("Pripomienku môžete zapnúť najskôr 8 dní pred výletom.")
+          : null;
   const testing = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("eve-test") === "1";
 
   return (
@@ -189,6 +200,24 @@ export function EveReminder({
             </button>
           )}
           {test && <p className="text-xs text-[var(--muted)]">{test}</p>}
+        </div>
+      )}
+      {offReason && (
+        <div className="flex flex-col gap-1">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={false}
+            aria-disabled
+            disabled
+            className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-2.5 text-left text-sm font-semibold text-[var(--muted)] line-through opacity-60"
+          >
+            <span aria-hidden className="relative h-6 w-10 shrink-0 rounded-full bg-[var(--muted)]">
+              <span className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-[var(--card-bg)]" />
+            </span>
+            <span>{t("Pripomenúť večer pred výletom")}</span>
+          </button>
+          <p className="text-xs text-[var(--muted)]">{offReason}</p>
         </div>
       )}
       <button type="button" onClick={download} className={`${secondary} self-start`}>

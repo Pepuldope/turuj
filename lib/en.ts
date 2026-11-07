@@ -1034,6 +1034,8 @@ export const EN: Record<string, string> = {
   "Pozrite si plán a počasie na stránke výletu.": "Check the plan and the weather on the trip page.",
   "Pripomenúť večer pred výletom": "Remind me the evening before",
   "Napíšeme vám o 19:00 deň vopred: počasie a kedy vyraziť.": "We will write at 19:00 the day before: the weather and when to leave.",
+  "Pripomienka chodí o 19:00 deň pred výletom, na tento deň je už neskoro. Pridajte si výlet do kalendára.": "The reminder comes at 19:00 the day before the trip, so it is too late for this day. Add the trip to your calendar.",
+  "Pripomienku môžete zapnúť najskôr 8 dní pred výletom.": "You can switch the reminder on at most 8 days before the trip.",
   "Upozornenia sú v prehliadači zakázané. Povoľte ich v nastaveniach stránky alebo použite kalendár.": "Notifications are blocked in the browser. Allow them in the site settings or use the calendar.",
   "Pripomienku sa teraz nepodarilo nastaviť. Skúste to znova alebo použite kalendár.": "The reminder could not be set up right now. Try again or use the calendar.",
   "Poslať skúšobnú pripomienku teraz": "Send a test reminder now",
