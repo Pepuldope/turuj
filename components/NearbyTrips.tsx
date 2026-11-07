@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatDuration } from "@/lib/format";
 import { langPath, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
+import { Nums } from "@/components/Nums";
 import { UiIcon } from "@/components/UiIcon";
 import { closedSeason } from "@/lib/townTrips";
 import { roundKm } from "@/lib/nearbyTrips";
@@ -16,8 +17,8 @@ export function NearbyTrips({ lang, items, walks }: { lang: Lang; items: Nearby[
   if (items.length === 0) return null;
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="px-1 text-[15px] font-semibold text-[var(--foreground)]">{tr(lang, "Ďalšie výlety v okolí")}</h2>
-      <ul className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)]">
+      <h2 className="px-1 text-base font-semibold text-[var(--foreground)]">{tr(lang, "Ďalšie výlety v okolí")}</h2>
+      <ul className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--card-edge)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">
         {items.map(({ trip, m }) => {
           // The yearly rule only (the page is built once), same mark as the town tiles.
           const closed = closedSeason(trip);
@@ -25,14 +26,12 @@ export function NearbyTrips({ lang, items, walks }: { lang: Lang; items: Nearby[
             <li key={trip.slug} className="border-t border-[var(--border)] first:border-t-0">
               <Link href={langPath(lang, `/trasa/${trip.slug}`)} className="flex min-h-14 items-center gap-3 px-4 py-3">
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="text-[15px] font-semibold leading-snug text-[var(--foreground)]">{trip.name}</span>
-                  <span className="text-[13px] leading-snug text-[var(--muted)]">
-                    {formatDuration(walks.get(trip.slug) ?? trip.duration_min)}
-                    {" · "}
-                    {tr(lang, "{km} km odtiaľto", { km: roundKm(m) })}
+                  <span className="text-base font-semibold leading-snug text-[var(--foreground)]">{trip.name}</span>
+                  <span className="text-sm leading-snug text-[var(--muted)]">
+                    <Nums text={`${formatDuration(walks.get(trip.slug) ?? trip.duration_min)} · ${tr(lang, "{km} km odtiaľto", { km: roundKm(m) })}`} />
                   </span>
                   {closed && (
-                    <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-xs font-medium text-[var(--muted)]">
+                    <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-[var(--danger-bg)] px-2.5 py-1 text-xs font-semibold text-[var(--danger)]">
                       <UiIcon name="lock" size={12} />
                       {tr(lang, "zatvorené {when}", { when: closed })}
                     </span>
