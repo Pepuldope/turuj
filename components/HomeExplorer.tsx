@@ -836,7 +836,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
             }}
             placeholder={t("Hľadať výlet alebo pohorie")}
             autoComplete="off"
-            className="h-11 w-full rounded-full border border-[var(--border)] bg-[var(--card-bg)] pr-2 pl-8 text-base shadow-[var(--shadow-float)] min-[420px]:pr-3 min-[420px]:pl-10 lg:shadow-none"
+            className="h-11 w-full rounded-full border border-[var(--border)] bg-[var(--card-bg)] pr-2 pl-8 text-base shadow-[var(--shadow-float)] outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] min-[420px]:pr-3 min-[420px]:pl-10 lg:shadow-none"
           />
         </label>
         <button
