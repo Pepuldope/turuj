@@ -194,6 +194,29 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
             </LangLink>
             .
           </p>
+        </div>
+      )}
+
+      {saved && !askShare && status !== "saving" && (
+        <p className="text-sm">
+          {t("Uložené na")} <strong>{dayAfterNa(saved.date, lang)}</strong> {t("o")} <strong>{saved.time}</strong>
+          {saved.offline === "ok" ? t(", funguje aj bez signálu. ") : ". "}
+          <button type="button" onClick={() => remove(slug)} className="text-[var(--muted)] underline">
+            {t("Odstrániť")}
+          </button>
+        </p>
+      )}
+
+      {saved && status !== "saving" && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} onChange={(eve) => patch(slug, { eve })} />}
+
+      {status === "error" && (
+        <p className="text-sm text-[var(--warn)]">
+          {t("Výlet je uložený, ale kópia bez signálu sa nepodarila. Skúste to znova so signálom.")}
+        </p>
+      )}
+
+      {saved && askShare && (
+        <div className="flex flex-col gap-2 rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
           <p className="font-semibold">{t("Zdieľať výlet?")}</p>
           <div className="flex flex-wrap gap-2">
             <ShareButton
@@ -214,24 +237,6 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
       )}
 
       {saved && askHeard && <HeardFrom onDone={() => setAskHeard(false)} />}
-
-      {saved && !askShare && status !== "saving" && (
-        <p className="text-sm">
-          {t("Uložené na")} <strong>{dayAfterNa(saved.date, lang)}</strong> {t("o")} <strong>{saved.time}</strong>
-          {saved.offline === "ok" ? t(", funguje aj bez signálu. ") : ". "}
-          <button type="button" onClick={() => remove(slug)} className="text-[var(--muted)] underline">
-            {t("Odstrániť")}
-          </button>
-        </p>
-      )}
-
-      {saved && status !== "saving" && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} onChange={(eve) => patch(slug, { eve })} />}
-
-      {status === "error" && (
-        <p className="text-sm text-[var(--warn)]">
-          {t("Výlet je uložený, ale kópia bez signálu sa nepodarila. Skúste to znova so signálom.")}
-        </p>
-      )}
 
       {!askShare && share}
 
