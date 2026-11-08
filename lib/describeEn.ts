@@ -1,5 +1,6 @@
 // English for a trip's generated description (pipeline/trips.py _describe), e.g.
 // "Výstup na vrchol Baba (536 m). Štart: Podbabská dolina, späť rovnakou cestou. Po modrej a červenej značke."
+// (a loop since 2026-11-07: "Štart: Podlesok (okruh)."; the older "Štart: Podlesok, okruh." still reads.)
 // Names stay Slovak. A description written by hand doesn't match and gets null.
 
 const FIRST: [RegExp, string][] = [
@@ -19,7 +20,7 @@ const FIRST: [RegExp, string][] = [
 const COLOUR: Record<string, string> = { červenej: "red", modrej: "blue", zelenej: "green", žltej: "yellow" };
 
 export function describeEn(sk: string | null | undefined): string | null {
-  const m = sk ? /^(.+?\.) Štart: (.+), (okruh|späť rovnakou cestou)\.(?: Po (.+) značke\.)?$/.exec(sk) : null;
+  const m = sk ? /^(.+?\.) Štart: (?:(.+), (okruh|späť rovnakou cestou)|(.+) \((okruh)\))\.(?: Po (.+) značke\.)?$/.exec(sk) : null;
   if (!m) return null;
   let first: string | null = null;
   for (const [re, en] of FIRST) {
@@ -30,12 +31,13 @@ export function describeEn(sk: string | null | undefined): string | null {
     }
   }
   if (!first) return null;
-  const back = m[3] === "okruh" ? "as a loop" : "out and back the same way";
+  const start = m[2] ?? m[4];
+  const back = (m[3] ?? m[5]) === "okruh" ? "as a loop" : "out and back the same way";
   let marks = "";
-  if (m[4]) {
-    const cols = m[4].split(/, | a /).map((c) => COLOUR[c]);
+  if (m[6]) {
+    const cols = m[6].split(/, | a /).map((c) => COLOUR[c]);
     if (cols.some((c) => !c)) return null;
     marks = ` Follows the ${cols.length > 1 ? `${cols.slice(0, -1).join(", ")} and ${cols[cols.length - 1]}` : cols[0]} trail marking${cols.length > 1 ? "s" : ""}.`;
   }
-  return `${first} Starts at ${m[2]}, ${back}.${marks}`;
+  return `${first} Starts at ${start}, ${back}.${marks}`;
 }

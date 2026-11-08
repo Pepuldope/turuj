@@ -2,33 +2,7 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Hrad Hajnáčka</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Hrad Hajnáčka</name><desc>hajnacka</desc><trkseg>
-    <trkpt lat="48.223512" lon="19.960395"><ele>353</ele></trkpt>
-    <trkpt lat="48.223314" lon="19.960569"><ele>350</ele></trkpt>
-    <trkpt lat="48.223144" lon="19.961105"><ele>336</ele></trkpt>
-    <trkpt lat="48.223084" lon="19.961659"><ele>321</ele></trkpt>
-    <trkpt lat="48.222892" lon="19.962088"><ele>307</ele></trkpt>
-    <trkpt lat="48.222611" lon="19.962472"><ele>296</ele></trkpt>
-    <trkpt lat="48.222421" lon="19.962554"><ele>293</ele></trkpt>
-    <trkpt lat="48.222285" lon="19.962350"><ele>289</ele></trkpt>
-    <trkpt lat="48.222060" lon="19.961874"><ele>278</ele></trkpt>
-    <trkpt lat="48.221935" lon="19.961496"><ele>272</ele></trkpt>
-    <trkpt lat="48.221559" lon="19.960573"><ele>266</ele></trkpt>
-    <trkpt lat="48.221471" lon="19.960277"><ele>264</ele></trkpt>
-    <trkpt lat="48.221391" lon="19.959637"><ele>261</ele></trkpt>
-    <trkpt lat="48.221324" lon="19.959420"><ele>259</ele></trkpt>
-    <trkpt lat="48.221289" lon="19.958882"><ele>256</ele></trkpt>
-    <trkpt lat="48.221188" lon="19.958252"><ele>254</ele></trkpt>
-    <trkpt lat="48.221091" lon="19.957192"><ele>246</ele></trkpt>
-    <trkpt lat="48.220971" lon="19.956696"><ele>243</ele></trkpt>
-    <trkpt lat="48.220808" lon="19.956377"><ele>238</ele></trkpt>
-    <trkpt lat="48.220714" lon="19.956424"><ele>235</ele></trkpt>
-    <trkpt lat="48.220650" lon="19.956527"><ele>234</ele></trkpt>
-    <trkpt lat="48.220474" lon="19.956566"><ele>231</ele></trkpt>
-    <trkpt lat="48.220422" lon="19.956338"><ele>229</ele></trkpt>
-    <trkpt lat="48.219861" lon="19.957666"><ele>235</ele></trkpt>
-    <trkpt lat="48.219233" lon="19.958529"><ele>248</ele></trkpt>
-    <trkpt lat="48.218707" lon="19.959508"><ele>261</ele></trkpt>
-    <trkpt lat="48.218596" lon="19.959893"><ele>260</ele></trkpt>
+    <trkpt lat="48.218635" lon="19.960021"><ele>261</ele></trkpt>
     <trkpt lat="48.218366" lon="19.959352"><ele>262</ele></trkpt>
     <trkpt lat="48.218282" lon="19.959022"><ele>263</ele></trkpt>
     <trkpt lat="48.218292" lon="19.958464"><ele>265</ele></trkpt>
@@ -36,9 +10,9 @@
     <trkpt lat="48.218311" lon="19.957734"><ele>270</ele></trkpt>
     <trkpt lat="48.218152" lon="19.957211"><ele>278</ele></trkpt>
     <trkpt lat="48.217810" lon="19.956625"><ele>289</ele></trkpt>
-    <trkpt lat="48.217653" lon="19.956104"><ele>296</ele></trkpt>
+    <trkpt lat="48.217620" lon="19.955927"><ele>298</ele></trkpt>
     <trkpt lat="48.217616" lon="19.955740"><ele>300</ele></trkpt>
-    <trkpt lat="48.217700" lon="19.955414"><ele>305</ele></trkpt>
+    <trkpt lat="48.217683" lon="19.955468"><ele>305</ele></trkpt>
     <trkpt lat="48.217832" lon="19.955117"><ele>309</ele></trkpt>
     <trkpt lat="48.217871" lon="19.955088"><ele>311</ele></trkpt>
     <trkpt lat="48.217832" lon="19.955117"><ele>309</ele></trkpt>
@@ -52,33 +26,7 @@
     <trkpt lat="48.218292" lon="19.958464"><ele>265</ele></trkpt>
     <trkpt lat="48.218282" lon="19.959022"><ele>263</ele></trkpt>
     <trkpt lat="48.218366" lon="19.959352"><ele>262</ele></trkpt>
-    <trkpt lat="48.218596" lon="19.959893"><ele>260</ele></trkpt>
-    <trkpt lat="48.218707" lon="19.959508"><ele>261</ele></trkpt>
-    <trkpt lat="48.219233" lon="19.958529"><ele>248</ele></trkpt>
-    <trkpt lat="48.219861" lon="19.957666"><ele>235</ele></trkpt>
-    <trkpt lat="48.220422" lon="19.956338"><ele>229</ele></trkpt>
-    <trkpt lat="48.220474" lon="19.956566"><ele>231</ele></trkpt>
-    <trkpt lat="48.220650" lon="19.956527"><ele>234</ele></trkpt>
-    <trkpt lat="48.220714" lon="19.956424"><ele>235</ele></trkpt>
-    <trkpt lat="48.220808" lon="19.956377"><ele>238</ele></trkpt>
-    <trkpt lat="48.220971" lon="19.956696"><ele>243</ele></trkpt>
-    <trkpt lat="48.221091" lon="19.957192"><ele>246</ele></trkpt>
-    <trkpt lat="48.221188" lon="19.958252"><ele>254</ele></trkpt>
-    <trkpt lat="48.221289" lon="19.958882"><ele>256</ele></trkpt>
-    <trkpt lat="48.221324" lon="19.959420"><ele>259</ele></trkpt>
-    <trkpt lat="48.221391" lon="19.959637"><ele>261</ele></trkpt>
-    <trkpt lat="48.221471" lon="19.960277"><ele>264</ele></trkpt>
-    <trkpt lat="48.221559" lon="19.960573"><ele>266</ele></trkpt>
-    <trkpt lat="48.221935" lon="19.961496"><ele>272</ele></trkpt>
-    <trkpt lat="48.222060" lon="19.961874"><ele>278</ele></trkpt>
-    <trkpt lat="48.222285" lon="19.962350"><ele>289</ele></trkpt>
-    <trkpt lat="48.222421" lon="19.962554"><ele>293</ele></trkpt>
-    <trkpt lat="48.222611" lon="19.962472"><ele>296</ele></trkpt>
-    <trkpt lat="48.222892" lon="19.962088"><ele>307</ele></trkpt>
-    <trkpt lat="48.223084" lon="19.961659"><ele>321</ele></trkpt>
-    <trkpt lat="48.223144" lon="19.961105"><ele>336</ele></trkpt>
-    <trkpt lat="48.223314" lon="19.960569"><ele>350</ele></trkpt>
-    <trkpt lat="48.223512" lon="19.960395"><ele>353</ele></trkpt>
+    <trkpt lat="48.218635" lon="19.960021"><ele>261</ele></trkpt>
   </trkseg></trk>
   <trk><name>Hrad Hajnáčka</name><desc>hajnacka-gemersky-jablonec</desc><trkseg>
     <trkpt lat="48.194652" lon="19.976505"><ele>232</ele></trkpt>
@@ -226,33 +174,6 @@
     <trkpt lat="48.196146" lon="19.977609"><ele>232</ele></trkpt>
     <trkpt lat="48.195752" lon="19.977364"><ele>233</ele></trkpt>
     <trkpt lat="48.194652" lon="19.976505"><ele>232</ele></trkpt>
-  </trkseg></trk>
-  <trk><name>Hrad Hajnáčka</name><desc>hajnacka-od-auta</desc><trkseg>
-    <trkpt lat="48.218635" lon="19.960021"><ele>261</ele></trkpt>
-    <trkpt lat="48.218366" lon="19.959352"><ele>262</ele></trkpt>
-    <trkpt lat="48.218282" lon="19.959022"><ele>263</ele></trkpt>
-    <trkpt lat="48.218292" lon="19.958464"><ele>265</ele></trkpt>
-    <trkpt lat="48.218347" lon="19.958077"><ele>269</ele></trkpt>
-    <trkpt lat="48.218311" lon="19.957734"><ele>270</ele></trkpt>
-    <trkpt lat="48.218152" lon="19.957211"><ele>278</ele></trkpt>
-    <trkpt lat="48.217810" lon="19.956625"><ele>289</ele></trkpt>
-    <trkpt lat="48.217620" lon="19.955927"><ele>298</ele></trkpt>
-    <trkpt lat="48.217616" lon="19.955740"><ele>300</ele></trkpt>
-    <trkpt lat="48.217683" lon="19.955468"><ele>305</ele></trkpt>
-    <trkpt lat="48.217832" lon="19.955117"><ele>309</ele></trkpt>
-    <trkpt lat="48.217871" lon="19.955088"><ele>311</ele></trkpt>
-    <trkpt lat="48.217832" lon="19.955117"><ele>309</ele></trkpt>
-    <trkpt lat="48.217683" lon="19.955468"><ele>305</ele></trkpt>
-    <trkpt lat="48.217616" lon="19.955740"><ele>300</ele></trkpt>
-    <trkpt lat="48.217620" lon="19.955927"><ele>298</ele></trkpt>
-    <trkpt lat="48.217810" lon="19.956625"><ele>289</ele></trkpt>
-    <trkpt lat="48.218152" lon="19.957211"><ele>278</ele></trkpt>
-    <trkpt lat="48.218311" lon="19.957734"><ele>270</ele></trkpt>
-    <trkpt lat="48.218347" lon="19.958077"><ele>269</ele></trkpt>
-    <trkpt lat="48.218292" lon="19.958464"><ele>265</ele></trkpt>
-    <trkpt lat="48.218282" lon="19.959022"><ele>263</ele></trkpt>
-    <trkpt lat="48.218366" lon="19.959352"><ele>262</ele></trkpt>
-    <trkpt lat="48.218635" lon="19.960021"><ele>261</ele></trkpt>
   </trkseg></trk>
   <trk><name>Hrad Hajnáčka</name><desc>hajnacka-surice</desc><trkseg>
     <trkpt lat="48.230298" lon="19.914659"><ele>223</ele></trkpt>
