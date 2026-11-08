@@ -17,17 +17,17 @@ import type { UiIconName } from "@/lib/uiIcons";
 // right corner, over the map.
 
 /** The menu's links, in order. Peter adds more here. */
-/** The text links the desktop pill shows before the account button (the menu keeps them too); the last only from xl, so the pill fits on one line at 1024px. */
+/** The text links the desktop pill shows before the account button (the menu keeps them too); the last only from xl, so the pill fits on one line at 1024px.
+ *  No "Získať appku" on a computer (Peter, 8 Nov): it is for phones; the footer keeps the link. */
 const DESKTOP_LINKS = [
   { href: "/ulozene", label: "Moje výlety", cls: "" },
   { href: "/vylety-z", label: "Výlety z miest", cls: "lg:hidden xl:block" },
-  { href: "/aplikacia", label: "Získať appku", cls: "lg:hidden xl:block" },
 ] as const;
 
-const MENU: { href: string; label: string; icon: UiIconName }[] = [
+const MENU: { href: string; label: string; icon: UiIconName; cls?: string }[] = [
   { href: "/ulozene", label: "Moje výlety", icon: "list" },
   { href: "/vylety-z", label: "Výlety z miest", icon: "peak" },
-  { href: "/aplikacia", label: "Získať appku", icon: "phone" },
+  { href: "/aplikacia", label: "Získať appku", icon: "phone", cls: "lg:hidden" },
   { href: "/napiste-nam", label: "Napíšte nám", icon: "chat" },
   { href: "/nahlasit-chybu", label: "Nahlásiť chybu", icon: "flag" },
   { href: "/o-nas", label: "O nás", icon: "person" },
@@ -246,7 +246,7 @@ function MenuList() {
   return (
     <nav aria-label={t("Menu")} className="flex flex-col">
       {MENU.map((m) => (
-        <LangLink key={m.href} href={m.href} className={row}>
+        <LangLink key={m.href} href={m.href} className={`${row} ${m.cls ?? ""}`}>
           <span className="text-[var(--muted)]">
             <UiIcon name={m.icon} size={19} />
           </span>
