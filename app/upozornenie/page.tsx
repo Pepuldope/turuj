@@ -27,7 +27,10 @@ export default function DisclaimerPage() {
           <a href="https://www.tanap.sk">TANAP</a>).
         </li>
         <li>
-          Lavínovú situáciu v zime na <a href="https://www.hzs.sk">hzs.sk</a>.
+          Lavínovú predpoveď v zime na <a href="https://laviny.sk">laviny.sk</a>.
+        </li>
+        <li>
+          V horských oblastiach sa zapíšte do knihy vychádzok, napríklad v <a href="https://app.hzs.sk">aplikácii HZS</a>.
         </li>
         <li>Parkovanie a spoje. Údaje o parkoviskách pochádzajú z OpenStreetMap a nemusia byť aktuálne.</li>
       </ul>
@@ -35,6 +38,13 @@ export default function DisclaimerPage() {
       <h2>V núdzi</h2>
       <p>
         Horská záchranná služba: <a href="tel:18300">18 300</a>, tiesňová linka <a href="tel:112">112</a>.
+      </p>
+
+      <h2>Kto platí záchranu</h2>
+      <p>
+        Dospelý, ktorému Horská záchranná služba v horských oblastiach pomáha alebo ktorého hľadá, platí náklady
+        záchrany (§ 11 ods. 2 písm. e) zákona č. 544/2002 Z. z.). Odporúčame poistenie do hôr, uzavriete ho aj v{" "}
+        <a href="https://app.hzs.sk">aplikácii HZS</a>.
       </p>
 
       <h2>Zodpovednosť</h2>

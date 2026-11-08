@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { approachMin, atDayMinute, COMFORT_MARGIN_MIN, hikeMinutes, planDay, SAFE_MARGIN_MIN } from "./dayPlan";
+import { outsideDaylight, approachMin, atDayMinute, COMFORT_MARGIN_MIN, hikeMinutes, planDay, SAFE_MARGIN_MIN } from "./dayPlan";
 
 const BRATISLAVA = { lat: 48.1486, lon: 17.1077 };
 const MIN = 60000;
@@ -117,5 +117,20 @@ describe("approachMin", () => {
   it("rounds the walk to the trail up to 5 minutes", () => {
     expect(approachMin(200)).toBe(5);
     expect(approachMin(627)).toBe(15);
+  });
+});
+
+describe("outsideDaylight", () => {
+  const sunset = new Date(2026, 9, 10, 17, 0);
+  const at = (h: number) => new Date(2026, 9, 10, h, 0);
+  it("is late when the hike ends after sunset, even if it also started in the dark", () => {
+    expect(outsideDaylight({ hikeEnd: at(18), sunset, startsInDark: false })).toBe("late");
+    expect(outsideDaylight({ hikeEnd: at(18), sunset, startsInDark: true })).toBe("late");
+  });
+  it("is early when only the start is before sunrise", () => {
+    expect(outsideDaylight({ hikeEnd: at(14), sunset, startsInDark: true })).toBe("early");
+  });
+  it("is null inside daylight", () => {
+    expect(outsideDaylight({ hikeEnd: at(14), sunset, startsInDark: false })).toBeNull();
   });
 });

@@ -3,7 +3,9 @@
 import { setTripStops } from "@/lib/tripStops";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { activeClosures } from "@/lib/closures";
 import { planDay } from "@/lib/dayPlan";
+import { UiIcon } from "@/components/UiIcon";
 import { isoDate } from "@/lib/days";
 import { VERDICT_SHORT, formatDateSk, formatDuration, formatTime } from "@/lib/format";
 import { useSavedTrips } from "@/lib/savedTrips";
@@ -183,6 +185,12 @@ function TripList({
               {" · "}
               {trip.offline === "ok" ? t("funguje bez signálu") : t("len so signálom")}
             </p>
+            {!past && trip.closures && activeClosures(trip.closures, trip.date).length > 0 && (
+              <p className="flex items-start gap-1.5 text-[13px] font-semibold text-[var(--danger)]">
+                <UiIcon name="warn" size={16} className="mt-0.5 shrink-0" />
+                <span>{t("Chodník je v deň výletu ({date}) uzavretý", { date: formatDateSk(trip.date, lang) })}</span>
+              </p>
+            )}
             {plan && (
               <>
                 <div className="-mx-4 overflow-hidden border-y border-[var(--border)]">

@@ -77,10 +77,37 @@ function Row({ title, teaser, children }: { title: string; teaser: string | null
   );
 }
 
+/** When the TANAP daylight rule below was last read in the decree. */
+const TANAP_DAYLIGHT_CHECKED = "2026-10-31";
+
+/** TANAP: outside villages, walking only from sunrise to sunset (a yellow advice line; the closure rule itself stays red above). */
+function TanapDaylight({ lang }: { lang: Lang }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="flex items-start gap-1.5 rounded-xl bg-[var(--warn-bg)] p-3 font-semibold text-[var(--warn)]">
+        <UiIcon name="warn" size={16} className="mt-0.5 shrink-0" />
+        <span>{tr(lang, "Len cez deň: mimo obcí sa v TANAP-e smie chodiť od východu do západu slnka. Výnimkou je cesta na chatu alebo hotel, kde prespíte.")}</span>
+      </p>
+      <p className="text-xs">
+        <a
+          href="https://www.minv.sk/swift_data/source/verejna_sprava/vestnik_vlady_sr_rok_2022-2023/2023/vyhlaska_26.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          {tr(lang, "vyhláška č. 26/2023, § 4")}
+        </a>{" "}
+        · {tr(lang, "Overené: {date}", { date: formatDateSk(TANAP_DAYLIGHT_CHECKED, lang) })}
+      </p>
+    </div>
+  );
+}
+
 /** "Uzávery a poplatky" body: the closure rule with its source and date, and the fees. No rule is "Stav chodníka neoverený". */
-function ClosuresBody({ lang, closures, fees }: { lang: Lang; closures: Closure[]; fees: Fee[] }) {
+function ClosuresBody({ lang, closures, fees, region }: { lang: Lang; closures: Closure[]; fees: Fee[]; region: string | null }) {
   return (
     <>
+      {region === "Tatry" && <TanapDaylight lang={lang} />}
       {closures.length === 0 ? <p>{closureSentence(lang, closures)}</p> : <ClosureRules closures={closures} lang={lang} />}
       {closures.length > 0 && <p>{tr(lang, "Mimo týchto dátumov stav chodníka neručíme, pred výletom ho overte u správcu územia.")}</p>}
       {fees.length > 0 ? (
@@ -104,13 +131,15 @@ function ClosuresBody({ lang, closures, fees }: { lang: Lang; closures: Closure[
   );
 }
 
-/** Regions whose trip pages get the mountain-rescue row (research report 05 #6). Add Malá Fatra, Slovenský raj, ... here. */
+/** Regions whose trip pages get the mountain-rescue row (research report 05 #6). */
 const HZS_REGIONS = new Set(["Tatry", "Nízke Tatry"]);
+/** Regions with the short row: the rescue number, the trip log and the source (no insurance or avalanche lines). */
+const HZS_SHORT_REGIONS = new Set(["Malá Fatra", "Veľká Fatra", "Slovenský raj", "Pieniny"]);
 /** When the HZS facts below were last read on hzs.sk and app.hzs.sk. */
 const HZS_CHECKED = "2026-11-07";
 
-/** "Pred túrou: horská služba" body: the rescue number, the HZS app's trip log, insurance, the avalanche forecast. */
-function HzsBody({ lang }: { lang: Lang }) {
+/** "Pred túrou: horská služba" body: the rescue number, the HZS app's trip log, insurance, the avalanche forecast. `short`: only the number, the trip log and the source. */
+function HzsBody({ lang, short = false }: { lang: Lang; short?: boolean }) {
   return (
     <>
       <p>
@@ -129,16 +158,20 @@ function HzsBody({ lang }: { lang: Lang }) {
         <a href="https://app.hzs.sk" target="_blank" rel="noopener noreferrer" className="underline">
           {tr(lang, "aplikácii HZS")}
         </a>
-        . {tr(lang, "Večer pred túrou vám pošle výstrahy pre oblasť, a keď sa po návrate neozvete, záchranári vám prídu na pomoc.")}
+        .{!short && <> {tr(lang, "Večer pred túrou vám pošle výstrahy pre oblasť, a keď sa po návrate neozvete, záchranári vám prídu na pomoc.")}</>}
       </p>
-      <p>{tr(lang, "Poistenie do hôr preplatí zásah horskej služby, uzavriete ho aj v aplikácii.")}</p>
-      <p>
-        {tr(lang, "Ak idete v zime nad hranicu lesa, pozrite si lavínovú predpoveď na")}{" "}
-        <a href="https://laviny.sk" target="_blank" rel="noopener noreferrer" className="underline">
-          laviny.sk
-        </a>
-        .
-      </p>
+      {!short && (
+        <>
+          <p>{tr(lang, "Poistenie do hôr preplatí zásah horskej služby, uzavriete ho aj v aplikácii.")}</p>
+          <p>
+            {tr(lang, "Ak idete v zime nad hranicu lesa, pozrite si lavínovú predpoveď na")}{" "}
+            <a href="https://laviny.sk" target="_blank" rel="noopener noreferrer" className="underline">
+              laviny.sk
+            </a>
+            .
+          </p>
+        </>
+      )}
       <p className="text-xs">
         {tr(lang, "Zdroj")}:{" "}
         <a href="https://www.hzs.sk" target="_blank" rel="noopener noreferrer" className="underline">
@@ -287,7 +320,7 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
       )}
 
       <Row title={tr(lang, "Uzávery a poplatky")} teaser={closureTeaser(lang, closures)}>
-        <ClosuresBody lang={lang} closures={closures} fees={fees} />
+        <ClosuresBody lang={lang} closures={closures} fees={fees} region={region ?? null} />
       </Row>
 
       {months.length > 0 && (
@@ -350,9 +383,9 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
         </Row>
       )}
 
-      {region && HZS_REGIONS.has(region) && (
+      {region && (HZS_REGIONS.has(region) || HZS_SHORT_REGIONS.has(region)) && (
         <Row title={tr(lang, "Pred túrou: horská služba")} teaser={tr(lang, "Záchranári 18 300 · aplikácia HZS a kniha túr")}>
-          <HzsBody lang={lang} />
+          <HzsBody lang={lang} short={HZS_SHORT_REGIONS.has(region)} />
         </Row>
       )}
 

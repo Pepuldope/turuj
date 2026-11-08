@@ -28,7 +28,10 @@ export default function DisclaimerPage() {
           <a href="https://www.tanap.sk">TANAP</a>).
         </li>
         <li>
-          The avalanche situation in winter on <a href="https://www.hzs.sk">hzs.sk</a>.
+          The avalanche forecast in winter on <a href="https://laviny.sk">laviny.sk</a>.
+        </li>
+        <li>
+          In mountain areas, sign in to the trip log, for example in the <a href="https://app.hzs.sk">HZS app</a>.
         </li>
         <li>Parking and public transport. Car park data comes from OpenStreetMap and may be out of date.</li>
       </ul>
@@ -36,6 +39,13 @@ export default function DisclaimerPage() {
       <h2>In an emergency</h2>
       <p>
         Mountain Rescue Service: <a href="tel:18300">18 300</a>, emergency number <a href="tel:112">112</a>.
+      </p>
+
+      <h2>Who pays for a rescue</h2>
+      <p>
+        An adult whom the Mountain Rescue Service helps or searches for in the mountain areas pays the cost of the
+        rescue (Section 11(2)(e) of Act No. 544/2002). We recommend mountain insurance, which you can also take out in
+        the <a href="https://app.hzs.sk">HZS app</a>.
       </p>
 
       <h2>Responsibility</h2>

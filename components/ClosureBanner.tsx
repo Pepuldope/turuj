@@ -8,9 +8,19 @@ import { LangLink, useLang, useT } from "@/lib/i18n";
 
 interface Props {
   closures: Closure[];
+  /** The trip's region: where we know the park administration's closure page, the "no data" box links to it. */
+  region?: string | null;
 }
 
-export function ClosureBanner({ closures }: Props) {
+/** Who publishes trail closures for the region (the park administration's own page). Regions not listed get no link. */
+const PARK_CLOSURES: Record<string, { name: string; url: string }> = {
+  Tatry: { name: "Správa TANAP", url: "https://www.tanap.sk" },
+  "Nízke Tatry": { name: "Správa NAPANT", url: "https://www.napant.sk" },
+  "Malá Fatra": { name: "Správa NP Malá Fatra", url: "https://www.npmalafatra.sk/navstevnici/uzavery-turistickych-chodnikov/" },
+  Pieniny: { name: "Správa PIENAP", url: "https://pienap.sk" },
+};
+
+export function ClosureBanner({ closures, region = null }: Props) {
   // The day the trip page plans for (picked day, else today or tomorrow).
   const { date } = useTripDay();
   const t = useT();
@@ -20,12 +30,22 @@ export function ClosureBanner({ closures }: Props) {
   // closure rows at all for this trail, say so plainly instead of implying
   // "otvorené".
   if (closures.length === 0) {
+    const park = region ? PARK_CLOSURES[region] : undefined;
     return (
       <div className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4">
         <p className="font-semibold">{t("Stav chodníka neoverený")}</p>
         <p className="text-sm opacity-70">
           {t("Pre túto trasu nemáme žiadne údaje o uzáverách. Pred výletom si stav overte na inom zdroji.")}
         </p>
+        {park && (
+          <p className="text-sm">
+            {t("Uzávery v tejto oblasti zverejňuje")}{" "}
+            <a href={park.url} target="_blank" rel="noopener noreferrer" className="underline">
+              {t(park.name)}
+            </a>
+            .
+          </p>
+        )}
       </div>
     );
   }

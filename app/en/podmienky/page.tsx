@@ -25,7 +25,7 @@ export default function TermsPage() {
       <p>Optional, from age 16. One person, one account, your real email. You can delete it at once with “Delete account” in the account menu. We may block an account that breaks these rules or endangers others, and tell you why.</p>
       <h2>Do not</h2>
       <p>Break the law or others’ rights, scrape or overload the site, or try to get into accounts or our systems. Code, texts and design are all rights reserved; map data has its own licences.</p>
-      <h2>Quick reviews</h2>
+      <h2 id="b6">Quick reviews</h2>
       <p>Only for trips you really did; no paid, fake or bulk reviews, and none for places you are personally tied to. Reviews are not verified; we limit them per address, remove obvious spam and never edit them. Totals show from three reviews. Report illegal content to info@turuj.sk or through “Report a problem”; a person on the team decides, and you can ask the other team member to review that decision within 6 months.</p>
       <h2>Data and liability</h2>
       <p>Map data © OpenStreetMap contributors (ODbL); other sources are on <LangLink href="/zdroje">Sources</LangLink>. We give data in good faith and fix errors we learn about. We are not liable for decisions you make on the trail or for changes on the ground after our data date; nothing here limits liability the law does not allow us to limit, such as for harm to life or health caused by our fault.</p>
