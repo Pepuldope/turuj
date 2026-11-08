@@ -3,6 +3,7 @@
 import { UiIcon } from "@/components/UiIcon";
 import { useTripStops } from "@/lib/tripStops";
 import { useState } from "react";
+import type { ReactNode } from "react";
 import type { BBox, Closure, LatLng } from "@/lib/types";
 import type { TripProfile } from "@/lib/tripProfile";
 import { offlineMapUrls } from "@/lib/tiles";
@@ -34,6 +35,8 @@ interface Props extends ShareInfo {
   closures?: Closure[];
   /** Where the walk starts (parking, stop or trailhead), as the calendar event's place. */
   where?: { name: string; location: LatLng } | null;
+  /** The navigation buttons: they go after the calendar and before the app block. */
+  nav?: ReactNode;
 }
 
 type Status = "idle" | "saving" | "error";
@@ -86,7 +89,7 @@ const secondary =
  * device and stores it for offline use. Right after saving, one tap offers to
  * send the plan to the group.
  */
-export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], where = null, ...trip }: Props) {
+export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], where = null, nav = null, ...trip }: Props) {
   const { slug, name } = trip;
   const { trips, save, patch, remove } = useSavedTrips();
   const { start } = useUserLocation();
@@ -188,39 +191,18 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
         </button>
       )}
 
+      {/* Order (Peter, 8 Nov): the one-time question first, then saved + share as one box, the calendar, navigation, the app. */}
+      {saved && askHeard && <HeardFrom onDone={() => setAskHeard(false)} />}
+
       {saved && askShare && (
-        <div role="status" className="flex flex-col gap-2 rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
-          <p>
+        <div className="flex flex-col gap-2 rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
+          <p role="status">
             <strong>{t("Uložené.")}</strong> {t("Nájdete to v")}{" "}
             <LangLink href="/ulozene" className="underline">
               {t("Mojich výletoch")}
             </LangLink>
             .
           </p>
-        </div>
-      )}
-
-      {saved && !askShare && status !== "saving" && (
-        <p className="text-sm">
-          {t("Uložené na")} <strong>{dayAfterNa(saved.date, lang)}</strong> {t("o")} <strong>{saved.time}</strong>
-          {saved.offline === "ok" ? t(", funguje aj bez signálu. ") : ". "}
-          <button type="button" onClick={() => remove(slug)} className="text-[var(--muted)] underline">
-            {t("Odstrániť")}
-          </button>
-        </p>
-      )}
-
-      {saved && status !== "saving" && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch(slug, { eve })} />}
-
-      {status === "error" && (
-        <p className="flex items-start gap-1.5 text-sm text-[var(--warn)]">
-          <UiIcon name="warn" size={16} className="mt-0.5" />
-          <span>{t("Výlet je uložený, ale kópia bez signálu sa nepodarila. Skúste to znova so signálom.")}</span>
-        </p>
-      )}
-
-      {saved && askShare && (
-        <div className="flex flex-col gap-2 rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
           <p className="font-semibold">{t("Zdieľať výlet?")}</p>
           <div className="flex flex-wrap gap-2">
             <ShareButton
@@ -240,9 +222,28 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
         </div>
       )}
 
-      {saved && askHeard && <HeardFrom onDone={() => setAskHeard(false)} />}
+      {saved && !askShare && status !== "saving" && (
+        <p className="text-sm">
+          {t("Uložené na")} <strong>{dayAfterNa(saved.date, lang)}</strong> {t("o")} <strong>{saved.time}</strong>
+          {saved.offline === "ok" ? t(", funguje aj bez signálu. ") : ". "}
+          <button type="button" onClick={() => remove(slug)} className="text-[var(--muted)] underline">
+            {t("Odstrániť")}
+          </button>
+        </p>
+      )}
 
       {!askShare && share}
+
+      {status === "error" && (
+        <p className="flex items-start gap-1.5 text-sm text-[var(--warn)]">
+          <UiIcon name="warn" size={16} className="mt-0.5" />
+          <span>{t("Výlet je uložený, ale kópia bez signálu sa nepodarila. Skúste to znova so signálom.")}</span>
+        </p>
+      )}
+
+      {saved && status !== "saving" && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch(slug, { eve })} />}
+
+      {nav}
 
       {status !== "saving" && !installed && (
         <div className="flex items-center gap-3 rounded-xl bg-[var(--sun-soft)] p-3 text-sm">
