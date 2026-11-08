@@ -23,6 +23,8 @@ let bannerShown = false;
 
 // Notes sit on a card.
 const note = "w-fit rounded-lg bg-[var(--card-bg)] px-2.5 py-1.5 text-xs font-medium";
+/** A warning note: its sign beside the text, both in the warning colour. */
+const warnNote = "flex items-start gap-1.5 text-[var(--warn)] [&>svg]:mt-px";
 
 /**
  * "Odkiaľ vyrážate?" as the page's first question: a card open until a start is
@@ -50,13 +52,12 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
   const listOpen = suggestions.length > 0 && !listShut && search !== "results";
   const activeId = listOpen && active >= 0 && active < suggestions.length ? `${listId}-${active}` : undefined;
   const n = suggestions.length;
-  const liveText = !listOpen && !(search === "searching" || search === "empty")
+  // Errors ("nothing found", "didn't load", location problems) are role="alert" lines below, so they are not repeated here.
+  const liveText = !listOpen && search !== "searching"
     ? ""
     : search === "searching"
       ? t("Hľadáme miesto…")
-      : search === "empty"
-        ? t("Nič sme nenašli")
-        : n === 1
+      : n === 1
           ? t("{n} návrh", { n })
           : n < 5
             ? t("{n} návrhy", { n })
@@ -199,7 +200,7 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
       {expanded && (
         <div className="flex flex-col gap-2 pt-1">
           <form
-            className="flex h-12 items-center gap-2 rounded-xl border-2 border-[var(--accent)] bg-[var(--card-bg)] px-3 shadow-[0_2px_8px_rgba(23,105,209,0.12)]"
+            className="flex h-12 items-center gap-2 rounded-xl border-2 border-[var(--accent)] bg-[var(--card-bg)] px-3 shadow-[0_2px_8px_rgba(23,105,209,0.12)] has-[input:focus]:ring-1 has-[input:focus]:ring-[var(--accent)]"
             onSubmit={(e) => {
               e.preventDefault();
               runSearch();
@@ -236,7 +237,7 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
               aria-autocomplete="list"
               aria-activedescendant={activeId}
               autoComplete="off"
-              className="min-w-0 flex-1 rounded bg-transparent text-base focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"
+              className="min-w-0 flex-1 rounded bg-transparent text-base outline-none"
             />
             {query.trim().length >= 2 && (
               <button type="submit" className="min-h-10 px-1 text-sm font-bold text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]">
@@ -269,8 +270,8 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
             </ul>
           )}
           {search === "searching" && <p className={`${note} text-[var(--muted)]`}>{t("Hľadáme miesto…")}</p>}
-          {search === "empty" && <p className={`${note} text-[var(--warn)]`}>{t("Také miesto sme nenašli.")}</p>}
-          {search === "error" && <p className={`${note} text-[var(--warn)]`}>{t("Toto sa nenačítalo. Skúste to znova.")}</p>}
+          {search === "empty" && <p role="alert" className={`${note} ${warnNote}`}><UiIcon name="warn" size={14} />{t("Také miesto sme nenašli.")}</p>}
+          {search === "error" && <p role="alert" className={`${note} ${warnNote}`}><UiIcon name="warn" size={14} />{t("Toto sa nenačítalo. Skúste to znova.")}</p>}
           {search === "results" && (
             <ul className="flex flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card-bg)]">
               {results.map((p) => (
@@ -343,7 +344,8 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
       )}
 
       {message && status !== "locating" && (
-        <p role="status" className={`${note} text-[var(--warn)]`}>
+        <p role="alert" className={`${note} ${warnNote}`}>
+          <UiIcon name="warn" size={14} />
           {t(message)}
         </p>
       )}

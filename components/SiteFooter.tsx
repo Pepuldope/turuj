@@ -27,13 +27,13 @@ const GROUPS: { title: string; links: FooterLink[] }[] = [
   {
     title: "O projekte",
     links: [
-      { href: "/ako-to-funguje", label: "Ako to funguje", icon: "list" },
+      { href: "/ako-to-funguje", label: "Ako to funguje", icon: "help" },
       { href: "/o-nas", label: "O nás", icon: "person" },
       { href: "/sukromie", label: "Súkromie", icon: "lock" },
-      { href: "/pristupnost", label: "Prístupnosť", icon: "list" },
-      { href: "/podmienky", label: "Podmienky", icon: "list" },
+      { href: "/pristupnost", label: "Prístupnosť", icon: "access" },
+      { href: "/podmienky", label: "Podmienky", icon: "doc" },
       { href: "/upozornenie", label: "Upozornenie", icon: "warn" },
-      { href: "/uzavery", label: "Uzávery", icon: "warn" },
+      { href: "/uzavery", label: "Uzávery", icon: "barrier" },
     ],
   },
 ];

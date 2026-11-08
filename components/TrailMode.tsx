@@ -1,5 +1,6 @@
 "use client";
 
+import { UiIcon } from "@/components/UiIcon";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TrailMap } from "@/components/TrailMapClient";
 import { TrailReminders, endReminders } from "@/components/TrailReminders";
@@ -271,7 +272,7 @@ export function TrailMode({ trip, onClose }: { trip: SavedTrip; onClose: () => v
         </div>
 
         {pos.offRoute ? (
-          <p className="font-semibold text-[var(--warn)]">{t("Ste asi {m} od trasy.", { m: formatWalk(Math.round(pos.offM / 10) * 10, lang) })}</p>
+          <p className="flex items-start gap-1.5 font-semibold text-[var(--warn)]"><UiIcon name="warn" size={16} className="mt-0.5" /><span>{t("Ste asi {m} od trasy.", { m: formatWalk(Math.round(pos.offM / 10) * 10, lang) })}</span></p>
         ) : (
           <ul className="flex flex-col gap-1.5 text-base">
             <li className="flex items-center gap-2.5">
@@ -298,12 +299,13 @@ export function TrailMode({ trip, onClose }: { trip: SavedTrip; onClose: () => v
           <p className="tabular-nums">{t("Pri cieli buďte najneskôr o {at}, aby ste boli späť za svetla.", { at: clockShort(time.latestAtGoal) })}</p>
         )}
         {tooLate && time.backIfTurned && (
-          <p className="font-semibold text-[var(--warn)]">
-            {t("K cieľu a späť za svetla to už nestihnete. Ak sa otočíte teraz, budete späť okolo {at}.", { at: clockShort(time.backIfTurned) })}
+          <p className="flex items-start gap-1.5 font-semibold text-[var(--warn)]">
+            <UiIcon name="warn" size={16} className="mt-0.5" />
+            <span>{t("K cieľu a späť za svetla to už nestihnete. Ak sa otočíte teraz, budete späť okolo {at}.", { at: clockShort(time.backIfTurned) })}</span>
           </p>
         )}
         {!time.atGoal && time.late && sunset && (
-          <p className="font-semibold text-[var(--warn)]">{t("Týmto tempom budete späť až po západe slnka ({at}).", { at: clockShort(sunset) })}</p>
+          <p className="flex items-start gap-1.5 font-semibold text-[var(--warn)]"><UiIcon name="warn" size={16} className="mt-0.5" /><span>{t("Týmto tempom budete späť až po západe slnka ({at}).", { at: clockShort(sunset) })}</span></p>
         )}
         {fix.accuracy > ROUGH_M && <p className="text-[var(--muted)]">{t("Poloha je zatiaľ nepresná (±{m}).", { m: formatWalk(Math.round(fix.accuracy / 10) * 10, lang) })}</p>}
         {!walk.loop && !pos.pastGoal && (

@@ -1,5 +1,6 @@
 "use client";
 
+import { UiIcon } from "@/components/UiIcon";
 import { useEffect, useState } from "react";
 import { applyOptOut, optedOut } from "@/lib/analytics";
 import { setTeamAccount, useAccount } from "@/lib/account";
@@ -31,9 +32,10 @@ export function OptOutNote() {
   return (
     <div className="flex flex-col gap-2 text-xs">
       <p className="opacity-70">
+        {/* The team-account switch below shows only when signed in; signed out, point to signing in instead. */}
         {off
-          ? "Tento prehliadač sa nepočíta (zrušíte cez ?nepocitat=0 alebo cez tímový účet nižšie)."
-          : "Tento prehliadač sa počíta. Jeden prehliadač vypnete cez ?nepocitat=1, všetky zariadenia tímu cez tímový účet nižšie."}
+          ? `Tento prehliadač sa nepočíta (zrušíte cez ?nepocitat=0 alebo cez tímový účet ${account ? "nižšie" : "po prihlásení"}).`
+          : `Tento prehliadač sa počíta. Jeden prehliadač vypnete cez ?nepocitat=1, všetky zariadenia tímu cez tímový účet ${account ? "nižšie" : "po prihlásení"}.`}
       </p>
       {loaded && account && (
         <div className="flex flex-wrap items-center gap-2">
@@ -45,7 +47,7 @@ export function OptOutNote() {
           >
             {team ? "Toto nie je tímový účet: počítať ma znova" : "Toto je tímový účet: nepočítať ma na žiadnom zariadení"}
           </button>
-          {failed && <span role="status" className="text-[var(--warn)]">Nepodarilo sa uložiť. Skúste to znova.</span>}
+          {failed && <span role="status" className="inline-flex items-center gap-1.5 text-[var(--warn)]"><UiIcon name="warn" size={14} />Nepodarilo sa uložiť. Skúste to znova.</span>}
         </div>
       )}
     </div>

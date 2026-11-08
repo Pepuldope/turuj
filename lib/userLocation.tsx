@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { track } from "@/lib/analytics";
 import type { StartHow } from "@/lib/analytics";
 import { reverseTown } from "@/lib/geocode";
@@ -136,21 +137,36 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
       setAuto(true);
       setStatus("ok");
     }
-    // A town page's trip link (?z=zilina) gives a trip page a start for this visit, never over one already chosen.
-    const z = new URLSearchParams(window.location.search).get("z");
-    if (z && !restored && !cached && /\/trasa\//.test(window.location.pathname)) {
-      import("@/lib/trips")
-        .then(({ getTowns }) => {
-          const town = getTowns().find((t) => t.id === z);
-          if (!town) return;
-          startHow.current = "town_page";
-          // Held in memory only: "this visit", and a start picked meanwhile (or a fix) wins.
-          setManual((cur) => cur ?? { lat: town.location.lat, lon: town.location.lon, label: town.name });
-        })
-        .catch(() => {});
-    }
     setReady(true);
   }, []);
+
+  // A town page's trip link (?z=zilina) gives a trip page a start for this visit, never over one already chosen.
+  // Read on every navigation, not only on the first load: this provider sits in the layout, so tapping a
+  // town-page tile (an in-app navigation) doesn't remount it, and a mount-only read missed the town.
+  const pathname = usePathname();
+  const townStart = useRef<Omit<StartPoint, "source"> | null>(null);
+  useEffect(() => {
+    if (!ready || !/\/trasa\//.test(pathname)) return;
+    const z = new URLSearchParams(window.location.search).get("z");
+    // A stored start (typed earlier, or a GPS fix) always wins.
+    if (!z || readManual() || readCached()) return;
+    let live = true;
+    import("@/lib/trips")
+      .then(({ getTowns }) => {
+        const town = getTowns().find((t) => t.id === z);
+        if (!town || !live) return;
+        const next = { lat: town.location.lat, lon: town.location.lon, label: town.name };
+        const prevTown = townStart.current;
+        townStart.current = next;
+        if (startHow.current === null) startHow.current = "town_page";
+        // Held in memory only ("this visit"): a start picked meanwhile wins; an earlier town page's start doesn't.
+        setManual((cur) => (cur && cur !== prevTown ? cur : next));
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [pathname, ready]);
 
   const locate = useCallback((silent = false) => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {

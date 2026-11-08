@@ -1,4 +1,5 @@
 import { IntentLink } from "@/lib/i18n";
+import { UiIcon } from "@/components/UiIcon";
 import { formatDurationShort } from "@/lib/format";
 import { kindSvg } from "@/lib/kindIcons";
 import { GOAL_COLOUR } from "@/lib/palette";
@@ -47,8 +48,9 @@ export function TownTile({ tile, lang = "sk", townId }: { tile: Tile; lang?: Lan
         )}
         {tile.closedSeason && (
           // Seasonal park closure (TANAP ridges): visible before anyone picks a closed summit from Google.
-          <span className="absolute right-1.5 bottom-1.5 left-1.5 rounded-lg bg-[var(--danger-bg)] px-1 py-0.5 text-center text-[11px] font-bold whitespace-nowrap text-[var(--danger)]">
-            {tr(lang, "zatvorené {when}", { when: tile.closedSeason })}
+          <span className="absolute right-1 bottom-1.5 left-1 flex items-center justify-center gap-0.5 overflow-hidden rounded-lg bg-[var(--danger-bg)] px-1 py-0.5 text-[11px] font-bold whitespace-nowrap text-[var(--danger)]">
+            <UiIcon name="warn" size={11} />
+            <span className="min-w-0 truncate">{tr(lang, "zatvorené {when}", { when: tile.closedSeason })}</span>
           </span>
         )}
       </span>

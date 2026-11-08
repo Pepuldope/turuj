@@ -7,8 +7,11 @@ import { useSavedTrips } from "@/lib/savedTrips";
 import { LangLink, useT } from "@/lib/i18n";
 import { UiIcon } from "@/components/UiIcon";
 
-const KEY = "turuj-app-bar";
+/** "closed": the app offer was dismissed, here or on the save card. */
+export const APP_BAR_KEY = "turuj-app-bar";
 const NUDGE_AFTER_SAVES = 2;
+/** Scrolled this far, the trip search has left the bottom of a phone's first screen. */
+const SCROLL_PX = 160;
 
 /** Phone home page: a bar at the bottom pointing to /aplikacia, until closed once (Peter, 2026-10-28).
  *  Only at the right moment (C92, 2026-11-07): after the 2nd saved trip or a "Bol som tu", never on a
@@ -24,7 +27,7 @@ export function AppBar({ hidden }: { hidden?: boolean }) {
   useEffect(() => {
     let closed = false;
     try {
-      closed = localStorage.getItem(KEY) === "closed";
+      closed = localStorage.getItem(APP_BAR_KEY) === "closed";
     } catch {}
     if (closed || !proven) return;
     // A few seconds in, so the first look at the page stays clean.
@@ -32,14 +35,37 @@ export function AppBar({ hidden }: { hidden?: boolean }) {
     return () => clearTimeout(id);
   }, [proven]);
 
+  // The bar sits at the bottom of the screen, where the trip search is on a phone's first screen, and
+  // the search results ran under it while typing. So it waits until the page is scrolled (the search
+  // has stuck to the top by then) and steps aside while a text field has focus.
+  const [scrolled, setScrolled] = useState(false);
+  const [typing, setTyping] = useState(false);
+  useEffect(() => {
+    const isField = (el: Element | null) =>
+      el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && !["button", "checkbox", "radio", "range", "submit"].includes(el.type));
+    const onScroll = () => setScrolled(window.scrollY > SCROLL_PX);
+    const onFocus = () => setTyping(isField(document.activeElement));
+    const onBlur = () => requestAnimationFrame(onFocus);
+    const id = requestAnimationFrame(onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    document.addEventListener("focusin", onFocus);
+    document.addEventListener("focusout", onBlur);
+    return () => {
+      cancelAnimationFrame(id);
+      window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("focusin", onFocus);
+      document.removeEventListener("focusout", onBlur);
+    };
+  }, []);
+
   function close() {
     setShow(false);
     try {
-      localStorage.setItem(KEY, "closed");
+      localStorage.setItem(APP_BAR_KEY, "closed");
     } catch {}
   }
 
-  if (!show || installed || hidden) return null;
+  if (!show || installed || hidden || !scrolled || typing) return null;
   return (
     <div className="fixed inset-x-3 bottom-[calc(12px+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-md items-center gap-3 rounded-2xl bg-[#14233b] p-3 pl-4 text-white shadow-[var(--shadow-float)]">
       <span className="max-[359px]:hidden"><UiIcon name="phone" size={22} /></span>

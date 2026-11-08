@@ -750,6 +750,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
 
   const map = (
     <div className="relative h-full w-full" onPointerDownCapture={dropMapHint} onWheelCapture={dropMapHint}>
+      <p className="sr-only">{t("Mapa ukazuje tie isté výlety ako zoznam výletov.")}</p>
       <BrowseMap
         trips={mapTrips}
         areas={areas}
@@ -802,11 +803,13 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
 
   const tools = (
     <div ref={toolsRef} className="relative flex flex-col gap-2">
-      <div className="flex gap-2">
+      {/* 16 px text: iPhone Safari zooms the whole page into any field with smaller text. On phones under
+          420 px the Filtre button is icon-only and the padding tighter, so the placeholder still fits at 360 px. */}
+      <div className="flex gap-1.5 min-[420px]:gap-2">
         <label className="relative flex-1">
           <span className="sr-only">{t("Hľadať výlet alebo pohorie")}</span>
-          <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-[var(--muted)]">
-            <UiIcon name="search" size={18} />
+          <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[var(--muted)] min-[420px]:left-3.5">
+            <UiIcon name="search" size={16} />
           </span>
           <input
             type="search"
@@ -833,7 +836,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
             }}
             placeholder={t("Hľadať výlet alebo pohorie")}
             autoComplete="off"
-            className="h-11 w-full rounded-full border border-[var(--border)] bg-[var(--card-bg)] pr-3 pl-10 text-[15px] shadow-[var(--shadow-float)] lg:shadow-none"
+            className="h-11 w-full rounded-full border border-[var(--border)] bg-[var(--card-bg)] pr-2 pl-8 text-base shadow-[var(--shadow-float)] outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] min-[420px]:pr-3 min-[420px]:pl-10 lg:shadow-none"
           />
         </label>
         <button
@@ -843,12 +846,18 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
             setFiltersOpen((v) => !v);
             setSearchOpen(false);
           }}
-          className={`inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-semibold shadow-[var(--shadow-float)] lg:shadow-none ${
+          className={`inline-flex h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 text-sm font-semibold min-[420px]:px-4 shadow-[var(--shadow-float)] lg:shadow-none ${
             filterCount ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]" : "border-[var(--border)] bg-[var(--card-bg)]"
           }`}
         >
           <UiIcon name="filter" size={16} />
-          {filterCount ? `${t("Filtre")} · ${filterCount}` : t("Filtre")}
+          {/* Under 420 px the word gives its room to the search placeholder; it is still read out. */}
+          <span className="max-[419px]:sr-only">{filterCount ? `${t("Filtre")} · ${filterCount}` : t("Filtre")}</span>
+          {filterCount ? (
+            <span aria-hidden="true" className="min-[420px]:hidden">
+              {filterCount}
+            </span>
+          ) : null}
         </button>
       </div>
 
@@ -988,7 +997,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
   };
 
   const list = (
-    <section className="flex flex-col gap-3">
+    <section id="vylety" tabIndex={-1} className="flex flex-col gap-3 outline-none">
       {/* Only the heading is read out when the list changes, not every card in it. */}
       <div className="flex flex-col" aria-live="polite">
         <h2 className="text-base font-bold">{heading}</h2>
@@ -997,7 +1006,10 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
       {/* No start: the drive (and bus) to each trip can't be worked out yet, so say so before the list (Peter, 2026-10-26). */}
       {startReady && !start && words.length === 0 && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius-card)] bg-[var(--warn-bg)] p-3 text-sm text-[var(--warn)]">
-          <p className="font-semibold">{t("Nevieme, odkiaľ vyrážate, preto zatiaľ neukazujeme čas cesty autom ani autobusom.")}</p>
+          <p className="flex items-start gap-1.5 font-semibold">
+            <UiIcon name="warn" size={16} className="mt-0.5" />
+            <span>{t("Nevieme, odkiaľ vyrážate, preto zatiaľ neukazujeme čas cesty autom ani autobusom.")}</span>
+          </p>
           <button type="button" onClick={focusStart} className="font-semibold underline">
             {t("Zadať štart")}
           </button>
@@ -1006,10 +1018,13 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
 
       {noneFit && dayWord && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius-card)] bg-[var(--warn-bg)] p-3 text-sm text-[var(--warn)]">
-          <p className="font-semibold">
-            {date === today
-              ? t("Dnes už za svetla nestihnete žiadny výlet. Ukazujeme všetky.")
-              : t("{Day} za svetla nestihnete žiadny výlet. Ukazujeme všetky.", { Day: dayWord.charAt(0).toUpperCase() + dayWord.slice(1) })}
+          <p className="flex items-start gap-1.5 font-semibold">
+            <UiIcon name="warn" size={16} className="mt-0.5" />
+            <span>
+              {date === today
+                ? t("Dnes už za svetla nestihnete žiadny výlet. Ukazujeme všetky.")
+                : t("{Day} za svetla nestihnete žiadny výlet. Ukazujeme všetky.", { Day: dayWord.charAt(0).toUpperCase() + dayWord.slice(1) })}
+            </span>
           </p>
           {date === today && (
             <button type="button" onClick={showTomorrow} className="font-semibold underline">

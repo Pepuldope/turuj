@@ -66,11 +66,16 @@ export async function subscribe(): Promise<PushSubscription> {
   return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw });
 }
 
+/** Why the last call failed: shown only on the "?eve-test=1" page, to find out what went wrong on a real device. */
+export let lastPushError = "";
+
 export async function post(body: Record<string, unknown>): Promise<boolean> {
   try {
     const res = await fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (!res.ok) lastPushError = `server ${res.status}`;
     return res.ok;
-  } catch {
+  } catch (err) {
+    lastPushError = String(err);
     return false;
   }
 }

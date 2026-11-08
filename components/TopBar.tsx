@@ -17,17 +17,17 @@ import type { UiIconName } from "@/lib/uiIcons";
 // right corner, over the map.
 
 /** The menu's links, in order. Peter adds more here. */
-/** The text links the desktop pill shows before the account button (the menu keeps them too); the last only from xl, so the pill fits on one line at 1024px. */
+/** The text links the desktop pill shows before the account button (the menu keeps them too); the last only from xl, so the pill fits on one line at 1024px.
+ *  No "Získať appku" on a computer (Peter, 8 Nov): it is for phones; the footer keeps the link. */
 const DESKTOP_LINKS = [
   { href: "/ulozene", label: "Moje výlety", cls: "" },
   { href: "/vylety-z", label: "Výlety z miest", cls: "lg:hidden xl:block" },
-  { href: "/aplikacia", label: "Získať appku", cls: "lg:hidden xl:block" },
 ] as const;
 
-const MENU: { href: string; label: string; icon: UiIconName }[] = [
+const MENU: { href: string; label: string; icon: UiIconName; cls?: string }[] = [
   { href: "/ulozene", label: "Moje výlety", icon: "list" },
   { href: "/vylety-z", label: "Výlety z miest", icon: "peak" },
-  { href: "/aplikacia", label: "Získať appku", icon: "phone" },
+  { href: "/aplikacia", label: "Získať appku", icon: "phone", cls: "lg:hidden" },
   { href: "/napiste-nam", label: "Napíšte nám", icon: "chat" },
   { href: "/nahlasit-chybu", label: "Nahlásiť chybu", icon: "flag" },
   { href: "/o-nas", label: "O nás", icon: "person" },
@@ -40,6 +40,7 @@ type Panel = "menu" | "account" | null;
 
 export function TopBar() {
   const t = useT();
+  const { trips } = useSavedTrips();
   const path = usePathname() ?? "/";
   // Kept with the page it was opened on: a new page closes it.
   const [opened, setOpened] = useState<{ kind: Panel; path: string }>({ kind: null, path });
@@ -189,6 +190,9 @@ export function TopBar() {
                   className={`${l.cls} rounded-full px-3 py-2.5 text-[15px] font-semibold text-[var(--foreground)] hover:bg-[var(--segment-bg)] focus-visible:outline-2 focus-visible:outline-[var(--accent)] aria-[current=page]:text-[var(--accent)]`}
                 >
                   {t(l.label)}
+                  {l.href === "/ulozene" && trips.length > 0 && (
+                    <span className="ml-1.5 rounded-full bg-[var(--accent)] px-2 py-0.5 text-xs font-bold text-[var(--accent-contrast)]">{trips.length}</span>
+                  )}
                 </LangLink>
               );
             })}
@@ -246,7 +250,7 @@ function MenuList() {
   return (
     <nav aria-label={t("Menu")} className="flex flex-col">
       {MENU.map((m) => (
-        <LangLink key={m.href} href={m.href} className={row}>
+        <LangLink key={m.href} href={m.href} className={`${row} ${m.cls ?? ""}`}>
           <span className="text-[var(--muted)]">
             <UiIcon name={m.icon} size={19} />
           </span>
@@ -325,7 +329,7 @@ function AccountPanel({ notice, code: why, onDone }: { notice: string | null; co
         >
           {t("Zmazať účet")}
         </button>
-        {error && <p className="px-2 text-xs font-semibold text-[var(--danger)]">{error}</p>}
+        {error && <p className="flex items-start gap-1.5 px-2 text-xs font-semibold text-[var(--danger)]"><UiIcon name="warn" size={14} className="mt-px" /><span>{error}</span></p>}
       </div>
     );
   }
@@ -466,7 +470,7 @@ function AccountPanel({ notice, code: why, onDone }: { notice: string | null; co
         </div>
       )}
       {mode === "signup" && !verify && <p className="text-sm text-[var(--muted)]">{t("Účet je zadarmo. Email si overíme jedným kódom.")}</p>}
-      {(notice || error) && <p className="rounded-lg bg-[var(--warn-bg)] px-3 py-2 text-sm font-semibold text-[var(--warn)]">{t((error ?? notice)!)}{!error && why && <span className="font-normal opacity-75"> ({why})</span>}</p>}
+      {(notice || error) && <p className="flex items-start gap-1.5 rounded-lg bg-[var(--warn-bg)] px-3 py-2 text-sm font-semibold text-[var(--warn)]"><UiIcon name="warn" size={16} className="mt-0.5" /><span>{t((error ?? notice)!)}{!error && why && <span className="font-normal opacity-75"> ({why})</span>}</span></p>}
 
       <form onSubmit={submit} className="flex flex-col gap-2">
         {mode === "signup" && !verify && (
