@@ -24,7 +24,7 @@ import { zonedDate } from "@/lib/zoned";
 const compact =
   "inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 text-sm font-semibold whitespace-nowrap hover:border-[var(--accent)]";
 
-type State = "idle" | "busy" | "denied" | "failed";
+type State = "idle" | "busy" | "denied" | "failed" | "noservice";
 
 export function EveReminder({
   trip,
@@ -128,7 +128,8 @@ export function EveReminder({
       setState("idle");
     } catch (err) {
       setDetail(err instanceof Error ? `${err.name}: ${err.message}` : String(err));
-      setState("failed");
+      // The browser could not reach its own push service (Brave and some others have none): trying again won't help.
+      setState(err instanceof Error && err.name === "AbortError" && /push service/i.test(err.message) ? "noservice" : "failed");
     }
   }
 
@@ -213,6 +214,7 @@ export function EveReminder({
           </button>
           {on && <p className="text-xs text-[var(--muted)]">{t("Napíšeme vám o 19:00 deň vopred: počasie a kedy vyraziť.")}</p>}
           {state === "denied" && <p className="flex items-start gap-1.5 text-xs text-[var(--warn)]"><UiIcon name="warn" size={14} className="mt-px" /><span>{t("Upozornenia sú v prehliadači zakázané. Povoľte ich v nastaveniach stránky alebo použite kalendár.")}</span></p>}
+          {state === "noservice" && <p className="flex items-start gap-1.5 text-xs text-[var(--warn)]"><UiIcon name="warn" size={14} className="mt-px" /><span>{t("Tento prehliadač teraz upozornenia nastaviť nevie. Použite kalendár alebo iný prehliadač.")}</span></p>}
           {state === "failed" && <p className="flex items-start gap-1.5 text-xs text-[var(--warn)]"><UiIcon name="warn" size={14} className="mt-px" /><span>{t("Pripomienku sa teraz nepodarilo nastaviť. Skúste to znova alebo použite kalendár.")}</span></p>}
           {testing && on && (
             <button type="button" onClick={sendTest} className="self-start text-xs underline">
@@ -247,10 +249,10 @@ export function EveReminder({
         <button
           type="button"
           onClick={download}
-          aria-label={apple === "iphone" ? t("Do kalendára v iPhone") : apple === "mac" ? t("Do kalendára v Macu") : t("Do kalendára (.ics)")}
+          aria-label={apple ? t("Do Apple Kalendára") : t("Do iného kalendára (súbor .ics)")}
           className={compact}
         >
-          {apple === "iphone" ? "iPhone" : apple === "mac" ? "Mac" : ".ics"}
+          {apple ? "Apple" : t("Iný")}
         </button>
         <a
           // Built from the saved day and time on every render (this card only exists in the browser, after a save),
