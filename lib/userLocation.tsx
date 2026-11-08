@@ -2,7 +2,9 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { track } from "@/lib/analytics";
+import type { StartHow } from "@/lib/analytics";
 import { reverseTown } from "@/lib/geocode";
 import "@/lib/legacyStorage";
 
@@ -32,8 +34,8 @@ interface UserLocationState {
   fix: UserFix | null;
   /** The trip's start: the typed place if any, else the GPS fix, else null. */
   start: StartPoint | null;
-  /** Set (or clear with null) a typed start place. */
-  setManualStart: (place: Omit<StartPoint, "source"> | null) => void;
+  /** Set (or clear with null) a typed start place; `how` is only for the "start_set" event. */
+  setManualStart: (place: Omit<StartPoint, "source"> | null, how?: StartHow) => void;
   /** Slovak, user-facing; null when there is nothing to say. */
   message: string | null;
   locate: () => void;
@@ -49,6 +51,8 @@ interface UserLocationState {
 const STORAGE_KEY = "turuj-user-fix";
 // A typed start (usually home) is worth remembering across visits; a GPS fix is not.
 const MANUAL_KEY = "turuj-start";
+// "start_set" is counted once per visit (browser session), not once per page load.
+const START_SENT_KEY = "turuj-start-sent";
 
 const MESSAGES: Partial<Record<LocationStatus, string>> = {
   locating: "Zisťujeme vašu polohu…",
@@ -118,7 +122,7 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
   const [picking, setPicking] = useState(false);
   const [auto, setAuto] = useState(false);
   // How the first start of this visit came about, for the "start_set" event.
-  const startHow = useRef<"gps" | "manual" | "remembered" | "auto" | null>(null);
+  const startHow = useRef<StartHow | null>(null);
   const startSent = useRef(false);
 
   // Restore after hydration (browser storage doesn't exist on the server).
@@ -136,6 +140,34 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
     setReady(true);
   }, []);
 
+  // A town page's trip link (?z=zilina) gives a trip page a start for this visit, never over one already chosen.
+  // Read on every navigation, not only on the first load: this provider sits in the layout, so tapping a
+  // town-page tile (an in-app navigation) doesn't remount it, and a mount-only read missed the town.
+  const pathname = usePathname();
+  const townStart = useRef<Omit<StartPoint, "source"> | null>(null);
+  useEffect(() => {
+    if (!ready || !/\/trasa\//.test(pathname)) return;
+    const z = new URLSearchParams(window.location.search).get("z");
+    // A stored start (typed earlier, or a GPS fix) always wins.
+    if (!z || readManual() || readCached()) return;
+    let live = true;
+    import("@/lib/trips")
+      .then(({ getTowns }) => {
+        const town = getTowns().find((t) => t.id === z);
+        if (!town || !live) return;
+        const next = { lat: town.location.lat, lon: town.location.lon, label: town.name };
+        const prevTown = townStart.current;
+        townStart.current = next;
+        if (startHow.current === null) startHow.current = "town_page";
+        // Held in memory only ("this visit"): a start picked meanwhile wins; an earlier town page's start doesn't.
+        setManual((cur) => (cur && cur !== prevTown ? cur : next));
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [pathname, ready]);
+
   const locate = useCallback((silent = false) => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
       if (!silent) setStatus("unsupported");
@@ -151,7 +183,7 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
           accuracy: pos.coords.accuracy,
         };
         writeCached(next);
-        startHow.current = silent ? "auto" : "gps";
+        startHow.current = "gps";
         setFix(next);
         // Asking for GPS means "start from where I am": drop a typed place.
         writeManual(null);
@@ -195,16 +227,16 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
-  const setManualStart = useCallback((place: Omit<StartPoint, "source"> | null) => {
+  const setManualStart = useCallback((place: Omit<StartPoint, "source"> | null, how: StartHow = "typed") => {
     writeManual(place);
-    if (place) startHow.current = "manual";
+    if (place) startHow.current = how;
     setManual(place);
   }, []);
 
   const pickPoint = useCallback(
     (lat: number, lon: number) => {
       const point = { lat, lon, label: "Bod na mape" };
-      setManualStart(point);
+      setManualStart(point, "map_pick");
       setPicking(false);
       reverseTown(lat, lon)
         .then((town) => {
@@ -232,7 +264,13 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!start || startSent.current) return;
     startSent.current = true;
-    const how = startHow.current ?? start.source;
+    const how = startHow.current ?? (start.source === "gps" ? "gps" : "typed");
+    try {
+      if (sessionStorage.getItem(START_SENT_KEY)) return;
+      sessionStorage.setItem(START_SENT_KEY, "1");
+    } catch {
+      // Storage blocked: the page-load guard above still keeps it to once.
+    }
     // Umami's script loads after hydration; give it a moment, as TrackEvent does.
     setTimeout(() => track("start_set", { how }), 1500);
   }, [start]);

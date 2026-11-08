@@ -1,5 +1,6 @@
 "use client";
 
+import { UiIcon } from "@/components/UiIcon";
 import { useEffect, useId, useState } from "react";
 import { FEEDBACK_MAX, PROBLEM_TOPICS } from "@/lib/feedbackLimits";
 import type { FeedbackKind, ProblemTopic } from "@/lib/feedbackLimits";
@@ -115,7 +116,7 @@ export function FeedbackForm({ kind }: { kind: FeedbackKind }) {
           className="h-11 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 text-base outline-none focus:border-[var(--accent)]"
         />
       </div>
-      {state === "error" && <p className="text-[var(--warn)]">{t("Správu sa nepodarilo poslať. Skúste to znova o chvíľu.")}</p>}
+      {state === "error" && <p role="alert" className="flex items-start gap-1.5 text-[var(--warn)]"><UiIcon name="warn" size={16} className="mt-0.5" /><span>{t("Správu sa nepodarilo poslať. Skúste to znova o chvíľu.")}</span></p>}
       <button
         type="submit"
         disabled={!ready || state === "sending"}

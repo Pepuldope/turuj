@@ -1,8 +1,11 @@
 "use client";
 
+import { UiIcon } from "@/components/UiIcon";
+import { APP_BAR_KEY } from "@/components/AppBar";
 import { useTripStops } from "@/lib/tripStops";
-import { useState } from "react";
-import type { BBox, LatLng } from "@/lib/types";
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
+import type { BBox, Closure, LatLng } from "@/lib/types";
 import type { TripProfile } from "@/lib/tripProfile";
 import { offlineMapUrls } from "@/lib/tiles";
 import { dayAfterNa } from "@/lib/days";
@@ -15,6 +18,7 @@ import { useUserLocation } from "@/lib/userLocation";
 import { sinceArrival, track } from "@/lib/analytics";
 import { ShareButton } from "@/components/ShareButton";
 import { HeardFrom } from "@/components/HeardFrom";
+import { EveReminder } from "@/components/EveReminder";
 import type { ShareInfo } from "@/components/ShareButton";
 
 import { LangLink, useLang, useT } from "@/lib/i18n";
@@ -28,6 +32,12 @@ interface Props extends ShareInfo {
   profile: TripProfile | null;
   /** The walk, kept with the saved trip for the trail screen. */
   trail?: SavedTrail;
+  /** The trail's closure rules, for the evening-before reminder (empty when none is known). */
+  closures?: Closure[];
+  /** Where the walk starts (parking, stop or trailhead), as the calendar event's place. */
+  where?: { name: string; location: LatLng } | null;
+  /** The navigation buttons: they go after the calendar and before the app block. */
+  nav?: ReactNode;
 }
 
 type Status = "idle" | "saving" | "error";
@@ -80,7 +90,7 @@ const secondary =
  * device and stores it for offline use. Right after saving, one tap offers to
  * send the plan to the group.
  */
-export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, ...trip }: Props) {
+export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], where = null, nav = null, ...trip }: Props) {
   const { slug, name } = trip;
   const { trips, save, patch, remove } = useSavedTrips();
   const { start } = useUserLocation();
@@ -95,6 +105,23 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, ..
   const [askShare, setAskShare] = useState(false);
   // The first trip saved on this device: ask once how they heard of us (after the share offer).
   const [askHeard, setAskHeard] = useState(false);
+
+  // Closed once (here or on the home page's bar), the app offer stays away. Hidden until the browser has been asked.
+  const [appClosed, setAppClosed] = useState(true);
+  useEffect(() => {
+    let closed = false;
+    try {
+      closed = localStorage.getItem(APP_BAR_KEY) === "closed";
+    } catch {}
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAppClosed(closed);
+  }, []);
+  function closeApp() {
+    setAppClosed(true);
+    try {
+      localStorage.setItem(APP_BAR_KEY, "closed");
+    } catch {}
+  }
 
   const saved = trips.find((t) => t.slug === slug) ?? null;
   const changed =
@@ -128,6 +155,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, ..
       profile,
       stops,
       trail,
+      eve: saved?.eve,
       savedAt: new Date().toISOString(),
       offline: "pending",
     });
@@ -181,9 +209,12 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, ..
         </button>
       )}
 
+      {/* Order (Peter, 8 Nov): the one-time question first, then saved + share as one box, the calendar, navigation, the app. */}
+      {saved && askHeard && <HeardFrom onDone={() => setAskHeard(false)} />}
+
       {saved && askShare && (
-        <div role="status" className="flex flex-col gap-2 rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
-          <p>
+        <div className="flex flex-col gap-2 rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
+          <p role="status">
             <strong>{t("Uložené.")}</strong> {t("Nájdete to v")}{" "}
             <LangLink href="/ulozene" className="underline">
               {t("Mojich výletoch")}
@@ -209,27 +240,34 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, ..
         </div>
       )}
 
-      {saved && askHeard && !askShare && <HeardFrom onDone={() => setAskHeard(false)} />}
-
       {saved && !askShare && status !== "saving" && (
-        <p className="text-sm">
-          {t("Uložené na")} <strong>{dayAfterNa(saved.date, lang)}</strong> {t("o")} <strong>{saved.time}</strong>
+        <p className="rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
+          <strong>{t("Už uložené.")}</strong> {t("Nájdete to v")}{" "}
+          <LangLink href="/ulozene" className="underline">
+            {t("Mojich výletoch")}
+          </LangLink>
+          , {t("naplánované na")} <strong>{dayAfterNa(saved.date, lang)}</strong> {t("o")} <strong>{saved.time}</strong>
           {saved.offline === "ok" ? t(", funguje aj bez signálu. ") : ". "}
-          <button type="button" onClick={() => remove(slug)} className="text-[var(--muted)] underline">
+          <button type="button" onClick={() => remove(slug)} className="underline">
             {t("Odstrániť")}
           </button>
         </p>
       )}
 
+      {!askShare && share}
+
       {status === "error" && (
-        <p className="text-sm text-[var(--warn)]">
-          {t("Výlet je uložený, ale kópia bez signálu sa nepodarila. Skúste to znova so signálom.")}
+        <p className="flex items-start gap-1.5 text-sm text-[var(--warn)]">
+          <UiIcon name="warn" size={16} className="mt-0.5" />
+          <span>{t("Výlet je uložený, ale kópia bez signálu sa nepodarila. Skúste to znova so signálom.")}</span>
         </p>
       )}
 
-      {!askShare && share}
+      {saved && status !== "saving" && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch(slug, { eve })} />}
 
-      {status !== "saving" && !installed && (
+      {nav}
+
+      {status !== "saving" && !installed && !appClosed && (
         <div className="flex items-center gap-3 rounded-xl bg-[var(--sun-soft)] p-3 text-sm">
           <span className="min-w-0 flex-1">{t("Hore na kopci bez signálu? Uložený výlet otvoríte najrýchlejšie z ikony na ploche.")}</span>
           <LangLink
@@ -239,6 +277,9 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, ..
           >
             {t("Získať appku")}
           </LangLink>
+          <button type="button" onClick={closeApp} aria-label={t("Zavrieť")} className="-mr-1 grid h-10 w-10 shrink-0 place-items-center rounded-full text-xl leading-none text-[var(--muted)]">
+            ×
+          </button>
         </div>
       )}
     </div>

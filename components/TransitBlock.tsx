@@ -248,7 +248,7 @@ export function TransitLegs({ plan, rail }: { plan: DayPlan; rail: RailTrip }) {
                 <Legs journey={trainBack} />
               </>
             ) : (
-              <p className="font-semibold text-[var(--warn)]">{t("Po túre už v tento deň nejde vlak späť. Skúste skorší odchod alebo autobus.")}</p>
+              <p className="flex items-start gap-1.5 font-semibold text-[var(--warn)]"><UiIcon name="warn" size={16} className="mt-0.5" /><span>{t("Po túre už v tento deň nejde vlak späť. Skúste skorší odchod alebo autobus.")}</span></p>
             )}
           </div>
           <p className="text-xs text-[var(--muted)]">{t("Časy vlakov podľa cestovného poriadku ŽSR. Výluky a meškania overte na cp.sk.")}</p>
@@ -275,13 +275,21 @@ export function TransitLegs({ plan, rail }: { plan: DayPlan; rail: RailTrip }) {
             {t("na zastávku")} <strong>{stopLabel(stop.name)}</strong>, {t("buďte tam okolo")} <span className="font-data text-base leading-none">{formatTime(plan.hikeStart)}</span>.{" "}
             {t("Odtiaľ {walk}.", { walk })}
           </p>
-          <p className="text-xs text-[var(--muted)]">
-            {rail.status === "loading"
-              ? t("Hľadáme vlaky…")
-              : rail.status === "no-day"
-                ? t("Cestovný poriadok vlakov na tento deň ešte nemáme. Čas je odhad podľa cesty autom.")
-                : t("Čas je odhad podľa cesty autom s rezervou na zastávky a čakanie. Presný spoj nájdete v Google Mapách vyššie.")}
-          </p>
+          {rail.status === "no-day" && rail.changeDay ? (
+            // A yellow warning with its sign: the day's trains may change (Peter, 8 Nov).
+            <p className="flex items-start gap-1.5 rounded-xl bg-[var(--warn-bg)] px-3 py-2 text-xs font-semibold text-[var(--warn)]">
+              <UiIcon name="warn" size={14} className="mt-px" />
+              <span>{t("Cestovný poriadok sa mení {day} Spoj si overte na cp.sk.", { day: rail.changeDay })}</span>
+            </p>
+          ) : (
+            <p className="text-xs text-[var(--muted)]">
+              {rail.status === "loading"
+                ? t("Hľadáme vlaky…")
+                : rail.status === "no-day"
+                  ? t("Cestovný poriadok vlakov na tento deň ešte nemáme. Čas je odhad podľa cesty autom.")
+                  : t("Čas je odhad podľa cesty autom s rezervou na zastávky a čakanie. Presný spoj nájdete v Google Mapách vyššie.")}
+            </p>
+          )}
           <p className="pt-1">
             <span className="font-semibold">{t("Späť:")}</span> {t("na zastávke budete okolo")} <span className="font-data text-base leading-none">{formatTime(plan.hikeEnd)}</span>
             {rideMin !== null && (

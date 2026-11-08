@@ -1,6 +1,7 @@
 import { getAllTrips, getCarWalks, getPhotos, getTownDrives } from "@/lib/tripFiles";
 import type { PlacePhoto } from "@/lib/tripFiles";
 import { haversineM } from "@/lib/geo";
+import { monthDayOf } from "@/lib/closedToday";
 import { closureRulesFor, getTowns } from "@/lib/trips";
 import type { DestinationKind, Town, TripSummary } from "@/lib/tripSchema";
 
@@ -39,6 +40,8 @@ export interface TownTile {
   photo: PlacePhoto | null;
   /** A yearly closure covers the trip: "1. 11. – 31. 5." (the page is built once, so the season, not today's state). */
   closedSeason: string | null;
+  /** The same yearly closure as "MM-DD" start and end, for the browser to compare with today's date. */
+  closedRange: { from: string; to: string } | null;
 }
 
 const dayMonth = (iso: string) => `${Number(iso.slice(8, 10))}.\u00a0${Number(iso.slice(5, 7))}.`;
@@ -46,6 +49,11 @@ const dayMonth = (iso: string) => `${Number(iso.slice(8, 10))}.\u00a0${Number(is
 export function closedSeason(trip: TripSummary): string | null {
   const rule = closureRulesFor(trip).find((r) => r.kind === "rocna");
   return rule ? `${dayMonth(rule.starts_on)}–${dayMonth(rule.ends_on)}` : null;
+}
+
+export function closedRange(trip: TripSummary): { from: string; to: string } | null {
+  const rule = closureRulesFor(trip).find((r) => r.kind === "rocna");
+  return rule ? { from: monthDayOf(rule.starts_on), to: monthDayOf(rule.ends_on) } : null;
 }
 
 export interface TownRow {
@@ -91,6 +99,7 @@ export async function getTownTrips(id: string): Promise<TownTrips | null> {
     kids: trip.family_friendly,
     photo: photos[trip.destination.osm ?? `trip/${trip.slug}`] ?? null,
     closedSeason: closedSeason(trip),
+    closedRange: closedRange(trip),
   });
   const inTown = reach.filter((r) => haversineM(r.trip.start.location, town.location) <= IN_TOWN_M);
   const outside = reach.filter((r) => !inTown.includes(r));

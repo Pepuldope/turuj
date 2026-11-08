@@ -8,6 +8,7 @@ import { TripSettingsProvider } from "@/lib/tripSettings";
 import { Analytics } from "@/components/Analytics";
 import { VisitBeacon } from "@/components/VisitBeacon";
 import { TopBar } from "@/components/TopBar";
+import { SkipToTrips } from "@/components/SkipToTrips";
 import { LangProvider } from "@/lib/i18n";
 import { OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
 
@@ -71,6 +72,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <LangProvider>
           <UserLocationProvider>
             <TripSettingsProvider>
+              <SkipToTrips />
               <TopBar />
               {children}
             </TripSettingsProvider>

@@ -20,7 +20,7 @@ import { StopsBlock } from "@/components/TransitBlock";
 import { ClosureBanner } from "@/components/ClosureBanner";
 import { isIndexedVariant, variantHeading } from "@/lib/variantTitles";
 import { NearbyTrips } from "@/components/NearbyTrips";
-import { nearestMainTrips } from "@/lib/nearbyTrips";
+import { nearestMainTrips, noYearlyClosure, withoutYearlyClosure } from "@/lib/nearbyTrips";
 import { TripAnswers, TripHeaderFacts } from "@/components/TripAnswers";
 import { TripPlanner } from "@/components/TripPlanner";
 import { TripReviews } from "@/components/TripReviews";
@@ -32,6 +32,7 @@ import { RouteChoice } from "@/components/RouteChoice";
 import { TripAccessProvider } from "@/components/TripAccess";
 import { JsonLd } from "@/components/JsonLd";
 import { TrackEvent } from "@/components/TrackEvent";
+import { TripSeenFlag } from "@/components/TripSeenFlag";
 import { absoluteUrl } from "@/lib/site";
 import type { RouteBrief, Town, TripDetail } from "@/lib/tripSchema";
 import type { TrailDetail } from "@/lib/types";
@@ -45,8 +46,13 @@ import { describeTripEn } from "@/lib/tripJsonLdEn";
 import { markSigns } from "@/lib/markSigns";
 import { startLines, subtitle } from "@/lib/tripAnswers";
 
-/** How many neighbours the "Ďalšie výlety v okolí" block lists. */
-const NEARBY_COUNT = 7;
+/**
+ * How many neighbours the "Ďalšie výlety v okolí" block holds in the HTML: the browser shows the first
+ * seven that are not closed today and folds the closed ones away (components/NearbyList.tsx).
+ */
+const NEARBY_COUNT = 14;
+/** Trips without a yearly closure the nearby list always has to offer (C70). */
+const NEARBY_OPEN = 7;
 
 /**
  * The photo as a schema.org ImageObject with the credit fields Google's image metadata reads (F17):
@@ -203,7 +209,14 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
   });
   // C53: the nearest other places as plain links (lib/nearbyTrips.ts). The index holds main routes only.
   const mains = await getAllTrips();
-  const nearby = nearestMainTrips(mains, trip.destination.location, trip.variant_of ?? trail.slug, NEARBY_COUNT);
+  const exclude = trip.variant_of ?? trail.slug;
+  const nearest = nearestMainTrips(mains, trip.destination.location, exclude, NEARBY_COUNT);
+  // C70: in a closed area (Kriváň in winter) most neighbours carry a yearly closure. Add the nearest trips that have
+  // none, so the list can always show NEARBY_OPEN alternatives. Date-independent: the client splits by today.
+  const nearby =
+    nearest.filter((n) => noYearlyClosure(n.trip)).length >= NEARBY_OPEN
+      ? nearest
+      : [...new Map([...nearest, ...nearestMainTrips(withoutYearlyClosure(mains), trip.destination.location, exclude, NEARBY_OPEN)].map((n) => [n.trip.slug, n])).values()].sort((a, b) => a.m - b.m);
   // C39: an indexed variant gets its own H1, "Kriváň z Troch Studničiek" (lib/variantTitles.ts).
   const h1 = !loopBack && lang === "sk" && isIndexedVariant(trip, mains) ? variantHeading(trail.name, trip.start.name, "").h1 : trail.name;
   const nearbyWalks = await getCarWalks();
@@ -214,6 +227,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
       <main className="flex flex-1 flex-col bg-[var(--page-sunk)] lg:h-dvh lg:flex-none lg:flex-row lg:overflow-hidden">
         <JsonLd data={trailJsonLd(detail, photo, town, lang, about, lang === "en" ? describeTripEn(trip, detail) : null, loopBack ? null : updated)} />
         <TrackEvent name="trip_open" data={{ trail: trail.slug }} />
+        <TripSeenFlag />
         <div className="mx-auto flex w-full max-w-[640px] flex-col gap-5 px-4 pt-4 pb-6 md:max-w-[760px] lg:mx-0 lg:w-[460px] lg:max-w-none lg:shrink-0 relative lg:overflow-y-auto lg:overscroll-contain">
           <header className="relative -mx-4 -mt-4 flex min-h-[220px] shrink-0 flex-col justify-between sm:overflow-hidden sm:rounded-b-[24px] lg:overflow-visible lg:rounded-none">
             {photo ? (
@@ -363,7 +377,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
           </TripPlanner>
 
           {town && (
-            <Link href={langPath(lang, `/vylety-z/${town.id}`)} className="w-fit text-sm font-semibold text-[var(--accent)]">
+            <Link href={langPath(lang, `/vylety-z/${town.id}`)} className="accent-on-sunk w-fit text-sm font-semibold">
               {tr(lang, "Ďalšie výlety okolo {town}", { town: townOf(lang, town.id, town.name) })} →
             </Link>
           )}

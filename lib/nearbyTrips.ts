@@ -1,3 +1,4 @@
+import { closureRulesFor } from "@/lib/trips";
 /**
  * "Ďalšie výlety v okolí": the nearest other places to a trip, for the plain links on its page (C53).
  * The lists are not stored: a coarse grid over the trip index is built once per server instance (the
@@ -74,4 +75,17 @@ export function nearestMainTrips(mains: readonly TripSummary[], from: LatLng, ex
 /** "6 km odtiaľto" distances: whole kilometres, "do 1 km" under one. */
 export function roundKm(m: number): number {
   return Math.max(1, Math.round(m / 1000));
+}
+
+/** True when a trip has no yearly closure rule (closure_rules kind "rocna"). */
+export function noYearlyClosure(trip: TripSummary): boolean {
+  return !closureRulesFor(trip).some((r) => r.kind === "rocna");
+}
+
+const openLists = new WeakMap<readonly TripSummary[], TripSummary[]>();
+/** The main trips without a yearly closure, kept per list so the nearest-trip grid is built once (C70). */
+export function withoutYearlyClosure(mains: readonly TripSummary[]): TripSummary[] {
+  let l = openLists.get(mains);
+  if (!l) openLists.set(mains, (l = mains.filter(noYearlyClosure)));
+  return l;
 }

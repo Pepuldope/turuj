@@ -44,7 +44,10 @@ def rows_of(path: str | None) -> tuple[list, str | None]:
 
 
 def event_totals(rows: list, month: str) -> dict:
-    t = {"starts": 0, "saved": 0, "sent": 0, "sent_fast": 0, "friend_opens": 0, "navigations": 0, "plus_want": 0, "plus_no": 0}
+    t = {
+        "starts": 0, "saved": 0, "sent": 0, "sent_fast": 0, "friend_opens": 0, "navigations": 0, "plus_want": 0, "plus_no": 0,
+        "planned": 0, "planned_timed": 0, "planned_fast": 0, "gpx": 0, "on_trail": 0, "list_empty": 0,
+    }
     for r in rows:
         if r.get("month") != month:
             continue
@@ -61,8 +64,17 @@ def event_totals(rows: list, month: str) -> dict:
             t["friend_opens"] += n
         elif name == "nav_open":
             t["navigations"] += n
-        elif name in ("plus_want", "plus_no"):
+        elif name in ("plus_want", "plus_no", "on_trail", "list_empty"):
             t[name] += n
+        elif name == "gpx_download":
+            t["gpx"] += n
+        elif name == "plan_commit":
+            t["planned"] += n
+        elif name == "plan_took":
+            # How long after landing each planned trip was committed (stored from Nov 2026).
+            t["planned_timed"] += n
+            if r.get("detail") == "0-2 min":
+                t["planned_fast"] += n
     return t
 
 
@@ -75,13 +87,20 @@ def kpis(events: dict, visit: dict | None) -> dict:
     # Visit days = people x average days: a page load per person per day at least.
     visit_days = round(visit["visitors"] * visit["avg_days"]) if visit else 0
     return {
-        # North star, goal 20/month: plans saved, sent or taken into navigation.
-        "confirmed_plans": events["saved"] + events["sent"] + events["navigations"],
+        # North star, goal 20/month: planned trips = plan_commit (a trail saved, sent, navigated to or
+        # downloaded, once per trail per page load). Not a sum of saved + sent + navigations: one plan
+        # often brings several of those. Months before plan_commit existed show 0.
+        "planned": events["planned"],
         # Goal 50 %. start_set is sent once per page load and visit days count a person once a
-        # day, so this runs high when people reload; read it as a trend.
+        # day, so this runs high when people reload; read it as a trend. (A visit with a start is
+        # not separable from reloads without per-visit data; kept as starts / visit days.)
         "activation": ratio(events["starts"], visit_days),
-        # Goal 50 %: plans sent within two minutes of landing.
-        "two_minute_share": ratio(events["sent_fast"], events["sent"]),
+        # Goal 50 %: planned trips within two minutes of landing, over all plan_commits that have a
+        # time (plan_took). Months before plan_took was stored fall back to the old sent-plans share.
+        "two_minute_share": ratio(events["planned_fast"], events["planned_timed"])
+        if events["planned_timed"]
+        else ratio(events["sent_fast"], events["sent"]),
+        "two_minute_basis": "plan_commit" if events["planned_timed"] else "share_sent (no plan_took stored)",
         # Goal >= 1.5: friends opening a shared plan per plan sent.
         "growth_loop": ratio(events["friend_opens"], events["sent"]),
     }
@@ -98,24 +117,24 @@ def markdown(report: dict) -> str:
         "",
         "| Goal | This month | Target |",
         "| --- | --- | --- |",
-        f"| Confirmed plans | {k['confirmed_plans']} | 20 |",
+        f"| Planned trips (North Star, plan_commit) | {k['planned']} | 20 |",
         f"| Activation (start known) | {pct(k['activation'])} | 50 % |",
-        f"| Two-minute share | {pct(k['two_minute_share'])} | 50 % |",
+        f"| Two-minute share ({k['two_minute_basis']}) | {pct(k['two_minute_share'])} | 50 % |",
         f"| Growth loop (opens per share) | {k['growth_loop'] if k['growth_loop'] is not None else 'n/a'} | 1.5 |",
         "",
         "| Action | Count |",
         "| --- | --- |",
     ]
     lines += [f"| {name} | {n} |" for name, n in e.items()]
-    lines += ["", "## People (/statistiky)", "", "| Month | People | 2+ days | 4+ days | Avg days |", "| --- | --- | --- | --- | --- |"]
+    lines += ["", "## People (/statistiky)", "", "| Month | People | 2+ days | 4+ days | 4+ use days (trip opened or saved) | Avg days |", "| --- | --- | --- | --- | --- | --- |"]
     for r in report["visits"]:
         lines.append(
-            f"| {r['month']} | {r['visitors']} | {r['visitors_2plus_days']} | {r['visitors_4plus_days']} | {r['avg_days']} |"
+            f"| {r['month']} | {r['visitors']} | {r['visitors_2plus_days']} | {r['visitors_4plus_days']} | {r.get('visitors_4plus_use_days', 'n/a')} | {r['avg_days']} |"
         )
     for key in ("visits_error", "events_error"):
         if report.get(key):
             lines.append(f"\n{key.split('_')[0].title()} not read: {report[key]}")
-    lines += ["", "Sources, pages and devices: Umami dashboard (free plan has no export)."]
+    lines += ["", "Sources, pages and devices: Umami dashboard (no API on the free plan; CSV export is in Settings → Data → Export, to verify)."]
     return "\n".join(lines) + "\n"
 
 

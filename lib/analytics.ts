@@ -22,12 +22,19 @@ export type AnalyticsEvent =
   | "app_installed" // Android install dialog accepted on /aplikacia
   | "on_trail" // "Kde som na trase?" tapped on a trip page
   | "plan_commit" // North Star: the first save, send, navigation or GPX for a trail in this page load (sent by track())
-  | "heard_from"; // one-tap "Ako ste sa o nás dozvedeli?" after the first saved trip on this device
+  | "list_empty" // the home trip list came back empty for the chosen filters (trackListEmpty)
+  | "heard_from" // one-tap "Ako ste sa o nás dozvedeli?" after the first saved trip on this device
+  | "eve_planned" // the evening-before reminder was switched on for a saved trip (push)
+  | "eve_sent" // the evening-before reminder went out (counted in the worker log, not in Umami)
+  | "ics_download" // "Pridať do kalendára" tapped
+  | "day_pick" // a day chosen in the day picker: dnes / zajtra / so / ne / iny
+  | "trip_search" // a search on the home page was run: hit (something found) or miss
+  | "trip_search_town"; // a known town was typed into the trip search (the "Vyrážam z …" row showed)
 
 type EventData = Record<string, string | number | boolean>;
 
-/** Also added to our own monthly totals (app/api/event, lib/eventCounts.ts), since Umami's free plan has no export. */
-const KEPT: ReadonlySet<AnalyticsEvent> = new Set(["start_set", "trip_saved", "share_sent", "shared_open", "nav_open", "plus_want", "plus_no", "plan_commit", "heard_from"]);
+/** Also added to our own monthly totals (app/api/event, lib/eventCounts.ts; per month in event_month and per day in event_day), since Umami's free plan has no export. */
+const KEPT: ReadonlySet<AnalyticsEvent> = new Set(["start_set", "trip_saved", "share_sent", "shared_open", "nav_open", "plus_want", "plus_no", "plan_commit", "heard_from", "gpx_download", "on_trail", "list_empty", "day_pick", "trip_search"]);
 
 /**
  * The actions that mean "this trip is planned", and the name each gives in plan_commit's `via`.
@@ -129,11 +136,35 @@ function sendToUmami(name: string, data?: EventData): void {
   }, 500);
 }
 
-function keep(name: AnalyticsEvent, detail: string): void {
+function keep(name: string, detail: string): void {
   const body = JSON.stringify({ name, detail });
   if (!navigator.sendBeacon?.("/api/event", body)) {
     fetch("/api/event", { method: "POST", body, keepalive: true }).catch(() => {});
   }
+}
+
+let usedSent = false;
+
+/** Tells /api/visit that this visitor-day is a use day. Once per page load. */
+function markUsed(): void {
+  if (usedSent) return;
+  usedSent = true;
+  if (!navigator.sendBeacon?.("/api/visit?used=1")) {
+    fetch("/api/visit?used=1", { method: "POST", keepalive: true }).catch(() => {});
+  }
+}
+
+let lastEmpty = "";
+
+/**
+ * The home trip list is empty for the chosen filters. `filters` are the fixed filter choices only
+ * (kind, length, ...; never a typed place or coordinates). The same combination counts once in a row.
+ */
+export function trackListEmpty(filters: EventData): void {
+  const key = JSON.stringify(filters);
+  if (key === lastEmpty) return;
+  lastEmpty = key;
+  track("list_empty", filters);
 }
 
 /** Send one event. Silently does nothing when Umami isn't loaded or is blocked. */
@@ -142,15 +173,24 @@ export function track(name: AnalyticsEvent, data?: EventData): void {
   try {
     sendToUmami(name, data);
     const counts = countsHere();
-    if (KEPT.has(name) && counts) keep(name, String(data?.took ?? data?.how ?? data?.ch ?? ""));
+    if (KEPT.has(name) && counts) keep(name, String(data?.took ?? data?.how ?? data?.ch ?? data?.day ?? data?.result ?? ""));
     const via = COMMIT_VIA[name];
     const trail = data?.trail;
     if (via && typeof trail === "string" && !committed.has(trail)) {
       committed.add(trail);
       sendToUmami("plan_commit", { via, trail, took: sinceArrival() });
-      if (counts) keep("plan_commit", via);
+      if (counts) {
+        keep("plan_commit", via);
+        // How long it took, for the two-minute goal over every planned trip (not only saved or sent ones).
+        keep("plan_took", sinceArrival());
+      }
     }
+    // A trip page opened or a trip saved makes this a "use day" (see /api/visit?used=1).
+    if (counts && (name === "trip_open" || name === "trip_saved")) markUsed();
   } catch {
     // Analytics must never break the app.
   }
 }
+
+/** How a start came about, for start_set's `how`; never where. */
+export type StartHow = "suggestion" | "typed" | "town_button" | "map_pick" | "gps" | "remembered" | "town_page";

@@ -11,16 +11,24 @@ export interface MonthStats {
   visitors_2plus_days: number;
   visitors_4plus_days: number;
   avg_days: number;
+  /** 4+ days on which the visitor opened a trip page or saved a trip. */
+  visitors_4plus_use_days: number;
 }
 
 const SCHEMA = [
   // One row per visitor per day; visitor = hash(month salt, IP, browser).
-  `CREATE TABLE IF NOT EXISTS visit_day (visitor TEXT NOT NULL, day TEXT NOT NULL, PRIMARY KEY (visitor, day)) WITHOUT ROWID`,
+  `CREATE TABLE IF NOT EXISTS visit_day (visitor TEXT NOT NULL, day TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (visitor, day)) WITHOUT ROWID`,
   // A random key per month, created here and deleted when the month is over,
   // so old hashes can never be recomputed, not even by us.
   `CREATE TABLE IF NOT EXISTS visit_salt (month TEXT PRIMARY KEY, salt TEXT NOT NULL)`,
   // Totals of finished months; the raw rows behind them are deleted.
-  `CREATE TABLE IF NOT EXISTS visit_month (month TEXT PRIMARY KEY, visitors INTEGER NOT NULL, visitors_2plus_days INTEGER NOT NULL, visitors_4plus_days INTEGER NOT NULL, avg_days REAL NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS visit_month (month TEXT PRIMARY KEY, visitors INTEGER NOT NULL, visitors_2plus_days INTEGER NOT NULL, visitors_4plus_days INTEGER NOT NULL, avg_days REAL NOT NULL, visitors_4plus_use_days INTEGER NOT NULL DEFAULT 0)`,
+];
+
+// Tables made before use days existed get the column added (the error for "already there" is fine).
+const ADD_COLUMNS = [
+  `ALTER TABLE visit_day ADD COLUMN used INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE visit_month ADD COLUMN visitors_4plus_use_days INTEGER NOT NULL DEFAULT 0`,
 ];
 
 const MONTH_TOTALS = `
@@ -28,8 +36,9 @@ const MONTH_TOTALS = `
          COUNT(*) AS visitors,
          SUM(days >= 2) AS visitors_2plus_days,
          SUM(days >= 4) AS visitors_4plus_days,
-         ROUND(AVG(days), 2) AS avg_days
-  FROM (SELECT substr(day, 1, 7) AS month, visitor, COUNT(*) AS days FROM visit_day GROUP BY 1, 2)`;
+         ROUND(AVG(days), 2) AS avg_days,
+         SUM(use_days >= 4) AS visitors_4plus_use_days
+  FROM (SELECT substr(day, 1, 7) AS month, visitor, COUNT(*) AS days, SUM(used) AS use_days FROM visit_day GROUP BY 1, 2)`;
 
 let ready: Promise<void> | null = null;
 let lastCloseOut = "";
@@ -41,7 +50,13 @@ let statsMemo: { at: number; rows: MonthStats[] } | null = null;
 async function prepared(db: D1Like): Promise<void> {
   ready ??= db
     .batch(SCHEMA.map((sql) => db.prepare(sql)))
-    .then(() => undefined)
+    .then(async () => {
+      for (const sql of ADD_COLUMNS) {
+        await db.prepare(sql).run().catch((err) => {
+          if (!/duplicate column/i.test(String(err))) throw err;
+        });
+      }
+    })
     .catch((err) => {
       ready = null;
       throw err;
@@ -88,10 +103,17 @@ export async function monthSalt(month: string): Promise<string | null> {
   return row.salt;
 }
 
-export async function recordVisitDay(visitor: string, day: string): Promise<void> {
+/** `used`: the visitor opened a trip page or saved a trip today. A repeat plain visit writes nothing. */
+export async function recordVisitDay(visitor: string, day: string, used = false): Promise<void> {
   const db = await getDb();
   if (!db) return;
-  await db.prepare(`INSERT OR IGNORE INTO visit_day (visitor, day) VALUES (?1, ?2)`).bind(visitor, day).run();
+  await db
+    .prepare(
+      `INSERT INTO visit_day (visitor, day, used) VALUES (?1, ?2, ?3)
+       ON CONFLICT (visitor, day) DO UPDATE SET used = 1 WHERE excluded.used = 1 AND used = 0`,
+    )
+    .bind(visitor, day, used ? 1 : 0)
+    .run();
 }
 
 /** Every month, newest first: finished months from visit_month, the current one live. */
@@ -104,7 +126,7 @@ export async function monthlyStats(): Promise<MonthStats[] | null> {
     .prepare(
       `${MONTH_TOTALS} WHERE month NOT IN (SELECT month FROM visit_month) GROUP BY month
        UNION ALL
-       SELECT month, visitors, visitors_2plus_days, visitors_4plus_days, avg_days FROM visit_month
+       SELECT month, visitors, visitors_2plus_days, visitors_4plus_days, avg_days, visitors_4plus_use_days FROM visit_month
        ORDER BY month DESC`,
     )
     .all<MonthStats>();

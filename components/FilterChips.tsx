@@ -6,6 +6,7 @@ import type { BadSky } from "@/lib/weather";
 import { addDaysIso, dayStrip, isoDate, shortDay } from "@/lib/days";
 import { useTripSettings } from "@/lib/tripSettings";
 import { UiIcon } from "@/components/UiIcon";
+import { track } from "@/lib/analytics";
 import { useLang, useT } from "@/lib/i18n";
 import type { Lang } from "@/lib/lang";
 
@@ -54,9 +55,10 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
   const other = current !== null && days !== null && current !== days.today && current !== days.tomorrow;
   const showStrip = days !== null && stripOpen;
 
-  function pick(iso: string) {
+  function pick(iso: string, day: "dnes" | "zajtra" | "iny" = "iny") {
     // On home a second tap un-picks the day: back to every trip.
     setStripOpen(false);
+    if (iso !== date) track("day_pick", { day });
     update({ date: variant === "home" && iso === date ? null : iso });
   }
 
@@ -65,7 +67,10 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
     if (!days) return;
     if (!other) {
       const next = days.strip.find((d) => d.iso !== days.today && d.iso !== days.tomorrow);
-      if (next) update({ date: next.iso });
+      if (next) {
+        update({ date: next.iso });
+        track("day_pick", { day: "iny" });
+      }
       setStripOpen(true);
       return;
     }
@@ -85,10 +90,10 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
   return (
     <div className="flex flex-col gap-2">
       <div role="group" aria-label={t("Deň výletu")} className={segment}>
-        <button type="button" aria-pressed={!!days && current === days.today} onClick={() => days && pick(days.today)} className={segBtn(!!days && current === days.today)}>
+        <button type="button" aria-pressed={!!days && current === days.today} onClick={() => days && pick(days.today, "dnes")} className={segBtn(!!days && current === days.today)}>
           {t("Dnes")}
         </button>
-        <button type="button" aria-pressed={!!days && current === days.tomorrow} onClick={() => days && pick(days.tomorrow)} className={segBtn(!!days && current === days.tomorrow)}>
+        <button type="button" aria-pressed={!!days && current === days.tomorrow} onClick={() => days && pick(days.tomorrow, "zajtra")} className={segBtn(!!days && current === days.tomorrow)}>
           {t("Zajtra")}
         </button>
         <button
@@ -110,7 +115,8 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between text-[12.5px] font-bold text-[var(--muted)]">
             <span className="capitalize">{stripMonths(days.strip[0].iso, days.strip[days.strip.length - 1].iso, lang)}</span>
-            <span className="relative -my-2 py-2">
+            {/* The date input is invisible (opacity-0), so the label draws its focus ring. */}
+            <span className="relative -my-2 rounded-md py-2 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--accent)]">
               <span aria-hidden="true" className="inline-flex items-center gap-0.5 font-bold text-[var(--accent)]">
                 {t("Celý kalendár")} <UiIcon name="chev" size={13} />
               </span>
@@ -120,8 +126,13 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
                 min={days.today}
                 value={current ?? ""}
                 onClick={(e) => openCalendar(e.currentTarget)}
-                onChange={(e) => e.target.value && update({ date: e.target.value })}
-                className="absolute inset-0 h-full w-full min-w-0 cursor-pointer appearance-none opacity-0"
+                onChange={(e) => {
+                  if (!e.target.value) return;
+                  track("day_pick", { day: "iny" });
+                  update({ date: e.target.value });
+                }}
+                // 16 px: an iPhone zooms the page into a smaller-text field when it is tapped (the field itself is invisible).
+                className="absolute inset-0 h-full w-full min-w-0 cursor-pointer appearance-none text-base opacity-0"
               />
             </span>
           </div>
@@ -134,7 +145,10 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
                   type="button"
                   role="option"
                   aria-selected={on}
-                  onClick={() => update({ date: d.iso })}
+                  onClick={() => {
+                    if (d.iso !== current) track("day_pick", { day: d.iso === days.today ? "dnes" : d.iso === days.tomorrow ? "zajtra" : "iny" });
+                    update({ date: d.iso });
+                  }}
                   className={`flex w-[42px] shrink-0 flex-col items-center gap-px rounded-[11px] border py-1.5 ${
                     on
                       ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]"

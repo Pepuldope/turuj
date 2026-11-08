@@ -14,6 +14,7 @@ import { useUserLocation } from "@/lib/userLocation";
 import { FALLBACK_STYLE, SLOVAKIA, hideBasePois } from "@/components/TrailMap";
 import { PickPin } from "@/components/PickStartMap";
 import { pageLang, tr } from "@/lib/lang";
+import { mapLocale } from "@/lib/mapLocale";
 
 type MapLibre = typeof import("maplibre-gl");
 type Box = [number, number, number, number];
@@ -28,6 +29,8 @@ export interface BrowseTrip {
   start: LatLng;
   /** Not doable on the picked day: drawn in faint grey, under the others. */
   dim?: boolean;
+  /** A yearly closure is in force on the picked day: washed out like `dim`, dashed, with a lock on its square. */
+  closed?: boolean;
 }
 
 /** A mountain area: one dot while zoomed out. */
@@ -190,7 +193,7 @@ function roundSquare(g: CanvasRenderingContext2D, x: number, y: number, size: nu
 }
 
 /** The site's square trail mark (16 px, white edge, soft shadow), drawn for the map at 2x. */
-function squareImage(fill: string, edge: string, size: number): ImageData {
+function squareImage(fill: string, edge: string, size: number, lock = false): ImageData {
   const r = 2;
   const pad = 3 * r;
   const s = size * r;
@@ -209,6 +212,16 @@ function squareImage(fill: string, edge: string, size: number): ImageData {
   g.beginPath();
   roundSquare(g, pad + 2 * r, pad + 2 * r, s - 4 * r, 1.5 * r);
   g.fill();
+  if (lock) {
+    // A small padlock in the middle, for trips closed on the picked day.
+    const mid = c.width / 2;
+    g.strokeStyle = g.fillStyle = "#ffffff";
+    g.lineWidth = 1.6 * r;
+    g.beginPath();
+    g.arc(mid, mid - 1.5 * r, 2.6 * r, Math.PI, 0);
+    g.stroke();
+    g.fillRect(mid - 4 * r, mid - 1 * r, 8 * r, 6 * r);
+  }
   return g.getImageData(0, 0, c.width, c.height);
 }
 
@@ -386,6 +399,7 @@ export function BrowseMap({
         style: MAP_STYLE_URL,
         ...(start ? { center: start.center, zoom: start.zoom } : { bounds: SLOVAKIA }),
         attributionControl: { compact: true },
+        locale: mapLocale(pageLang()),
         dragRotate: false,
         pitchWithRotate: false,
         // Flat only: a two-finger drag on phones tilted the map into 3D by accident (Peter, 2026-10-24).
@@ -469,6 +483,8 @@ export function BrowseMap({
           m.addLayer({ id: `${src}-top`, type: "line", source: src, ...range, filter: ["==", ["get", "p"], 4], layout, paint: { "line-color": POPULARITY_TOP_OUTLINE, "line-width": width(0.6, 1.4, 2.5, 1), "line-opacity": fade(0.9, src) } });
           // A thin dark thread under the two quietest (yellow) levels: on a white or pale road the yellow alone washes out.
           m.addLayer({ id: `${src}-thread`, type: "line", source: src, ...range, filter: ["<=", ["get", "p"], 1], layout, paint: { "line-color": QUIET_THREAD, "line-width": width(0.6, 1.4, 2.5, 1.2), "line-opacity": fade(0.4, src) } });
+          // Closed on the picked day: the same washed-out line, dashed, under the others (the solid one is made invisible, but stays for taps).
+          m.addLayer({ id: `${src}-closed`, type: "line", source: src, ...range, filter: ["==", ["get", "s"], ""], layout, paint: { "line-color": DIM_RAMP, "line-width": width(0.6, 1.4, 2.5), "line-opacity": fade(0.7, src), "line-dasharray": [2, 2] } });
           m.addLayer({ id: `${src}-line`, type: "line", source: src, ...range, layout, paint: { "line-color": RAMP, "line-width": width(0.6, 1.4, 2.5), "line-opacity": fade(["case", ["==", ["get", "p"], 0], 1, 0.95], src), "line-dasharray": ["step", ["zoom"], ["literal", [1, 0]], QUIET_DASH_ZOOM, POPULARITY_DASH] as unknown as ExpressionSpecification } });
           // Wide and invisible, so a thin line is easy to hit.
           m.addLayer({ id: `${src}-hit`, type: "line", source: src, ...range, paint: { "line-color": "#000", "line-width": 18, "line-opacity": 0 } });
@@ -488,6 +504,7 @@ export function BrowseMap({
         // Squares: one layer per level, each fading in as its zoom is reached.
         for (const [kind, colour] of Object.entries(GOAL_COLOUR)) m.addImage(`sq-${kind}`, squareImage(colour, "#ffffff", 16), { pixelRatio: 2 });
         for (const [kind, colour] of Object.entries(GOAL_COLOUR)) m.addImage(`sq-dim-${kind}`, squareImage(desaturate(colour), "#ffffff", 16), { pixelRatio: 2 });
+        for (const [kind, colour] of Object.entries(GOAL_COLOUR)) m.addImage(`sq-lock-${kind}`, squareImage(desaturate(colour), "#ffffff", 16, true), { pixelRatio: 2 });
         m.addImage("sq-active", squareImage(SUN, NIGHT, 22), { pixelRatio: 2 });
         m.addSource("squares", { type: "geojson", data: EMPTY });
         for (let z = SQUARE_MIN; z <= SQUARE_MAX; z++) {
@@ -498,7 +515,7 @@ export function BrowseMap({
             source: "squares",
             minzoom: z - shift - 0.01,
             filter: ["==", ["get", "z"], z],
-            layout: { "icon-image": ["concat", ["case", ["get", "d"], "sq-dim-", "sq-"], ["get", "g"]], "icon-allow-overlap": true, "icon-ignore-placement": true, "symbol-sort-key": ["-", 0, ["get", "r"]] },
+            layout: { "icon-image": ["concat", ["case", ["get", "c"], "sq-lock-", ["get", "d"], "sq-dim-", "sq-"], ["get", "g"]], "icon-allow-overlap": true, "icon-ignore-placement": true, "symbol-sort-key": ["-", 0, ["get", "r"]] },
             paint: { "icon-opacity": fade },
           });
         }
@@ -852,13 +869,15 @@ export function BrowseMap({
     const slugs = trips.map((t) => t.slug);
     const only = ["in", ["get", "s"], ["literal", slugs]] as unknown as ExpressionSpecification;
     const dim = ["in", ["get", "s"], ["literal", trips.filter((t) => t.dim).map((t) => t.slug)]] as unknown as ExpressionSpecification;
+    const shut = ["in", ["get", "s"], ["literal", trips.filter((t) => t.closed).map((t) => t.slug)]] as unknown as ExpressionSpecification;
     for (const src of ["trip-lines", "trip-lines-gap", "trip-lines-d"]) {
+      map.setFilter(`${src}-closed`, ["all", only, shut] as unknown as ExpressionSpecification);
       map.setFilter(`${src}-line`, only);
       map.setFilter(`${src}-hit`, only);
       map.setFilter(`${src}-top`, ["all", ["==", ["get", "p"], 4], only, ["!", dim]] as unknown as ExpressionSpecification);
       map.setFilter(`${src}-thread`, ["all", ["<=", ["get", "p"], 1], only, ["!", dim]] as unknown as ExpressionSpecification);
       map.setPaintProperty(`${src}-line`, "line-color", ["case", dim, DIM_RAMP, RAMP]);
-      map.setPaintProperty(`${src}-line`, "line-opacity", ["case", dim, 0.8, ["==", ["get", "p"], 0], 1, 0.95]);
+      map.setPaintProperty(`${src}-line`, "line-opacity", ["case", shut, 0, dim, 0.8, ["==", ["get", "p"], 0], 1, 0.95]);
       // Washed-out lines go under the coloured ones.
       map.setLayoutProperty(`${src}-line`, "line-sort-key", ["case", dim, -1, ["get", "r"]]);
     }
@@ -869,7 +888,7 @@ export function BrowseMap({
     showDots(areaEls.current, !few && map.getZoom() < AREA_ZOOM - ctx.shift);
     squares.current.all = trips.map((t) => ({
       type: "Feature",
-      properties: { s: t.slug, g: t.goal, r: t.rank, z: level.get(t.slug), d: !!t.dim, f: few && !t.dim },
+      properties: { s: t.slug, g: t.goal, r: t.rank, z: level.get(t.slug), d: !!t.dim, c: !!t.closed, f: few && !t.dim },
       geometry: { type: "Point", coordinates: [t.location.lon, t.location.lat] },
     }));
     squares.current.full = false;

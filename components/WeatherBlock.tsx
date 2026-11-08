@@ -1,5 +1,6 @@
 "use client";
 
+import { UiIcon } from "@/components/UiIcon";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { SAFE_MARGIN_MIN } from "@/lib/dayPlan";
@@ -74,12 +75,14 @@ export function WeatherNotes({ plan, weather, goal }: { plan: DayPlan; weather: 
       </p>
       {notes.map((n) =>
         n.strong ? (
-          <p key={n.text} className="rounded-xl bg-[var(--danger-bg)] px-3 py-2 font-semibold text-[var(--danger)]">
-            {n.text}
+          <p key={n.text} className="flex items-start gap-1.5 rounded-xl bg-[var(--danger-bg)] px-3 py-2 font-semibold text-[var(--danger)]">
+            <UiIcon name="warn" size={16} className="mt-0.5" />
+            <span>{n.text}</span>
           </p>
         ) : (
-          <p key={n.text} className="font-semibold text-[var(--warn)]">
-            {n.text}
+          <p key={n.text} className="flex items-start gap-1.5 font-semibold text-[var(--warn)]">
+            <UiIcon name="warn" size={16} className="mt-0.5" />
+            <span>{n.text}</span>
           </p>
         )
       )}

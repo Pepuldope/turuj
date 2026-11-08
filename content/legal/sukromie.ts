@@ -92,7 +92,7 @@ export const PRIVACY_SK = [
   "",
   "### 9. Pripomienky počas túry",
   "",
-  "Keď počas výletu zapnete pripomienky, prehliadač sa vás opýta na povolenie upozornení. Potom uložíme adresu, na ktorú môžeme vášmu zariadeniu poslať upozornenie, jej kľúče, výlet a čas a text najviac dvoch pripomienok (kedy sa otočiť a pred západom slnka). Každú zmažeme hneď po odoslaní, a tiež keď výlet ukončíte alebo pripomienky vypnete. Upozornenie doručí služba vášho prehliadača (Google, Apple, Mozilla alebo Microsoft); text je zašifrovaný, takže ho nevidí. Pripomienky nepoužívame na reklamu ani novinky.",
+  "Keď počas výletu zapnete pripomienky, prehliadač sa vás opýta na povolenie upozornení. Potom uložíme adresu, na ktorú môžeme vášmu zariadeniu poslať upozornenie, jej kľúče, výlet a čas a text najviac dvoch pripomienok (kedy sa otočiť a pred západom slnka). Každú zmažeme hneď po odoslaní, a tiež keď výlet ukončíte alebo pripomienky vypnete. Upozornenie doručí služba vášho prehliadača (Google, Apple, Mozilla alebo Microsoft); text je zašifrovaný, takže ho nevidí. Ak si pri uloženom výlete zapnete aj pripomienku večer pred výletom, použije rovnaké prihlásenie na upozornenia; uložíme k nej názov výletu, miesto štartu a čas a po odoslaní ju zmažeme. Pripomienky nepoužívame na reklamu ani novinky.",
   "",
   "### 10. Vaša poloha a miesto štartu",
   "",

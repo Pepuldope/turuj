@@ -39,6 +39,7 @@ export function StatsTables() {
               <th>Ľudia</th>
               <th>2+ dni</th>
               <th>4+ dni</th>
+              <th>4+ dni používania (otvorený alebo uložený výlet)</th>
               <th>Priemer dní</th>
             </tr>
           </thead>
@@ -49,6 +50,7 @@ export function StatsTables() {
                 <td>{r.visitors}</td>
                 <td>{r.visitors_2plus_days}</td>
                 <td className="font-semibold">{r.visitors_4plus_days}</td>
+                <td className="font-semibold">{r.visitors_4plus_use_days ?? 0}</td>
                 <td>{r.avg_days}</td>
               </tr>
             ))}

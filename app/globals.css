@@ -397,6 +397,16 @@ h2,
   color: var(--accent-contrast);
 }
 
+/* Accent as text on the trip page's --page-sunk grey: plain --accent is 4.47:1 there, this 5.4:1. Dark mode keeps --accent (8.4:1). */
+.accent-on-sunk {
+  color: color-mix(in oklab, var(--accent) 88%, black);
+}
+@media (prefers-color-scheme: dark) {
+  .accent-on-sunk {
+    color: var(--accent);
+  }
+}
+
 .kind-ink {
   /* A touch darker than the pin colour, so the lighter kinds (hrad, prameň) still reach 4.5:1 as small text. */
   color: color-mix(in oklab, var(--kind) 82%, #000);
@@ -458,6 +468,7 @@ h2,
 }
 .time-slider:focus-visible { outline: none; }
 .time-slider:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--accent); outline-offset: 2px; }
+.time-slider:focus-visible::-moz-range-thumb { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 /* The confirm card by a freshly placed start pin: a short pop, so the eye catches it. */
 .mt-pick-card {

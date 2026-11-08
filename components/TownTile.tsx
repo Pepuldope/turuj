@@ -1,4 +1,5 @@
 import { IntentLink } from "@/lib/i18n";
+import { UiIcon } from "@/components/UiIcon";
 import { formatDurationShort } from "@/lib/format";
 import { kindSvg } from "@/lib/kindIcons";
 import { GOAL_COLOUR } from "@/lib/palette";
@@ -7,10 +8,10 @@ import { langPath, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 
 /** A town page tile: the place's photo (or its kind's colour and a hill), name, drive and walk. */
-export function TownTile({ tile, lang = "sk" }: { tile: Tile; lang?: Lang }) {
+export function TownTile({ tile, lang = "sk", townId }: { tile: Tile; lang?: Lang; /** The town page this tile is on: the trip page then starts from it (?z=) unless a start is already chosen. */ townId?: string }) {
   const colour = GOAL_COLOUR[tile.kind] ?? GOAL_COLOUR.ine;
   return (
-    <IntentLink href={langPath(lang, `/trasa/${tile.slug}`)} className="flex w-[150px] flex-none snap-start flex-col gap-1.5 text-inherit no-underline">
+    <IntentLink href={langPath(lang, `/trasa/${tile.slug}${townId ? `?z=${townId}` : ""}`)} className="flex w-[150px] flex-none snap-start flex-col gap-1.5 text-inherit no-underline">
       <span
         className="relative block aspect-square overflow-hidden rounded-2xl"
         style={{ background: `linear-gradient(170deg, ${colour}, ${colour}dd)` }}
@@ -47,8 +48,9 @@ export function TownTile({ tile, lang = "sk" }: { tile: Tile; lang?: Lang }) {
         )}
         {tile.closedSeason && (
           // Seasonal park closure (TANAP ridges): visible before anyone picks a closed summit from Google.
-          <span className="absolute right-1.5 bottom-1.5 left-1.5 rounded-lg bg-[var(--danger-bg)] px-1 py-0.5 text-center text-[11px] font-bold whitespace-nowrap text-[var(--danger)]">
-            {tr(lang, "zatvorené {when}", { when: tile.closedSeason })}
+          <span className="absolute right-1 bottom-1.5 left-1 flex items-center justify-center gap-0.5 overflow-hidden rounded-lg bg-[var(--danger-bg)] px-1 py-0.5 text-[11px] font-bold whitespace-nowrap text-[var(--danger)]">
+            <UiIcon name="warn" size={11} />
+            <span className="min-w-0 truncate">{tr(lang, "zatvorené {when}", { when: tile.closedSeason })}</span>
           </span>
         )}
       </span>

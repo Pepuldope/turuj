@@ -2,7 +2,7 @@
   "name": "Túruj",
   "short_name": "Túruj",
   "description": "Kam dnes na výlet do hôr, aby ste boli späť za svetla",
-  "start_url": "/",
+  "start_url": "/?utm_source=pwa",
   "display": "standalone",
   "background_color": "#f3f6fa",
   "theme_color": "#17213a",

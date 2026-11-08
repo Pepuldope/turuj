@@ -1,5 +1,6 @@
 "use client";
 
+import { UiIcon } from "@/components/UiIcon";
 import { useState } from "react";
 import type { Fit, Timing } from "@/lib/reviewLimits";
 import "@/lib/legacyStorage";
@@ -127,7 +128,7 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
             {tx("Nahlásiť chybu")}
           </LangLink>
         </p>
-        {state === "error" && <p className="text-sm text-[var(--danger)]">{tx("Nepodarilo sa odoslať. Skúste to o chvíľu.")}</p>}
+        {state === "error" && <p className="flex items-start gap-1.5 text-sm text-[var(--danger)]"><UiIcon name="warn" size={15} className="mt-0.5" /><span>{tx("Nepodarilo sa odoslať. Skúste to o chvíľu.")}</span></p>}
         <div className="flex justify-between gap-2">
           <button type="button" onClick={() => onDone(false)} className="rounded-full border border-[var(--border)] px-4 py-2.5 text-sm font-semibold">
             {tx("Teraz nie")}

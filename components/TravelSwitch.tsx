@@ -127,19 +127,25 @@ export function TravelSwitch({
       {noBus && why && (
         <p
           role="status"
-          className="rounded-xl border-2 border-[var(--warn)] bg-[var(--warn-bg)] px-3 py-2 text-sm text-[var(--warn)]"
+          className="flex items-start gap-1.5 rounded-xl border-2 border-[var(--warn)] bg-[var(--warn-bg)] px-3 py-2 text-sm text-[var(--warn)]"
         >
-          <b>{t("Autobusom ani vlakom sa sem nedá.")}</b>{" "}
-          {t("Pri štarte tejto cesty nepoznáme zastávku, preto plánujeme cestu autom. Ak chcete ísť autobusom, vyberte inú cestu so zastávkou.")}
+          <UiIcon name="warn" size={16} className="mt-0.5" />
+          <span>
+            <b>{t("Autobusom ani vlakom sa sem nedá.")}</b>{" "}
+            {t("Pri štarte tejto cesty nepoznáme zastávku, preto plánujeme cestu autom. Ak chcete ísť autobusom, vyberte inú cestu so zastávkou.")}
+          </span>
         </p>
       )}
       {noCar && why && (
         <p
           role="status"
-          className="rounded-xl border-2 border-[var(--warn)] bg-[var(--warn-bg)] px-3 py-2 text-sm text-[var(--warn)]"
+          className="flex items-start gap-1.5 rounded-xl border-2 border-[var(--warn)] bg-[var(--warn-bg)] px-3 py-2 text-sm text-[var(--warn)]"
         >
-          <b>{t("Autom sa sem nedá.")}</b>{" "}
-          {t("Pri štarte tejto cesty nie je kde nechať auto, preto plánujeme cestu autobusom alebo vlakom. Ak chcete ísť autom, vyberte inú cestu s parkoviskom.")}
+          <UiIcon name="warn" size={16} className="mt-0.5" />
+          <span>
+            <b>{t("Autom sa sem nedá.")}</b>{" "}
+            {t("Pri štarte tejto cesty nie je kde nechať auto, preto plánujeme cestu autobusom alebo vlakom. Ak chcete ísť autom, vyberte inú cestu s parkoviskom.")}
+          </span>
         </p>
       )}
     </div>
