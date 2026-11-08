@@ -5,7 +5,8 @@ import { useLang, useT } from "@/lib/i18n";
 import { langPath } from "@/lib/lang";
 import { EVE_MAX_AHEAD_MS, closedUntilFor, eveAtFor, eveWanted } from "@/lib/eve";
 import type { EveJob } from "@/lib/eve";
-import { buildIcs } from "@/lib/ics";
+import { appleKind, buildIcs, googleCalendarUrl } from "@/lib/ics";
+import type { IcsTrip } from "@/lib/ics";
 import { track } from "@/lib/analytics";
 import { currentSub, post, subscribe, support } from "@/components/TrailReminders";
 import type { Support } from "@/components/TrailReminders";
@@ -28,12 +29,15 @@ export function EveReminder({
   plan,
   sun,
   closures,
+  where,
   onChange,
 }: {
   trip: SavedTrip;
   plan: DayPlan | null;
   sun: LatLng | null;
   closures: Closure[];
+  /** Where the walk starts (parking, stop or trailhead), for the event's place; the trip name without it. */
+  where?: { name: string; location: LatLng } | null;
   onChange: (eve: boolean) => void;
 }) {
   const t = useT();
@@ -42,10 +46,12 @@ export function EveReminder({
   const [state, setState] = useState<State>("idle");
   const [now] = useState(() => Date.now());
   const [test, setTest] = useState<string | null>(null);
+  const [apple, setApple] = useState<"iphone" | "mac" | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCan(support());
+    setApple(appleKind(navigator.userAgent, navigator.maxTouchPoints));
   }, []);
 
   const at = eveWanted(trip.date, now);
@@ -130,12 +136,13 @@ export function EveReminder({
     }
   }
 
-  function download() {
+  /** The event as the .ics and the Google link both write it. */
+  function eventOf(): IcsTrip {
     const [y, m, d] = trip.date.split("-").map(Number);
     const [hh, mm] = trip.time.split(":").map(Number);
     const start = Number.isFinite(hh) ? zonedDate(y, m, d, hh, mm).getTime() : null;
     const end = plan && sameDay(plan.hikeStart, trip.date) ? plan.hikeEnd.getTime() : null;
-    const ics = buildIcs({
+    return {
       name: trip.name,
       url: `${window.location.origin}${langPath(lang, `/trasa/${trip.slug}`)}`,
       date: trip.date,
@@ -144,7 +151,13 @@ export function EveReminder({
       lang,
       uid: `${trip.slug}-${trip.date}@turuj.sk`,
       stampMs: Date.now(),
-    });
+      location: where?.name ?? trip.name,
+      geo: where ? { lat: where.location.lat, lon: where.location.lon } : null,
+    };
+  }
+
+  function download() {
+    const ics = buildIcs(eventOf());
     const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
     const a = document.createElement("a");
     a.href = url;
@@ -220,9 +233,25 @@ export function EveReminder({
           <p className="text-xs text-[var(--muted)]">{offReason}</p>
         </div>
       )}
-      <button type="button" onClick={download} className={`${secondary} self-start`}>
-        {t("Pridať do kalendára")}
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={download} className={`${secondary} whitespace-nowrap`}>
+          {apple === "iphone" ? t("Do kalendára v iPhone") : apple === "mac" ? t("Do kalendára v Macu") : t("Do kalendára (.ics)")}
+        </button>
+        <a
+          href="https://calendar.google.com/calendar/render"
+          target="_blank"
+          rel="noopener"
+          onClick={(e) => {
+            // The link is built from the saved day and time when tapped, so it never shows a stale plan.
+            e.currentTarget.href = googleCalendarUrl(eventOf());
+            track("ics_download", { trail: trip.slug, to: "google" });
+          }}
+          className={`${secondary} whitespace-nowrap`}
+        >
+          {t("Do Google Kalendára")}
+        </a>
+      </div>
+      <p className="text-xs text-[var(--muted)]">{t("Google použije vaše vlastné predvolené upozornenie.")}</p>
       {can === "iphone-browser" && (
         <p className="text-xs text-[var(--muted)]">{t("Na iPhone príde pripomienka z kalendára. Upozornenia od Túruja fungujú po pridaní na plochu.")}</p>
       )}

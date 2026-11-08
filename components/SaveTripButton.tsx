@@ -31,6 +31,8 @@ interface Props extends ShareInfo {
   trail?: SavedTrail;
   /** The trail's closure rules, for the evening-before reminder (empty when none is known). */
   closures?: Closure[];
+  /** Where the walk starts (parking, stop or trailhead), as the calendar event's place. */
+  where?: { name: string; location: LatLng } | null;
 }
 
 type Status = "idle" | "saving" | "error";
@@ -83,7 +85,7 @@ const secondary =
  * device and stores it for offline use. Right after saving, one tap offers to
  * send the plan to the group.
  */
-export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], ...trip }: Props) {
+export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], where = null, ...trip }: Props) {
   const { slug, name } = trip;
   const { trips, save, patch, remove } = useSavedTrips();
   const { start } = useUserLocation();
@@ -207,7 +209,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
         </p>
       )}
 
-      {saved && status !== "saving" && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} onChange={(eve) => patch(slug, { eve })} />}
+      {saved && status !== "saving" && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch(slug, { eve })} />}
 
       {status === "error" && (
         <p className="text-sm text-[var(--warn)]">

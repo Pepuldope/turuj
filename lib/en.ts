@@ -1042,5 +1042,10 @@ export const EN: Record<string, string> = {
   "Skúšobná pripomienka odoslaná.": "Test reminder sent.",
   "Skúšobnú pripomienku sa nepodarilo poslať.": "The test reminder could not be sent.",
   "Pridať do kalendára": "Add to calendar",
+  "Do kalendára v iPhone": "Add to Calendar on iPhone",
+  "Do kalendára v Macu": "Add to Calendar on Mac",
+  "Do kalendára (.ics)": "Add to calendar (.ics)",
+  "Do Google Kalendára": "Add to Google Calendar",
+  "Google použije vaše vlastné predvolené upozornenie.": "Google uses your own default reminder.",
   "Na iPhone príde pripomienka z kalendára. Upozornenia od Túruja fungujú po pridaní na plochu.": "On iPhone the reminder comes from the calendar. Notifications from Túruj work once it is added to the home screen.",
 };
