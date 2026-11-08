@@ -3,8 +3,7 @@
 import { useMemo, useState } from "react";
 import { BAD_SKY_LABEL, badSkySvg } from "@/lib/weatherIcons";
 import type { BadSky } from "@/lib/weather";
-import { addDaysIso, dayChips, dayStrip, isoDate, shortDay } from "@/lib/days";
-import { track } from "@/lib/analytics";
+import { addDaysIso, dayStrip, isoDate, shortDay } from "@/lib/days";
 import { useTripSettings } from "@/lib/tripSettings";
 import { UiIcon } from "@/components/UiIcon";
 import { useLang, useT } from "@/lib/i18n";
@@ -30,9 +29,9 @@ interface Props {
   dayWeather?: Record<string, BadSky>;
 }
 
-const segment = (wide: boolean) => `${wide ? "flex" : "grid grid-cols-3"} gap-[3px] rounded-xl bg-[var(--segment-bg)] p-[3px]`;
+const segment = "grid grid-cols-3 gap-[3px] rounded-xl bg-[var(--segment-bg)] p-[3px]";
 const segBtn = (on: boolean) =>
-  `inline-flex min-h-10 min-w-10 flex-auto items-center justify-center gap-1.5 rounded-[10px] px-1.5 py-2 text-[13.5px] font-semibold whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] min-[380px]:px-2 min-[380px]:text-sm ${
+  `inline-flex items-center justify-center gap-1.5 rounded-[10px] px-2 py-2 text-sm font-semibold whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
     on ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
   }`;
 
@@ -50,32 +49,23 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
       today: isoDate(now),
       tomorrow: addDaysIso(isoDate(now), 1),
       strip: dayStrip(now, 14, lang),
-      // The coming Saturday and Sunday, unless they already are Dnes or Zajtra.
-      weekend: dayChips(now, lang).slice(2).map((c) => c.iso),
     };
   }, [today, lang]);
-  // A day outside the chips (Dnes, Zajtra, the weekend): "Iný deň" shows the picked date instead of the weekend chips.
-  const other = current !== null && days !== null && current !== days.today && current !== days.tomorrow && !days.weekend.includes(current);
-  const weekendPicked = current !== null && days !== null && days.weekend.includes(current);
-  const weekendChips = days !== null && !other ? days.weekend : [];
+  const other = current !== null && days !== null && current !== days.today && current !== days.tomorrow;
   const showStrip = days !== null && stripOpen;
 
-  function pick(iso: string, day: "dnes" | "zajtra" | "so" | "ne" | "iny" = "iny") {
+  function pick(iso: string) {
     // On home a second tap un-picks the day: back to every trip.
     setStripOpen(false);
-    if (iso !== date) track("day_pick", { day });
     update({ date: variant === "home" && iso === date ? null : iso });
   }
 
   // "Iný deň" is picked at once (the day after tomorrow), then the strip lets you move it.
   function openOther() {
     if (!days) return;
-    if (!other && !weekendPicked) {
+    if (!other) {
       const next = days.strip.find((d) => d.iso !== days.today && d.iso !== days.tomorrow);
-      if (next) {
-        update({ date: next.iso });
-        track("day_pick", { day: "iny" });
-      }
+      if (next) update({ date: next.iso });
       setStripOpen(true);
       return;
     }
@@ -94,33 +84,25 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
 
   return (
     <div className="flex flex-col gap-2">
-      <div role="group" aria-label={t("Deň výletu")} className={segment(weekendChips.length > 0)}>
-        <button type="button" aria-pressed={!!days && current === days.today} onClick={() => days && pick(days.today, "dnes")} className={segBtn(!!days && current === days.today)}>
+      <div role="group" aria-label={t("Deň výletu")} className={segment}>
+        <button type="button" aria-pressed={!!days && current === days.today} onClick={() => days && pick(days.today)} className={segBtn(!!days && current === days.today)}>
           {t("Dnes")}
         </button>
-        <button type="button" aria-pressed={!!days && current === days.tomorrow} onClick={() => days && pick(days.tomorrow, "zajtra")} className={segBtn(!!days && current === days.tomorrow)}>
+        <button type="button" aria-pressed={!!days && current === days.tomorrow} onClick={() => days && pick(days.tomorrow)} className={segBtn(!!days && current === days.tomorrow)}>
           {t("Zajtra")}
         </button>
-        {weekendChips.map((iso) => (
-          <button key={iso} type="button" aria-pressed={current === iso} onClick={() => pick(iso, new Date(`${iso}T12:00:00Z`).getUTCDay() === 6 ? "so" : "ne")} className={segBtn(current === iso)}>
-            {shortDay(iso, lang)}
-          </button>
-        ))}
         <button
           type="button"
           aria-pressed={other}
           aria-expanded={showStrip}
           onClick={openOther}
-          // With the weekend chips beside it, "Iný deň" shrinks to the calendar icon so the row stays on one line at 360px.
-          aria-label={weekendChips.length ? t("Iný deň") : undefined}
-          title={weekendChips.length ? t("Iný deň") : undefined}
           className={segBtn(other)}
         >
           {/* On a narrow phone the picked date ("St 14. 10.") needs the icon's room to stay on one line. */}
           <span className={other ? "hidden min-[380px]:inline-flex" : "inline-flex"}>
             <UiIcon name="cal" size={15} />
           </span>
-          {other && current ? shortDay(current, lang) : weekendChips.length ? null : t("Iný deň")}
+          {other && current ? shortDay(current, lang) : t("Iný deň")}
         </button>
       </div>
 
@@ -139,11 +121,7 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
                 min={days.today}
                 value={current ?? ""}
                 onClick={(e) => openCalendar(e.currentTarget)}
-                onChange={(e) => {
-                  if (!e.target.value) return;
-                  track("day_pick", { day: "iny" });
-                  update({ date: e.target.value });
-                }}
+                onChange={(e) => e.target.value && update({ date: e.target.value })}
                 className="absolute inset-0 h-full w-full min-w-0 cursor-pointer appearance-none opacity-0"
               />
             </span>
@@ -157,10 +135,7 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
                   type="button"
                   role="option"
                   aria-selected={on}
-                  onClick={() => {
-                    track("day_pick", { day: "iny" });
-                    update({ date: d.iso });
-                  }}
+                  onClick={() => update({ date: d.iso })}
                   className={`flex w-[42px] shrink-0 flex-col items-center gap-px rounded-[11px] border py-1.5 ${
                     on
                       ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]"
