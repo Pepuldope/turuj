@@ -40,6 +40,7 @@ type Panel = "menu" | "account" | null;
 
 export function TopBar() {
   const t = useT();
+  const { trips } = useSavedTrips();
   const path = usePathname() ?? "/";
   // Kept with the page it was opened on: a new page closes it.
   const [opened, setOpened] = useState<{ kind: Panel; path: string }>({ kind: null, path });
@@ -189,6 +190,9 @@ export function TopBar() {
                   className={`${l.cls} rounded-full px-3 py-2.5 text-[15px] font-semibold text-[var(--foreground)] hover:bg-[var(--segment-bg)] focus-visible:outline-2 focus-visible:outline-[var(--accent)] aria-[current=page]:text-[var(--accent)]`}
                 >
                   {t(l.label)}
+                  {l.href === "/ulozene" && trips.length > 0 && (
+                    <span className="ml-1.5 rounded-full bg-[var(--accent)] px-2 py-0.5 text-xs font-bold text-[var(--accent-contrast)]">{trips.length}</span>
+                  )}
                 </LangLink>
               );
             })}
