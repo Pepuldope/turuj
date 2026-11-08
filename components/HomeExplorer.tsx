@@ -803,11 +803,13 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
 
   const tools = (
     <div ref={toolsRef} className="relative flex flex-col gap-2">
-      <div className="flex gap-2">
+      {/* 16 px text: iPhone Safari zooms the whole page into any field with smaller text. On phones under
+          420 px the Filtre button is icon-only and the padding tighter, so the placeholder still fits at 360 px. */}
+      <div className="flex gap-1.5 min-[420px]:gap-2">
         <label className="relative flex-1">
           <span className="sr-only">{t("Hľadať výlet alebo pohorie")}</span>
-          <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-[var(--muted)]">
-            <UiIcon name="search" size={18} />
+          <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[var(--muted)] min-[420px]:left-3.5">
+            <UiIcon name="search" size={16} />
           </span>
           <input
             type="search"
@@ -834,7 +836,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
             }}
             placeholder={t("Hľadať výlet alebo pohorie")}
             autoComplete="off"
-            className="h-11 w-full rounded-full border border-[var(--border)] bg-[var(--card-bg)] pr-2 pl-9 text-[14px] shadow-[var(--shadow-float)] min-[400px]:pr-3 min-[400px]:pl-10 min-[400px]:text-[15px] lg:shadow-none"
+            className="h-11 w-full rounded-full border border-[var(--border)] bg-[var(--card-bg)] pr-2 pl-8 text-base shadow-[var(--shadow-float)] min-[420px]:pr-3 min-[420px]:pl-10 lg:shadow-none"
           />
         </label>
         <button
@@ -844,15 +846,15 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
             setFiltersOpen((v) => !v);
             setSearchOpen(false);
           }}
-          className={`inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-semibold shadow-[var(--shadow-float)] lg:shadow-none ${
+          className={`inline-flex h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 text-sm font-semibold min-[420px]:px-4 shadow-[var(--shadow-float)] lg:shadow-none ${
             filterCount ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]" : "border-[var(--border)] bg-[var(--card-bg)]"
           }`}
         >
           <UiIcon name="filter" size={16} />
-          {/* Under 380 px the word gives its room to the search placeholder; it is still read out. */}
-          <span className="max-[379px]:sr-only">{filterCount ? `${t("Filtre")} · ${filterCount}` : t("Filtre")}</span>
+          {/* Under 420 px the word gives its room to the search placeholder; it is still read out. */}
+          <span className="max-[419px]:sr-only">{filterCount ? `${t("Filtre")} · ${filterCount}` : t("Filtre")}</span>
           {filterCount ? (
-            <span aria-hidden="true" className="min-[380px]:hidden">
+            <span aria-hidden="true" className="min-[420px]:hidden">
               {filterCount}
             </span>
           ) : null}
