@@ -4,10 +4,11 @@ import { useState } from "react";
 import { longDay } from "@/lib/days";
 import { parkingPlace, sharePath, shareText } from "@/lib/links";
 import type { DayPlan } from "@/lib/dayPlan";
-import type { Difficulty } from "@/lib/types";
+import type { Closure, Difficulty } from "@/lib/types";
 import { useTripSettings } from "@/lib/tripSettings";
 import { useTripAccess } from "@/components/TripAccess";
 import { sinceArrival, track } from "@/lib/analytics";
+import { activeClosures } from "@/lib/closures";
 import { clock } from "@/lib/zoned";
 import { stopLabel } from "@/lib/format";
 import { useLang, useT } from "@/lib/i18n";
@@ -25,6 +26,8 @@ interface Props extends ShareInfo {
   time: string | null;
   hikeMin: number;
   hasDrive: boolean;
+  /** The trail's closure rules: a closed day gets a line in the message. */
+  closures?: Closure[];
   label?: string;
   className?: string;
   /** After the share sheet closes or the text is copied. */
@@ -36,7 +39,7 @@ interface Props extends ShareInfo {
  * Friends leave from different places (Peter, 2026-10-22), so what goes out is the day and the meeting
  * time where the walk starts, never the sender's start; each friend's page works out their own departure.
  */
-export function ShareButton({ plan, date, time, hikeMin, hasDrive, label = "Zdieľať výlet", className, onShared, ...trip }: Props) {
+export function ShareButton({ plan, date, time, hikeMin, hasDrive, closures = [], label = "Zdieľať výlet", className, onShared, ...trip }: Props) {
   const { withKids } = useTripSettings();
   const t = useT();
   const lang = useLang();
@@ -61,6 +64,7 @@ export function ShareButton({ plan, date, time, hikeMin, hasDrive, label = "Zdie
       end: plan.hikeEnd,
       endPlace: byStop ? "stop" : atParking ? "car" : null,
       inDaylight: plan.verdict === "ok" || plan.verdict === "close" || plan.verdict === "tight",
+      closedOnDay: activeClosures(closures, date).length > 0,
       hikeMin,
       difficulty: trip.difficulty,
       url,

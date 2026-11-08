@@ -289,6 +289,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
           </header>
 
           <TripPlanner
+            tanap={trail.region_name === "Tatry"}
             slug={trail.slug}
             name={trail.name}
             difficulty={trail.difficulty}
@@ -329,7 +330,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                   />
                 )}
                 {/* A real closure stays up top; "no data" is a quiet note under the map. The closure rule itself is in the "Uzávery a poplatky" section below. */}
-                {closures.length > 0 && <ClosureBanner closures={closures} />}
+                {closures.length > 0 && <ClosureBanner closures={closures} region={trail.region_name} />}
               </>
             }
             outro={
@@ -371,7 +372,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
               <PhoneTripMap detail={detail} gpxUrl={gpxUrl} path={loopLine} others={others} loop={trip.route === "okruh"} marks={marks} colour={ownColour} />
             </div>
 
-            {closures.length === 0 && <ClosureBanner closures={closures} />}
+            {closures.length === 0 && <ClosureBanner closures={closures} region={trail.region_name} />}
 
             <PoiList pois={detail.pois} slug={trail.slug} loop={trip.route === "okruh"} />
           </TripPlanner>

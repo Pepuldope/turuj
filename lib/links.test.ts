@@ -96,6 +96,27 @@ describe("shared plan links", () => {
     expect(text).toContain("Pozor, z túry zídete až po západe slnka.");
   });
 
+  it("puts the closure warning right under the title, and only on a closed day", () => {
+    const base = {
+      name: "Chleb",
+      dayLabel: "sobota 10. 10.",
+      withKids: false,
+      meet: new Date(2026, 9, 10, 10, 0),
+      place: null,
+      end: new Date(2026, 9, 10, 14, 0),
+      endPlace: null,
+      inDaylight: true,
+      hikeMin: 240,
+      difficulty: "tazka" as const,
+      url: "https://turuj.sk/trasa/chleb",
+    };
+    const lines = shareText({ ...base, closedOnDay: true }).split("\n");
+    expect(lines[1]).toBe("Pozor, chodník je v tento deň uzavretý.");
+    expect(lines[2]).toBe("• 10:00 začiatok túry");
+    expect(shareText(base)).not.toContain("uzavretý");
+    expect(shareText({ ...base, closedOnDay: true }, "en")).toContain("Careful, the trail is closed on this day.");
+  });
+
   it("names a parking only when it has its own name", () => {
     expect(parkingPlace("Parkovisko")).toBe("na parkovisku");
     expect(parkingPlace("Parkovisko Pod Kriváňom")).toBe("na parkovisku Pod Kriváňom");

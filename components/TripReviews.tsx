@@ -6,7 +6,7 @@ import { isoDate } from "@/lib/days";
 import type { Fit } from "@/lib/reviewLimits";
 import { useSavedTrips } from "@/lib/savedTrips";
 import { ReviewSheet } from "@/components/ReviewSheet";
-import { useLang, useT } from "@/lib/i18n";
+import { LangLink, useLang, useT } from "@/lib/i18n";
 import { decimal } from "@/lib/lang";
 
 /** Shown once a trip has this many reviews: fewer says more about one group than the trail. */
@@ -59,6 +59,17 @@ export function TripReviews({ slug, name }: { slug: string; name: string }) {
           {topFit && topFit[1] > 0 && <span className="text-[var(--muted)]">· {tx("väčšinou {how}", { how: tx(FIT_WORDS[topFit[0]]) })}</span>}
           {summary.crowded! * 2 > summary.n && <span className="text-[var(--muted)]">· {tx("často veľa ľudí")}</span>}
         </p>
+      )}
+      {shown && (
+        <details className="text-xs text-[var(--muted)]">
+          <summary className="cursor-pointer">{tx("Ako fungujú hodnotenia")}</summary>
+          <p className="pt-1">
+            {tx("Neoveríme, že ste na výlete boli, preto hodnotenia neoznačujeme ako overené. Počet hodnotení z jednej adresy za minútu je obmedzený. Hodnotenia priebežne prezeráme a zjavný spam alebo hromadne pridané hodnotenia mažeme. Sami výlety nehodnotíme za iných a hodnotenia neupravujeme. Hodnotenia členov tímu označíme.")}{" "}
+            <LangLink href="/podmienky#b6" className="underline">
+              {tx("Viac v podmienkach")}
+            </LangLink>
+          </p>
+        </details>
       )}
       {ask && (
         <div className="flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] border border-[var(--accent)] bg-[var(--card-bg)] p-3">

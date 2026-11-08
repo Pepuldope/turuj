@@ -101,6 +101,8 @@ export interface ShareTextInput {
   endPlace: "car" | "stop" | null;
   /** The hike ends before sunset. Otherwise the message warns instead of promising daylight. */
   inDaylight: boolean;
+  /** The trail is closed on the shared day: the message says so right under the title. */
+  closedOnDay?: boolean;
   hikeMin: number;
   difficulty: keyof typeof DIFFICULTY_LABEL;
   url: string;
@@ -118,6 +120,7 @@ export function shareText(i: ShareTextInput, lang: Lang = "sk"): string {
   // Step by step, one fact a line (Peter, 2026-10-28: a plain "share trip" message for anyone).
   return [
     `${i.name} · ${i.dayLabel}${i.withKids ? t(" (s deťmi)") : ""}`,
+    ...(i.closedOnDay ? [t("Pozor, chodník je v tento deň uzavretý.")] : []),
     `• ${meet}`,
     `• ${walk}`,
     `• ${hhmm(i.end)} ${endWord}`,

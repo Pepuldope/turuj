@@ -52,6 +52,15 @@ export interface DayPlan {
   approx: boolean;
 }
 
+/**
+ * Where the walk leaves daylight: "late" when the hike ends after sunset, "early" when it starts before
+ * sunrise (and does not end after sunset), null inside daylight. For rules that allow walking only by day (TANAP).
+ */
+export function outsideDaylight(plan: Pick<DayPlan, "hikeEnd" | "sunset" | "startsInDark">): "late" | "early" | null {
+  if (plan.hikeEnd > plan.sunset) return "late";
+  return plan.startsInDark ? "early" : null;
+}
+
 export type TravelMode = "auto" | "transit";
 
 /** A real train trip, minutes after midnight of the plan's date: leave home, reach the stop; leave the stop, be home. */

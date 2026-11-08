@@ -17,6 +17,7 @@ import type { TripPlan } from "@/lib/useTripPlan";
 import { useUserLocation } from "@/lib/userLocation";
 import { sinceArrival, track } from "@/lib/analytics";
 import { ShareButton } from "@/components/ShareButton";
+import { ClosureGuard } from "@/components/ClosureGuard";
 import { HeardFrom } from "@/components/HeardFrom";
 import { EveReminder } from "@/components/EveReminder";
 import type { ShareInfo } from "@/components/ShareButton";
@@ -155,6 +156,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
       profile,
       stops,
       trail,
+      closures,
       eve: saved?.eve,
       savedAt: new Date().toISOString(),
       offline: "pending",
@@ -193,12 +195,14 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
       time={time}
       hikeMin={hikeMin}
       hasDrive={route !== null || driveMin !== null}
+      closures={closures}
       className={secondary}
     />
   );
 
   return (
     <div className="flex flex-col gap-3">
+      {showButton && <ClosureGuard closures={closures} date={date} />}
       {showButton && (
         <button type="button" onClick={onSave} disabled={status === "saving" || !date || !time || loading} className={primary}>
           {status === "saving"
@@ -230,6 +234,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
               time={time}
               hikeMin={hikeMin}
               hasDrive={route !== null || driveMin !== null}
+              closures={closures}
               className="rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-bold text-[var(--accent-contrast)]"
               onShared={() => setAskShare(false)}
             />
@@ -265,6 +270,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
 
       {saved && status !== "saving" && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch(slug, { eve })} />}
 
+      {saved && <ClosureGuard closures={closures} date={date} />}
       {nav}
 
       {status !== "saving" && !installed && !appClosed && (

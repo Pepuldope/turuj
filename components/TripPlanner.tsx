@@ -3,6 +3,7 @@
 import { UiIcon } from "@/components/UiIcon";
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { outsideDaylight } from "@/lib/dayPlan";
 import type { DayPlan, Verdict } from "@/lib/dayPlan";
 import { EARLIEST_DEPARTURE_HOUR, dayAfterNa, dayStrip, floorTo5, longDay } from "@/lib/days";
 import { badDays } from "@/lib/weather";
@@ -33,7 +34,7 @@ import { GOAL_WORDS, trimProfile, withApproach, withStops } from "@/lib/tripProf
 import { LUNCH, STAY_MIN, keepStopsOf, stopsMinutes, useTripStops } from "@/lib/tripStops";
 import type { LunchPick } from "@/components/StopsRow";
 import type { PauseAt, TripProfile } from "@/lib/tripProfile";
-import { useLang, useT } from "@/lib/i18n";
+import { LangLink, useLang, useT } from "@/lib/i18n";
 import { tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 import type { SavedTrail } from "@/lib/savedTrips";
@@ -59,6 +60,8 @@ interface Props extends ShareInfo {
   hasPlaces?: boolean;
   /** The walk, kept with the saved trip for the trail screen ("Začať výlet"). */
   trail?: SavedTrail;
+  /** The trip is in the Tatras: TANAP allows walking outside villages only from sunrise to sunset. */
+  tanap?: boolean;
 }
 
 /** One of the page's three cards, set off from the darker page so each step reads on its own. */
@@ -78,7 +81,7 @@ function meetingAt(date: string, hhmm: string): Date {
   return zonedDate(y, mo, d, h, mi);
 }
 
-export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, closures = [], walk, intro, children, outro, hasPlaces = false, trail, ...trip }: Props) {
+export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, closures = [], walk, intro, children, outro, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
   const { start } = useUserLocation();
   const { today, update } = useTripSettings();
   const t = useT();
@@ -410,6 +413,16 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
           </ol>
           <StopsRow slug={trip.slug} hasPlaces={hasPlaces} loop={!!walkProfile?.loop} lunch={lunch} />
           <WeatherReport plan={plan} weather={weather} goal={goal} wholeDay={transit} sunAt={sun} closures={closures} onPickDay={(iso) => update({ date: iso })} onPickTime={(time) => update({ time })} />
+          {tanap && !tripPlan.loading && outsideDaylight(plan) && (
+            <p role="status" className="flex items-start gap-1.5 rounded-xl bg-[var(--warn-bg)] p-3 text-sm font-semibold text-[var(--warn)]">
+              <UiIcon name="warn" size={16} className="mt-0.5 shrink-0" />
+              <span>
+                {outsideDaylight(plan) === "late"
+                  ? t("V TANAP-e sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte skôr alebo vyberte kratší výlet.")
+                  : t("V TANAP-e sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte až po východe slnka.")}
+              </span>
+            </p>
+          )}
           {transit && <TransitLegs plan={plan} rail={rail} />}
           {transit && rail.status === "ok" && <p className="text-xs text-[var(--muted)]">{t("Podľa cestovného poriadku vlakov, spoj si vyberiete nižšie.")}</p>}
           {driveApprox && !transit && (
@@ -427,6 +440,12 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
         </section>
 
         {outro}
+        <p className="text-xs text-[var(--muted)]">
+          {t("Čo si overiť pred odchodom a kto platí záchranu:")}{" "}
+          <LangLink href="/upozornenie" className="underline">
+            {t("Upozornenie")}
+          </LangLink>
+        </p>
       </section>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import type { TripStop } from "@/lib/tripStops";
 import { useCallback, useSyncExternalStore } from "react";
-import type { LatLng } from "@/lib/types";
+import type { Closure, LatLng } from "@/lib/types";
 import type { TripProfile } from "@/lib/tripProfile";
 import type { FixedRide } from "@/lib/dayPlan";
 import type { Travel } from "@/lib/tripSettings";
@@ -46,6 +46,8 @@ export interface SavedTrip {
   reviewed?: boolean;
   /** The walk itself, for the trail screen ("Začať výlet"); missing on trips saved before it existed. */
   trail?: SavedTrail;
+  /** The trail's closure rules at save time, so the list can warn about a closed day offline; missing on trips saved before it existed. */
+  closures?: Closure[];
   /** The evening-before reminder (push): true on, false switched off by the group, missing until first offered. */
   eve?: boolean;
   /** Offline copy state: the page, GPX and map tiles. */
