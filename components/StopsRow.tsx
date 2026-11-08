@@ -114,12 +114,15 @@ export function StopsRow({
 function LunchTime({ lunch, at, onPick }: { lunch: LunchPick; at: string | undefined; onPick: (at: string | undefined) => void }) {
   const t = useT();
   return (
-    <span className="relative inline-flex shrink-0 items-center">
+    // The pill shows the choice at 13 px; the phone's own picker sits on top, invisible, at 16 px, because
+    // iPhone Safari zooms the page into any field with smaller text.
+    <span className="relative inline-flex h-7 shrink-0 items-center rounded-full border border-[var(--border)] bg-[var(--card-bg)] pr-6 pl-2.5 text-[13px] font-semibold text-[var(--foreground)] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--accent)]">
+      <span aria-hidden>{at ?? t("na cieli {t}", { t: lunch.goalTime })}</span>
       <select
         value={at ?? ""}
         onChange={(e) => onPick(e.target.value || undefined)}
         aria-label={t("Kedy obed")}
-        className="h-7 cursor-pointer appearance-none rounded-full border border-[var(--border)] bg-[var(--card-bg)] py-0 pr-6 pl-2.5 text-[13px] font-semibold text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+        className="absolute inset-0 h-full w-full cursor-pointer appearance-none text-base opacity-0"
       >
         <option value="">{t("na cieli {t}", { t: lunch.goalTime })}</option>
         {at && !lunch.times.includes(at) && <option value={at}>{at}</option>}
@@ -143,12 +146,14 @@ function LunchTime({ lunch, at, onPick }: { lunch: LunchPick; at: string | undef
 export function WaySwitch({ name, way, onPick }: { name: string; way: StopWay | undefined; onPick: (way: StopWay) => void }) {
   const t = useT();
   return (
-    <span className="relative inline-flex shrink-0 items-center">
+    // Same as LunchTime: visible pill at 13 px, the invisible picker on top at 16 px (no iPhone zoom).
+    <span className="relative inline-flex h-7 shrink-0 items-center rounded-full border border-[var(--border)] bg-[var(--card-bg)] pr-6 pl-2.5 text-[13px] font-semibold text-[var(--foreground)] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--accent)]">
+      <span aria-hidden>{t(WAYS.find(([w]) => w === (way ?? "tam"))?.[1] ?? WAYS[0][1])}</span>
       <select
         value={way ?? "tam"}
         onChange={(e) => onPick(e.target.value as StopWay)}
         aria-label={t("Kedy sa zastavíte: {name}", { name: t(name) })}
-        className="h-7 cursor-pointer appearance-none rounded-full border border-[var(--border)] bg-[var(--card-bg)] py-0 pr-6 pl-2.5 text-[13px] font-semibold text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+        className="absolute inset-0 h-full w-full cursor-pointer appearance-none text-base opacity-0"
       >
         {WAYS.map(([w, label]) => (
           <option key={w} value={w}>
