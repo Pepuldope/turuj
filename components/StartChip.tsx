@@ -198,7 +198,7 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
       {expanded && (
         <div className="flex flex-col gap-2 pt-1">
           <form
-            className="flex h-12 items-center gap-2 rounded-xl border-2 border-[var(--accent)] bg-[var(--card-bg)] px-3 shadow-[0_2px_8px_rgba(23,105,209,0.12)]"
+            className="flex h-12 items-center gap-2 rounded-xl border-2 border-[var(--accent)] bg-[var(--card-bg)] px-3 shadow-[0_2px_8px_rgba(23,105,209,0.12)] has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-[var(--accent)]"
             onSubmit={(e) => {
               e.preventDefault();
               runSearch();
@@ -235,7 +235,7 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
               aria-autocomplete="list"
               aria-activedescendant={activeId}
               autoComplete="off"
-              className="min-w-0 flex-1 rounded bg-transparent text-base focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"
+              className="min-w-0 flex-1 rounded bg-transparent text-base outline-none"
             />
             {query.trim().length >= 2 && (
               <button type="submit" className="min-h-10 px-1 text-sm font-bold text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]">
