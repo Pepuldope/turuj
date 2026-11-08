@@ -9,7 +9,7 @@ import type { EveJob } from "@/lib/eve";
 import { appleKind, buildIcs, googleCalendarUrl } from "@/lib/ics";
 import type { IcsTrip } from "@/lib/ics";
 import { track } from "@/lib/analytics";
-import { currentSub, post, subscribe, support } from "@/components/TrailReminders";
+import { currentSub, lastPushError, post, subscribe, support } from "@/components/TrailReminders";
 import type { Support } from "@/components/TrailReminders";
 import type { SavedTrip } from "@/lib/savedTrips";
 import type { DayPlan } from "@/lib/dayPlan";
@@ -20,8 +20,9 @@ import { zonedDate } from "@/lib/zoned";
 // "Pridať do kalendára" for everyone. An iPhone outside the installed app has no web push, so it only
 // gets the calendar.
 
-const secondary =
-  "rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-2.5 text-sm font-semibold hover:border-[var(--accent)] disabled:opacity-60";
+/** A calendar button, small enough for the label and both buttons on one row at 360 px. */
+const compact =
+  "inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 text-sm font-semibold whitespace-nowrap hover:border-[var(--accent)]";
 
 type State = "idle" | "busy" | "denied" | "failed";
 
@@ -47,6 +48,7 @@ export function EveReminder({
   const [state, setState] = useState<State>("idle");
   const [now] = useState(() => Date.now());
   const [test, setTest] = useState<string | null>(null);
+  const [detail, setDetail] = useState("");
   const [apple, setApple] = useState<"iphone" | "mac" | null>(null);
 
   useEffect(() => {
@@ -116,12 +118,16 @@ export function EveReminder({
         onChange(false);
         return setState("idle");
       }
-      if (!(await plant())) return setState((s) => (s === "denied" ? s : "failed"));
+      if (!(await plant())) {
+        setDetail(lastPushError);
+        return setState((s) => (s === "denied" ? s : "failed"));
+      }
       sent.current = jobKey;
       onChange(true);
       track("eve_planned", { trail: trip.slug, how: "switch" });
       setState("idle");
-    } catch {
+    } catch (err) {
+      setDetail(err instanceof Error ? `${err.name}: ${err.message}` : String(err));
       setState("failed");
     }
   }
@@ -214,6 +220,7 @@ export function EveReminder({
             </button>
           )}
           {test && <p className="text-xs text-[var(--muted)]">{test}</p>}
+          {testing && detail && <p className="text-xs break-words text-[var(--muted)]">Detail: {detail}</p>}
         </div>
       )}
       {offReason && (
@@ -234,9 +241,16 @@ export function EveReminder({
           <p className="text-xs text-[var(--muted)]">{offReason}</p>
         </div>
       )}
-      <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={download} className={`${secondary} whitespace-nowrap`}>
-          {apple === "iphone" ? t("Do kalendára v iPhone") : apple === "mac" ? t("Do kalendára v Macu") : t("Do kalendára (.ics)")}
+      {/* One row, even at 360 px: the label says what it is, the buttons only say where. */}
+      <div className="flex items-center gap-2">
+        <span className="min-w-0 flex-1 text-sm font-semibold">{t("Pridať do kalendára")}</span>
+        <button
+          type="button"
+          onClick={download}
+          aria-label={apple === "iphone" ? t("Do kalendára v iPhone") : apple === "mac" ? t("Do kalendára v Macu") : t("Do kalendára (.ics)")}
+          className={compact}
+        >
+          {apple === "iphone" ? "iPhone" : apple === "mac" ? "Mac" : ".ics"}
         </button>
         <a
           // Built from the saved day and time on every render (this card only exists in the browser, after a save),
@@ -244,13 +258,13 @@ export function EveReminder({
           href={typeof window === "undefined" ? "https://calendar.google.com/calendar/render" : googleCalendarUrl(eventOf())}
           target="_blank"
           rel="noopener"
+          aria-label={t("Do Google Kalendára")}
           onClick={() => track("ics_download", { trail: trip.slug, to: "google" })}
-          className={`${secondary} whitespace-nowrap`}
+          className={compact}
         >
-          {t("Do Google Kalendára")}
+          Google
         </a>
       </div>
-      <p className="text-xs text-[var(--muted)]">{t("Google použije vaše vlastné predvolené upozornenie.")}</p>
       {can === "iphone-browser" && (
         <p className="text-xs text-[var(--muted)]">{t("Na iPhone príde pripomienka z kalendára. Upozornenia od Túruja fungujú po pridaní na plochu.")}</p>
       )}
