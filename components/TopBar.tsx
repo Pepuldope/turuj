@@ -325,7 +325,7 @@ function AccountPanel({ notice, code: why, onDone }: { notice: string | null; co
         >
           {t("Zmazať účet")}
         </button>
-        {error && <p className="px-2 text-xs font-semibold text-[var(--danger)]">{error}</p>}
+        {error && <p className="flex items-start gap-1.5 px-2 text-xs font-semibold text-[var(--danger)]"><UiIcon name="warn" size={14} className="mt-px" /><span>{error}</span></p>}
       </div>
     );
   }
@@ -466,7 +466,7 @@ function AccountPanel({ notice, code: why, onDone }: { notice: string | null; co
         </div>
       )}
       {mode === "signup" && !verify && <p className="text-sm text-[var(--muted)]">{t("Účet je zadarmo. Email si overíme jedným kódom.")}</p>}
-      {(notice || error) && <p className="rounded-lg bg-[var(--warn-bg)] px-3 py-2 text-sm font-semibold text-[var(--warn)]">{t((error ?? notice)!)}{!error && why && <span className="font-normal opacity-75"> ({why})</span>}</p>}
+      {(notice || error) && <p className="flex items-start gap-1.5 rounded-lg bg-[var(--warn-bg)] px-3 py-2 text-sm font-semibold text-[var(--warn)]"><UiIcon name="warn" size={16} className="mt-0.5" /><span>{t((error ?? notice)!)}{!error && why && <span className="font-normal opacity-75"> ({why})</span>}</span></p>}
 
       <form onSubmit={submit} className="flex flex-col gap-2">
         {mode === "signup" && !verify && (

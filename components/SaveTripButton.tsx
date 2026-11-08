@@ -1,5 +1,6 @@
 "use client";
 
+import { UiIcon } from "@/components/UiIcon";
 import { useTripStops } from "@/lib/tripStops";
 import { useState } from "react";
 import type { BBox, Closure, LatLng } from "@/lib/types";
@@ -212,8 +213,9 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
       {saved && status !== "saving" && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch(slug, { eve })} />}
 
       {status === "error" && (
-        <p className="text-sm text-[var(--warn)]">
-          {t("Výlet je uložený, ale kópia bez signálu sa nepodarila. Skúste to znova so signálom.")}
+        <p className="flex items-start gap-1.5 text-sm text-[var(--warn)]">
+          <UiIcon name="warn" size={16} className="mt-0.5" />
+          <span>{t("Výlet je uložený, ale kópia bez signálu sa nepodarila. Skúste to znova so signálom.")}</span>
         </p>
       )}
 

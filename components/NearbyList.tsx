@@ -41,7 +41,7 @@ function Card({ item, hidden }: { item: NearbyItem; hidden?: boolean }) {
           </span>
           {item.chip && (
             <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-[var(--danger-bg)] px-2.5 py-1 text-xs font-semibold text-[var(--danger)]">
-              <UiIcon name="lock" size={12} />
+              <UiIcon name="warn" size={12} />
               {item.chip}
             </span>
           )}

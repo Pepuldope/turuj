@@ -1,5 +1,6 @@
 "use client";
 
+import { UiIcon } from "@/components/UiIcon";
 import { useEffect, useState } from "react";
 import { applyOptOut, optedOut } from "@/lib/analytics";
 import { setTeamAccount, useAccount } from "@/lib/account";
@@ -46,7 +47,7 @@ export function OptOutNote() {
           >
             {team ? "Toto nie je tímový účet: počítať ma znova" : "Toto je tímový účet: nepočítať ma na žiadnom zariadení"}
           </button>
-          {failed && <span role="status" className="text-[var(--warn)]">Nepodarilo sa uložiť. Skúste to znova.</span>}
+          {failed && <span role="status" className="inline-flex items-center gap-1.5 text-[var(--warn)]"><UiIcon name="warn" size={14} />Nepodarilo sa uložiť. Skúste to znova.</span>}
         </div>
       )}
     </div>

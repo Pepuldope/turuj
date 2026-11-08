@@ -1004,7 +1004,10 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
       {/* No start: the drive (and bus) to each trip can't be worked out yet, so say so before the list (Peter, 2026-10-26). */}
       {startReady && !start && words.length === 0 && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius-card)] bg-[var(--warn-bg)] p-3 text-sm text-[var(--warn)]">
-          <p className="font-semibold">{t("Nevieme, odkiaľ vyrážate, preto zatiaľ neukazujeme čas cesty autom ani autobusom.")}</p>
+          <p className="flex items-start gap-1.5 font-semibold">
+            <UiIcon name="warn" size={16} className="mt-0.5" />
+            <span>{t("Nevieme, odkiaľ vyrážate, preto zatiaľ neukazujeme čas cesty autom ani autobusom.")}</span>
+          </p>
           <button type="button" onClick={focusStart} className="font-semibold underline">
             {t("Zadať štart")}
           </button>
@@ -1013,10 +1016,13 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
 
       {noneFit && dayWord && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius-card)] bg-[var(--warn-bg)] p-3 text-sm text-[var(--warn)]">
-          <p className="font-semibold">
-            {date === today
-              ? t("Dnes už za svetla nestihnete žiadny výlet. Ukazujeme všetky.")
-              : t("{Day} za svetla nestihnete žiadny výlet. Ukazujeme všetky.", { Day: dayWord.charAt(0).toUpperCase() + dayWord.slice(1) })}
+          <p className="flex items-start gap-1.5 font-semibold">
+            <UiIcon name="warn" size={16} className="mt-0.5" />
+            <span>
+              {date === today
+                ? t("Dnes už za svetla nestihnete žiadny výlet. Ukazujeme všetky.")
+                : t("{Day} za svetla nestihnete žiadny výlet. Ukazujeme všetky.", { Day: dayWord.charAt(0).toUpperCase() + dayWord.slice(1) })}
+            </span>
           </p>
           {date === today && (
             <button type="button" onClick={showTomorrow} className="font-semibold underline">

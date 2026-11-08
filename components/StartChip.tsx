@@ -23,6 +23,8 @@ let bannerShown = false;
 
 // Notes sit on a card.
 const note = "w-fit rounded-lg bg-[var(--card-bg)] px-2.5 py-1.5 text-xs font-medium";
+/** A warning note: its sign beside the text, both in the warning colour. */
+const warnNote = "flex items-start gap-1.5 text-[var(--warn)] [&>svg]:mt-px";
 
 /**
  * "Odkiaľ vyrážate?" as the page's first question: a card open until a start is
@@ -268,8 +270,8 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
             </ul>
           )}
           {search === "searching" && <p className={`${note} text-[var(--muted)]`}>{t("Hľadáme miesto…")}</p>}
-          {search === "empty" && <p role="alert" className={`${note} text-[var(--warn)]`}>{t("Také miesto sme nenašli.")}</p>}
-          {search === "error" && <p role="alert" className={`${note} text-[var(--warn)]`}>{t("Toto sa nenačítalo. Skúste to znova.")}</p>}
+          {search === "empty" && <p role="alert" className={`${note} ${warnNote}`}><UiIcon name="warn" size={14} />{t("Také miesto sme nenašli.")}</p>}
+          {search === "error" && <p role="alert" className={`${note} ${warnNote}`}><UiIcon name="warn" size={14} />{t("Toto sa nenačítalo. Skúste to znova.")}</p>}
           {search === "results" && (
             <ul className="flex flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card-bg)]">
               {results.map((p) => (
@@ -342,7 +344,8 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
       )}
 
       {message && status !== "locating" && (
-        <p role="alert" className={`${note} text-[var(--warn)]`}>
+        <p role="alert" className={`${note} ${warnNote}`}>
+          <UiIcon name="warn" size={14} />
           {t(message)}
         </p>
       )}

@@ -149,7 +149,10 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
     >
       {/* Picked on the map and closed that day: the warning comes first, above the title (Peter, 8 Nov). */}
       {big && pill?.tone === "closed" && (
-        <span className={`col-span-2 -mt-0.5 flex items-center rounded-xl px-2.5 py-1.5 text-[13.5px] font-semibold ${PILL_CLASS.closed}`}>{pill.text}</span>
+        <span className={`col-span-2 -mt-0.5 flex items-start gap-1.5 rounded-xl px-2.5 py-1.5 text-[13.5px] font-semibold ${PILL_CLASS.closed}`}>
+          <UiIcon name="warn" size={15} className="mt-0.5" />
+          {pill.text}
+        </span>
       )}
       {thumb ? (
         // A photo of the place in place of the kind icon (Peter, 2026-10-22); the kind sits on it as a small badge.
@@ -273,6 +276,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
         )}
         {pill && !(big && pill.tone === "closed") && (
           <span className={`mt-0.5 inline-flex items-baseline gap-1.5 self-start rounded-full px-2.5 py-1 text-[12.5px] font-semibold ${PILL_CLASS[pill.tone]}`}>
+            {pill.tone === "closed" && <UiIcon name="warn" size={13} className="self-center" />}
             {pill.text}
             {pill.time && <span className="font-data text-[17px] leading-none font-bold">{pill.time}</span>}
           </span>

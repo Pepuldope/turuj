@@ -1,5 +1,6 @@
 "use client";
 
+import { UiIcon } from "@/components/UiIcon";
 import { useEffect, useRef, useState } from "react";
 import { useLang, useT } from "@/lib/i18n";
 import { langPath } from "@/lib/lang";
@@ -205,8 +206,8 @@ export function EveReminder({
             <span>{t("Pripomenúť večer pred výletom")}</span>
           </button>
           {on && <p className="text-xs text-[var(--muted)]">{t("Napíšeme vám o 19:00 deň vopred: počasie a kedy vyraziť.")}</p>}
-          {state === "denied" && <p className="text-xs text-[var(--warn)]">{t("Upozornenia sú v prehliadači zakázané. Povoľte ich v nastaveniach stránky alebo použite kalendár.")}</p>}
-          {state === "failed" && <p className="text-xs text-[var(--warn)]">{t("Pripomienku sa teraz nepodarilo nastaviť. Skúste to znova alebo použite kalendár.")}</p>}
+          {state === "denied" && <p className="flex items-start gap-1.5 text-xs text-[var(--warn)]"><UiIcon name="warn" size={14} className="mt-px" /><span>{t("Upozornenia sú v prehliadači zakázané. Povoľte ich v nastaveniach stránky alebo použite kalendár.")}</span></p>}
+          {state === "failed" && <p className="flex items-start gap-1.5 text-xs text-[var(--warn)]"><UiIcon name="warn" size={14} className="mt-px" /><span>{t("Pripomienku sa teraz nepodarilo nastaviť. Skúste to znova alebo použite kalendár.")}</span></p>}
           {testing && on && (
             <button type="button" onClick={sendTest} className="self-start text-xs underline">
               {t("Poslať skúšobnú pripomienku teraz")}

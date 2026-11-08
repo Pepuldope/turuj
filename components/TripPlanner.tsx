@@ -1,5 +1,6 @@
 "use client";
 
+import { UiIcon } from "@/components/UiIcon";
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type { DayPlan, Verdict } from "@/lib/dayPlan";
@@ -350,8 +351,9 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
           {/* Right under the time it is about (Peter). Not from the quick guess shown while the route loads:
               a warning that then vanishes would only confuse. */}
           {plan && !tripPlan.loading && (late || latestPassed) && (
-            <p role="status" className="rounded-xl bg-[var(--warn-bg)] px-3.5 py-3 text-base font-semibold text-[var(--warn)]">
-              {lateText(plan.verdict, { latestPassed: !!latestPassed, tooLong, noTrain: !!plan.noTrainInLight, startWord, latest: formatTime(latest!) }, lang)}
+            <p role="status" className="flex items-start gap-2 rounded-xl bg-[var(--warn-bg)] px-3.5 py-3 text-base font-semibold text-[var(--warn)]">
+              <UiIcon name="warn" size={18} className="mt-1" />
+              <span>{lateText(plan.verdict, { latestPassed: !!latestPassed, tooLong, noTrain: !!plan.noTrainInLight, startWord, latest: formatTime(latest!) }, lang)}</span>
             </p>
           )}
           {driveStatus === "loading" && !walking && <p className="text-xs text-[var(--muted)]">{transit ? t("Počítame cestu na zastávku…") : t("Počítame cestu autom…")}</p>}
@@ -383,7 +385,12 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
               <SunArc key={date ?? ""} plan={plan} profile={profile} sun={sun} hasDrive={hasDrive} byBus={transit} byTrain={transit && rail.status === "ok"} weather={weather.below} />
             </div>
           )}
-          {plan.startsInDark && <p className="text-sm text-[var(--warn)]">{t("Túra začína pred východom slnka, vezmite si čelovku.")}</p>}
+          {plan.startsInDark && (
+            <p className="flex items-start gap-1.5 text-sm text-[var(--warn)]">
+              <UiIcon name="warn" size={16} className="mt-0.5" />
+              <span>{t("Túra začína pred východom slnka, vezmite si čelovku.")}</span>
+            </p>
+          )}
           {/* Peter: the arrival is the first big time; the departure (also set in the box above) sits
               small over it, a chip set apart from the labels below it. */}
           {hasDrive && (
