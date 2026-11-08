@@ -239,14 +239,12 @@ export function EveReminder({
           {apple === "iphone" ? t("Do kalendára v iPhone") : apple === "mac" ? t("Do kalendára v Macu") : t("Do kalendára (.ics)")}
         </button>
         <a
-          href="https://calendar.google.com/calendar/render"
+          // Built from the saved day and time on every render (this card only exists in the browser, after a save),
+          // so a long-press or "open in new tab" carries the event too.
+          href={typeof window === "undefined" ? "https://calendar.google.com/calendar/render" : googleCalendarUrl(eventOf())}
           target="_blank"
           rel="noopener"
-          onClick={(e) => {
-            // The link is built from the saved day and time when tapped, so it never shows a stale plan.
-            e.currentTarget.href = googleCalendarUrl(eventOf());
-            track("ics_download", { trail: trip.slug, to: "google" });
-          }}
+          onClick={() => track("ics_download", { trail: trip.slug, to: "google" })}
           className={`${secondary} whitespace-nowrap`}
         >
           {t("Do Google Kalendára")}
