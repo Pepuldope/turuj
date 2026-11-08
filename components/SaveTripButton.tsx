@@ -1,8 +1,9 @@
 "use client";
 
 import { UiIcon } from "@/components/UiIcon";
+import { APP_BAR_KEY } from "@/components/AppBar";
 import { useTripStops } from "@/lib/tripStops";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { BBox, Closure, LatLng } from "@/lib/types";
 import type { TripProfile } from "@/lib/tripProfile";
@@ -104,6 +105,23 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
   const [askShare, setAskShare] = useState(false);
   // The first trip saved on this device: ask once how they heard of us (after the share offer).
   const [askHeard, setAskHeard] = useState(false);
+
+  // Closed once (here or on the home page's bar), the app offer stays away. Hidden until the browser has been asked.
+  const [appClosed, setAppClosed] = useState(true);
+  useEffect(() => {
+    let closed = false;
+    try {
+      closed = localStorage.getItem(APP_BAR_KEY) === "closed";
+    } catch {}
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAppClosed(closed);
+  }, []);
+  function closeApp() {
+    setAppClosed(true);
+    try {
+      localStorage.setItem(APP_BAR_KEY, "closed");
+    } catch {}
+  }
 
   const saved = trips.find((t) => t.slug === slug) ?? null;
   const changed =
@@ -223,10 +241,14 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
       )}
 
       {saved && !askShare && status !== "saving" && (
-        <p className="text-sm">
-          {t("Uložené na")} <strong>{dayAfterNa(saved.date, lang)}</strong> {t("o")} <strong>{saved.time}</strong>
+        <p className="rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
+          <strong>{t("Už uložené.")}</strong> {t("Nájdete to v")}{" "}
+          <LangLink href="/ulozene" className="underline">
+            {t("Mojich výletoch")}
+          </LangLink>
+          , {t("naplánované na")} <strong>{dayAfterNa(saved.date, lang)}</strong> {t("o")} <strong>{saved.time}</strong>
           {saved.offline === "ok" ? t(", funguje aj bez signálu. ") : ". "}
-          <button type="button" onClick={() => remove(slug)} className="text-[var(--muted)] underline">
+          <button type="button" onClick={() => remove(slug)} className="underline">
             {t("Odstrániť")}
           </button>
         </p>
@@ -245,7 +267,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
 
       {nav}
 
-      {status !== "saving" && !installed && (
+      {status !== "saving" && !installed && !appClosed && (
         <div className="flex items-center gap-3 rounded-xl bg-[var(--sun-soft)] p-3 text-sm">
           <span className="min-w-0 flex-1">{t("Hore na kopci bez signálu? Uložený výlet otvoríte najrýchlejšie z ikony na ploche.")}</span>
           <LangLink
@@ -255,6 +277,9 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
           >
             {t("Získať appku")}
           </LangLink>
+          <button type="button" onClick={closeApp} aria-label={t("Zavrieť")} className="-mr-1 grid h-10 w-10 shrink-0 place-items-center rounded-full text-xl leading-none text-[var(--muted)]">
+            ×
+          </button>
         </div>
       )}
     </div>

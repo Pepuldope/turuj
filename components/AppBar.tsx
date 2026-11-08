@@ -7,7 +7,8 @@ import { useSavedTrips } from "@/lib/savedTrips";
 import { LangLink, useT } from "@/lib/i18n";
 import { UiIcon } from "@/components/UiIcon";
 
-const KEY = "turuj-app-bar";
+/** "closed": the app offer was dismissed, here or on the save card. */
+export const APP_BAR_KEY = "turuj-app-bar";
 const NUDGE_AFTER_SAVES = 2;
 /** Scrolled this far, the trip search has left the bottom of a phone's first screen. */
 const SCROLL_PX = 160;
@@ -26,7 +27,7 @@ export function AppBar({ hidden }: { hidden?: boolean }) {
   useEffect(() => {
     let closed = false;
     try {
-      closed = localStorage.getItem(KEY) === "closed";
+      closed = localStorage.getItem(APP_BAR_KEY) === "closed";
     } catch {}
     if (closed || !proven) return;
     // A few seconds in, so the first look at the page stays clean.
@@ -60,7 +61,7 @@ export function AppBar({ hidden }: { hidden?: boolean }) {
   function close() {
     setShow(false);
     try {
-      localStorage.setItem(KEY, "closed");
+      localStorage.setItem(APP_BAR_KEY, "closed");
     } catch {}
   }
 
