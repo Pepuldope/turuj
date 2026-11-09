@@ -1003,9 +1003,11 @@
     <trkpt lat="49.165243" lon="21.290127"><ele>323</ele></trkpt>
   </trkseg></trk>
   <trk><name>Fričkovská jaskyňa 1</name><desc>frickovska-jaskyna-1-zavadka</desc><trkseg>
-    <trkpt lat="49.147486" lon="21.238790"><ele>567</ele></trkpt>
+    <trkpt lat="49.147489" lon="21.238701"><ele>567</ele></trkpt>
+    <trkpt lat="49.147488" lon="21.238807"><ele>567</ele></trkpt>
     <trkpt lat="49.147947" lon="21.238676"><ele>573</ele></trkpt>
-    <trkpt lat="49.148118" lon="21.238696"><ele>575</ele></trkpt>
+    <trkpt lat="49.148136" lon="21.238719"><ele>576</ele></trkpt>
+    <trkpt lat="49.148230" lon="21.237505"><ele>584</ele></trkpt>
     <trkpt lat="49.148306" lon="21.236955"><ele>591</ele></trkpt>
     <trkpt lat="49.148294" lon="21.236151"><ele>598</ele></trkpt>
     <trkpt lat="49.148443" lon="21.234975"><ele>606</ele></trkpt>
@@ -1181,8 +1183,10 @@
     <trkpt lat="49.148443" lon="21.234975"><ele>606</ele></trkpt>
     <trkpt lat="49.148294" lon="21.236151"><ele>598</ele></trkpt>
     <trkpt lat="49.148306" lon="21.236955"><ele>591</ele></trkpt>
-    <trkpt lat="49.148118" lon="21.238696"><ele>575</ele></trkpt>
+    <trkpt lat="49.148230" lon="21.237505"><ele>584</ele></trkpt>
+    <trkpt lat="49.148136" lon="21.238719"><ele>576</ele></trkpt>
     <trkpt lat="49.147947" lon="21.238676"><ele>573</ele></trkpt>
-    <trkpt lat="49.147486" lon="21.238790"><ele>567</ele></trkpt>
+    <trkpt lat="49.147488" lon="21.238807"><ele>567</ele></trkpt>
+    <trkpt lat="49.147489" lon="21.238701"><ele>567</ele></trkpt>
   </trkseg></trk>
 </gpx>

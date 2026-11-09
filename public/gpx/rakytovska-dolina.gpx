@@ -602,13 +602,12 @@
     <trkpt lat="48.876417" lon="19.040508"><ele>1271</ele></trkpt>
   </trkseg></trk>
   <trk><name>Rakytovská dolina</name><desc>rakytovska-dolina-raksa</desc><trkseg>
-    <trkpt lat="48.881467" lon="18.879979"><ele>504</ele></trkpt>
+    <trkpt lat="48.881476" lon="18.879936"><ele>504</ele></trkpt>
     <trkpt lat="48.881281" lon="18.880463"><ele>504</ele></trkpt>
     <trkpt lat="48.881177" lon="18.881711"><ele>504</ele></trkpt>
     <trkpt lat="48.881067" lon="18.882320"><ele>506</ele></trkpt>
     <trkpt lat="48.881165" lon="18.882359"><ele>506</ele></trkpt>
-    <trkpt lat="48.881451" lon="18.882700"><ele>505</ele></trkpt>
-    <trkpt lat="48.881810" lon="18.883227"><ele>507</ele></trkpt>
+    <trkpt lat="48.881828" lon="18.883212"><ele>507</ele></trkpt>
     <trkpt lat="48.881648" lon="18.883667"><ele>508</ele></trkpt>
     <trkpt lat="48.881539" lon="18.884334"><ele>511</ele></trkpt>
     <trkpt lat="48.881425" lon="18.884761"><ele>510</ele></trkpt>
@@ -958,12 +957,11 @@
     <trkpt lat="48.881425" lon="18.884761"><ele>510</ele></trkpt>
     <trkpt lat="48.881539" lon="18.884334"><ele>511</ele></trkpt>
     <trkpt lat="48.881648" lon="18.883667"><ele>508</ele></trkpt>
-    <trkpt lat="48.881810" lon="18.883227"><ele>507</ele></trkpt>
-    <trkpt lat="48.881451" lon="18.882700"><ele>505</ele></trkpt>
+    <trkpt lat="48.881828" lon="18.883212"><ele>507</ele></trkpt>
     <trkpt lat="48.881165" lon="18.882359"><ele>506</ele></trkpt>
     <trkpt lat="48.881067" lon="18.882320"><ele>506</ele></trkpt>
     <trkpt lat="48.881177" lon="18.881711"><ele>504</ele></trkpt>
     <trkpt lat="48.881281" lon="18.880463"><ele>504</ele></trkpt>
-    <trkpt lat="48.881467" lon="18.879979"><ele>504</ele></trkpt>
+    <trkpt lat="48.881476" lon="18.879936"><ele>504</ele></trkpt>
   </trkseg></trk>
 </gpx>

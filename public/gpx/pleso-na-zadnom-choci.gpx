@@ -476,7 +476,7 @@
     <trkpt lat="49.087685" lon="19.353939"><ele>488</ele></trkpt>
   </trkseg></trk>
   <trk><name>Pleso na Zadnom Choči</name><desc>pleso-na-zadnom-choci-lucky-obecny-urad</desc><trkseg>
-    <trkpt lat="49.127912" lon="19.403476"><ele>578</ele></trkpt>
+    <trkpt lat="49.127902" lon="19.403467"><ele>578</ele></trkpt>
     <trkpt lat="49.127921" lon="19.403407"><ele>578</ele></trkpt>
     <trkpt lat="49.127561" lon="19.403219"><ele>578</ele></trkpt>
     <trkpt lat="49.127481" lon="19.403210"><ele>578</ele></trkpt>
@@ -485,14 +485,16 @@
     <trkpt lat="49.127265" lon="19.402700"><ele>578</ele></trkpt>
     <trkpt lat="49.127208" lon="19.402625"><ele>578</ele></trkpt>
     <trkpt lat="49.127058" lon="19.402543"><ele>578</ele></trkpt>
-    <trkpt lat="49.127185" lon="19.401847"><ele>580</ele></trkpt>
+    <trkpt lat="49.127216" lon="19.401772"><ele>580</ele></trkpt>
     <trkpt lat="49.127427" lon="19.401514"><ele>581</ele></trkpt>
     <trkpt lat="49.127470" lon="19.401377"><ele>581</ele></trkpt>
-    <trkpt lat="49.127530" lon="19.400419"><ele>584</ele></trkpt>
-    <trkpt lat="49.127470" lon="19.400010"><ele>585</ele></trkpt>
+    <trkpt lat="49.127534" lon="19.401087"><ele>582</ele></trkpt>
+    <trkpt lat="49.127485" lon="19.401004"><ele>583</ele></trkpt>
+    <trkpt lat="49.127538" lon="19.400430"><ele>584</ele></trkpt>
     <trkpt lat="49.127397" lon="19.399744"><ele>588</ele></trkpt>
     <trkpt lat="49.127052" lon="19.398991"><ele>595</ele></trkpt>
     <trkpt lat="49.126668" lon="19.397790"><ele>608</ele></trkpt>
+    <trkpt lat="49.126550" lon="19.397001"><ele>615</ele></trkpt>
     <trkpt lat="49.126507" lon="19.396707"><ele>618</ele></trkpt>
     <trkpt lat="49.126657" lon="19.396131"><ele>624</ele></trkpt>
     <trkpt lat="49.126766" lon="19.395359"><ele>630</ele></trkpt>
@@ -864,14 +866,16 @@
     <trkpt lat="49.126766" lon="19.395359"><ele>630</ele></trkpt>
     <trkpt lat="49.126657" lon="19.396131"><ele>624</ele></trkpt>
     <trkpt lat="49.126507" lon="19.396707"><ele>618</ele></trkpt>
+    <trkpt lat="49.126550" lon="19.397001"><ele>615</ele></trkpt>
     <trkpt lat="49.126668" lon="19.397790"><ele>608</ele></trkpt>
     <trkpt lat="49.127052" lon="19.398991"><ele>595</ele></trkpt>
     <trkpt lat="49.127397" lon="19.399744"><ele>588</ele></trkpt>
-    <trkpt lat="49.127470" lon="19.400010"><ele>585</ele></trkpt>
-    <trkpt lat="49.127530" lon="19.400419"><ele>584</ele></trkpt>
+    <trkpt lat="49.127538" lon="19.400430"><ele>584</ele></trkpt>
+    <trkpt lat="49.127485" lon="19.401004"><ele>583</ele></trkpt>
+    <trkpt lat="49.127534" lon="19.401087"><ele>582</ele></trkpt>
     <trkpt lat="49.127470" lon="19.401377"><ele>581</ele></trkpt>
     <trkpt lat="49.127427" lon="19.401514"><ele>581</ele></trkpt>
-    <trkpt lat="49.127185" lon="19.401847"><ele>580</ele></trkpt>
+    <trkpt lat="49.127216" lon="19.401772"><ele>580</ele></trkpt>
     <trkpt lat="49.127058" lon="19.402543"><ele>578</ele></trkpt>
     <trkpt lat="49.127208" lon="19.402625"><ele>578</ele></trkpt>
     <trkpt lat="49.127265" lon="19.402700"><ele>578</ele></trkpt>
@@ -880,7 +884,7 @@
     <trkpt lat="49.127481" lon="19.403210"><ele>578</ele></trkpt>
     <trkpt lat="49.127561" lon="19.403219"><ele>578</ele></trkpt>
     <trkpt lat="49.127921" lon="19.403407"><ele>578</ele></trkpt>
-    <trkpt lat="49.127912" lon="19.403476"><ele>578</ele></trkpt>
+    <trkpt lat="49.127902" lon="19.403467"><ele>578</ele></trkpt>
   </trkseg></trk>
   <trk><name>Pleso na Zadnom Choči</name><desc>pleso-na-zadnom-choci-valaska-dubova-ina-cesta</desc><trkseg>
     <trkpt lat="49.141987" lon="19.295887"><ele>686</ele></trkpt>
