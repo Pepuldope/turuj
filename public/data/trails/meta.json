@@ -1,7 +1,7 @@
 {
  "version": 1,
- "generated_at": "2026-11-02T13:25:23+00:00",
- "osm_data_at": "2026-11-01T21:21:36Z",
+ "generated_at": "2026-11-09T13:29:24+00:00",
+ "osm_data_at": "2026-11-08T21:21:00Z",
  "attribution": "© OpenStreetMap contributors (ODbL); popularity from Wikipedia page views (Wikimedia, CC0)",
  "grid": {
   "lon0": 16.75,
@@ -81,7 +81,7 @@
  ],
  "levels": 5,
  "km": 19920,
- "pieces": 72641,
+ "pieces": 72662,
  "level_km": [
   7968,
   4980,
@@ -90,10 +90,10 @@
   1195
  ],
  "cuts": [
-  407,
-  1292,
-  3222,
-  11514
+  438,
+  1339,
+  3291,
+  11630
  ],
  "top_goals": [
   {
