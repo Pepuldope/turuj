@@ -20,7 +20,7 @@ const GENITIVE: Record<string, string> = {
   "Slovenský kras a Volovské vrchy": "Slovenského krasu a Volovských vrchov",
   "Levočské vrchy, Branisko a Čergov": "Levočských vrchov, Braniska a Čergova",
   "Slanské vrchy, Vihorlat a Poloniny": "Slanských vrchov, Vihorlatu a Polonín",
-  "Záhorie a Podunajsko": "Záhoria a Podunajska",
+  "Podunajsko": "Podunajska",
   "Krupinská planina, Ipeľ a Cerová vrchovina": "Krupinskej planiny, Ipľa a Cerovej vrchoviny",
   "Košická kotlina a juh východu": "Košickej kotliny a juhu východu",
 };

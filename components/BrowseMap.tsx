@@ -364,10 +364,9 @@ export function BrowseMap({
   const waitRef = useRef(waitForUse);
   const insetRef = useRef(bottomInset);
   const zoomToAreaRef = useRef<(a: BrowseArea) => void>(() => {});
-  const startPickRef = useRef(pickPoint);
-  useEffect(() => {
-    startPickRef.current = pickPoint;
-  }, [pickPoint]);
+  // The "change the start?" card by the start pin: open, and where the pin is on screen.
+  const [startMenu, setStartMenu] = useState(false);
+  const [startXY, setStartXY] = useState<{ x: number; y: number } | null>(null);
   const hoverAreaRef = useRef<(id: string | null) => void>(() => {});
 
   useEffect(() => {
@@ -729,6 +728,8 @@ export function BrowseMap({
         handlers.current.onHover(null);
       });
       m.on("click", (e) => {
+        // A tap on the start house opens its own card (below), never a trip under it.
+        if ((e.originalEvent.target as Element | null)?.closest?.(".mt-start")) return;
         // "Vybrať bod na mape". With a mouse the click puts the pin there; on a touch screen the pin
         // stays in the middle and a tap brings that spot under it.
         if (pickingRef.current) {
@@ -971,15 +972,23 @@ export function BrowseMap({
       name.textContent = start.label;
       el.append(dot, name);
       // Anchored on the house, with the name hanging below it.
-      // The house can be dragged: a start anywhere, fine-tuned by hand.
+      // Peter, 2026-11-11: the house no longer drags (too easy to move by accident while panning).
+      // A tap opens a small card by it asking whether to change the start.
       dot.style.pointerEvents = "auto";
-      dot.style.cursor = "grab";
-      const marker = new ml.Marker({ element: el, anchor: "top", offset: [0, -18], draggable: true }).setLngLat([start.lon, start.lat]).addTo(map);
-      marker.on("dragend", () => {
-        const at = marker.getLngLat();
-        startPickRef.current(at.lat, at.lng);
+      dot.style.cursor = "pointer";
+      dot.setAttribute("role", "button");
+      dot.tabIndex = 0;
+      dot.setAttribute("aria-label", tr(pageLang(), "Štart: {name}. Zmeniť?", { name: start.label }));
+      dot.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setStartMenu((open) => !open);
       });
-      userMarkers.current.push(marker);
+      dot.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        setStartMenu(true);
+      });
+      userMarkers.current.push(new ml.Marker({ element: el, anchor: "top", offset: [0, -18] }).setLngLat([start.lon, start.lat]).addTo(map));
     }
     // A new start (or the first one with no remembered view): show its surroundings, where the nearest trips are.
     const key = start ? `${start.lat.toFixed(4)},${start.lon.toFixed(4)}` : null;
@@ -1014,6 +1023,34 @@ export function BrowseMap({
     ctx.map.on("move", place);
     return () => void ctx.map.off("move", place);
   }, [ctx, pickAt]);
+  // The card by the start pin follows the pin while the map moves; a tap elsewhere, Escape, or a new
+  // start closes it.
+  const startAt = start?.source === "manual" ? start : null;
+  if ((!startAt || picking) && startMenu) setStartMenu(false);
+  useEffect(() => {
+    if (!ctx || !startMenu || !startAt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStartXY(null);
+      return;
+    }
+    const place = () => {
+      const p = ctx.map.project([startAt.lon, startAt.lat]);
+      setStartXY({ x: p.x, y: p.y });
+    };
+    place();
+    const close = (e: MapMouseEvent) => {
+      if (!(e.originalEvent.target as Element | null)?.closest?.(".mt-start")) setStartMenu(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setStartMenu(false);
+    ctx.map.on("move", place);
+    ctx.map.on("click", close);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      ctx.map.off("move", place);
+      ctx.map.off("click", close);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [ctx, startMenu, startAt?.lat, startAt?.lon]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!ctx) return;
     if (!picking) return;
@@ -1026,6 +1063,35 @@ export function BrowseMap({
   return (
     <div className="relative h-full w-full" data-browse-map="">
       <div ref={containerRef} className="isolate h-full w-full" role="region" aria-label={ariaLabel} />
+      {startMenu && startXY && startAt && (
+        // Above the house (its name hangs below it); under it when the house is near the top.
+        <div
+          role="dialog"
+          aria-label={tr(pageLang(), "Zmeniť štart")}
+          className={`mt-pick-card absolute z-[31] flex -translate-x-1/2 flex-col gap-2 rounded-xl bg-[var(--card-bg)] p-3 text-sm shadow-[var(--shadow-float)] ${startXY.y < 150 ? "translate-y-12" : "-translate-y-[calc(100%+30px)]"}`}
+          style={{ left: startXY.x, top: startXY.y }}
+        >
+          <span className="max-w-[240px] font-semibold">{tr(pageLang(), "Chcete zmeniť, odkiaľ vyrážate?")}</span>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setStartMenu(false)} className="h-9 rounded-[10px] border border-[var(--border)] px-3.5 font-bold whitespace-nowrap">
+              {tr(pageLang(), "Nie")}
+            </button>
+            <button
+              type="button"
+              autoFocus
+              onClick={() => {
+                setStartMenu(false);
+                // On a touch screen the pick pin sits in the middle: start it from the current start.
+                if (!finePointer) ctx?.map.easeTo({ center: [startAt.lon, startAt.lat], duration: 400 });
+                setPicking(true);
+              }}
+              className="h-9 flex-1 rounded-[10px] bg-[var(--accent)] px-3.5 font-bold whitespace-nowrap text-[var(--accent-contrast)]"
+            >
+              {tr(pageLang(), "Zmeniť štart")}
+            </button>
+          </div>
+        </div>
+      )}
       {picking && !finePointer && (
         <>
           {/* The pin's tip is the middle of the map. */}

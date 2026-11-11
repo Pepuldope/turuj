@@ -33,6 +33,8 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { track, trackListEmpty } from "@/lib/analytics";
 import { townFrom } from "@/lib/townNames";
+import { startTown } from "@/lib/links";
+import { genitiveFrom } from "@/lib/slovakCase";
 import { suggestTowns } from "@/lib/townSuggest";
 import { decimal } from "@/lib/lang";
 import { StartChip } from "@/components/StartChip";
@@ -639,21 +641,34 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
   }, [visible.length, listedAll.length, filterCount]);
 
   const zoomedIn = !!mapView && mapView.zoom >= mapView.areaZoom - 1;
+  // Peter, 2026-11-11: a short title saying what the list is, and the order as a small line under it
+  // ("Výlety na zajtra" / "najbližšie od Žiliny"), instead of one long "Stihnete zajtra, na mape najbližšie k vášmu štartu".
+  // "v sobotu" -> "na sobotu", "on Saturday" -> "for Saturday".
+  const dayNoun = dayWord ? dayWord.replace(lang === "en" ? /^on\s+/ : /^vo?\s+/, "") : null;
+  const startName = start?.source === "manual" ? startTown(start) : null;
+  // Only a form we're sure of ("od Žiliny"); otherwise the plain "k vášmu štartu".
+  const startGen = startName ? genitiveFrom(startName) : null;
+  const fromName = lang === "en" ? startName : startGen?.text;
   const heading = words.length > 0
     ? t("Výsledky pre „{q}“", { q: query.trim() })
-    : zoomedIn
-      ? start
-        ? dayWord && !noneFit
-          ? t("Stihnete {day}, na mape najbližšie k vášmu štartu", { day: dayWord })
-          : t("Na mape, najbližšie k vášmu štartu")
-        : dayWord && !noneFit
-          ? t("Stihnete {day}, najbližšie k stredu mapy", { day: dayWord })
-          : t("Najbližšie k stredu mapy")
-      : dayWord && !noneFit
-        ? t(start ? "Stihnete {day}, najbližšie prvé" : "Stihnete {day}", { day: dayWord })
-        : start
-          ? t("Najbližšie výlety")
+    : dayNoun && !noneFit
+      ? t("Výlety na {day}", { day: dayNoun })
+      : start
+        ? t("Najbližšie výlety")
+        : zoomedIn
+          ? t("Výlety v tejto časti mapy")
           : t("Tisíce výletov po celom Slovensku");
+  const headingSort = words.length > 0
+    ? null
+    : start
+      ? start.source !== "manual"
+        ? t("najbližšie k vám")
+        : startGen?.confident
+          ? t("najbližšie od {from}", { from: fromName ?? "" })
+          : t("najbližšie k vášmu štartu")
+      : zoomedIn && dayNoun && !noneFit
+        ? t("v tejto časti mapy")
+        : null;
 
   const pickedItem = isDesktop && selected ? bySlug.get(selected) : undefined;
 
@@ -1001,6 +1016,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
       {/* Only the heading is read out when the list changes, not every card in it. */}
       <div className="flex flex-col" aria-live="polite">
         <h2 className="text-base font-bold">{heading}</h2>
+        {headingSort && <p className="text-sm text-[var(--muted)]">{headingSort}</p>}
       </div>
 
       {/* No start: the drive (and bus) to each trip can't be worked out yet, so say so before the list (Peter, 2026-10-26). */}
