@@ -1112,4 +1112,6 @@ export const EN: Record<string, string> = {
   "{n} zastávka": "{n} stop",
   "{n} zastávky": "{n} stops",
   "{n} zastávok": "{n} stops",
+  "Pred odchodom skontrolujte": "Check before you go",
+  "Upraviť v kroku {n}": "Fix in step {n}",
 };
