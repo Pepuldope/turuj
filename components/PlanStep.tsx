@@ -42,6 +42,31 @@ const StepsContext = createContext<StepsApi | null>(null);
 
 const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/** The gap kept between what a scroll brings up and the edge above it. */
+const SCROLL_GAP = 12;
+
+/**
+ * Scrolls `el` to the top of the window, just under the phone's top bar. The bar's real height is read
+ * from the page (its safe-area padding for the notch included) and counted as if it were shown: it comes
+ * back whenever the page scrolls up, and a gap that is a little too big when it hides is harmless, one
+ * too small would leave the card under the bar. Wide screens have no bar over the column.
+ */
+function scrollUnderBar(el: Element | null | undefined) {
+  if (!el) return;
+  const behavior: ScrollBehavior = reduced() ? "auto" : "smooth";
+  // Wide screens scroll the left column inside its own box (the map stays beside it), with no bar over it.
+  let box: HTMLElement | null = el.parentElement;
+  while (box && box !== document.body && !(/(auto|scroll)/.test(getComputedStyle(box).overflowY) && box.scrollHeight > box.clientHeight)) box = box.parentElement;
+  if (box && box !== document.body) {
+    box.scrollTo({ top: box.scrollTop + el.getBoundingClientRect().top - box.getBoundingClientRect().top - SCROLL_GAP, behavior });
+    return;
+  }
+  const phone = window.matchMedia("(max-width: 1023.98px)").matches;
+  const bar = phone ? document.querySelector<HTMLElement>("[data-topbar]") : null;
+  const top = el.getBoundingClientRect().top + window.scrollY - (bar?.offsetHeight ?? 0) - SCROLL_GAP;
+  window.scrollTo({ top: Math.max(0, top), behavior });
+}
+
 /**
  * Which steps are open, shared by the steps (they can be far apart in the tree: the route step comes
  * from the server) so "Ďalej" can fold one and open the next. Nothing is remembered across visits.
@@ -97,7 +122,7 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       if (steps.findIndex((s) => s.id === to) > steps.findIndex((s) => s.id === from)) setDone((d) => ({ ...d, [from]: true }));
       setOpen((o) => ({ ...o, [from]: false, [to]: true }));
     },
-    toResult: () => document.getElementById(resultId)?.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" }),
+    toResult: () => scrollUnderBar(document.getElementById(resultId)),
     isDone: (id) => !!done[id],
   };
   // After the new state is on screen: the next step's header gets the focus, and the view once the
@@ -108,10 +133,16 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     pending.current = null;
     const header = document.getElementById(`plan-step-${id}`);
     header?.focus({ preventScroll: true });
-    const scroll = () => header?.closest("section")?.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" });
+    const scroll = () => scrollUnderBar(header?.closest("section"));
     if (reduced()) return scroll();
-    const later = setTimeout(scroll, FOLD_MS + 20);
-    return () => clearTimeout(later);
+    // Two frames after the fold's timer: the folded body is gone from the page by then, so the target's
+    // position is final (measured earlier, the card would land too high once the page shrank).
+    let frame = 0;
+    const later = setTimeout(() => (frame = requestAnimationFrame(() => (frame = requestAnimationFrame(scroll)))), FOLD_MS + 20);
+    return () => {
+      clearTimeout(later);
+      cancelAnimationFrame(frame);
+    };
   }, [open]);
   return <StepsContext.Provider value={api}>{children}</StepsContext.Provider>;
 }
@@ -163,7 +194,7 @@ export function PlanStep({
   const next = api.steps[at + 1];
   const prev = api.steps[at - 1];
   return (
-    <section aria-label={title} className="scroll-mt-[calc(64px+env(safe-area-inset-top))] overflow-hidden lg:scroll-mt-3 rounded-[14px] border-[1.5px] border-[var(--accent)] bg-[var(--card-bg)]">
+    <section aria-label={title} className="overflow-hidden rounded-[14px] border-[1.5px] border-[var(--accent)] bg-[var(--card-bg)]">
       <button
         type="button"
         id={`plan-step-${id}`}
@@ -204,14 +235,14 @@ export function PlanStep({
           }`}
         >
         <div className="min-h-0 overflow-hidden">
-        <div id={bodyId} className="flex flex-col gap-3 px-3 pb-3">
+        <div id={bodyId} className="flex flex-col gap-2 px-3 pb-2.5">
           {children}
-          {/* On to the next choice: a secondary button (Uložiť výlet stays the only primary one). */}
-          <div className="flex flex-col items-start gap-1 border-t border-[var(--border)] pt-3">
+          {/* On to the next choice: the filled accent button (Peter, 2026-11-11), "Späť" stays quiet. */}
+          <div className="flex flex-col items-start gap-0.5 pt-0.5">
             <button
               type="button"
               onClick={() => (next ? api.go(id, next.id) : api.toResult())}
-              className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-[var(--accent)] bg-[var(--card-bg)] px-4 py-2 text-[15px] font-bold text-[var(--accent)] transition-colors hover:bg-[var(--accent-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+              className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-[var(--accent)] px-4 py-2 text-[15px] font-bold text-[var(--accent-contrast)] transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
             >
               {next ? t("Ďalej: {n}. {title}", { n: next.n, title: next.title }) : t("Hotovo: pozrite si svoj deň")}
               <UiIcon name={next ? "chev" : "down"} size={16} />
@@ -260,7 +291,7 @@ export function StepMap(props: Omit<ComponentProps<typeof PhoneTripMap>, "compac
     return () => io.disconnect();
   }, []);
   return (
-    <div ref={ref} className="h-[220px] shrink-0 lg:hidden">
+    <div ref={ref} className="h-[170px] shrink-0 lg:hidden">
       {near ? <PhoneTripMap {...props} compact /> : <div className="h-full rounded-xl border border-[var(--border)] bg-[var(--segment-bg)]" />}
     </div>
   );

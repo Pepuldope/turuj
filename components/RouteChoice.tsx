@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { ReactNode } from "react";
 import type { RouteBrief } from "@/lib/tripSchema";
 import type { RouteWalk } from "@/lib/walkFacts";
@@ -7,6 +8,7 @@ import { formatDuration } from "@/lib/format";
 import { PlanStep } from "@/components/PlanStep";
 import { RouteRows, useRouteNumbers } from "@/components/RouteRows";
 import { routeLabel } from "@/components/routeBits";
+import { ShowMore, shownRows } from "@/components/ShowMore";
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { routeNameIn } from "@/lib/lang";
 
@@ -34,8 +36,10 @@ export function RoutesStep({ n, slug, routes, walks, map }: Props) {
   const lang = useLang();
   const at = Math.max(0, routes.findIndex((r) => r.slug === slug));
   const numbers = useRouteNumbers(routes, walks, routes[at]?.slug ?? null);
+  const [all, setAll] = useState(false);
   if (routes.length < 2) return null;
   const current = routes[at];
+  const shown = shownRows(routes.length, all, [at]);
 
   return (
     <PlanStep
@@ -51,11 +55,14 @@ export function RoutesStep({ n, slug, routes, walks, map }: Props) {
       {map}
       {/* The first and last rows follow the list's corners (12 px card minus the 1 px border), so their hover outline isn't cut off. */}
       <ul className="flex flex-col divide-y divide-[var(--border)] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card-bg)] [&>li:first-child>a]:rounded-t-[11px] [&>li:last-child>a]:rounded-b-[11px]">
-        <RouteRows routes={routes} at={at} walks={walks} />
+        <RouteRows routes={routes} at={at} walks={walks} shown={shown} />
       </ul>
-      <LangLink href={`/trasa/${slug}/cesty`} className="flex min-h-10 w-fit items-center gap-1.5 text-sm font-bold whitespace-nowrap text-[var(--accent)]">
-        {t("Porovnať na mape")} ›
-      </LangLink>
+      <div className="flex items-center justify-between gap-x-3">
+        <ShowMore hidden={routes.length - shown.length} open={all} onToggle={() => setAll((v) => !v)} />
+        <LangLink href={`/trasa/${slug}/cesty`} className="ml-auto flex min-h-10 w-fit items-center gap-1.5 text-sm font-bold whitespace-nowrap text-[var(--accent)]">
+          {t("Porovnať na mape")} ›
+        </LangLink>
+      </div>
     </PlanStep>
   );
 }

@@ -10,7 +10,7 @@ import { useT } from "@/lib/i18n";
  * The trip page's first line under the header (Peter, 2026-10-19, option B): where the day is
  * planned from, and "Zmeniť štart" opening the same start picker as a panel from the bottom.
  */
-export function StartPill({ quiet = false }: { /** One small muted line ("Štart: Žilina · zmeniť") for inside the plan card, not the round pill. */ quiet?: boolean } = {}) {
+export function StartPill({ quiet = false }: { /** A full-width start row ("Vyrážate z / Žilina / Zmeniť") for inside the plan card, not the round pill. */ quiet?: boolean } = {}) {
   const { start, ready } = useUserLocation();
   const [open, setOpen] = useState(false);
   const t = useT();
@@ -25,25 +25,27 @@ export function StartPill({ quiet = false }: { /** One small muted line ("Štart
   return (
     <>
       {quiet ? (
-        <p className={`flex min-w-0 flex-wrap items-center gap-x-1 text-[13px] ${ready && !start ? "font-semibold" : "text-[var(--muted)]"}`}>
-          {ready && start ? (
-            <>
-              <span>{t("Štart:")}</span>
-              <span className="min-w-0 truncate font-semibold text-[var(--foreground)]">{t(start.label.split(",")[0])}</span>
-              <span aria-hidden>·</span>
-            </>
-          ) : (
-            <span>{ready ? t("Odkiaľ vyrážate?") : "…"}</span>
-          )}
+        // Where the day starts, as big as the home page's start row (Peter, 2026-11-11): a box above step 1.
+        <div className="flex min-h-[60px] items-center gap-3 rounded-xl bg-[var(--segment-bg)] py-2 pr-1.5 pl-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-[var(--accent-soft)] text-[var(--accent)]">
+            <UiIcon name="pin" size={18} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <span className={`block leading-snug ${ready && !start ? "text-base font-bold" : "text-[12.5px] text-[var(--muted)]"}`}>
+              {ready && start ? t("Vyrážate z") : ready ? t("Odkiaľ vyrážate?") : "…"}
+              {ready && start?.source === "gps" && ` · ${t("vaša poloha")}`}
+            </span>
+            {ready && start && <strong className="block truncate text-lg leading-tight">{start.label.trim() ? t(start.label.split(",")[0]) : t("Vaša poloha")}</strong>}
+          </div>
           <button
             type="button"
             onClick={() => setOpen(true)}
             aria-haspopup="dialog"
-            className="-my-2 inline-flex min-h-10 cursor-pointer items-center px-1 font-bold text-[var(--accent)] hover:underline focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+            className="min-h-10 shrink-0 cursor-pointer rounded-lg px-3 font-bold text-[var(--accent)] hover:bg-[var(--accent-soft)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
           >
-            {ready && !start ? t("Vybrať štart") : t("zmeniť")}
+            {ready && !start ? t("Vybrať štart") : t("Zmeniť")}
           </button>
-        </p>
+        </div>
       ) : (
       <button
         type="button"

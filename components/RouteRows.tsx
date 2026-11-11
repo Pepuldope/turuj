@@ -43,12 +43,12 @@ export function useRouteNumbers(routes: RouteBrief[], walks: Record<string, Rout
 }
 
 /** The routes as rows; the one under the pointer (here or on the map) gets an outline and lights up on the map. */
-export function RouteRows({ routes, at, walks }: { routes: RouteBrief[]; at: number; walks: Record<string, RouteWalk> }) {
+export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; at: number; walks: Record<string, RouteWalk>; shown?: number[] }) {
   const hovered = useHoveredRoute();
   const numbers = useRouteNumbers(routes, walks, routes[at]?.slug ?? null);
   const t = useT();
   const lang = useLang();
-  return routes.map((r, i) => (
+  return routes.map((r, i) => shown && !shown.includes(i) ? null : (
     <li key={r.slug}>
       <LangLink
         href={`/trasa/${r.slug}`}
@@ -65,12 +65,12 @@ export function RouteRows({ routes, at, walks }: { routes: RouteBrief[]; at: num
           const lats = r.up.map((p) => p[1]);
           if (r.up.length > 1) focusOnMap({ scope: "routes", location: { lat: lats[0], lon: lons[0] }, fit: [{ lat: Math.min(...lats), lon: Math.min(...lons) }, { lat: Math.max(...lats), lon: Math.max(...lons) }] });
         }}
-        className={`flex items-center gap-3 px-3.5 py-2.5 outline-offset-[-2px] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${i === at ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--segment-bg)]"} ${
+        className={`flex items-center gap-2.5 px-3 py-2 outline-offset-[-2px] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${i === at ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--segment-bg)]"} ${
           hovered === r.slug ? "outline-2 outline-[var(--accent)] outline" : ""
         }`}
       >
         <Dot i={i} />
-        <span className="flex min-w-0 flex-col">
+        <span className="flex min-w-0 flex-col leading-snug">
           <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[15px] font-bold">
             {routeNameIn(lang, routeLabel(r))}
             {!r.parking && <NoParkingChip />}

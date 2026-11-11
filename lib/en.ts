@@ -344,6 +344,8 @@ export const EN: Record<string, string> = {
   "odbočka +{n} min": "detour +{n} min",
   "odbočka +{n} min tam aj späť": "detour +{n} min there and back",
   "v pláne dňa": "in the day plan",
+  "Zobraziť ďalšie ({n})": "Show {n} more",
+  "Zobraziť menej": "Show fewer",
 
   // Trip facts and routes
   "Cez {place}": "Via {place}",

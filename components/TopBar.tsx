@@ -151,6 +151,7 @@ export function TopBar() {
   return (
     <div
       ref={boxRef}
+      data-topbar=""
       style={{ transitionTimingFunction: visible ? EASE_IN : EASE_OUT }}
       // Back at the top the bar turns see-through at once, not over 280 ms: iOS reads the colour for the
       // strip behind the clock while the page scrolls, and caught it still white (Peter, 2026-11-05).
