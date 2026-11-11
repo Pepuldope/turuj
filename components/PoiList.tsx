@@ -4,7 +4,7 @@ import { KindIcon } from "@/components/KindIcon";
 import { poiIcon, poiLabel } from "@/lib/food";
 import { focusOnMap } from "@/lib/mapFocus";
 import { POI_COLOUR } from "@/lib/palette";
-import type { Poi } from "@/lib/types";
+import type { LatLng, Poi } from "@/lib/types";
 import { UiIcon } from "@/components/UiIcon";
 import { stopFor, useTripStops, visits } from "@/lib/tripStops";
 import type { TripStop } from "@/lib/tripStops";
@@ -26,10 +26,13 @@ export function PoiList({
   pois,
   slug,
   loop,
+  near = {},
 }: {
   pois: Poi[];
   slug: string;
   loop: boolean;
+  /** Each place's nearest point on the walk (by id): the map shows it with the place. */
+  near?: Record<string, LatLng>;
 }) {
   const stops = useTripStops(slug);
   const t = useT();
@@ -58,7 +61,11 @@ export function PoiList({
             p={p}
             stop={stops.stops.find((s) => s.id === p.id) ?? null}
             loop={loop}
-            onToggle={() => stops.toggle(stopFor(p))}
+            near={near[p.id]}
+            onToggle={() => {
+              if (!stops.has(p.id)) focusOnMap({ location: p.location, scope: "places", context: near[p.id] });
+              stops.toggle(stopFor(p));
+            }}
             onWay={(way) => stops.setWay(p.id, way)}
           />
         ))}
@@ -73,7 +80,11 @@ export function PoiList({
             p={p}
             stop={stops.stops.find((s) => s.id === p.id) ?? null}
             loop={loop}
-            onToggle={() => stops.toggle(stopFor(p))}
+            near={near[p.id]}
+            onToggle={() => {
+              if (!stops.has(p.id)) focusOnMap({ location: p.location, scope: "places", context: near[p.id] });
+              stops.toggle(stopFor(p));
+            }}
             onWay={(way) => stops.setWay(p.id, way)}
           />
         ))}
@@ -86,10 +97,12 @@ function PoiRow({
   p,
   stop,
   loop,
+  near,
   onToggle,
   onWay,
 }: {
   p: Poi;
+  near?: LatLng;
   stop: TripStop | null;
   loop: boolean;
   onToggle: () => void;
@@ -104,7 +117,7 @@ function PoiRow({
         <button
           type="button"
           onClick={() =>
-            focusOnMap({ id: `poi-${p.id}`, location: p.location })
+            focusOnMap({ id: `poi-${p.id}`, location: p.location, scope: "places", context: near })
           }
           className="-ml-2 flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-1 text-left hover:bg-[var(--segment-bg)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
         >

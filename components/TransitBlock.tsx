@@ -11,6 +11,7 @@ import { useHomeStop } from "@/lib/useHomeStop";
 import { useUserLocation } from "@/lib/userLocation";
 import type { TransitStop } from "@/lib/types";
 import { clock } from "@/lib/zoned";
+import { focusOnMap } from "@/lib/mapFocus";
 import { useTripAccess } from "@/components/TripAccess";
 import { UiIcon } from "@/components/UiIcon";
 import { useLang, useT } from "@/lib/i18n";
@@ -42,8 +43,8 @@ export function StopIcon({ mode, size = 16 }: { mode: TransitStop["mode"]; size?
  * By train or bus: which stop near the trail to get off at, as the options of the "Ako sa tam
  * dostanete" step. The walk to the trail, the plan and the cp.sk searches follow the pick.
  */
-export function StopOptions({ onPick }: { /** After a pick (the big map frames the stops again). */ onPick?: () => void }) {
-  const { stops, stopChoice, chooseStop, transit } = useTripAccess();
+export function StopOptions() {
+  const { stops, stopChoice, chooseStop, transit, trailStart } = useTripAccess();
   const t = useT();
   const lang = useLang();
   if (!transit) return null;
@@ -65,7 +66,7 @@ export function StopOptions({ onPick }: { /** After a pick (the big map frames t
                   aria-checked={selected}
                   onClick={() => {
                     chooseStop(i);
-                    onPick?.();
+                    focusOnMap({ location: s.location, scope: "access", context: s.join?.location ?? trailStart ?? undefined });
                   }}
                   disabled={options.length === 1}
                   className={`flex min-h-11 w-full items-start gap-3 rounded-xl border px-3 py-2 text-left text-sm disabled:cursor-default ${

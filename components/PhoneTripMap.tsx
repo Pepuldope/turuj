@@ -83,7 +83,7 @@ export function PhoneTripMap({
                 <li key={p.id}>
                   <button
                     type="button"
-                    onClick={() => focusOnMap({ id: `poi-${p.id}`, location: p.location })}
+                    onClick={() => focusOnMap({ id: `poi-${p.id}`, location: p.location, scope: focus })}
                     className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-[var(--segment-bg)]"
                   >
                     <KindIcon kind={poiIcon(p)} colour={POI_COLOUR[p.kind]} />

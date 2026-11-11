@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import type { RouteBrief } from "@/lib/tripSchema";
 import type { RouteWalk } from "@/lib/walkFacts";
 import { formatDuration } from "@/lib/format";
-import { fitOnMap } from "@/lib/mapFocus";
 import { PlanStep } from "@/components/PlanStep";
 import { RouteRows, useRouteNumbers } from "@/components/RouteRows";
 import { routeLabel } from "@/components/routeBits";
@@ -40,9 +39,9 @@ export function RoutesStep({ n, slug, routes, walks, map }: Props) {
 
   return (
     <PlanStep
+      id="route"
       n={n}
       title={t("Kadiaľ pôjdete")}
-      onOpen={() => fitOnMap("routes")}
       summary={
         <>
           {routeNameIn(lang, routeLabel(current))} · <span className="font-data">{formatDuration(numbers[at].min)}</span>

@@ -1,6 +1,7 @@
 "use client";
 
 import { formatDuration, formatWalk } from "@/lib/format";
+import { focusOnMap } from "@/lib/mapFocus";
 import { useTripAccess } from "@/components/TripAccess";
 import { approachMin } from "@/lib/dayPlan";
 import type { ParkingLot } from "@/lib/types";
@@ -35,8 +36,8 @@ export function summaryWalk(p: ParkingLot, lang: Lang): string {
  * Where to leave the car, as the options of the "Ako sa tam dostanete" step. With several parking
  * spots near the start the visitor picks one; the drive, the walk to the trail and the plan follow.
  */
-export function ParkingOptions({ onPick }: { /** After a pick (the big map frames the parking again). */ onPick?: () => void }) {
-  const { parkingLots, choice, choose, parking, transit, stops, walking } = useTripAccess();
+export function ParkingOptions() {
+  const { parkingLots, choice, choose, parking, transit, stops, walking, trailStart } = useTripAccess();
   const options = parkingLots.slice(0, MAX_OPTIONS);
   const t = useT();
   const lang = useLang();
@@ -64,7 +65,8 @@ export function ParkingOptions({ onPick }: { /** After a pick (the big map frame
                   aria-checked={selected}
                   onClick={() => {
                     choose(i);
-                    onPick?.();
+                    // The map beside it centres on this parking, with where it meets the trail in view.
+                    focusOnMap({ location: p.location, scope: "access", context: p.join?.location ?? trailStart ?? undefined });
                   }}
                   disabled={options.length === 1}
                   className={`flex min-h-11 w-full items-start gap-3 rounded-xl border px-3 py-2 text-left text-sm disabled:cursor-default ${

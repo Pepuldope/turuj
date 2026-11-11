@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BBox, LatLng, TrailDetail } from "@/lib/types";
 import { haversineM, legOffPath, nearestOnPath } from "@/lib/geo";
@@ -20,7 +20,7 @@ import { TrailMap } from "@/components/TrailMapClient";
 import type { MapMarker, MapTrack, SideLeg } from "@/components/TrailMap";
 import { useTripAccess } from "@/components/TripAccess";
 import { stopFor, useTripStops } from "@/lib/tripStops";
-import { onMapFit } from "@/lib/mapFocus";
+import { focusOnMap, onMapFit } from "@/lib/mapFocus";
 import type { MapFit } from "@/lib/mapFocus";
 import { setHoveredRoute, useHoveredRoute } from "@/lib/routeHover";
 import { NETWORK_ON } from "@/lib/trailNetwork";
@@ -345,7 +345,7 @@ export function TripMap({ detail, gpxUrl, path, others = [], loop = false, marks
             active: i === choice,
             dimmed: i !== choice,
             // Tapping another parking picks it (the plan and both routes follow).
-            onClick: i === choice ? undefined : () => choose(i),
+            onClick: i === choice ? undefined : () => (choose(i), focusOnMap({ location: p.location, scope: "access", context: p.join?.location ?? trailStart ?? undefined })),
           }))),
       ...(transit
         ? stops.map((s, i) => ({
@@ -360,7 +360,7 @@ export function TripMap({ detail, gpxUrl, path, others = [], loop = false, marks
             ],
             active: i === stopChoice,
             dimmed: i !== stopChoice,
-            onClick: i === stopChoice ? undefined : () => chooseStop(i),
+            onClick: i === stopChoice ? undefined : () => (chooseStop(i), focusOnMap({ location: s.location, scope: "access", context: s.join?.location ?? trailStart ?? undefined })),
           }))
         : []),
       ...(transit && homeStop
@@ -407,7 +407,7 @@ export function TripMap({ detail, gpxUrl, path, others = [], loop = false, marks
           ]
         : []),
     ],
-    [marks, signs, walked, skip, sideMarks, sideKey, sideLegs, sideStops, trailheads, parkingLots, choice, choose, stops, stopChoice, chooseStop, homeStop, pois, transit, goal, goalKind, trail.goal_name, trail.name, addedStops, toggleStop, loop, t, lang]
+    [marks, signs, walked, skip, sideMarks, sideKey, sideLegs, sideStops, trailheads, parkingLots, choice, choose, trailStart, stops, stopChoice, chooseStop, homeStop, pois, transit, goal, goalKind, trail.goal_name, trail.name, addedStops, toggleStop, loop, t, lang]
   );
 
   // Opens on the trail and where the car stops. The drive is drawn too, but a long drive would
@@ -432,31 +432,48 @@ export function TripMap({ detail, gpxUrl, path, others = [], loop = false, marks
   }, [fitKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The frame a plan step asks for: its own choice and what belongs to it, never closer than the trail's own zoom limit.
-  const focusBounds = useMemo<BBox | null>(() => {
-    if (!focus) return null;
-    const pts: LatLng[] = [];
-    const corners = (b: BBox | null) => b && pts.push(b.sw, b.ne);
-    if (focus === "routes") {
-      corners(trail.bbox);
-      for (const o of others) for (const [lat, lon] of o.points) pts.push({ lat, lon });
-      if (goal) pts.push(goal);
-    } else if (focus === "access") {
-      if (trailStart) pts.push(trailStart);
-      if (walking) {
-        if (start) pts.push(start);
-      } else if (transit) pts.push(...stops.slice(0, OFFERED).map((s) => s.location));
-      else pts.push(...parkingLots.slice(0, OFFERED).map((p) => p.location));
-      if (pts.length === 0) corners(trail.bbox);
-    } else {
-      corners(trail.bbox);
-      pts.push(...pois.map((p) => p.location));
-      if (goal) pts.push(goal);
-    }
-    if (pts.length === 0) return null;
-    const lats = pts.map((p) => p.lat);
-    const lons = pts.map((p) => p.lon);
-    return { sw: { lat: Math.min(...lats), lon: Math.min(...lons) }, ne: { lat: Math.max(...lats), lon: Math.max(...lons) } };
-  }, [focus, trail.bbox, others, goal, trailStart, walking, start, transit, stops, parkingLots, pois]);
+  const boundsFor = useCallback(
+    (f: MapFit): BBox | null => {
+      const pts: LatLng[] = [];
+      const corners = (b: BBox | null) => b && pts.push(b.sw, b.ne);
+      if (f === "routes") {
+        corners(trail.bbox);
+        for (const o of others) for (const [lat, lon] of o.points) pts.push({ lat, lon });
+        if (goal) pts.push(goal);
+      } else if (f === "access") {
+        if (trailStart) pts.push(trailStart);
+        if (walking) {
+          if (start) pts.push(start);
+        } else if (transit) pts.push(...stops.slice(0, OFFERED).map((s) => s.location));
+        else pts.push(...parkingLots.slice(0, OFFERED).map((p) => p.location));
+        if (pts.length === 0) corners(trail.bbox);
+      } else {
+        corners(trail.bbox);
+        pts.push(...pois.map((p) => p.location));
+        if (goal) pts.push(goal);
+      }
+      if (pts.length === 0) return null;
+      const lats = pts.map((p) => p.lat);
+      const lons = pts.map((p) => p.lon);
+      const box = { sw: { lat: Math.min(...lats), lon: Math.min(...lons) }, ne: { lat: Math.max(...lats), lon: Math.max(...lons) } };
+      if (f !== "routes") return box;
+      // The same set of routes seen from another route's page frames to nearly the same box: rounded outwards
+      // (about 100 m) so opening another route doesn't glide the map back out to the whole set.
+      const r = 1000;
+      return {
+        sw: { lat: Math.floor(box.sw.lat * r) / r, lon: Math.floor(box.sw.lon * r) / r },
+        ne: { lat: Math.ceil(box.ne.lat * r) / r, lon: Math.ceil(box.ne.lon * r) / r },
+      };
+    },
+    [trail.bbox, others, goal, trailStart, walking, start, transit, stops, parkingLots, pois]
+  );
+  const focusBounds = useMemo(() => (focus ? boundsFor(focus) : null), [focus, boundsFor]);
+  // A step map opened after another parking (or stop) was picked starts centred on it.
+  const openOn = useMemo(() => {
+    if (focusProp !== "access" || walking) return undefined;
+    const item = transit ? (stopChoice > 0 ? stops[stopChoice] : undefined) : choice > 0 ? parkingLots[choice] : undefined;
+    return item ? { location: item.location, context: item.join?.location ?? trailStart ?? undefined } : undefined;
+  }, [focusProp, walking, transit, stopChoice, stops, choice, parkingLots, trailStart]);
 
   return (
     <TrailMap
@@ -464,7 +481,9 @@ export function TripMap({ detail, gpxUrl, path, others = [], loop = false, marks
       markers={markers}
       bounds={focusBounds ?? bounds}
       refit={asked?.n}
-      handleFocus={!focusProp || focusProp === "places"}
+      scope={focusProp}
+      focusFloor={(f) => (f ? boundsFor(f) : null)}
+      openOn={openOn}
       driveLeg={driveLeg}
       walkLeg={walkLeg}
       sideLegs={sideLegs}

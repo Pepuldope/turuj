@@ -37,6 +37,7 @@ import type { RouteBrief, Town, TripDetail } from "@/lib/tripSchema";
 import type { TrailDetail } from "@/lib/types";
 import { LOOP_SUFFIX } from "@/lib/loopRoute";
 import { nearestTown } from "@/lib/trips";
+import { nearestOnPath } from "@/lib/geo";
 import { townOf } from "@/lib/townNames";
 import { langPath, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
@@ -196,6 +197,13 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
 
   // Each plan step that is about a place has its own map on phones, framed on that choice (components/PlanStep.tsx).
   const mapProps = { detail, gpxUrl, path: loopLine, others, loop: trip.route === "okruh", marks, colour: ownColour };
+  // Each place's nearest point on the walk, so the map can show the place together with the trail.
+  const walkPoints = trip.path.map(([lon, lat]) => ({ lat, lon }));
+  const near: Record<string, { lat: number; lon: number }> = {};
+  for (const p of detail.pois) {
+    const hit = nearestOnPath(walkPoints, p.location);
+    if (hit) near[p.id] = hit.point;
+  }
   const routeAt = Math.max(0, routes.findIndex((r) => r.slug === current));
 
   // Named for the route, as the route list calls it, when the place has several.
@@ -313,7 +321,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
             routesStep={routes.length > 1 ? <RoutesStep key="routes-step" n={2} slug={current} routes={routes} walks={walks} map={<StepMap key="routes" {...mapProps} focus="routes" />} /> : null}
             accessMap={<StepMap key="access" {...mapProps} focus="access" />}
             placesMap={detail.pois.length > 0 ? <StepMap key="places" {...mapProps} focus="places" /> : null}
-            places={<PoiList key="places-list" pois={detail.pois} slug={trail.slug} loop={trip.route === "okruh"} />}
+            places={<PoiList key="places-list" pois={detail.pois} slug={trail.slug} loop={trip.route === "okruh"} near={near} />}
             intro={
               <>
                 <div className="flex flex-col gap-2">

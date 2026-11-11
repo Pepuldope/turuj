@@ -1,7 +1,7 @@
 "use client";
 
 import { UiIcon } from "@/components/UiIcon";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { outsideDaylight } from "@/lib/dayPlan";
 import type { DayPlan, Verdict } from "@/lib/dayPlan";
@@ -24,7 +24,8 @@ import { FilterChips, KidsRow } from "@/components/FilterChips";
 import { NavHandoff } from "@/components/NavHandoff";
 import { SaveTripButton } from "@/components/SaveTripButton";
 import type { ShareInfo } from "@/components/ShareButton";
-import { PlanStep, StepInfo } from "@/components/PlanStep";
+import { PlanStep, PlanStepsProvider, StepInfo } from "@/components/PlanStep";
+import type { StepDef } from "@/components/PlanStep";
 import { ParkingOptions, feeLabel, summaryWalk } from "@/components/ParkingBlock";
 import { StartPill } from "@/components/StartPill";
 import { StopsRow } from "@/components/StopsRow";
@@ -301,6 +302,20 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
     : transit
       ? `${t(stop?.mode === "vlak" ? "Vlakom" : "Autobusom")} · ${stop ? stopLabel(stop.name) : t("bez zastávky")}`
       : `${t("Autom")} · ${parking ? [t(parking.name), summaryWalk(parking, lang), feeLabel(parking, lang)].filter(Boolean).join(", ") : t("bez parkoviska")}`;
+  const steps: StepDef[] = [
+    { id: "when", n: 1, title: t("Kedy") },
+    ...(routeChoice ? [{ id: "route", n: 2, title: t("Kadiaľ pôjdete"), fit: "routes" as const }] : []),
+    { id: "access", n: accessN, title: t("Ako sa tam dostanete"), open: true, fit: "access" as const },
+    { id: "places", n: accessN + 1, title: t("Zastávky po ceste"), open: true, fit: "places" as const },
+  ];
+  // Car, bus or on foot changes what the "how you get there" map shows: the big map frames it again.
+  const wayKey = `${transit}-${walking}`;
+  const lastWay = useRef(wayKey);
+  useEffect(() => {
+    if (lastWay.current === wayKey) return;
+    lastWay.current = wayKey;
+    fitOnMap("access");
+  }, [wayKey]);
   const stopsWord = t(stops.length === 1 ? "{n} zastávka" : stops.length < 5 ? "{n} zastávky" : "{n} zastávok", { n: stops.length });
 
   return (
@@ -365,7 +380,9 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
         {/* Quiet: the home screen already asked where from (Peter, 2026-11-11). */}
         <StartPill quiet />
 
+        <PlanStepsProvider steps={steps} resultId="vas-den">
         <PlanStep
+          id="when"
           n={1}
           title={t("Kedy")}
           warn={plan !== null && !tripPlan.loading && (late || !!latestPassed)}
@@ -413,33 +430,35 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
           </StepInfo>
         )}
 
-        <PlanStep n={accessN} title={t("Ako sa tam dostanete")} summary={accessSummary} defaultOpen onOpen={() => fitOnMap("access")}>
+        <PlanStep id="access" n={accessN} title={t("Ako sa tam dostanete")} summary={accessSummary}>
           <TravelSwitch roadMin={roadMin} trainMin={rail.status === "ok" ? driveMin : null} noCar={noCar} noBus={noBus} walkMin={walkThere} walking={walking} onWalk={setOnFoot} />
           {transit && <TransitHandoff />}
           {accessMap}
-          {transit ? <StopOptions onPick={() => fitOnMap("access")} /> : <ParkingOptions onPick={() => fitOnMap("access")} />}
+          {transit ? <StopOptions /> : <ParkingOptions />}
         </PlanStep>
 
         <PlanStep
+          id="places"
           n={accessN + 1}
           title={t("Zastávky po ceste")}
           summary={
             stops.length === 0 ? (
-              t("Žiadne")
+              hasPlaces ? t("Zatiaľ žiadna nevybraná") : t("Prestávka na obed? Pridajte ju nižšie")
             ) : (
               <>
                 {stopsWord} · <span className="font-data">+{formatDurationShort(stopMin)}</span>
               </>
             )
           }
-          defaultOpen
-          onOpen={() => fitOnMap("places")}
         >
           {placesMap}
           <StopsRow slug={trip.slug} hasPlaces={hasPlaces} loop={!!walkProfile?.loop} lunch={lunch} />
           {places}
         </PlanStep>
 
+        </PlanStepsProvider>
+
+        <div id="vas-den" className="flex scroll-mt-3 flex-col gap-4">
         {plan && (
           <section aria-label={t("Priebeh dňa")} className="flex flex-col gap-4 border-t border-[var(--border)] pt-4">
             {sun && (
@@ -494,6 +513,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
         <section aria-label={t("Uložiť a zdieľať")} className="flex flex-col gap-3">
           <SaveTripButton gpxUrl={gpxUrl} bbox={bbox} sun={sun} tripPlan={tripPlan} profile={profile} trail={trail} closures={closures} where={calendarPlace} {...trip} nav={<NavHandoff slug={trip.slug} drive={destination} start={start} walkFrom={walkStart} walk={walk} join={trailJoin} />} />
         </section>
+        </div>
       </section>
 
       <section aria-label={t("Na mieste")} className={part}>
