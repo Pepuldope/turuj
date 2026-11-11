@@ -420,6 +420,11 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
             </p>
           )}
           {driveStatus === "loading" && !walking && <p className="text-xs text-[var(--muted)]">{transit ? t("Počítame cestu na zastávku…") : t("Počítame cestu autom…")}</p>}
+          {/* The weather for the walk's hours and the drier time or day, where the day and time are chosen
+              (Peter, 2026-11-11: "weather is not accounted for when deciding when to go"). Moved up from under the sun dial. */}
+          {plan && (
+            <WeatherReport plan={plan} weather={weather} goal={goal} wholeDay={transit} sunAt={sun} closures={closures} onPickDay={(iso) => update({ date: iso })} onPickTime={(time) => update({ time })} />
+          )}
           <KidsRow />
         </PlanStep>
 
@@ -491,7 +496,6 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
               <Step label={t(transit && stop ? "na zastávke" : hasDrive ? "pri aute" : "späť")} time={plan.hikeEnd} />
               {plan.segments[plan.segments.length - 1].kind === "drive-back" && <Step label={t("doma")} time={plan.segments[plan.segments.length - 1].end} />}
             </ol>
-            <WeatherReport plan={plan} weather={weather} goal={goal} wholeDay={transit} sunAt={sun} closures={closures} onPickDay={(iso) => update({ date: iso })} onPickTime={(time) => update({ time })} />
             {tanap && !tripPlan.loading && outsideDaylight(plan) && (
               <p role="status" className="flex items-start gap-1.5 rounded-xl bg-[var(--warn-bg)] p-3 text-sm font-semibold text-[var(--warn)]">
                 <UiIcon name="warn" size={16} className="mt-0.5 shrink-0" />
