@@ -94,7 +94,7 @@ export function ParkingOptions() {
           })}
         </ul>
       )}
-      <ShowMore hidden={options.length - rows.length} open={all} onToggle={() => setAll((v) => !v)} />
+      <ShowMore kind="parking" hidden={options.length - rows.length} open={all} onToggle={() => setAll((v) => !v)} />
       {parking && (
         <p className="text-[11px] text-[var(--muted)]">
           {t("Súradnice:")}{" "}

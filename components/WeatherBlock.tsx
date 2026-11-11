@@ -1,5 +1,6 @@
 "use client";
 
+import { HourStrip } from "@/components/HourStrip";
 import { UiIcon } from "@/components/UiIcon";
 import { useState } from "react";
 import type { ReactNode } from "react";
@@ -10,6 +11,7 @@ import { useCachedJson } from "@/lib/useDriveRoute";
 import { addDaysIso, dayInSentence, isoDate } from "@/lib/days";
 import { activeClosures } from "@/lib/closures";
 import { getSunTimes } from "@/lib/sun";
+import { hourStrip } from "@/lib/hourStrip";
 import { clock } from "@/lib/zoned";
 import { FORECAST_DAYS, betterDay, betterTime, summarize, tripWeatherReport, weatherNotes, weatherWords } from "@/lib/weather";
 import type { BetterDay, BetterTime, WeatherForecast } from "@/lib/weather";
@@ -123,12 +125,25 @@ export function WeatherReport({
   const t = useT();
   const lang = useLang();
   if (weather.loading) return <p className="text-xs text-[var(--muted)]">{t("Načítavame predpoveď počasia…")}</p>;
-  if (!weather.below) return null;
+  // The forecast loaded but this day is past its range: one quiet line instead of the strip.
+  if (!weather.below) return weather.strip ? <p className="text-sm text-[var(--muted)]">{t("Predpoveď na tento deň ešte nie je.")}</p> : null;
   const from = wholeDay ? plan.segments[0].start : plan.hikeStart;
   const to = wholeDay ? plan.segments[plan.segments.length - 1].end : plan.hikeEnd;
   const r = tripWeatherReport(weather.below, weather.above, from, to, { from: plan.hikeStart, to: plan.hikeEnd }, lang);
   if (!r) return null;
   const notes = weatherNotes(weather.below, weather.above, plan.hikeStart, plan.hikeEnd, lang);
+  // The hours of the day's light (wider where the plan reaches outside it), one cell each.
+  const leaveAt = plan.segments[0].start;
+  const homeAt = plan.segments[plan.segments.length - 1].end;
+  const cells = hourStrip(
+    weather.below,
+    { from: new Date(Math.min(plan.sunrise.getTime(), leaveAt.getTime() - 3600000)), to: new Date(Math.max(plan.sunset.getTime() + 3600000, homeAt.getTime() + 3600000)) },
+    leaveAt,
+    plan.hikeStart,
+    plan.hikeEnd,
+    homeAt
+  );
+  const strip = onPickTime && cells.some((c) => c.kind !== null);
   const stormy = notes.some((n) => n.strong);
   const range = temps(r, lang);
   // A wet or stormy walk always gets a next step: the nearest dry day in the forecast, same start time.
@@ -156,12 +171,18 @@ export function WeatherReport({
 
   return (
     <section aria-label={t("Počasie")} className="flex flex-col gap-1.5 text-sm">
-      <p>
-        <span className="font-semibold">{t(wholeDay ? "Počasie počas výletu:" : "Počasie počas túry:")}</span> {range}
-        {r.topMin !== null && goal ? t(", {goal} až {t} °C", { goal: goal.name, t: r.topMin }) : ""}
-        {/* Rain, snow and storms get their own warning lines below. */}
-        {r.wet ? "." : r.worstWhen ? t(", najhoršie {what} {when}.", { what: r.worst, when: r.worstWhen }) : `, ${r.worst}.`}
-      </p>
+      {strip && <HourStrip cells={cells} hikeStart={plan.hikeStart} lead={plan.hikeStart.getTime() - leaveAt.getTime()} onPickTime={onPickTime!} dayKey={isoDate(plan.hikeStart)} />}
+      {strip ? (
+        // The strip shows the hours; only what it can't (the cold at the top) is said in words.
+        r.topMin !== null && <p className="font-semibold">{t("Na vrchole až {t} °C", { t: String(r.topMin).replace("-", "\u2212") })}</p>
+      ) : (
+        <p>
+          <span className="font-semibold">{t(wholeDay ? "Počasie počas výletu:" : "Počasie počas túry:")}</span> {range}
+          {r.topMin !== null && goal ? t(", {goal} až {t} °C", { goal: goal.name, t: r.topMin }) : ""}
+          {/* Rain, snow and storms get their own warning lines below. */}
+          {r.wet ? "." : r.worstWhen ? t(", najhoršie {what} {when}.", { what: r.worst, when: r.worstWhen }) : `, ${r.worst}.`}
+        </p>
+      )}
       {/* Warnings in a box with a sign (Peter: plain coloured text was easy to overlook). */}
       {r.wet && !stormy && (
         <Warning kind={r.wet.snow ? "snow" : "rain"}>

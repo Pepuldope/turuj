@@ -62,6 +62,8 @@ export function PhoneTripMap({
 
   return (
     <div
+      // Small maps hide MapLibre's +/- (pinch and scroll still zoom); full screen shows them (globals.css).
+      data-small-map={full ? undefined : ""}
       className={
         full
           ? "fixed inset-0 z-50 bg-[var(--background)] pt-[env(safe-area-inset-top)]"
@@ -72,6 +74,7 @@ export function PhoneTripMap({
       {/* Top left: the map's zoom buttons sit top right. */}
       <MapExpandButton
         side="left"
+        small
         full={full}
         onClick={() => {
           setFull((f) => !f);

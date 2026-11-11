@@ -57,9 +57,9 @@ export function RoutesStep({ n, slug, routes, walks, map }: Props) {
       <ul className="flex flex-col divide-y divide-[var(--border)] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card-bg)] [&>li:first-child>a]:rounded-t-[11px] [&>li:last-child>a]:rounded-b-[11px]">
         <RouteRows routes={routes} at={at} walks={walks} shown={shown} />
       </ul>
-      <div className="flex items-center justify-between gap-x-3">
-        <ShowMore hidden={routes.length - shown.length} open={all} onToggle={() => setAll((v) => !v)} />
-        <LangLink href={`/trasa/${slug}/cesty`} className="ml-auto flex min-h-10 w-fit items-center gap-1.5 text-sm font-bold whitespace-nowrap text-[var(--accent)]">
+      <div className="flex flex-col gap-1">
+        <ShowMore kind="routes" hidden={routes.length - shown.length} open={all} onToggle={() => setAll((v) => !v)} />
+        <LangLink href={`/trasa/${slug}/cesty`} className="flex min-h-10 w-fit self-end items-center gap-1.5 text-sm font-bold whitespace-nowrap text-[var(--accent)]">
           {t("Porovnať na mape")} ›
         </LangLink>
       </div>

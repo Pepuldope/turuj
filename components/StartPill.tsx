@@ -5,13 +5,15 @@ import { StartChip } from "@/components/StartChip";
 import { UiIcon } from "@/components/UiIcon";
 import { useUserLocation } from "@/lib/userLocation";
 import { useT } from "@/lib/i18n";
+import { useStartFlash } from "@/lib/startFlash";
 
 /**
  * The trip page's first line under the header (Peter, 2026-10-19, option B): where the day is
  * planned from, and "Zmeniť štart" opening the same start picker as a panel from the bottom.
  */
 export function StartPill({ quiet = false }: { /** A full-width start row ("Vyrážate z / Žilina / Zmeniť") for inside the plan card, not the round pill. */ quiet?: boolean } = {}) {
-  const { start, ready } = useUserLocation();
+  const { start, ready, auto } = useUserLocation();
+  const flash = useStartFlash(quiet && auto && start?.source === "gps");
   const [open, setOpen] = useState(false);
   const t = useT();
 
@@ -26,7 +28,7 @@ export function StartPill({ quiet = false }: { /** A full-width start row ("Vyr�
     <>
       {quiet ? (
         // Where the day starts, as big as the home page's start row (Peter, 2026-11-11): a box above step 1.
-        <div className="flex min-h-[60px] items-center gap-3 rounded-xl bg-[var(--segment-bg)] py-2 pr-1.5 pl-3">
+        <div className={`flex min-h-[60px] items-center gap-3 rounded-xl bg-[var(--segment-bg)] py-2 pr-1.5 pl-3 ${flash ? "start-flash" : ""}`}>
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-[var(--accent-soft)] text-[var(--accent)]">
             <UiIcon name="pin" size={18} />
           </span>
