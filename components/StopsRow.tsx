@@ -101,7 +101,7 @@ export function StopsRow({
       )}
       <p className="text-xs text-[var(--muted)]">
         {minutes > 0
-          ? t("Zastávky predĺžia deň o {t}, časy aj obrázok dňa vyššie ich už rátajú.", { t: formatDurationShort(minutes) })
+          ? t("Zastávky predĺžia deň o {t}, časy aj obrázok dňa nižšie ich už rátajú.", { t: formatDurationShort(minutes) })
           : hasPlaces
             ? t("Zastávku pridáte tlačidlom + pri mieste na trase alebo na mape.")
             : t("Pridajte prestávku, časy sa posunú.")}

@@ -20,6 +20,8 @@ import { TrailMap } from "@/components/TrailMapClient";
 import type { MapMarker, MapTrack, SideLeg } from "@/components/TrailMap";
 import { useTripAccess } from "@/components/TripAccess";
 import { stopFor, useTripStops } from "@/lib/tripStops";
+import { onMapFit } from "@/lib/mapFocus";
+import type { MapFit } from "@/lib/mapFocus";
 import { setHoveredRoute, useHoveredRoute } from "@/lib/routeHover";
 import { NETWORK_ON } from "@/lib/trailNetwork";
 import { useLang, useT } from "@/lib/i18n";
@@ -47,7 +49,15 @@ interface Props {
   marks?: MarkSigns;
   /** The picked route's colour from the route list; else its trail marking's. */
   colour?: string;
+  /**
+   * What the map first frames: all the routes, the parking (or stops) on offer, or the places on the way.
+   * Without it this is the big map beside the page, which frames the trail and follows the plan steps (lib/mapFocus.ts).
+   */
+  focus?: MapFit;
 }
+
+/** How many parking lots or stops the plan offers (ParkingBlock, TransitBlock). */
+const OFFERED = 4;
 
 /** Other routes in a muted slate: clearly not the walk you picked (that one keeps its trail colour), still easy to see. */
 const OTHER_ROUTE_COLOUR = "#6b7a93";
@@ -70,15 +80,19 @@ const pair = (p: LatLng): [number, number] => [p.lat, p.lon];
  * With a start, the whole way: the drive (dashed) to the chosen parking, the
  * walk from there to the trail (dotted), then the trail itself.
  */
-export function TripMap({ detail, gpxUrl, path, others = [], loop = false, marks, colour: ownColour }: Props) {
+export function TripMap({ detail, gpxUrl, path, others = [], loop = false, marks, colour: ownColour, focus: focusProp }: Props) {
   const t = useT();
   const lang = useLang();
   const { trail, trailheads, pois } = detail;
   const router = useRouter();
-  const { parkingLots, choice, choose, rideTo: destination, trailJoin, walkFrom, walkLine, transit, stops, stopChoice, chooseStop, skip, walking } = useTripAccess();
+  const { parkingLots, choice, choose, rideTo: destination, trailJoin, trailStart, walkFrom, walkLine, transit, stops, stopChoice, chooseStop, skip, walking } = useTripAccess();
   const [gpxPoints, setGpxPoints] = useState<[number, number][]>([]);
   const points = path ?? gpxPoints;
   const { start } = useUserLocation();
+  // The big map takes its frame from the plan step the visitor opens; a step's own map keeps the one it was given.
+  const [asked, setAsked] = useState<{ focus: MapFit; n: number } | null>(null);
+  useEffect(() => (focusProp ? undefined : onMapFit((focus) => setAsked((a) => ({ focus, n: (a?.n ?? 0) + 1 })))), [focusProp]);
+  const focus = focusProp ?? asked?.focus ?? null;
   // Places the group added as stops: their pins stand out and the popup offers to remove them.
   const { stops: addedStops, toggle: toggleStop } = useTripStops(trail.slug);
   const homeStop = useHomeStop(transit ? start : null);
@@ -417,11 +431,40 @@ export function TripMap({ detail, gpxUrl, path, others = [], loop = false, marks
     };
   }, [fitKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // The frame a plan step asks for: its own choice and what belongs to it, never closer than the trail's own zoom limit.
+  const focusBounds = useMemo<BBox | null>(() => {
+    if (!focus) return null;
+    const pts: LatLng[] = [];
+    const corners = (b: BBox | null) => b && pts.push(b.sw, b.ne);
+    if (focus === "routes") {
+      corners(trail.bbox);
+      for (const o of others) for (const [lat, lon] of o.points) pts.push({ lat, lon });
+      if (goal) pts.push(goal);
+    } else if (focus === "access") {
+      if (trailStart) pts.push(trailStart);
+      if (walking) {
+        if (start) pts.push(start);
+      } else if (transit) pts.push(...stops.slice(0, OFFERED).map((s) => s.location));
+      else pts.push(...parkingLots.slice(0, OFFERED).map((p) => p.location));
+      if (pts.length === 0) corners(trail.bbox);
+    } else {
+      corners(trail.bbox);
+      pts.push(...pois.map((p) => p.location));
+      if (goal) pts.push(goal);
+    }
+    if (pts.length === 0) return null;
+    const lats = pts.map((p) => p.lat);
+    const lons = pts.map((p) => p.lon);
+    return { sw: { lat: Math.min(...lats), lon: Math.min(...lons) }, ne: { lat: Math.max(...lats), lon: Math.max(...lons) } };
+  }, [focus, trail.bbox, others, goal, trailStart, walking, start, transit, stops, parkingLots, pois]);
+
   return (
     <TrailMap
       tracks={tracks}
       markers={markers}
-      bounds={bounds}
+      bounds={focusBounds ?? bounds}
+      refit={asked?.n}
+      handleFocus={!focusProp || focusProp === "places"}
       driveLeg={driveLeg}
       walkLeg={walkLeg}
       sideLegs={sideLegs}

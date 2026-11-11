@@ -13,10 +13,9 @@ import { GOAL_COLOUR, POI_COLOUR, ROUTE_COLOURS } from "@/lib/palette";
 import { seasonOf } from "@/lib/season";
 import { SeasonScene } from "@/components/SeasonScene";
 import { UiIcon } from "@/components/UiIcon";
-import { ParkingBlock } from "@/components/ParkingBlock";
-import { PhoneTripMap } from "@/components/PhoneTripMap";
 import { PoiList } from "@/components/PoiList";
-import { StopsBlock } from "@/components/TransitBlock";
+import { StepMap } from "@/components/PlanStep";
+import { ShorterRouteHint } from "@/components/RouteRows";
 import { ClosureBanner } from "@/components/ClosureBanner";
 import { isIndexedVariant, variantHeading } from "@/lib/variantTitles";
 import { NearbyTrips } from "@/components/NearbyTrips";
@@ -28,7 +27,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { TripFacts } from "@/components/TripFacts";
 import { TripMap } from "@/components/TripMap";
 import type { OtherRoute } from "@/components/TripMap";
-import { RouteChoice } from "@/components/RouteChoice";
+import { RoutesStep } from "@/components/RouteChoice";
 import { TripAccessProvider } from "@/components/TripAccess";
 import { JsonLd } from "@/components/JsonLd";
 import { TrackEvent } from "@/components/TrackEvent";
@@ -195,6 +194,10 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
     }))
     .filter((r) => r.slug !== current);
 
+  // Each plan step that is about a place has its own map on phones, framed on that choice (components/PlanStep.tsx).
+  const mapProps = { detail, gpxUrl, path: loopLine, others, loop: trip.route === "okruh", marks, colour: ownColour };
+  const routeAt = Math.max(0, routes.findIndex((r) => r.slug === current));
+
   // Named for the route, as the route list calls it, when the place has several.
   const ownLabel = routes.length > 1 ? routes.find((r) => r.slug === trail.slug)?.route_label : null;
   const gpxName = ownLabel ? `${trail.name} (${ownLabel})` : trail.name;
@@ -306,6 +309,11 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
             bbox={trail.bbox}
             closures={closures}
             hasPlaces={detail.pois.length > 0}
+            routeCount={routes.length}
+            routesStep={routes.length > 1 ? <RoutesStep key="routes-step" n={2} slug={current} routes={routes} walks={walks} map={<StepMap key="routes" {...mapProps} focus="routes" />} /> : null}
+            accessMap={<StepMap key="access" {...mapProps} focus="access" />}
+            placesMap={detail.pois.length > 0 ? <StepMap key="places" {...mapProps} focus="places" /> : null}
+            places={<PoiList key="places-list" pois={detail.pois} slug={trail.slug} loop={trip.route === "okruh"} />}
             intro={
               <>
                 <div className="flex flex-col gap-2">
@@ -317,7 +325,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                   {description && <p className="text-sm text-[var(--muted)]">{description}</p>}
                   <TripReviews slug={trail.slug} name={trail.name} />
                 </div>
-                <RouteChoice slug={current} destination={trip.destination.name} routes={routes} walks={walks} />
+                {routes.length > 1 && <ShorterRouteHint routes={routes} at={routeAt} walks={walks} />}
                 {!loopBack && (
                   <TripHeaderFacts
                     lang={lang}
@@ -327,6 +335,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                     stops={stopsByWalk(transitStops)}
                     closures={closures}
                     updated={updated}
+                    only="closure"
                   />
                 )}
                 {/* A real closure stays up top; "no data" is a quiet note under the map. The closure rule itself is in the "Uzávery a poplatky" section below. */}
@@ -364,17 +373,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
             }}
             walk={{ points: trip.path.map(([lon, lat]) => [+lat.toFixed(5), +lon.toFixed(5)]), loop: trip.route === "okruh" }}
           >
-            {/* Testers: Uložiť and navigation belong at the end; parking first, then the map. */}
-            <ParkingBlock />
-            <StopsBlock />
-
-            <div className="lg:hidden">
-              <PhoneTripMap detail={detail} gpxUrl={gpxUrl} path={loopLine} others={others} loop={trip.route === "okruh"} marks={marks} colour={ownColour} />
-            </div>
-
             {closures.length === 0 && <ClosureBanner closures={closures} region={trail.region_name} />}
-
-            <PoiList pois={detail.pois} slug={trail.slug} loop={trip.route === "okruh"} />
           </TripPlanner>
 
           {town && (

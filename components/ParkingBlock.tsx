@@ -3,16 +3,15 @@
 import { formatDuration, formatWalk } from "@/lib/format";
 import { useTripAccess } from "@/components/TripAccess";
 import { approachMin } from "@/lib/dayPlan";
-import { UiIcon } from "@/components/UiIcon";
 import type { ParkingLot } from "@/lib/types";
 import { useLang, useT } from "@/lib/i18n";
 import { decimal, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 
 /** How many parking options to offer; the rest are far or duplicates. */
-const MAX_OPTIONS = 4;
+export const MAX_OPTIONS = 4;
 
-function feeLabel(p: ParkingLot, lang: Lang): string | null {
+export function feeLabel(p: ParkingLot, lang: Lang): string | null {
   return p.fee === true ? tr(lang, "spoplatnené") : p.fee === false ? tr(lang, "zadarmo") : null;
 }
 
@@ -27,16 +26,16 @@ function walkLabel(p: ParkingLot, lang: Lang): string {
   return min > 0 ? tr(lang, "{m} pešo k začiatku (~{t})", { m: formatWalk(p.walk_m, lang), t: formatDuration(min) }) : tr(lang, "pri začiatku trasy");
 }
 
-function summaryWalk(p: ParkingLot, lang: Lang): string {
+export function summaryWalk(p: ParkingLot, lang: Lang): string {
   if (p.join) return p.join.walk_m < 150 ? tr(lang, "pri trase") : tr(lang, "{m} k trase", { m: formatWalk(p.join.walk_m, lang) });
   return p.walk_m < 150 ? tr(lang, "pri štarte") : formatWalk(p.walk_m, lang);
 }
 
 /**
- * Where to leave the car. With several parking spots near the start the
- * visitor picks one; the drive, the walk to the trail and the plan follow.
+ * Where to leave the car, as the options of the "Ako sa tam dostanete" step. With several parking
+ * spots near the start the visitor picks one; the drive, the walk to the trail and the plan follow.
  */
-export function ParkingBlock() {
+export function ParkingOptions({ onPick }: { /** After a pick (the big map frames the parking again). */ onPick?: () => void }) {
   const { parkingLots, choice, choose, parking, transit, stops, walking } = useTripAccess();
   const options = parkingLots.slice(0, MAX_OPTIONS);
   const t = useT();
@@ -44,20 +43,7 @@ export function ParkingBlock() {
   if (transit || walking) return null;
 
   return (
-    <details className="group rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)]">
-      <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-base font-bold [&::-webkit-details-marker]:hidden">
-        <span className="mt-pin mt-pin-parking shrink-0 scale-90" aria-hidden>
-          P
-        </span>
-        {t("Parkovanie")}
-        <span className="ml-auto truncate text-sm font-medium text-[var(--muted)]">
-          {parking ? [summaryWalk(parking, lang), feeLabel(parking, lang)].filter(Boolean).join(", ") : t("bez parkoviska")}
-        </span>
-        <span className="text-[var(--muted)] transition-transform group-open:rotate-90">
-          <UiIcon name="chev" size={16} />
-        </span>
-      </summary>
-      <div className="flex flex-col gap-2 px-4 pb-3.5">
+    <div className="flex flex-col gap-2">
       {!parking && (
         <p className="text-sm">
           {t("Pri začiatku trasy nemáme parkovisko. Navigácia vás dovedie na najbližšiu cestu, odtiaľ pešo.")}
@@ -76,10 +62,13 @@ export function ParkingBlock() {
                   type="button"
                   role="radio"
                   aria-checked={selected}
-                  onClick={() => choose(i)}
+                  onClick={() => {
+                    choose(i);
+                    onPick?.();
+                  }}
                   disabled={options.length === 1}
-                  className={`flex w-full items-start gap-3 rounded-xl border px-3 py-2 text-left text-sm disabled:cursor-default ${
-                    selected ? "border-[var(--accent)] bg-[var(--background)]" : "border-[var(--border)] hover:border-[var(--accent)]"
+                  className={`flex min-h-11 w-full items-start gap-3 rounded-xl border px-3 py-2 text-left text-sm disabled:cursor-default ${
+                    selected ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--border)] hover:border-[var(--accent)]"
                   }`}
                 >
                   <span className="mt-pin mt-pin-parking shrink-0" aria-hidden>
@@ -107,7 +96,6 @@ export function ParkingBlock() {
           · {t("Zdroj: OpenStreetMap")}
         </p>
       )}
-      </div>
-    </details>
+    </div>
   );
 }

@@ -8,6 +8,7 @@ import type { OtherRoute } from "@/components/TripMap";
 import { UiIcon } from "@/components/UiIcon";
 import { poiIcon, poiLabel } from "@/lib/food";
 import { focusOnMap } from "@/lib/mapFocus";
+import type { MapFit } from "@/lib/mapFocus";
 import { POI_COLOUR } from "@/lib/palette";
 import type { TrailDetail } from "@/lib/types";
 import { useT } from "@/lib/i18n";
@@ -25,6 +26,8 @@ export function PhoneTripMap({
   loop = false,
   marks,
   colour,
+  focus,
+  compact = false,
 }: {
   detail: TrailDetail;
   gpxUrl: string | null;
@@ -33,6 +36,10 @@ export function PhoneTripMap({
   loop?: boolean;
   marks?: MarkSigns;
   colour?: string;
+  /** What the map first frames (inside a plan step). */
+  focus?: MapFit;
+  /** A short map filling its parent (a plan step's), instead of the tall stand-alone one. */
+  compact?: boolean;
 }) {
   const [full, setFull] = useState(false);
   const t = useT();
@@ -55,10 +62,10 @@ export function PhoneTripMap({
       className={
         full
           ? "fixed inset-0 z-50 bg-[var(--background)] pt-[env(safe-area-inset-top)]"
-          : "relative h-[45vh] overflow-hidden rounded-[var(--radius-card)] border border-[var(--border)]"
+          : `relative ${compact ? "h-full" : "h-[45vh]"} overflow-hidden rounded-xl border border-[var(--border)]`
       }
     >
-      <TripMap detail={detail} gpxUrl={gpxUrl} path={path} others={others} loop={loop} marks={marks} colour={colour} />
+      <TripMap detail={detail} gpxUrl={gpxUrl} path={path} others={others} loop={loop} marks={marks} colour={colour} focus={focus} />
       {/* Top left: the map's zoom buttons sit top right. */}
       <MapExpandButton
         side="left"

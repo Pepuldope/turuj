@@ -40,11 +40,8 @@ export function PoiList({
   const word =
     lang === "en" ? (pois.length === 1 ? "place" : "places") : pois.length === 1 ? "miesto" : pois.length < 5 ? "miesta" : "miest";
   return (
-    <details
-      open
-      className="group rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)]"
-    >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-base font-bold [&::-webkit-details-marker]:hidden">
+    <div className="flex flex-col gap-1">
+      <p className="flex items-baseline justify-between gap-2 text-sm font-bold">
         {t(on.length === 0
           ? "Kúsok bokom"
           : off.length > 0
@@ -53,11 +50,8 @@ export function PoiList({
         <span className="ml-auto text-sm font-medium text-[var(--muted)]">
           {pois.length} {word}
         </span>
-        <span className="text-[var(--muted)] transition-transform group-open:rotate-90">
-          <UiIcon name="chev" size={16} />
-        </span>
-      </summary>
-      <ul className="flex flex-col gap-0.5 px-4 pb-3">
+      </p>
+      <ul className="flex flex-col gap-0.5">
         {on.map((p) => (
           <PoiRow
             key={p.id}
@@ -84,7 +78,7 @@ export function PoiList({
           />
         ))}
       </ul>
-    </details>
+    </div>
   );
 }
 
@@ -143,7 +137,7 @@ function PoiRow({
             added ? t("Odobrať zastávku {name}", { name: t(p.name) }) : t("Pridať zastávku {name}", { name: t(p.name) })
           }
           title={added ? t("Odobrať zo zastávok") : t("Pridať ako zastávku")}
-          className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-lg leading-none font-extrabold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
+          className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg leading-none font-extrabold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
             added
               ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
               : "bg-[var(--accent-soft)] text-[var(--accent)]"

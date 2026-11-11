@@ -5,11 +5,13 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { outsideDaylight } from "@/lib/dayPlan";
 import type { DayPlan, Verdict } from "@/lib/dayPlan";
-import { EARLIEST_DEPARTURE_HOUR, dayAfterNa, dayStrip, floorTo5, longDay } from "@/lib/days";
+import { EARLIEST_DEPARTURE_HOUR, addDaysIso, dayAfterNa, dayStrip, floorTo5, longDay } from "@/lib/days";
 import { badDays } from "@/lib/weather";
-import { formatDuration, formatTime, stopLabel } from "@/lib/format";
+import { formatDuration, formatDurationShort, formatTime, stopLabel } from "@/lib/format";
 import { haversineM } from "@/lib/geo";
 import { walkThereMinutes } from "@/lib/walkThere";
+import { formatKm, walkMinutes } from "@/lib/walkFacts";
+import { fitOnMap } from "@/lib/mapFocus";
 import { parkingPlace, readSharedPlan } from "@/lib/links";
 import { track } from "@/lib/analytics";
 import type { SharedPlan, WalkRoute } from "@/lib/links";
@@ -22,13 +24,14 @@ import { FilterChips, KidsRow } from "@/components/FilterChips";
 import { NavHandoff } from "@/components/NavHandoff";
 import { SaveTripButton } from "@/components/SaveTripButton";
 import type { ShareInfo } from "@/components/ShareButton";
-import { StartChip } from "@/components/StartChip";
+import { PlanStep, StepInfo } from "@/components/PlanStep";
+import { ParkingOptions, feeLabel, summaryWalk } from "@/components/ParkingBlock";
 import { StartPill } from "@/components/StartPill";
 import { StopsRow } from "@/components/StopsRow";
 import { SunArc } from "@/components/SunArc";
 import { useTripAccess } from "@/components/TripAccess";
 import { WeatherReport, useTripWeather } from "@/components/WeatherBlock";
-import { TransitHandoff, TransitLegs } from "@/components/TransitBlock";
+import { StopOptions, TransitHandoff, TransitLegs } from "@/components/TransitBlock";
 import { TravelSwitch } from "@/components/TravelSwitch";
 import { GOAL_WORDS, trimProfile, withApproach, withStops } from "@/lib/tripProfile";
 import { LUNCH, STAY_MIN, keepStopsOf, stopsMinutes, useTripStops } from "@/lib/tripStops";
@@ -52,10 +55,19 @@ interface Props extends ShareInfo {
   walk: WalkRoute;
   /** Top of the first card: the trail's facts and route choice. */
   intro?: ReactNode;
-  /** Shown between the plan and Uložiť: parking, the map, fees... (Uložiť and navigation come last). */
+  /** After the plan card: the quiet "no closure data" note. */
   children?: ReactNode;
-  /** Under Uložiť and navigation, in the last card. */
+  /** Under the plan card, in the last card. */
   outro?: ReactNode;
+  /** How many routes the trip has: with one there is no route choice, only a line of plain info. */
+  routeCount?: number;
+  /** The "Kadiaľ pôjdete" step (several routes only; components/RouteChoice.tsx). */
+  routesStep?: ReactNode;
+  /** A phone's map for the "Ako sa tam dostanete" step, and for the "Zastávky po ceste" one. */
+  accessMap?: ReactNode;
+  placesMap?: ReactNode;
+  /** The places on the way, with their "+" buttons (components/PoiList.tsx). */
+  places?: ReactNode;
   /** The trip has places on or near the walk that can be added as stops. */
   hasPlaces?: boolean;
   /** The walk, kept with the saved trip for the trail screen ("Začať výlet"). */
@@ -81,9 +93,9 @@ function meetingAt(date: string, hhmm: string): Date {
   return zonedDate(y, mo, d, h, mi);
 }
 
-export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, closures = [], walk, intro, children, outro, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
+export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, closures = [], walk, intro, children, outro, routeCount = 1, routesStep, accessMap, placesMap, places, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
   const { start } = useUserLocation();
-  const { today, update } = useTripSettings();
+  const { today, update, withKids } = useTripSettings();
   const t = useT();
   const lang = useLang();
   const { destination, rideTo, approachMin, trailStart, transit: transitAccess, noCar, noBus, parking, stop, skip, walkFrom, trailJoin, walk: onFoot, choose, chooseStop, setWalking } = useTripAccess();
@@ -117,7 +129,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
   const tripPlan = useTripPlan(sun, rideTo, baseHikeMin, transitAccess && stop?.mode === "vlak" ? stop.location : null, transitAccess, trip.slug, walking ? walkThere : null);
   const { plan, date, time, driveMin, roadMin, driveApprox, driveStatus, rail } = tripPlan;
   // The stops the group added stand on the walk where it passes them (lunch at the goal).
-  const { stops } = useTripStops(trip.slug);
+  const { stops, minutes: stopMin } = useTripStops(trip.slug);
   // Stops belong to this visit: opening another trip or the list forgets them (a saved trip keeps
   // its own copy); the route comparison and the loop of this trip keep them.
   useEffect(() => keepStopsOf(trip.slug), [trip.slug]);
@@ -278,14 +290,22 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
   }, [asked, time, unusual]);
   const better = latest && !tooLong && !latestPassed ? formatTime(latest) : null;
 
+  // The plan's four choices, each folded to its current pick (components/PlanStep.tsx).
+  // A trip with one route has no route choice: its numbers are plain info and the steps count on.
+  const routeChoice = routeCount > 1;
+  const accessN = routeChoice ? 3 : 2;
+  const dayWord = !date ? "…" : date === today ? t("Dnes") : today && date === addDaysIso(today, 1) ? t("Zajtra") : longDay(date, lang);
+  const timeWord = hasDrive || walking ? t("Odchod") : transit && stop ? t("Na zastávke") : t("Začiatok túry");
+  const accessSummary = walking
+    ? t("Pešo")
+    : transit
+      ? `${t(stop?.mode === "vlak" ? "Vlakom" : "Autobusom")} · ${stop ? stopLabel(stop.name) : t("bez zastávky")}`
+      : `${t("Autom")} · ${parking ? [t(parking.name), summaryWalk(parking, lang), feeLabel(parking, lang)].filter(Boolean).join(", ") : t("bez parkoviska")}`;
+  const stopsWord = t(stops.length === 1 ? "{n} zastávka" : stops.length < 5 ? "{n} zastávky" : "{n} zastávok", { n: stops.length });
+
   return (
     <div className="flex flex-col gap-5">
-      {/* First thing under the header: where the day is planned from, changeable without scrolling. */}
-      <div data-nosnippet className="flex items-center gap-2">
-        <StartPill />
-      </div>
-      {/* Three cards, so the eye takes one step at a time:
-          plan the trip, see the day, then get there. */}
+      {/* The trip's facts: what it is, how others found it, a shorter way and closures. The choices are in the plan card below. */}
       <section aria-label={t("Plán výletu")} className={part}>
         {intro}
 
@@ -320,24 +340,46 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
             {t("Plán od kamaráta bol na")} <strong>{dayAfterNa(expired.date, lang)}</strong>{t(", ten deň už prešiel. Nižšie si vyberte nový deň.")}
           </p>
         )}
+      </section>
 
-        {/* In the order of the day: where from, how, which day and time. */}
-        {/* F9: interactive planner chrome stays out of Google's snippets (data-nosnippet); `contents` keeps the layout. */}
-        <div data-nosnippet className="contents">
-          <StartChip />
+      {confirm && plan && (
+        <UnusualTime
+          time={confirm}
+          text={
+            late || latestPassed
+              ? lateText(plan.verdict, { latestPassed: !!latestPassed, tooLong, noTrain: !!plan.noTrainInLight, startWord, latest: better ?? "" }, lang)
+              : t("To je uprostred noci, cesta by začínala po tme. Nemysleli ste ráno?")
+          }
+          better={late || latestPassed ? better : NIGHT_FIX}
+          onBetter={() => {
+            update({ time: better! });
+            setConfirm(null);
+          }}
+          onKeep={() => setConfirm(null)}
+        />
+      )}
 
-          <TravelSwitch roadMin={roadMin} trainMin={rail.status === "ok" ? driveMin : null} noCar={noCar} noBus={noBus} walkMin={walkThere} walking={walking} onWalk={setOnFoot} />
-          {transit && <TransitHandoff />}
+      {/* F9: interactive planner chrome stays out of Google's snippets (data-nosnippet). */}
+      <section data-nosnippet aria-label={t("Váš plán")} className={part}>
+        <h2 className="text-[1.35rem] leading-tight font-bold">{t("Váš plán")}</h2>
+        {/* Quiet: the home screen already asked where from (Peter, 2026-11-11). */}
+        <StartPill quiet />
 
-          {/* Kids along, in the plan itself (Peter 2026-10-22: the pill above the card went unnoticed on a phone). */}
-          <KidsRow />
-        </div>
-
-        <section data-nosnippet aria-label={t("Deň a odchod")} className="flex flex-col gap-3">
+        <PlanStep
+          n={1}
+          title={t("Kedy")}
+          warn={plan !== null && !tripPlan.loading && (late || !!latestPassed)}
+          summary={
+            <>
+              {dayWord}, {timeWord.toLowerCase()} <span className="font-data">{time ?? "…"}</span>
+              {withKids ? ` · ${t("s deťmi")}` : ""}
+            </>
+          }
+        >
           <FilterChips variant="trip" activeDate={date} dayWeather={dayWeather} />
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm font-semibold">
-              {hasDrive || walking ? t("Odchod") : transit && stop ? t("Na zastávke") : t("Začiatok túry")}
+              {timeWord}
               <input
                 type="time"
                 step={300}
@@ -360,84 +402,102 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
             </p>
           )}
           {driveStatus === "loading" && !walking && <p className="text-xs text-[var(--muted)]">{transit ? t("Počítame cestu na zastávku…") : t("Počítame cestu autom…")}</p>}
+          <KidsRow />
+        </PlanStep>
+
+        {routeChoice ? (
+          routesStep
+        ) : (
+          <StepInfo title={t("Kadiaľ pôjdete")}>
+            <span className="font-data">{formatDuration(walkMinutes(onFoot, withKids))}</span> · <span className="font-data">{formatKm(onFoot.m, lang)}</span> · <span className="font-data">+{onFoot.ascentM} m</span>
+          </StepInfo>
+        )}
+
+        <PlanStep n={accessN} title={t("Ako sa tam dostanete")} summary={accessSummary} defaultOpen onOpen={() => fitOnMap("access")}>
+          <TravelSwitch roadMin={roadMin} trainMin={rail.status === "ok" ? driveMin : null} noCar={noCar} noBus={noBus} walkMin={walkThere} walking={walking} onWalk={setOnFoot} />
+          {transit && <TransitHandoff />}
+          {accessMap}
+          {transit ? <StopOptions onPick={() => fitOnMap("access")} /> : <ParkingOptions onPick={() => fitOnMap("access")} />}
+        </PlanStep>
+
+        <PlanStep
+          n={accessN + 1}
+          title={t("Zastávky po ceste")}
+          summary={
+            stops.length === 0 ? (
+              t("Žiadne")
+            ) : (
+              <>
+                {stopsWord} · <span className="font-data">+{formatDurationShort(stopMin)}</span>
+              </>
+            )
+          }
+          defaultOpen
+          onOpen={() => fitOnMap("places")}
+        >
+          {placesMap}
+          <StopsRow slug={trip.slug} hasPlaces={hasPlaces} loop={!!walkProfile?.loop} lunch={lunch} />
+          {places}
+        </PlanStep>
+
+        {plan && (
+          <section aria-label={t("Priebeh dňa")} className="flex flex-col gap-4 border-t border-[var(--border)] pt-4">
+            {sun && (
+              // Framed inside the card: its sky would otherwise blend into the page.
+              <div className="overflow-hidden rounded-xl">
+                <SunArc key={date ?? ""} plan={plan} profile={profile} sun={sun} hasDrive={hasDrive} byBus={transit} byTrain={transit && rail.status === "ok"} weather={weather.below} />
+              </div>
+            )}
+            {plan.startsInDark && (
+              <p className="flex items-start gap-1.5 text-sm text-[var(--warn)]">
+                <UiIcon name="warn" size={16} className="mt-0.5" />
+                <span>{t("Túra začína pred východom slnka, vezmite si čelovku.")}</span>
+              </p>
+            )}
+            {/* Peter: the arrival is the first big time; the departure (also set in the box above) sits
+                small over it, a chip set apart from the labels below it. */}
+            {hasDrive && (
+              <p className="font-data -mb-2.5 w-fit rounded-full bg-[var(--segment-bg)] px-2 py-0.5 text-[14px] leading-tight font-semibold">
+                {t("odchod")} {formatTime(plan.segments[0].start)}
+              </p>
+            )}
+            <ol className="font-data grid grid-cols-[repeat(4,auto)] justify-between gap-x-2 text-[1.3rem] leading-tight font-bold sm:text-[1.6rem]">
+              <Step
+                label={t(transit && stop ? "zastávka" : hasDrive ? (parking ? "parkovisko" : "na mieste") : "túra")}
+                time={plan.hikeStart}
+              />
+              {profile && <Step label={t(GOAL_WORDS[profile.goalKind].noun)} time={goalTime(plan, profile)} approx />}
+              {/* One line each on a phone (Peter): "späť na zastávke" wrapped. */}
+              <Step label={t(transit && stop ? "na zastávke" : hasDrive ? "pri aute" : "späť")} time={plan.hikeEnd} />
+              {plan.segments[plan.segments.length - 1].kind === "drive-back" && <Step label={t("doma")} time={plan.segments[plan.segments.length - 1].end} />}
+            </ol>
+            <WeatherReport plan={plan} weather={weather} goal={goal} wholeDay={transit} sunAt={sun} closures={closures} onPickDay={(iso) => update({ date: iso })} onPickTime={(time) => update({ time })} />
+            {tanap && !tripPlan.loading && outsideDaylight(plan) && (
+              <p role="status" className="flex items-start gap-1.5 rounded-xl bg-[var(--warn-bg)] p-3 text-sm font-semibold text-[var(--warn)]">
+                <UiIcon name="warn" size={16} className="mt-0.5 shrink-0" />
+                <span>
+                  {outsideDaylight(plan) === "late"
+                    ? t("V TANAP-e sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte skôr alebo vyberte kratší výlet.")
+                    : t("V TANAP-e sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte až po východe slnka.")}
+                </span>
+              </p>
+            )}
+            {transit && <TransitLegs plan={plan} rail={rail} />}
+            {transit && rail.status === "ok" && <p className="text-xs text-[var(--muted)]">{t("Podľa cestovného poriadku vlakov, spoj si vyberiete nižšie.")}</p>}
+            {driveApprox && !transit && (
+              <p className="text-xs text-[var(--muted)]">{t("Cestu autom teraz odhadujeme podľa vzdialenosti (~{t}).", { t: formatDuration(driveMin!) })}</p>
+            )}
+            {!start && !transit && <p className="text-xs text-[var(--muted)]">{t("Vyberte, odkiaľ vyrážate, a pridáme aj cestu autom.")}</p>}
+          </section>
+        )}
+
+        <section aria-label={t("Uložiť a zdieľať")} className="flex flex-col gap-3">
+          <SaveTripButton gpxUrl={gpxUrl} bbox={bbox} sun={sun} tripPlan={tripPlan} profile={profile} trail={trail} closures={closures} where={calendarPlace} {...trip} nav={<NavHandoff slug={trip.slug} drive={destination} start={start} walkFrom={walkStart} walk={walk} join={trailJoin} />} />
         </section>
       </section>
 
-      {confirm && plan && (
-        <UnusualTime
-          time={confirm}
-          text={
-            late || latestPassed
-              ? lateText(plan.verdict, { latestPassed: !!latestPassed, tooLong, noTrain: !!plan.noTrainInLight, startWord, latest: better ?? "" }, lang)
-              : t("To je uprostred noci, cesta by začínala po tme. Nemysleli ste ráno?")
-          }
-          better={late || latestPassed ? better : NIGHT_FIX}
-          onBetter={() => {
-            update({ time: better! });
-            setConfirm(null);
-          }}
-          onKeep={() => setConfirm(null)}
-        />
-      )}
-
-      {plan && (
-        <section data-nosnippet aria-label={t("Priebeh dňa")} className={part}>
-          {sun && (
-            // Framed inside the card: its sky would otherwise blend into the page.
-            <div className="overflow-hidden rounded-xl">
-              <SunArc key={date ?? ""} plan={plan} profile={profile} sun={sun} hasDrive={hasDrive} byBus={transit} byTrain={transit && rail.status === "ok"} weather={weather.below} />
-            </div>
-          )}
-          {plan.startsInDark && (
-            <p className="flex items-start gap-1.5 text-sm text-[var(--warn)]">
-              <UiIcon name="warn" size={16} className="mt-0.5" />
-              <span>{t("Túra začína pred východom slnka, vezmite si čelovku.")}</span>
-            </p>
-          )}
-          {/* Peter: the arrival is the first big time; the departure (also set in the box above) sits
-              small over it, a chip set apart from the labels below it. */}
-          {hasDrive && (
-            <p className="font-data -mb-2.5 w-fit rounded-full bg-[var(--segment-bg)] px-2 py-0.5 text-[14px] leading-tight font-semibold">
-              {t("odchod")} {formatTime(plan.segments[0].start)}
-            </p>
-          )}
-          <ol className="font-data grid grid-cols-[repeat(4,auto)] justify-between gap-x-2 text-[1.3rem] leading-tight font-bold sm:text-[1.6rem]">
-            <Step
-              label={t(transit && stop ? "zastávka" : hasDrive ? (parking ? "parkovisko" : "na mieste") : "túra")}
-              time={plan.hikeStart}
-            />
-            {profile && <Step label={t(GOAL_WORDS[profile.goalKind].noun)} time={goalTime(plan, profile)} approx />}
-            {/* One line each on a phone (Peter): "späť na zastávke" wrapped. */}
-            <Step label={t(transit && stop ? "na zastávke" : hasDrive ? "pri aute" : "späť")} time={plan.hikeEnd} />
-            {plan.segments[plan.segments.length - 1].kind === "drive-back" && <Step label={t("doma")} time={plan.segments[plan.segments.length - 1].end} />}
-          </ol>
-          <StopsRow slug={trip.slug} hasPlaces={hasPlaces} loop={!!walkProfile?.loop} lunch={lunch} />
-          <WeatherReport plan={plan} weather={weather} goal={goal} wholeDay={transit} sunAt={sun} closures={closures} onPickDay={(iso) => update({ date: iso })} onPickTime={(time) => update({ time })} />
-          {tanap && !tripPlan.loading && outsideDaylight(plan) && (
-            <p role="status" className="flex items-start gap-1.5 rounded-xl bg-[var(--warn-bg)] p-3 text-sm font-semibold text-[var(--warn)]">
-              <UiIcon name="warn" size={16} className="mt-0.5 shrink-0" />
-              <span>
-                {outsideDaylight(plan) === "late"
-                  ? t("V TANAP-e sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte skôr alebo vyberte kratší výlet.")
-                  : t("V TANAP-e sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte až po východe slnka.")}
-              </span>
-            </p>
-          )}
-          {transit && <TransitLegs plan={plan} rail={rail} />}
-          {transit && rail.status === "ok" && <p className="text-xs text-[var(--muted)]">{t("Podľa cestovného poriadku vlakov, spoj si vyberiete nižšie.")}</p>}
-          {driveApprox && !transit && (
-            <p className="text-xs text-[var(--muted)]">{t("Cestu autom teraz odhadujeme podľa vzdialenosti (~{t}).", { t: formatDuration(driveMin!) })}</p>
-          )}
-          {!start && !transit && <p className="text-xs text-[var(--muted)]">{t("Vyberte, odkiaľ vyrážate, a pridáme aj cestu autom.")}</p>}
-        </section>
-      )}
-
       <section aria-label={t("Na mieste")} className={part}>
         {children}
-
-        <section data-nosnippet aria-label={t("Uložiť a zdieľať")} className="flex flex-col gap-3">
-          <SaveTripButton gpxUrl={gpxUrl} bbox={bbox} sun={sun} tripPlan={tripPlan} profile={profile} trail={trail} closures={closures} where={calendarPlace} {...trip} nav={<NavHandoff slug={trip.slug} drive={destination} start={start} walkFrom={walkStart} walk={walk} join={trailJoin} />} />
-        </section>
 
         {outro}
         <p className="text-xs text-[var(--muted)]">

@@ -64,6 +64,10 @@ interface Props {
   markers: MapMarker[];
   /** The map re-fits to this box whenever it changes. */
   bounds: BBox | null;
+  /** Changes to fit `bounds` again although the box itself stayed the same (a plan step opened again). */
+  refit?: number;
+  /** Answers "show it on the map" from a list row (default). Off for the small maps inside plan steps that aren't about places. */
+  handleFocus?: boolean;
   onSelectTrail?: (slug: string) => void;
   /** The pointer moved onto a track (its slug) or off every track (null). */
   onHoverTrail?: (slug: string | null) => void;
@@ -230,6 +234,8 @@ export function TrailMap({
   tracks,
   markers,
   bounds,
+  refit = 0,
+  handleFocus = true,
   onSelectTrail,
   onHoverTrail,
   driveLeg,
@@ -488,7 +494,7 @@ export function TrailMap({
     fittedRef.current = true;
     // `bounds` is tracked via boundsKey so a new-but-equal object doesn't refit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ctx, boundsKey]);
+  }, [ctx, boundsKey, refit]);
 
   // Tracks: dimmed first, then the picked line, other routes thin on top.
   useEffect(() => {
@@ -602,7 +608,7 @@ export function TrailMap({
 
   // A row in a list below ("Na trase") asks for its place: bring the map into view, glide there, open the pin.
   useEffect(() => {
-    if (!ctx) return;
+    if (!ctx || !handleFocus) return;
     const { map } = ctx;
     return onMapFocus(({ id, location }) => {
       containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -611,7 +617,7 @@ export function TrailMap({
       const i = markerIds.current.indexOf(id);
       if (i >= 0) map.once("moveend", () => markerRefs.current[i]?.togglePopup());
     });
-  }, [ctx]);
+  }, [ctx, handleFocus]);
 
   // Start pin (typed place) and "you are here" dot (GPS).
   useEffect(() => {
