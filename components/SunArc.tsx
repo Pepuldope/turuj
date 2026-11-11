@@ -454,7 +454,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   // Height on the trail at that moment (Peter: see how it changes along the route): the number in the readout, "m n. m." small after it.
   const heightText = height === null ? null : height.toLocaleString(lang === "en" ? "en-GB" : "sk-SK");
   // The trail sign you are on: a small KST mark (white, colour, white) and its word.
-  const markText = markColour ? tx(MARKING_SHORT[markColour] ?? "neznačený chodník") : null;
+  const markText = markColour ? tx(MARKING_SHORT[markColour] ?? "bez značky") : null;
 
   // The trail colours worth naming: a few metres of another colour at a junction would only puzzle.
   const legendColours = useMemo(() => {
@@ -877,27 +877,31 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
       <div className="flex justify-between gap-3 border-t border-[var(--border)] px-4 pt-2.5 pb-3.5 text-sm">
         <div className="min-w-0">
           <div className="font-data text-[22px] leading-none">{formatTime(new Date(t))}</div>
-          <div className="font-semibold">{what}</div>
-          {/* Height and trail sign at that moment, only on the walk (while driving there is nothing to say). */}
+          <div className="truncate font-semibold">{what}</div>
+          {/* Height and trail sign at that moment, only on the walk (while driving the line stays, empty). Always exactly one
+              line, never wrapping (Peter, 2026-11-11: "neznačený chodník" wrapped to two lines and the readout jumped each time
+              the trail went from marked to unmarked and back). */}
+          <div className="flex h-[19px] min-w-0 flex-nowrap items-center gap-x-3 overflow-hidden text-[13px] text-[var(--muted)]">
           {onTrail && (heightText || markText) && (
-            <div className="flex flex-wrap items-center gap-x-3 text-[13px] text-[var(--muted)]">
+            <>
               {heightText && (
-                <span className="whitespace-nowrap">
+                <span className="shrink-0 whitespace-nowrap">
                   <span className="font-data text-[14px] font-semibold text-[var(--foreground)]">{heightText}</span> {tx("m n. m.")}
                 </span>
               )}
               {markText && markColour && (
-                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                <span className="inline-flex min-w-0 items-center gap-1 whitespace-nowrap">
                   {/* The trail mark as painted on the trees: white band, colour stripe, white band, thin dark edge. */}
-                  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+                  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" className="shrink-0">
                     <rect x="0.5" y="0.5" width="11" height="11" rx="2" fill="#fff" stroke={INK} strokeWidth="1" />
                     <rect x="1" y="4" width="10" height="4" fill={markColour} />
                   </svg>
-                  {markText}
+                  <span className="truncate">{markText}</span>
                 </span>
               )}
-            </div>
+            </>
           )}
+          </div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-0.5 text-right text-[13px] whitespace-nowrap text-[var(--muted)]">
           {now && (
