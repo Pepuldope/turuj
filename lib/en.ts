@@ -398,6 +398,7 @@ export const EN: Record<string, string> = {
   "{walk}, túra kratšia o {km} km": "{walk}, hike {km} km shorter",
   "Odtiaľ {walk}.": "From there {walk}.",
   "{m} m n. m.": "{m} m a.s.l.",
+  "m n. m.": "m a.s.l.",
   "spolu": "total",
   "Štart": "Start",
   "Štart:": "Start:",

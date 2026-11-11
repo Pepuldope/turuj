@@ -45,6 +45,8 @@ const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matc
 
 /** The gap kept between what a scroll brings up and the edge above it. */
 const SCROLL_GAP = 12;
+/** How long the glide to the next step takes. */
+const GLIDE_MS = 450;
 
 /**
  * Scrolls `el` to the top of the window, just under the phone's top bar. The bar's real height is read
@@ -55,17 +57,57 @@ const SCROLL_GAP = 12;
 function scrollUnderBar(el: Element | null | undefined) {
   if (!el) return;
   const behavior: ScrollBehavior = reduced() ? "auto" : "smooth";
+  const { box, top } = underBar(el);
+  if (box) box.scrollTo({ top, behavior });
+  else window.scrollTo({ top, behavior });
+}
+
+/** What to scroll (a wide screen's column box, or the window when null) and to where, to bring `el` under the bar. */
+function underBar(el: Element): { box: HTMLElement | null; top: number } {
   // Wide screens scroll the left column inside its own box (the map stays beside it), with no bar over it.
   let box: HTMLElement | null = el.parentElement;
   while (box && box !== document.body && !(/(auto|scroll)/.test(getComputedStyle(box).overflowY) && box.scrollHeight > box.clientHeight)) box = box.parentElement;
-  if (box && box !== document.body) {
-    box.scrollTo({ top: box.scrollTop + el.getBoundingClientRect().top - box.getBoundingClientRect().top - SCROLL_GAP, behavior });
-    return;
-  }
+  if (box && box !== document.body) return { box, top: box.scrollTop + el.getBoundingClientRect().top - box.getBoundingClientRect().top - SCROLL_GAP };
   const phone = window.matchMedia("(max-width: 1023.98px)").matches;
   const bar = phone ? document.querySelector<HTMLElement>("[data-topbar]") : null;
-  const top = el.getBoundingClientRect().top + window.scrollY - (bar?.offsetHeight ?? 0) - SCROLL_GAP;
-  window.scrollTo({ top: Math.max(0, top), behavior });
+  return { box: null, top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - (bar?.offsetHeight ?? 0) - SCROLL_GAP) };
+}
+
+/**
+ * Glides to `el` like scrollUnderBar, but follows it: the place it ends at is measured again on every
+ * frame, minus the fold still to come. "Ďalej" folds the step above while it scrolls, so a target measured
+ * once (before or after the fold) is a stale one and the glide overshoots or lands short. It keeps holding the spot until the fold
+ * has finished (`holdMs`), and gives way at once to a finger, wheel or key. Returns the stop function.
+ */
+function glideUnderBar(el: Element, holdMs: number, folding: Element | null): () => void {
+  // The step left behind is above `el` and is still folding away: where `el` will stand is where it stands
+  // now minus what is left of that step's body (the body is the section's second child, gone once folded).
+  const toFold = () => (folding?.children[1]?.getBoundingClientRect().height ?? 0);
+  const where = () => {
+    const u = underBar(el);
+    return { box: u.box, top: Math.max(0, u.top - toFold()) };
+  };
+  const start = where();
+  const from = start.box ? start.box.scrollTop : window.scrollY;
+  const t0 = performance.now();
+  let frame = 0;
+  const stop = () => {
+    cancelAnimationFrame(frame);
+    for (const ev of ["wheel", "touchstart", "keydown", "mousedown"]) window.removeEventListener(ev, stop);
+  };
+  for (const ev of ["wheel", "touchstart", "keydown", "mousedown"]) window.addEventListener(ev, stop, { passive: true });
+  const step = (now: number) => {
+    const { box, top } = where();
+    const p = Math.min(1, (now - t0) / GLIDE_MS);
+    const eased = 1 - Math.pow(1 - p, 3);
+    const at = from + (top - from) * eased;
+    if (box) box.scrollTo({ top: at, behavior: "instant" });
+    else window.scrollTo({ top: at, behavior: "instant" });
+    if (now - t0 < Math.max(GLIDE_MS, holdMs)) frame = requestAnimationFrame(step);
+    else stop();
+  };
+  frame = requestAnimationFrame(step);
+  return stop;
 }
 
 /**
@@ -103,7 +145,7 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     const later = setTimeout(hold, 400);
     return () => clearTimeout(later);
   }, []);
-  const pending = useRef<string | null>(null);
+  const pending = useRef<{ to: string; from: string; forward: boolean } | null>(null);
   const fitFor = (id: string) => steps.find((s) => s.id === id)?.fit;
   const api: StepsApi = {
     steps,
@@ -116,34 +158,32 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       setOpen((o) => ({ ...o, [id]: !o[id] }));
     },
     go: (from, to) => {
-      pending.current = to;
+      const forward = steps.findIndex((s) => s.id === to) > steps.findIndex((s) => s.id === from);
+      pending.current = { to, from, forward };
       const fit = fitFor(to);
       if (fit) fitOnMap(fit);
       // Forward ("Ďalej") marks the step left behind as done; "Späť" leaves the ticks as they are.
-      if (steps.findIndex((s) => s.id === to) > steps.findIndex((s) => s.id === from)) setDone((d) => ({ ...d, [from]: true }));
+      if (forward) setDone((d) => ({ ...d, [from]: true }));
       setOpen((o) => ({ ...o, [from]: false, [to]: true }));
     },
     toResult: () => scrollUnderBar(document.getElementById(resultId)),
     isDone: (id) => !!done[id],
   };
-  // After the new state is on screen: the next step's header gets the focus, and the view once the
-  // step being left has finished folding (scrolling during the fold would land short).
+  // After the new state is on screen: the next step's header gets the focus and the view glides to it.
   useEffect(() => {
-    const id = pending.current;
-    if (!id) return;
+    const go = pending.current;
+    if (!go) return;
     pending.current = null;
+    const id = go.to;
     const header = document.getElementById(`plan-step-${id}`);
     header?.focus({ preventScroll: true });
-    const scroll = () => scrollUnderBar(header?.closest("section"));
-    if (reduced()) return scroll();
-    // Two frames after the fold's timer: the folded body is gone from the page by then, so the target's
-    // position is final (measured earlier, the card would land too high once the page shrank).
-    let frame = 0;
-    const later = setTimeout(() => (frame = requestAnimationFrame(() => (frame = requestAnimationFrame(scroll)))), FOLD_MS + 20);
-    return () => {
-      clearTimeout(later);
-      cancelAnimationFrame(frame);
-    };
+    const section = header?.closest("section");
+    if (!section) return;
+    if (reduced()) return scrollUnderBar(section);
+    // Starts at once and tracks the target while the step left behind folds and this one unfolds.
+    // Only a step left above is folding out from under the target (going back, the target is above it).
+    const left = go.forward ? document.getElementById(`plan-step-${go.from}`)?.closest("section") : null;
+    return glideUnderBar(section, FOLD_MS + 150, left ?? null);
   }, [open]);
   return <StepsContext.Provider value={api}>{children}</StepsContext.Provider>;
 }

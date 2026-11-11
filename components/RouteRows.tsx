@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { formatDuration } from "@/lib/format";
 import type { RouteBrief } from "@/lib/tripSchema";
 import { useTripSettings } from "@/lib/tripSettings";
@@ -42,22 +42,32 @@ export function useRouteNumbers(routes: RouteBrief[], walks: Record<string, Rout
   );
 }
 
+const PREFETCH_MAX = 6;
+
 /** The routes as rows; the one under the pointer (here or on the map) gets an outline and lights up on the map. */
 export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; at: number; walks: Record<string, RouteWalk>; shown?: number[] }) {
   const hovered = useHoveredRoute();
   const numbers = useRouteNumbers(routes, walks, routes[at]?.slug ?? null);
   const t = useT();
   const lang = useLang();
+  // The tapped row is marked at once; the new page (a server render) takes a moment and only then changes `at`.
+  const [tapped, setTapped] = useState<{ slug: string; at: number } | null>(null);
+  const picked = tapped && tapped.at === at ? tapped.slug : null;
+  // Pages of the sibling routes are loaded ahead (whole, not just their shell) while the list is open,
+  // so a tap finds its page ready (a route switch hitched on the round trip). At most a handful.
+  let ahead = 0;
   return routes.map((r, i) => shown && !shown.includes(i) ? null : (
     <li key={r.slug}>
       <LangLink
         href={`/trasa/${r.slug}`}
-        aria-current={i === at ? "page" : undefined}
+        prefetch={i !== at && ++ahead <= PREFETCH_MAX ? true : undefined}
+        aria-current={(picked ? r.slug === picked : i === at) ? "page" : undefined}
         scroll={false}
         onMouseEnter={() => setHoveredRoute(i === at ? null : r.slug)}
         onMouseLeave={() => setHoveredRoute(null)}
         onClick={(e) => {
           setHoveredRoute(null);
+          if (i !== at) setTapped({ slug: r.slug, at });
           // The page changes to that route's, the plan card stays as it is (lib/planUi.ts).
           markRoutePicked(r.slug, e.currentTarget.closest("section")?.getBoundingClientRect().top ?? 0);
           // The map beside it fits the chosen route's whole line.
@@ -65,7 +75,7 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
           const lats = r.up.map((p) => p[1]);
           if (r.up.length > 1) focusOnMap({ scope: "routes", location: { lat: lats[0], lon: lons[0] }, fit: [{ lat: Math.min(...lats), lon: Math.min(...lons) }, { lat: Math.max(...lats), lon: Math.max(...lons) }] });
         }}
-        className={`flex items-center gap-2.5 px-3 py-2 outline-offset-[-2px] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${i === at ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--segment-bg)]"} ${
+        className={`flex items-center gap-2.5 px-3 py-2 outline-offset-[-2px] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${(picked ? r.slug === picked : i === at) ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--segment-bg)]"} ${
           hovered === r.slug ? "outline-2 outline-[var(--accent)] outline" : ""
         }`}
       >
