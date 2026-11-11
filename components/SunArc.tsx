@@ -66,6 +66,15 @@ const MARKING_WORD: Record<string, string> = {
   [UNMARKED]: "bez značky",
 };
 
+/** The marking you are on, in one word (the readout chip); unmarked is said plainly. */
+const MARKING_SHORT: Record<string, string> = {
+  [MARKING_COLOR.red]: "červená",
+  [MARKING_COLOR.blue]: "modrá",
+  [MARKING_COLOR.green]: "zelená",
+  [MARKING_COLOR.yellow]: "žltá",
+  [MARKING_COLOR.black]: "čierna",
+};
+
 /** Sky colours by sun height (degrees): [height, top, horizon]. */
 const SKY: [number, string, string][] = [
   [-12, "#141d36", "#1d2a52"],
@@ -424,11 +433,14 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   let walker: [number, number] = [sx, HOR];
   let climbed = 0;
   let height: number | null = null;
+  // The trail marking under the walker at this moment.
+  let markColour: string | null = null;
   if (onTrail) {
     const w = scene.walk;
     const i = Math.max(1, w.findIndex((p) => p.t >= t));
     const f = (t - w[i - 1].t) / (w[i].t - w[i - 1].t || 1);
     walker = [w[i - 1].x + (w[i].x - w[i - 1].x) * f, w[i - 1].y + (w[i].y - w[i - 1].y) * f];
+    markColour = w[i].colour;
     if (profile) {
       const ele = w[i - 1].ele + (w[i].ele - w[i - 1].ele) * f;
       climbed = ele - w[0].ele;
@@ -444,6 +456,10 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   const heightText = height === null ? null : tx("{m} m n. m.", { m: height.toLocaleString(lang === "en" ? "en-GB" : "sk-SK") });
   const heightW = heightText ? 16 + heightText.length * 6.4 : 0;
   const heightY = temp !== null ? 45 : 25;
+  // The trail sign you are on: a small KST mark (white, colour, white) and its word, under the height.
+  const markText = markColour ? tx(MARKING_SHORT[markColour] ?? "neznačený chodník") : null;
+  const markW = markText ? 28 + markText.length * 6 : 0;
+  const markY = heightText ? heightY + 20 : heightY;
 
   // The trail colours worth naming: a few metres of another colour at a junction would only puzzle.
   const legendColours = useMemo(() => {
@@ -819,6 +835,17 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
               <rect x={-heightW} y={heightY} width={heightW} height={16} rx={8} fill="#fff" opacity={0.92} />
               <text x={-heightW / 2} y={heightY + 12} textAnchor="middle" fontSize={12} fontWeight={700} fill="#14233b" className="font-data">
                 {heightText}
+              </text>
+            </>
+          )}
+          {markText && markColour && (
+            <>
+              <rect x={-markW} y={markY} width={markW} height={16} rx={8} fill="#fff" opacity={0.92} />
+              {/* The trail mark as painted on the trees: white band, colour stripe, white band, thin dark edge. */}
+              <rect x={-markW + 6} y={markY + 3} width={10} height={10} rx={2} fill="#fff" stroke={INK} strokeWidth={1} />
+              <rect x={-markW + 6.5} y={markY + 6} width={9} height={4} fill={markColour} />
+              <text x={-markW + 20} y={markY + 12} fontSize={12} fontWeight={700} fill="#14233b" className="font-data">
+                {markText}
               </text>
             </>
           )}

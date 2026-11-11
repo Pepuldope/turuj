@@ -26,6 +26,7 @@ import { justPickedRoute } from "@/lib/planUi";
 import { setHoveredRoute, useHoveredRoute } from "@/lib/routeHover";
 import { NETWORK_ON } from "@/lib/trailNetwork";
 import { useLang, useT } from "@/lib/i18n";
+import { keptMapKey } from "@/lib/keptMap";
 
 /** Another route to the same place: drawn faint, a tap opens it. */
 export interface OtherRoute {
@@ -55,6 +56,8 @@ interface Props {
    * Without it this is the big map beside the page, which frames the trail and follows the plan steps (lib/mapFocus.ts).
    */
   focus?: MapFit;
+  /** One place's routes share it: the map is kept alive across the soft navigation between their pages (lib/keptMap.ts). */
+  placeKey?: string;
 }
 
 /** How many parking lots or stops the plan offers (ParkingBlock, TransitBlock). */
@@ -81,7 +84,7 @@ const pair = (p: LatLng): [number, number] => [p.lat, p.lon];
  * With a start, the whole way: the drive (dashed) to the chosen parking, the
  * walk from there to the trail (dotted), then the trail itself.
  */
-export function TripMap({ detail, gpxUrl, path, others = [], loop = false, marks, colour: ownColour, focus: focusProp }: Props) {
+export function TripMap({ detail, gpxUrl, path, others = [], loop = false, marks, colour: ownColour, focus: focusProp, placeKey }: Props) {
   const t = useT();
   const lang = useLang();
   const { trail, trailheads, pois } = detail;
@@ -505,6 +508,7 @@ export function TripMap({ detail, gpxUrl, path, others = [], loop = false, marks
       }}
       onHoverTrail={others.length ? (slug) => setHoveredRoute(others.some((o) => o.slug === slug) ? slug : null) : undefined}
       ariaLabel={t("Mapa trasy")}
+      persistKey={keptMapKey(placeKey, focusProp)}
     />
   );
 }

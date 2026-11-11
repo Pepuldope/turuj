@@ -27,6 +27,7 @@ export function PhoneTripMap({
   marks,
   colour,
   focus,
+  placeKey,
   compact = false,
 }: {
   detail: TrailDetail;
@@ -38,6 +39,8 @@ export function PhoneTripMap({
   colour?: string;
   /** What the map first frames (inside a plan step). */
   focus?: MapFit;
+  /** The place the routes belong to: its map is kept across the route pages (lib/keptMap.ts). */
+  placeKey?: string;
   /** A short map filling its parent (a plan step's), instead of the tall stand-alone one. */
   compact?: boolean;
 }) {
@@ -65,7 +68,7 @@ export function PhoneTripMap({
           : `relative ${compact ? "h-full" : "h-[45vh]"} overflow-hidden rounded-xl border border-[var(--border)]`
       }
     >
-      <TripMap detail={detail} gpxUrl={gpxUrl} path={path} others={others} loop={loop} marks={marks} colour={colour} focus={focus} />
+      <TripMap detail={detail} gpxUrl={gpxUrl} path={path} others={others} loop={loop} marks={marks} colour={colour} focus={focus} placeKey={placeKey} />
       {/* Top left: the map's zoom buttons sit top right. */}
       <MapExpandButton
         side="left"

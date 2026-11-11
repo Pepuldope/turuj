@@ -3,9 +3,12 @@
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import type { ComponentProps } from "react";
+import { hasKeptMap } from "@/lib/keptMap";
 
 // MapLibre touches `window`, so the map is client-only.
-const TrailMapInner = dynamic(() => import("@/components/TrailMap").then((m) => m.TrailMap), {
+// Once loaded it is used directly: re-suspending on the next route page would hide the map for a frame or two.
+let loaded: typeof import("@/components/TrailMap").TrailMap | null = null;
+const TrailMapInner = dynamic(() => import("@/components/TrailMap").then((m) => (loaded = m.TrailMap)), {
   ssr: false,
   loading: () => <div className="h-full w-full animate-pulse bg-[var(--border)]" />,
 });
@@ -16,7 +19,8 @@ const TrailMapInner = dynamic(() => import("@/components/TrailMap").then((m) => 
  */
 export function TrailMap(props: ComponentProps<typeof TrailMapInner>) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  // A parked map of the page just left is taken over at once: no placeholder frame in between.
+  const [visible, setVisible] = useState(() => hasKeptMap(props.persistKey));
 
   useEffect(() => {
     const el = ref.current;
@@ -31,9 +35,10 @@ export function TrailMap(props: ComponentProps<typeof TrailMapInner>) {
     return () => io.disconnect();
   }, [visible]);
 
+  const Inner = loaded ?? TrailMapInner;
   return (
     <div ref={ref} className="h-full w-full">
-      {visible ? <TrailMapInner {...props} /> : <div className="h-full w-full bg-[var(--border)]" />}
+      {visible ? <Inner {...props} /> : <div className="h-full w-full bg-[var(--border)]" />}
     </div>
   );
 }

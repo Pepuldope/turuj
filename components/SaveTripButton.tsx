@@ -39,6 +39,8 @@ interface Props extends ShareInfo {
   where?: { name: string; location: LatLng } | null;
   /** The navigation buttons: they go after the calendar and before the app block. */
   nav?: ReactNode;
+  /** The GPX download, the last action of the card. */
+  gpx?: ReactNode;
 }
 
 type Status = "idle" | "saving" | "error";
@@ -91,7 +93,7 @@ const secondary =
  * device and stores it for offline use. Right after saving, one tap offers to
  * send the plan to the group.
  */
-export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], where = null, nav = null, ...trip }: Props) {
+export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], where = null, nav = null, gpx = null, ...trip }: Props) {
   const { slug, name } = trip;
   const { trips, save, patch, remove } = useSavedTrips();
   const { start } = useUserLocation();
@@ -99,30 +101,12 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
   const { plan, date, time, hikeMin, driveMin, route, transit, fixed, withKids, loading } = tripPlan;
   const { stops } = useTripStops(slug);
   const t = useT();
-  const installed = useInstalled();
   const lang = useLang();
   const [status, setStatus] = useState<Status>("idle");
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [askShare, setAskShare] = useState(false);
   // The first trip saved on this device: ask once how they heard of us (after the share offer).
   const [askHeard, setAskHeard] = useState(false);
-
-  // Closed once (here or on the home page's bar), the app offer stays away. Hidden until the browser has been asked.
-  const [appClosed, setAppClosed] = useState(true);
-  useEffect(() => {
-    let closed = false;
-    try {
-      closed = localStorage.getItem(APP_BAR_KEY) === "closed";
-    } catch {}
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setAppClosed(closed);
-  }, []);
-  function closeApp() {
-    setAppClosed(true);
-    try {
-      localStorage.setItem(APP_BAR_KEY, "closed");
-    } catch {}
-  }
 
   const saved = trips.find((t) => t.slug === slug) ?? null;
   const changed =
@@ -196,7 +180,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
       hikeMin={hikeMin}
       hasDrive={route !== null || driveMin !== null}
       closures={closures}
-      className={secondary}
+      className={`${secondary} min-h-11 w-full`}
     />
   );
 
@@ -213,7 +197,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
         </button>
       )}
 
-      {/* Order (Peter, 8 Nov): the one-time question first, then saved + share as one box, the calendar, navigation, the app. */}
+      {/* Order (Peter, 8 Nov): the one-time question first, then saved + share as one box, the calendar, navigation, GPX. The app offer is AppPromo, outside this card. */}
       {saved && askHeard && <HeardFrom onDone={() => setAskHeard(false)} />}
 
       {saved && askShare && (
@@ -272,9 +256,37 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
 
       {saved && <ClosureGuard closures={closures} date={date} />}
       {nav}
+      {gpx}
+    </div>
+  );
+}
 
-      {status !== "saving" && !installed && !appClosed && (
-        <div className="flex items-center gap-3 rounded-xl bg-[var(--sun-soft)] p-3 text-sm">
+/**
+ * "Získať appku": the one-time offer to put the saved trip on the home screen. A card of its own under the
+ * "Vyraziť" card, so it doesn't mix with saving, sharing and navigating.
+ */
+export function AppPromo() {
+  const t = useT();
+  const installed = useInstalled();
+  // Closed once (here or on the home page's bar), the app offer stays away. Hidden until the browser has been asked.
+  const [appClosed, setAppClosed] = useState(true);
+  useEffect(() => {
+    let closed = false;
+    try {
+      closed = localStorage.getItem(APP_BAR_KEY) === "closed";
+    } catch {}
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAppClosed(closed);
+  }, []);
+  function closeApp() {
+    setAppClosed(true);
+    try {
+      localStorage.setItem(APP_BAR_KEY, "closed");
+    } catch {}
+  }
+  if (installed || appClosed) return null;
+  return (
+        <div className="flex items-center gap-3 rounded-[var(--radius-card)] bg-[var(--sun-soft)] p-3 text-sm">
           <span className="min-w-0 flex-1">{t("Hore na kopci bez signálu? Uložený výlet otvoríte najrýchlejšie z ikony na ploche.")}</span>
           <LangLink
             href="/aplikacia"
@@ -287,7 +299,5 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
             ×
           </button>
         </div>
-      )}
-    </div>
   );
 }

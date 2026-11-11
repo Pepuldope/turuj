@@ -5,6 +5,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { PhoneTripMap } from "@/components/PhoneTripMap";
 import { UiIcon } from "@/components/UiIcon";
 import { fitOnMap } from "@/lib/mapFocus";
+import { hasKeptMap, keptMapKey } from "@/lib/keptMap";
 import { pickedAnchor, rememberOpenSteps, stepsKeptFromRoutePick } from "@/lib/planUi";
 import type { MapFit } from "@/lib/mapFocus";
 import { useT } from "@/lib/i18n";
@@ -282,7 +283,8 @@ export function StepInfo({ title, children }: { title: string; children: ReactNo
  */
 export function StepMap(props: Omit<ComponentProps<typeof PhoneTripMap>, "compact">) {
   const ref = useRef<HTMLDivElement>(null);
-  const [near, setNear] = useState(false);
+  // A parked map of the page just left is taken over at once, so no placeholder shows in between.
+  const [near, setNear] = useState(() => hasKeptMap(keptMapKey(props.placeKey, props.focus)));
   useEffect(() => {
     const el = ref.current;
     if (!el) return;

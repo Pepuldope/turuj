@@ -196,7 +196,9 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
     .filter((r) => r.slug !== current);
 
   // Each plan step that is about a place has its own map on phones, framed on that choice (components/PlanStep.tsx).
-  const mapProps = { detail, gpxUrl, path: loopLine, others, loop: trip.route === "okruh", marks, colour: ownColour };
+  // One place's route pages share their maps: the map stays when another route is picked (lib/keptMap.ts).
+  const placeKey = routes.length > 1 ? routes[0].slug : trail.slug;
+  const mapProps = { detail, gpxUrl, path: loopLine, others, loop: trip.route === "okruh", marks, colour: ownColour, placeKey };
   // Each place's nearest point on the walk, so the map can show the place together with the trail.
   const walkPoints = trip.path.map(([lon, lat]) => ({ lat, lon }));
   const near: Record<string, { lat: number; lon: number }> = {};
@@ -314,6 +316,8 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
             }}
             profile={profile}
             gpxUrl={gpxUrl}
+            // A visible action of the "Vyraziť" card (still in the server HTML: the link is a plain anchor).
+            gpxAction={gpxUrl ? <GpxDownload gpxUrl={gpxUrl} slug={trail.slug} name={gpxName} /> : null}
             bbox={trail.bbox}
             closures={closures}
             hasPlaces={detail.pois.length > 0}
@@ -367,7 +371,6 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                 closuresOnly={!!loopBack}
                 about={about}
                 region={trail.region_name}
-                gpx={gpxUrl ? <GpxDownload gpxUrl={gpxUrl} slug={trail.slug} name={gpxName} row /> : null}
               />
             }
             trail={{
@@ -404,7 +407,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
         </div>
 
         <div className="hidden lg:sticky lg:top-0 lg:block lg:h-dvh lg:flex-1 lg:border-l lg:border-[var(--border)]">
-          <TripMap detail={detail} gpxUrl={gpxUrl} path={loopLine} others={others} loop={trip.route === "okruh"} marks={marks} colour={ownColour} />
+          <TripMap detail={detail} gpxUrl={gpxUrl} path={loopLine} others={others} loop={trip.route === "okruh"} marks={marks} colour={ownColour} placeKey={placeKey} />
         </div>
       </main>
     </TripAccessProvider>

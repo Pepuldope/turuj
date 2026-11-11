@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { GeoJSONSource, Map as MlMap, Marker, StyleSpecification } from "maplibre-gl";
 import type { BBox, LatLng } from "@/lib/types";
 import { MAP_STYLE_URL, mapPixelRatio } from "@/lib/mapLayers";
@@ -15,6 +15,8 @@ import type { NetworkMode } from "@/lib/trailNetwork";
 import { useUserLocation } from "@/lib/userLocation";
 import { pageLang, tr } from "@/lib/lang";
 import { mapLocale } from "@/lib/mapLocale";
+import { keepMap, mapShown, takeKeptMap } from "@/lib/keptMap";
+import type { KeptLive, KeptMap } from "@/lib/keptMap";
 
 type MapLibre = typeof import("maplibre-gl");
 
@@ -87,6 +89,11 @@ interface Props {
   network?: NetworkMode;
   ariaLabel: string;
   className?: string;
+  /**
+   * Keeps this map alive across a soft navigation: while it unmounts it is parked under this key, and the map
+   * that mounts next with the same key takes it over (lib/keptMap.ts). The routes of one place share the key.
+   */
+  persistKey?: string;
 }
 
 const MARKER_GLYPH: Record<MarkerKind, string> = {
@@ -289,21 +296,25 @@ export function TrailMap({
   network,
   ariaLabel,
   className,
+  persistKey,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [ctx, setCtx] = useState<{ ml: MapLibre; map: MlMap } | null>(null);
   const onSelectRef = useRef(onSelectTrail);
   const onHoverRef = useRef(onHoverTrail);
   const fittedRef = useRef(false);
+  // The map came from the last page of this place: it is already placed, and a focus request made just before
+  // (the route pick) was answered by that page's map.
+  const adoptedRef = useRef(false);
+  const persistRef = useRef(persistKey);
   const networkRef = useRef(network);
   const boundsRef = useRef<BBox | null>(bounds);
   // The view was centred on a pick: a resize keeps it instead of fitting the step's default view again.
   const centredRef = useRef(false);
   const floorRef = useRef(focusFloor);
   const openOnRef = useRef(openOn);
-  const markerRefs = useRef<Marker[]>([]);
-  const markerIds = useRef<string[]>([]);
-  const userMarkerRefs = useRef<Marker[]>([]);
+  // The pins and what the map's handlers call live on the map itself, so they go with it when it is kept.
+  const liveRef = useRef<KeptLive>({ select: () => {}, hover: () => {}, hoverOn: () => false, markers: [], markerIds: [], userMarkers: [] });
   const { fix, start } = useUserLocation();
 
   useEffect(() => {
@@ -311,24 +322,66 @@ export function TrailMap({
     onHoverRef.current = onHoverTrail;
     floorRef.current = focusFloor;
     openOnRef.current = openOn;
-  }, [onSelectTrail, onHoverTrail, focusFloor, openOn]);
+    persistRef.current = persistKey;
+  }, [onSelectTrail, onHoverTrail, focusFloor, openOn, persistKey]);
 
-  // Create the map once; tear it down on unmount.
-  useEffect(() => {
+  // Create the map once (or take over the parked one of this place); park or tear it down on unmount.
+  // A layout effect: the kept map is back in the page in the same frame the new page shows, with no empty one between.
+  useLayoutEffect(() => {
     let cancelled = false;
-    let map: MlMap | null = null;
+    let entry: KeptMap | null = null;
     let observer: ResizeObserver | null = null;
-    let detachNetwork: (() => void) | null = null;
-    let detachLimit: (() => void) | null = null;
+
+    // Puts the map into this component's slot and hands it to the effects below once it is loaded.
+    function bind(e: KeptMap) {
+      entry = e;
+      if (persistRef.current) mapShown(persistRef.current, true);
+      liveRef.current = e.live;
+      e.live.select = (slug) => onSelectRef.current?.(slug);
+      e.live.hover = (slug) => onHoverRef.current?.(slug);
+      e.live.hoverOn = () => !!onHoverRef.current;
+      containerRef.current!.appendChild(e.el);
+      const map = e.map;
+      // The map sits in flex/sticky containers whose size can change: keep the
+      // requested area in view rather than whatever zoom fit the old size.
+      let firstResize = true;
+      observer = new ResizeObserver(() => {
+        // The first call is the initial size: the bounds effect places the view (maybe gliding).
+        if (firstResize) {
+          firstResize = false;
+          return;
+        }
+        map.resize();
+        if (boundsRef.current && !centredRef.current) fit(map, boundsRef.current);
+      });
+      observer.observe(e.el);
+      const ready = () => !cancelled && setCtx({ ml: e.ml, map });
+      if (e.loaded) ready();
+      else e.onLoad = ready;
+    }
 
     async function init() {
+      // The map of the route page just left: same canvas, same tiles, no rebuild.
+      const kept = takeKeptMap(persistRef.current);
+      if (kept) {
+        fittedRef.current = true;
+        adoptedRef.current = true;
+        bind(kept);
+        // It sat detached (zero-sized) for a moment: its canvas takes the slot's size again.
+        kept.map.resize();
+        return;
+      }
       const ml = await import("maplibre-gl");
       if (cancelled || !containerRef.current) return;
 
       const from = lastCamera && Date.now() - lastCamera.at < GLIDE_WITHIN_MS ? lastCamera : null;
       if (from) fittedRef.current = true; // the first fit glides from there
-      map = new ml.Map({
-        container: containerRef.current,
+      const el = document.createElement("div");
+      el.className = "h-full w-full";
+      // In the page before the map is made, so it measures the slot.
+      containerRef.current.appendChild(el);
+      const map = new ml.Map({
+        container: el,
         style: MAP_STYLE_URL,
         ...(from ? { center: from.center, zoom: from.zoom } : { bounds: SLOVAKIA }),
         attributionControl: { compact: true },
@@ -341,12 +394,31 @@ export function TrailMap({
         maxPitch: 0,
         pixelRatio: mapPixelRatio(),
       });
+      let detachNetwork: (() => void) | null = null;
+      let detachLimit: (() => void) | null = null;
+      const live: KeptLive = { select: () => {}, hover: () => {}, hoverOn: () => false, markers: [], markerIds: [], userMarkers: [] };
+      const e: KeptMap = {
+        el,
+        map,
+        ml,
+        live,
+        loaded: false,
+        onLoad: null,
+        timer: null,
+        dispose: () => {
+          if (e.timer) clearTimeout(e.timer);
+          detachNetwork?.();
+          detachLimit?.();
+          map.remove();
+          el.remove();
+        },
+      };
       map.touchZoomRotate.disableRotation();
       // The compact attribution opens by itself at first (it covered pins and popups on the small step maps):
       // start it as the little "i" and open it only on a tap. The credit stays one tap away.
       // MapLibre re-opens it by itself whenever new map data brings its credits (the trail tiles arriving), so a
       // watcher folds it back each time, until the visitor taps the "i" themselves.
-      const attrib = containerRef.current?.querySelector(".maplibregl-ctrl-attrib");
+      const attrib = el.querySelector(".maplibregl-ctrl-attrib");
       let tapped = false;
       const closeAttribution = () => {
         if (tapped || !attrib) return;
@@ -363,7 +435,6 @@ export function TrailMap({
       map.once("remove", () => attribWatch?.disconnect());
       closeAttribution();
       map.on("moveend", () => {
-        if (!map) return;
         const c = map.getCenter();
         lastCamera = { center: [c.lng, c.lat], zoom: map.getZoom(), at: Date.now() };
       });
@@ -372,14 +443,13 @@ export function TrailMap({
       // Base map unreachable (offline, blocked): fall back to a plain background
       // so the trail, pins and drive leg still show.
       let styleFailed = false;
-      map.on("error", (e) => {
-        if (styleFailed || !map || map.isStyleLoaded() || !String(e.error?.message).includes(MAP_STYLE_URL)) return;
+      map.on("error", (ev) => {
+        if (styleFailed || map.isStyleLoaded() || !String(ev.error?.message).includes(MAP_STYLE_URL)) return;
         styleFailed = true;
         map.setStyle(FALLBACK_STYLE);
       });
 
       map.on("load", () => {
-        if (!map || cancelled) return;
         hideBasePois(map);
         detachLimit = keepInSlovakia(map);
         // Under everything of ours: the whole trail network.
@@ -484,73 +554,66 @@ export function TrailMap({
           paint: { "line-color": "#000000", "line-width": 18, "line-opacity": 0 },
         });
         // The pin closest to a tap, if the tap landed within a finger's width of it.
-        const nearestMarker = (at: { x: number; y: number }): Marker | null => {
+        const nearestMarker = (at: { x: number; y: number }) => {
           let best: Marker | null = null;
           let bestD = PIN_REACH_PX;
-          for (const m of markerRefs.current) {
-            const p = map!.project(m.getLngLat());
+          for (const m of live.markers) {
+            const p = map.project(m.getLngLat());
             const d = Math.hypot(p.x - at.x, p.y - at.y);
             if (d < bestD) [best, bestD] = [m, d];
           }
           return best;
         };
-        map.on("click", "track-hit", (e) => {
+        map.on("click", "track-hit", (ev) => {
           // A tap on a pin, or right beside one, is for the pin (its popup, "Pridať zastávku"), not the route under it.
-          const target = e.originalEvent.target as Element | null;
+          const target = ev.originalEvent.target as Element | null;
           if (target?.closest?.(".maplibregl-marker, .maplibregl-popup")) return;
-          const near = nearestMarker(e.point);
+          const near = nearestMarker(ev.point);
           if (near) {
             // Its own tap actions (pick the parking...) and its popup, as if the pin itself was hit.
             near.getElement().dispatchEvent(new MouseEvent("click"));
             if (!near.getPopup()?.isOpen()) near.togglePopup();
             return;
           }
-          const slug = e.features?.[0]?.properties?.slug as string | undefined;
-          if (slug) onSelectRef.current?.(slug);
+          const slug = ev.features?.[0]?.properties?.slug as string | undefined;
+          if (slug) live.select(slug);
         });
-        map.on("mousemove", "track-hit", (e) => {
-          const slug = e.features?.[0]?.properties?.slug as string | undefined;
-          if (!map || !onHoverRef.current) return;
+        map.on("mousemove", "track-hit", (ev) => {
+          const slug = ev.features?.[0]?.properties?.slug as string | undefined;
+          if (!live.hoverOn()) return;
           map.getCanvas().style.cursor = "pointer";
-          onHoverRef.current(slug ?? null);
+          live.hover(slug ?? null);
         });
         map.on("mouseleave", "track-hit", () => {
-          if (!map || !onHoverRef.current) return;
+          if (!live.hoverOn()) return;
           map.getCanvas().style.cursor = "";
-          onHoverRef.current(null);
+          live.hover(null);
         });
-        setCtx({ ml, map });
+        e.loaded = true;
+        e.onLoad?.();
+        e.onLoad = null;
       });
 
-      // The map sits in flex/sticky containers whose size can change: keep the
-      // requested area in view rather than whatever zoom fit the old size.
-      let firstResize = true;
-      observer = new ResizeObserver(() => {
-        if (!map) return;
-        // The first call is the initial size: the bounds effect places the view (maybe gliding).
-        if (firstResize) {
-          firstResize = false;
-          return;
-        }
-        map.resize();
-        if (boundsRef.current && !centredRef.current) fit(map, boundsRef.current);
-      });
-      observer.observe(containerRef.current);
+      bind(e);
     }
 
     init();
 
     return () => {
       cancelled = true;
-      if (map) {
-        const c = map.getCenter();
-        lastCamera = { center: [c.lng, c.lat], zoom: map.getZoom(), at: Date.now() };
-      }
       observer?.disconnect();
-      detachNetwork?.();
-      detachLimit?.();
-      map?.remove();
-      map = null;
+      if (entry) {
+        if (persistRef.current) mapShown(persistRef.current, false);
+        entry.onLoad = null;
+        const c = entry.map.getCenter();
+        lastCamera = { center: [c.lng, c.lat], zoom: entry.map.getZoom(), at: Date.now() };
+        const key = persistRef.current;
+        if (key) {
+          // The next route page of this place takes the map over; the page's slot goes without it.
+          entry.el.remove();
+          keepMap(key, entry);
+        } else entry.dispose();
+      }
       setCtx(null);
     };
   }, []);
@@ -565,7 +628,7 @@ export function TrailMap({
     const first = openOnRef.current;
     centredRef.current = !fittedRef.current && !!first;
     if (centredRef.current) centreOn(ctx.map, first!.location, first!.context, bounds, 0);
-    else fit(ctx.map, bounds, fittedRef.current ? 700 : 0);
+    else fit(ctx.map, bounds, fittedRef.current && !reducedMotion() ? 600 : 0);
     fittedRef.current = true;
     // `bounds` is tracked via boundsKey so a new-but-equal object doesn't refit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -645,11 +708,11 @@ export function TrailMap({
   useEffect(() => {
     if (!ctx) return;
     const { ml, map } = ctx;
-    for (const m of markerRefs.current) m.remove();
+    for (const m of liveRef.current.markers) m.remove();
     // Active last so it sits on top.
     const sorted = [...markers].sort((a, b) => Number(!!a.active) - Number(!!b.active));
-    markerIds.current = sorted.map((m) => m.id);
-    markerRefs.current = sorted
+    liveRef.current.markerIds = sorted.map((m) => m.id);
+    liveRef.current.markers = sorted
       .map((m) => {
         const el = pinElement(
           `${MARKER_CLASS[m.kind]}${m.dimmed ? " mt-pin-dimmed" : ""}${m.active ? " is-active" : ""}`,
@@ -705,14 +768,15 @@ export function TrailMap({
         );
         return;
       }
-      for (const m of markerRefs.current) if (m.getPopup()?.isOpen()) m.togglePopup();
-      const i = id ? markerIds.current.indexOf(id) : -1;
-      if (i >= 0) map.once("moveend", () => markerRefs.current[i]?.togglePopup());
+      for (const m of liveRef.current.markers) if (m.getPopup()?.isOpen()) m.togglePopup();
+      const i = id ? liveRef.current.markerIds.indexOf(id) : -1;
+      if (i >= 0) map.once("moveend", () => liveRef.current.markers[i]?.togglePopup());
       if (context || asked) centreOn(map, location, context, floorRef.current?.(asked ?? scope) ?? null, duration);
       else map.flyTo({ center: [location.lon, location.lat], zoom: Math.max(map.getZoom(), 15), essential: true, duration });
     };
     const recent = recentFocus(4000);
-    if (recent) apply(recent, true);
+    // A kept map was there when it was asked: it has already answered.
+    if (recent && !adoptedRef.current) apply(recent, true);
     return onMapFocus((target) => apply(target));
   }, [ctx, scope]);
 
@@ -720,10 +784,10 @@ export function TrailMap({
   useEffect(() => {
     if (!ctx) return;
     const { ml, map } = ctx;
-    for (const m of userMarkerRefs.current) m.remove();
-    userMarkerRefs.current = [];
+    for (const m of liveRef.current.userMarkers) m.remove();
+    liveRef.current.userMarkers = [];
     if (start?.source === "manual") {
-      userMarkerRefs.current.push(
+      liveRef.current.userMarkers.push(
         new ml.Marker({ element: pinElement("mt-pin-start", "S", start.label) })
           .setLngLat([start.lon, start.lat])
           .setPopup(new ml.Popup({ offset: 14, closeButton: false }).setDOMContent(popupContent(tr(pageLang(), "Štart"), [tr(pageLang(), start.label)])))
@@ -731,7 +795,7 @@ export function TrailMap({
       );
     }
     if (fix) {
-      userMarkerRefs.current.push(
+      liveRef.current.userMarkers.push(
         new ml.Marker({ element: pinElement("mt-pin-me", "", tr(pageLang(), "Vaša poloha")) }).setLngLat([fix.lon, fix.lat]).addTo(map)
       );
     }

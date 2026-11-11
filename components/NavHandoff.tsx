@@ -6,6 +6,7 @@ import { googleMapsUrl, googleWalkUrl, mapyUrl, mapyWalkUrl } from "@/lib/links"
 import type { WalkRoute } from "@/lib/links";
 import type { LatLng } from "@/lib/types";
 import { useTripAccess } from "@/components/TripAccess";
+import { UiIcon } from "@/components/UiIcon";
 import { useUserLocation } from "@/lib/userLocation";
 import "@/lib/legacyStorage";
 import { useT } from "@/lib/i18n";
@@ -39,12 +40,13 @@ function pickApp(app: App) {
 }
 
 const segBtn = (on: boolean) =>
-  `rounded-[10px] px-2 py-1.5 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
+  `min-h-10 rounded-[10px] px-3 py-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
     on ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
   }`;
 
+// Two tiles side by side, the icon over the label: "Navigovať autom" would wrap beside an icon on a 360 px phone.
 const navButton =
-  "flex-1 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2.5 text-center text-sm font-semibold hover:border-[var(--accent)]";
+  "flex min-h-[4.25rem] flex-1 flex-col items-center justify-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2.5 text-center text-sm font-semibold hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]";
 
 /**
  * Hand-off to a maps app in two legs, because one Google Maps link carries one travel
@@ -78,9 +80,9 @@ export function NavHandoff({
   if (!drive && !canWalk) return null;
   const google = app === "google";
   return (
-    <div className="flex flex-col gap-2">
+    <div role="group" aria-label={t("Navigácia")} className="flex flex-col gap-3 border-t border-[var(--border)] pt-4">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-semibold">{t("Navigovať v")}</span>
+        <h3 className="text-base font-bold">{t("Navigácia")}</h3>
         <div role="group" aria-label={t("Mapy na navigáciu")} className="grid grid-cols-2 gap-[3px] rounded-xl bg-[var(--segment-bg)] p-[3px]">
           <button type="button" aria-pressed={google} onClick={() => pickApp("google")} className={segBtn(google)}>
             Google
@@ -100,6 +102,7 @@ export function NavHandoff({
             rel="noopener noreferrer"
             className={navButton}
           >
+            <UiIcon name="car" size={22} />
             {parking ? t("Na parkovisko") : t("Navigovať autom")}
           </a>
         )}
@@ -111,6 +114,7 @@ export function NavHandoff({
             rel="noopener noreferrer"
             className={navButton}
           >
+            <UiIcon name="walker" size={22} />
             {t("Po trase")}
           </a>
         )}
