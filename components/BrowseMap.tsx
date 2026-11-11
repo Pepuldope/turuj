@@ -295,41 +295,19 @@ const line = (coords: number[][] | undefined): GeoJSON.FeatureCollection =>
  * square marks, the best known first. Lines load per area, for the view only.
  */
 /**
- * Hides area names that would overlap a bigger area's dot or name. Areas come
- * biggest first and sit higher, so a big area is never hidden behind a small one.
+ * Stacks the area names: all of them show, the biggest areas (first in the list) on top where they
+ * overlap. (The name `declutter` is kept from when it hid names that didn't fit.)
  */
 function declutter(all: HTMLElement[]) {
   // Dots that are switched off (zoomed in past the areas) take no space and have no name to place.
   const els = all.filter((el) => el.style.display !== "none");
-  const taken: DOMRect[] = [];
-  // A name cut off by the map's edge (more than a hairline) counts as not fitting too.
-  const box = els[0]?.closest(".maplibregl-map")?.getBoundingClientRect();
-  const out = (r: DOMRect) => !!box && (r.left < box.left - 3 || r.right > box.right + 3 || r.top < box.top - 3 || r.bottom > box.bottom + 3);
-  // A name may touch a dot or another name by a few pixels (its box includes the padding and the rounded corners, which are empty
-  // at the ends): strict boxes hid names until the very last zoom level before the dots switch off.
-  const OVERLAP_X = 4;
-  const OVERLAP_Y = 2;
-  const hits = (r: DOMRect) =>
-    out(r) ||
-    taken.some((t) => r.left + OVERLAP_X < t.right && r.right - OVERLAP_X > t.left && r.top + OVERLAP_Y < t.bottom && r.bottom - OVERLAP_Y > t.top);
-  // Every dot is placed first, so no name ever covers a dot.
+  // Peter, 2026-11-11: every name always shows, under its dot, and close names simply overlap. Hiding and
+  // moving names to make room misjudged on iPhones (a name missing while zoomed onto its own region).
+  // The larger regions (earlier in the list) sit on top where names overlap.
   els.forEach((el, i) => {
     el.style.zIndex = String(els.length - i);
-    taken.push((el.firstElementChild as HTMLElement).getBoundingClientRect());
-  });
-  // Then each name tries below its dot, then right, left, above and the four corners (Peter, 2026-11-11: on a phone most
-  // names were hidden); only a name that fits nowhere is hidden. The answer depends only on the view (always the same order of
-  // sides, never "the side it had"), so the same view shows the same names however it was reached.
-  els.forEach((el) => {
-    const label = el.lastElementChild as HTMLElement;
-    label.style.visibility = "";
-    for (const side of ["", "right", "left", "above", "br", "bl", "ar", "al"]) {
-      el.dataset.side = side;
-      const r = label.getBoundingClientRect();
-      if (!hits(r)) return void taken.push(r);
-    }
     el.dataset.side = "";
-    label.style.visibility = "hidden";
+    (el.lastElementChild as HTMLElement).style.visibility = "";
   });
 }
 
