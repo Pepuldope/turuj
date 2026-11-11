@@ -729,7 +729,7 @@ export function BrowseMap({
       });
       m.on("click", (e) => {
         // A tap on the start house opens its own card (below), never a trip under it.
-        if ((e.originalEvent.target as Element | null)?.closest?.(".mt-start")) return;
+        if ((e.originalEvent.target as Element | null)?.closest?.("[data-start-pin]")) return;
         // "Vybrať bod na mape". With a mouse the click puts the pin there; on a touch screen the pin
         // stays in the middle and a tap brings that spot under it.
         if (pickingRef.current) {
@@ -962,6 +962,24 @@ export function BrowseMap({
       el.title = title;
       return el;
     };
+    // The start's pin as a button: a tap (or Enter) opens "Chcete zmeniť, odkiaľ vyrážate?".
+    const startButton = (dot: HTMLElement, label: string) => {
+      dot.dataset.startPin = "";
+      dot.style.pointerEvents = "auto";
+      dot.style.cursor = "pointer";
+      dot.setAttribute("role", "button");
+      dot.tabIndex = 0;
+      dot.setAttribute("aria-label", tr(pageLang(), "Štart: {name}. Zmeniť?", { name: label }));
+      dot.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setStartMenu((open) => !open);
+      });
+      dot.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        setStartMenu(true);
+      });
+    };
     if (start?.source === "manual") {
       const el = document.createElement("div");
       el.className = "mt-start";
@@ -974,20 +992,7 @@ export function BrowseMap({
       // Anchored on the house, with the name hanging below it.
       // Peter, 2026-11-11: the house no longer drags (too easy to move by accident while panning).
       // A tap opens a small card by it asking whether to change the start.
-      dot.style.pointerEvents = "auto";
-      dot.style.cursor = "pointer";
-      dot.setAttribute("role", "button");
-      dot.tabIndex = 0;
-      dot.setAttribute("aria-label", tr(pageLang(), "Štart: {name}. Zmeniť?", { name: start.label }));
-      dot.addEventListener("click", (e) => {
-        e.stopPropagation();
-        setStartMenu((open) => !open);
-      });
-      dot.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter" && e.key !== " ") return;
-        e.preventDefault();
-        setStartMenu(true);
-      });
+      startButton(dot, start.label);
       userMarkers.current.push(new ml.Marker({ element: el, anchor: "top", offset: [0, -18] }).setLngLat([start.lon, start.lat]).addTo(map));
     }
     // A new start (or the first one with no remembered view): show its surroundings, where the nearest trips are.
@@ -996,7 +1001,12 @@ export function BrowseMap({
       map.easeTo({ center: [start!.lon, start!.lat], zoom: AREA_ZOOM - ctx.shift + START_ZOOM_IN, duration: startKey.current === undefined ? 0 : 900 });
     }
     startKey.current = key;
-    if (fix) userMarkers.current.push(new ml.Marker({ element: pin("mt-pin-me", "", tr(pageLang(), "Vaša poloha")) }).setLngLat([fix.lon, fix.lat]).addTo(map));
+    if (fix) {
+      const me = pin("mt-pin-me", "", tr(pageLang(), "Vaša poloha"));
+      // Starting from where you are (no typed start): the blue dot is the start, so it opens the same card.
+      if (start?.source === "gps") startButton(me, tr(pageLang(), "Vaša poloha"));
+      userMarkers.current.push(new ml.Marker({ element: me }).setLngLat([fix.lon, fix.lat]).addTo(map));
+    }
   }, [ctx, fix, start]);
 
   // Picking a start (Peter, 2026-10-29). Touch screens, as in Google Maps: a pin fixed in the middle
@@ -1025,7 +1035,7 @@ export function BrowseMap({
   }, [ctx, pickAt]);
   // The card by the start pin follows the pin while the map moves; a tap elsewhere, Escape, or a new
   // start closes it.
-  const startAt = start?.source === "manual" ? start : null;
+  const startAt = start?.source === "manual" || (start?.source === "gps" && fix) ? start : null;
   if ((!startAt || picking) && startMenu) setStartMenu(false);
   useEffect(() => {
     if (!ctx || !startMenu || !startAt) {
@@ -1039,7 +1049,7 @@ export function BrowseMap({
     };
     place();
     const close = (e: MapMouseEvent) => {
-      if (!(e.originalEvent.target as Element | null)?.closest?.(".mt-start")) setStartMenu(false);
+      if (!(e.originalEvent.target as Element | null)?.closest?.("[data-start-pin]")) setStartMenu(false);
     };
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setStartMenu(false);
     ctx.map.on("move", place);
