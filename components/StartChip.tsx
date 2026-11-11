@@ -6,7 +6,6 @@ import { getTowns } from "@/lib/trips";
 import { suggestTowns } from "@/lib/townSuggest";
 import type { StartHow } from "@/lib/analytics";
 import type { Place } from "@/lib/geocode";
-import { TOWNS } from "@/lib/towns";
 import { useUserLocation } from "@/lib/userLocation";
 import { UiIcon } from "@/components/UiIcon";
 import { PickStartMap } from "@/components/PickStartMap";
@@ -300,20 +299,7 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
             {status === "locating" ? t("Hľadáme vašu polohu…") : t("Použiť moju polohu")}
           </button>
           <p className="-mt-1 text-center text-xs text-[var(--muted)]">{t("Polohu si neukladáme, použijeme ju len na výpočet cesty.")}</p>
-          <div className="grid grid-cols-2 gap-2">
-            {TOWNS.slice(0, 6).map((town) => (
-              <button
-                key={town.label}
-                type="button"
-                onClick={() => choose(town, "town_button")}
-                className={`h-11 truncate rounded-[10px] border bg-[var(--segment-bg)] px-3 text-left font-semibold hover:border-[var(--accent)] ${
-                  start?.label === town.label ? "border-[var(--accent)]" : "border-[var(--border)]"
-                }`}
-              >
-                {town.label}
-              </button>
-            ))}
-          </div>
+          {/* Peter, 2026-11-11: three ways only (search, my location, a point on the map); the six town shortcuts are gone. */}
           {
             // Anywhere, not only places with an address: a cottage, a crossroads, a car park.
             <button
