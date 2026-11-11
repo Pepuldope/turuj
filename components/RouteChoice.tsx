@@ -76,7 +76,9 @@ export function RouteChoice({ slug, destination, routes, walks }: Props) {
             {t("Porovnať na mape")} ›
           </LangLink>
         </div>
-        <ul className="flex flex-col divide-y divide-[var(--border)] overflow-hidden rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)]">
+        {/* The first and last rows follow the list's corners (16 px card minus the 1 px border), so their hover
+            outline isn't cut off by the rounded edge (Peter, 2026-11-11). */}
+        <ul className="flex flex-col divide-y divide-[var(--border)] overflow-hidden rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] [&>li:first-child>a]:rounded-t-[15px] [&>li:last-child>a]:rounded-b-[15px]">
           {rows}
         </ul>
       </div>
