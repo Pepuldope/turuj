@@ -342,6 +342,15 @@ export function TrailMap({
         pixelRatio: mapPixelRatio(),
       });
       map.touchZoomRotate.disableRotation();
+      // The compact attribution opens by itself at first (it covered pins and popups on the small step maps):
+      // start it as the little "i" and open it only on a tap. The credit stays one tap away.
+      const closeAttribution = () => {
+        const el = containerRef.current?.querySelector(".maplibregl-ctrl-attrib");
+        el?.classList.remove("maplibregl-compact-show");
+        el?.removeAttribute("open");
+      };
+      closeAttribution();
+      map.once("load", closeAttribution);
       map.on("moveend", () => {
         if (!map) return;
         const c = map.getCenter();
@@ -669,7 +678,8 @@ export function TrailMap({
     // `replay`: the request came just before this map mounted; jump there without scrolling or gliding.
     const apply = ({ id, location, scope: asked, context, fit: points }: MapFocus, replay = false) => {
       if (scope && (asked ? asked !== scope : scope !== "places")) return;
-      if (!replay) containerRef.current?.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "nearest" });
+      // A route pick fits the line where the map is: the page must not move.
+      if (!replay && !points?.length) containerRef.current?.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "nearest" });
       const duration = replay || reducedMotion() ? 0 : 600;
       centredRef.current = !points?.length;
       if (points?.length) {

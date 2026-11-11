@@ -39,7 +39,7 @@ export function StartPill({ quiet = false }: { /** One small muted line ("Štart
             type="button"
             onClick={() => setOpen(true)}
             aria-haspopup="dialog"
-            className="-my-2 inline-flex min-h-10 items-center px-1 font-bold text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+            className="-my-2 inline-flex min-h-10 cursor-pointer items-center px-1 font-bold text-[var(--accent)] hover:underline focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
           >
             {ready && !start ? t("Vybrať štart") : t("zmeniť")}
           </button>

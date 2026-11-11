@@ -1073,6 +1073,7 @@ export const EN: Record<string, string> = {
   "Ako sa tam dostanete": "Getting there",
   "Zastávky po ceste": "Stops on the way",
   "zmeniť": "change",
+  "Dobré vedieť pred výletom": "Good to know before you go",
   "Zatiaľ žiadna nevybraná": "None picked yet",
   "Prestávka na obed? Pridajte ju nižšie": "Lunch break? Add it below",
   "Ďalej: {n}. {title}": "Next: {n}. {title}",

@@ -22,6 +22,7 @@ import { useTripAccess } from "@/components/TripAccess";
 import { stopFor, useTripStops } from "@/lib/tripStops";
 import { focusOnMap, onMapFit } from "@/lib/mapFocus";
 import type { MapFit } from "@/lib/mapFocus";
+import { justPickedRoute } from "@/lib/planUi";
 import { setHoveredRoute, useHoveredRoute } from "@/lib/routeHover";
 import { NETWORK_ON } from "@/lib/trailNetwork";
 import { useLang, useT } from "@/lib/i18n";
@@ -468,6 +469,17 @@ export function TripMap({ detail, gpxUrl, path, others = [], loop = false, marks
     [trail.bbox, others, goal, trailStart, walking, start, transit, stops, parkingLots, pois]
   );
   const focusBounds = useMemo(() => (focus ? boundsFor(focus) : null), [focus, boundsFor]);
+  // Right after a route was picked in the plan (this is that route's page): fit that route, not the whole set (lib/planUi.ts).
+  const [routePicked] = useState(() => justPickedRoute());
+  const pickedBounds = useMemo<BBox | null>(() => {
+    if (!routePicked || !(focusProp === "routes" || (!focusProp && !asked))) return null;
+    const pts: LatLng[] = trail.bbox ? [trail.bbox.sw, trail.bbox.ne] : [];
+    if (goal) pts.push(goal);
+    if (pts.length === 0) return null;
+    const lats = pts.map((p) => p.lat);
+    const lons = pts.map((p) => p.lon);
+    return { sw: { lat: Math.min(...lats), lon: Math.min(...lons) }, ne: { lat: Math.max(...lats), lon: Math.max(...lons) } };
+  }, [routePicked, focusProp, asked, trail.bbox, goal]);
   // A step map opened after another parking (or stop) was picked starts centred on it.
   const openOn = useMemo(() => {
     if (focusProp !== "access" || walking) return undefined;
@@ -479,7 +491,7 @@ export function TripMap({ detail, gpxUrl, path, others = [], loop = false, marks
     <TrailMap
       tracks={tracks}
       markers={markers}
-      bounds={focusBounds ?? bounds}
+      bounds={pickedBounds ?? focusBounds ?? bounds}
       refit={asked?.n}
       scope={focusProp}
       focusFloor={(f) => (f ? boundsFor(f) : null)}

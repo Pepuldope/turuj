@@ -69,7 +69,7 @@ export function ParkingOptions() {
                     focusOnMap({ location: p.location, scope: "access", context: p.join?.location ?? trailStart ?? undefined });
                   }}
                   disabled={options.length === 1}
-                  className={`flex min-h-11 w-full items-start gap-3 rounded-xl border px-3 py-2 text-left text-sm disabled:cursor-default ${
+                  className={`flex min-h-11 w-full items-start gap-3 rounded-xl border px-3 py-2 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:cursor-default ${
                     selected ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--border)] hover:border-[var(--accent)]"
                   }`}
                 >

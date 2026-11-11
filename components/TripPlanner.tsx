@@ -303,10 +303,10 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
       ? `${t(stop?.mode === "vlak" ? "Vlakom" : "Autobusom")} · ${stop ? stopLabel(stop.name) : t("bez zastávky")}`
       : `${t("Autom")} · ${parking ? [t(parking.name), summaryWalk(parking, lang), feeLabel(parking, lang)].filter(Boolean).join(", ") : t("bez parkoviska")}`;
   const steps: StepDef[] = [
-    { id: "when", n: 1, title: t("Kedy") },
+    { id: "when", n: 1, title: t("Kedy"), open: true },
     ...(routeChoice ? [{ id: "route", n: 2, title: t("Kadiaľ pôjdete"), fit: "routes" as const }] : []),
-    { id: "access", n: accessN, title: t("Ako sa tam dostanete"), open: true, fit: "access" as const },
-    { id: "places", n: accessN + 1, title: t("Zastávky po ceste"), open: true, fit: "places" as const },
+    { id: "access", n: accessN, title: t("Ako sa tam dostanete"), fit: "access" as const },
+    { id: "places", n: accessN + 1, title: t("Zastávky po ceste"), fit: "places" as const },
   ];
   // Car, bus or on foot changes what the "how you get there" map shows: the big map frames it again.
   const wayKey = `${transit}-${walking}`;
@@ -375,7 +375,8 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
       )}
 
       {/* F9: interactive planner chrome stays out of Google's snippets (data-nosnippet). */}
-      <section data-nosnippet aria-label={t("Váš plán")} className={part}>
+      {/* Buttons and links here are pointer targets (Tailwind 4 leaves buttons on the arrow); a washed-out one keeps its own cursor. */}
+      <section data-nosnippet aria-label={t("Váš plán")} className={`${part} [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer`}>
         <h2 className="text-[1.35rem] leading-tight font-bold">{t("Váš plán")}</h2>
         {/* Quiet: the home screen already asked where from (Peter, 2026-11-11). */}
         <StartPill quiet />
@@ -516,7 +517,8 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
         </div>
       </section>
 
-      <section aria-label={t("Na mieste")} className={part}>
+      <section aria-label={t("Dobré vedieť pred výletom")} className={part}>
+        <h2 className="px-1 text-base font-semibold text-[var(--foreground)]">{t("Dobré vedieť pred výletom")}</h2>
         {children}
 
         {outro}

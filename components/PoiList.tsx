@@ -150,10 +150,10 @@ function PoiRow({
             added ? t("Odobrať zastávku {name}", { name: t(p.name) }) : t("Pridať zastávku {name}", { name: t(p.name) })
           }
           title={added ? t("Odobrať zo zastávok") : t("Pridať ako zastávku")}
-          className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg leading-none font-extrabold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
+          className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg leading-none font-extrabold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
             added
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "bg-[var(--accent-soft)] text-[var(--accent)]"
+              ? "bg-[var(--accent)] text-[var(--accent-contrast)] hover:opacity-85"
+              : "bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
           }`}
         >
           {added ? "✓" : "+"}
