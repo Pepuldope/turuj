@@ -226,7 +226,7 @@ export function TripHeaderFacts({ lang, walk, starts, parking, stops, closures, 
           <dt>{tr(lang, starts.length > 1 ? "Štarty" : "Štart")}</dt>
           <dd>{starts.join("; ")}</dd>
         </div>
-        {items.filter((it) => !only || it.closure).map((it) => (
+        {items.filter((it) => !only || (it.closure && closures.length > 0)).map((it) => (
           <div key={it.label} className="flex items-start gap-2">
             <UiIcon name={it.icon} size={16} className="mt-px" />
             <dt className="sr-only">{it.label}</dt>
@@ -261,14 +261,12 @@ interface AnswersProps {
   closuresOnly?: boolean;
   /** Paragraphs of "O výlete". */
   about: string[];
-  /** The GPX download, shown as the last row of the card. */
-  gpx?: ReactNode;
   /** The trip's region ("Tatry"); Tatra regions get the mountain-rescue row. */
   region?: string | null;
 }
 
 /** The question rows of the trip page in ONE card: how long, parking, bus and train, closures and fees, when to leave, mountain rescue (Tatras), about. */
-export function TripAnswers({ lang, name, kind, startName, lines, loop, parking, stops, closures, fees, sunAt, walkMin, closuresOnly = false, about, gpx, region }: AnswersProps) {
+export function TripAnswers({ lang, name, kind, startName, lines, loop, parking, stops, closures, fees, sunAt, walkMin, closuresOnly = false, about, region }: AnswersProps) {
   const asOf = new Date().toISOString().slice(0, 10);
   const months = !closuresOnly && sunAt ? monthTable(sunAt, walkMin, closures, asOf) : [];
   const winter = winterTimedMonths(months);
@@ -399,7 +397,6 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
         </Row>
       )}
 
-      {gpx && <div className={`${CARD} text-sm hover:border-[var(--accent)]`}>{gpx}</div>}
     </Card>
   );
 }

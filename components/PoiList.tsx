@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { KindIcon } from "@/components/KindIcon";
 import { poiIcon, poiLabel } from "@/lib/food";
 import { focusOnMap } from "@/lib/mapFocus";
@@ -8,6 +9,7 @@ import type { LatLng, Poi } from "@/lib/types";
 import { UiIcon } from "@/components/UiIcon";
 import { stopFor, useTripStops, visits } from "@/lib/tripStops";
 import type { TripStop } from "@/lib/tripStops";
+import { ShowMore, shownRows } from "@/components/ShowMore";
 import { WaySwitch } from "@/components/StopsRow";
 import { formatDurationShort } from "@/lib/format";
 import { useLang, useT } from "@/lib/i18n";
@@ -37,17 +39,22 @@ export function PoiList({
   const stops = useTripStops(slug);
   const t = useT();
   const lang = useLang();
+  const [all, setAll] = useState(false);
   if (pois.length === 0) return null;
-  const on = pois.filter((p) => p.detour_min === null);
-  const off = pois.filter((p) => p.detour_min !== null);
+  // "Na trase" first, then "Kúsok bokom": folded, the first few and every place already added.
+  const ordered = [...pois.filter((p) => p.detour_min === null), ...pois.filter((p) => p.detour_min !== null)];
+  const rows = shownRows(ordered.length, all, ordered.flatMap((p, i) => (stops.has(p.id) ? [i] : [])));
+  const seen = ordered.filter((_, i) => rows.includes(i));
+  const on = seen.filter((p) => p.detour_min === null);
+  const off = seen.filter((p) => p.detour_min !== null);
   const word =
     lang === "en" ? (pois.length === 1 ? "place" : "places") : pois.length === 1 ? "miesto" : pois.length < 5 ? "miesta" : "miest";
   return (
     <div className="flex flex-col gap-1">
       <p className="flex items-baseline justify-between gap-2 text-sm font-bold">
-        {t(on.length === 0
+        {t(!ordered.some((p) => p.detour_min === null)
           ? "Kúsok bokom"
-          : off.length > 0
+          : ordered.some((p) => p.detour_min !== null)
             ? "Na trase a okolo"
             : "Na trase")}
         <span className="ml-auto text-sm font-medium text-[var(--muted)]">
@@ -89,6 +96,7 @@ export function PoiList({
           />
         ))}
       </ul>
+      <ShowMore hidden={pois.length - seen.length} open={all} onToggle={() => setAll((v) => !v)} />
     </div>
   );
 }

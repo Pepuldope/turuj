@@ -6,10 +6,10 @@ import { UiIcon } from "@/components/UiIcon";
 import { useT } from "@/lib/i18n";
 
 /**
- * "Stiahnuť GPX trasu": a place's file holds every route to it, so this downloads only the
+ * "Stiahnuť GPX": a place's file holds every route to it, so this downloads only the
  * route on this page, as `<slug>.gpx`. Falls back to the whole file when it can't be cut.
  */
-export function GpxDownload({ gpxUrl, slug, name, row = false }: { gpxUrl: string; slug: string; name: string; row?: boolean }) {
+export function GpxDownload({ gpxUrl, slug, name }: { gpxUrl: string; slug: string; name: string }) {
   const file = gpxUrl.split("#")[0];
   const t = useT();
 
@@ -34,27 +34,21 @@ export function GpxDownload({ gpxUrl, slug, name, row = false }: { gpxUrl: strin
     if (gpx) setTimeout(() => URL.revokeObjectURL(url), 10_000);
   }
 
-  if (row) {
-    // The last row of the question card: same shape as the rows above it.
-    return (
-      <a href={file} download={`${slug}.gpx`} onClick={download} className="flex min-h-14 w-full rounded-[var(--radius-card)] items-center gap-3 px-4 py-3">
-        <span className="text-[var(--accent)]">
-          <UiIcon name="download" size={20} />
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="text-base font-semibold leading-snug text-[var(--foreground)]">{t("Stiahnuť GPX trasu")}</span>
-          <span className="text-sm leading-snug text-[var(--muted)]">{t("na hodinky alebo do Mapy.com")}</span>
-        </span>
-        <span className="text-[var(--muted)]">
-          <UiIcon name="chev" size={16} />
-        </span>
-      </a>
-    );
-  }
-
+  // A real action of the "Vyraziť" card, a secondary button like the others there.
   return (
-    <a href={file} download={`${slug}.gpx`} onClick={download} className="w-fit font-semibold text-[var(--accent)] underline">
-      {t("Stiahnuť GPX trasu")}
+    <a
+      href={file}
+      download={`${slug}.gpx`}
+      onClick={download}
+      className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-2.5 text-left hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+    >
+      <span className="text-[var(--accent)]">
+        <UiIcon name="download" size={20} />
+      </span>
+      <span className="flex min-w-0 flex-col leading-snug">
+        <span className="text-sm font-semibold text-[var(--foreground)]">{t("Stiahnuť GPX")}</span>
+        <span className="text-[12.5px] text-[var(--muted)]">{t("do hodiniek alebo Mapy.com")}</span>
+      </span>
     </a>
   );
 }

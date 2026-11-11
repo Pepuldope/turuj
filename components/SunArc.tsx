@@ -6,7 +6,7 @@ import type { DayPlan } from "@/lib/dayPlan";
 import { formatDuration, formatDurationShort, formatTime } from "@/lib/format";
 import { LAND, seasonDetails, seasonOf, seeded, snowSvg } from "@/lib/season";
 import { UI_ICON, iconEdge } from "@/lib/uiIcons";
-import { MARKING_COLOR } from "@/lib/mapLayers";
+import { MARKING_COLOR, MARKING_LABEL } from "@/lib/mapLayers";
 import { KIND_ICON } from "@/lib/kindIcons";
 import { POI_COLOUR } from "@/lib/palette";
 import { sunAltitude } from "@/lib/sun";
@@ -64,6 +64,15 @@ const MARKING_WORD: Record<string, string> = {
   [MARKING_COLOR.yellow]: "žltá značka",
   [MARKING_COLOR.black]: "čierna značka",
   [UNMARKED]: "bez značky",
+};
+
+/** The marking you are on as the readout says it ("po červenej"); unmarked is said plainly. */
+const MARKING_SHORT: Record<string, string> = {
+  [MARKING_COLOR.red]: MARKING_LABEL.red,
+  [MARKING_COLOR.blue]: MARKING_LABEL.blue,
+  [MARKING_COLOR.green]: MARKING_LABEL.green,
+  [MARKING_COLOR.yellow]: MARKING_LABEL.yellow,
+  [MARKING_COLOR.black]: MARKING_LABEL.black,
 };
 
 /** Sky colours by sun height (degrees): [height, top, horizon]. */
@@ -424,11 +433,14 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   let walker: [number, number] = [sx, HOR];
   let climbed = 0;
   let height: number | null = null;
+  // The trail marking under the walker at this moment.
+  let markColour: string | null = null;
   if (onTrail) {
     const w = scene.walk;
     const i = Math.max(1, w.findIndex((p) => p.t >= t));
     const f = (t - w[i - 1].t) / (w[i].t - w[i - 1].t || 1);
     walker = [w[i - 1].x + (w[i].x - w[i - 1].x) * f, w[i - 1].y + (w[i].y - w[i - 1].y) * f];
+    markColour = w[i].colour;
     if (profile) {
       const ele = w[i - 1].ele + (w[i].ele - w[i - 1].ele) * f;
       climbed = ele - w[0].ele;
@@ -439,11 +451,10 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   // With the walker right in front of the sun, its glow and white ring would sit round the head like a halo.
   const behindWalker = onTrail && Math.hypot(sx - walker[0], sy - (walker[1] - 18)) < sunR + 18;
   const temp = now ? Math.round(now.temp - climbed * LAPSE_PER_M) : null;
-  const tempW = temp === null ? 0 : 20 + `${temp}`.length * 7;
-  // Height on the trail at that moment (Peter: see how it changes along the route); "1 234 m n. m.".
-  const heightText = height === null ? null : tx("{m} m n. m.", { m: height.toLocaleString(lang === "en" ? "en-GB" : "sk-SK") });
-  const heightW = heightText ? 16 + heightText.length * 6.4 : 0;
-  const heightY = temp !== null ? 45 : 25;
+  // Height on the trail at that moment (Peter: see how it changes along the route): the number in the readout, "m n. m." small after it.
+  const heightText = height === null ? null : height.toLocaleString(lang === "en" ? "en-GB" : "sk-SK");
+  // The trail sign you are on: a small KST mark (white, colour, white) and its word.
+  const markText = markColour ? tx(MARKING_SHORT[markColour] ?? "bez značky") : null;
 
   // The trail colours worth naming: a few metres of another colour at a junction would only puzzle.
   const legendColours = useMemo(() => {
@@ -804,24 +815,6 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
           <text x={-25} y={16} textAnchor="middle" fontSize={16} fontWeight={700} fill="#14233b" className="font-data">
             {formatTime(new Date(t))}
           </text>
-          {/* The temperature at that moment, right under the time (higher up the trail it is colder). */}
-          {temp !== null && (
-            <>
-              {/* As narrow as its number: "8 °C" needs less room than "-12 °C". */}
-              <rect x={-tempW} y={25} width={tempW} height={16} rx={8} fill="#fff" opacity={0.92} />
-              <text x={-tempW / 2} y={37} textAnchor="middle" fontSize={12} fontWeight={700} fill="#14233b" className="font-data">
-                {temp} °C
-              </text>
-            </>
-          )}
-          {heightText && (
-            <>
-              <rect x={-heightW} y={heightY} width={heightW} height={16} rx={8} fill="#fff" opacity={0.92} />
-              <text x={-heightW / 2} y={heightY + 12} textAnchor="middle" fontSize={12} fontWeight={700} fill="#14233b" className="font-data">
-                {heightText}
-              </text>
-            </>
-          )}
         </g>
       </svg>
       <button
@@ -882,16 +875,45 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
       </ul>
 
       <div className="flex justify-between gap-3 border-t border-[var(--border)] px-4 pt-2.5 pb-3.5 text-sm">
-        <div>
+        <div className="min-w-0">
           <div className="font-data text-[22px] leading-none">{formatTime(new Date(t))}</div>
-          <div className="font-semibold">{what}</div>
+          <div className="truncate font-semibold">{what}</div>
+          {/* Height and trail sign at that moment, only on the walk (while driving the line stays, empty). Always exactly one
+              line, never wrapping (Peter, 2026-11-11: "neznačený chodník" wrapped to two lines and the readout jumped each time
+              the trail went from marked to unmarked and back). */}
+          <div className="flex h-[19px] min-w-0 flex-nowrap items-center gap-x-3 overflow-hidden text-[13px] text-[var(--muted)]">
+          {onTrail && (heightText || markText) && (
+            <>
+              {heightText && (
+                <span className="shrink-0 whitespace-nowrap">
+                  <span className="font-data text-[14px] font-semibold text-[var(--foreground)]">{heightText}</span> {tx("m n. m.")}
+                </span>
+              )}
+              {markText && markColour && (
+                <span className="inline-flex min-w-0 items-center gap-1 whitespace-nowrap">
+                  {/* The trail mark as painted on the trees: white band, colour stripe, white band, thin dark edge. */}
+                  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" className="shrink-0">
+                    <rect x="0.5" y="0.5" width="11" height="11" rx="2" fill="#fff" stroke={INK} strokeWidth="1" />
+                    <rect x="1" y="4" width="10" height="4" fill={markColour} />
+                  </svg>
+                  <span className="truncate">{markText}</span>
+                </span>
+              )}
+            </>
+          )}
+          </div>
         </div>
-        <div className="flex flex-col items-end gap-0.5 text-right text-[13px] text-[var(--muted)]">
-          {kind && now && (
-            // One line always (the temperature sits under the time in the picture).
+        <div className="flex shrink-0 flex-col items-end gap-0.5 text-right text-[13px] whitespace-nowrap text-[var(--muted)]">
+          {now && (
+            // One line always: icon, word and the temperature at that moment (higher up the trail it is colder).
             <span className="inline-flex items-center gap-1 font-semibold whitespace-nowrap text-[var(--foreground)]">
-              <svg viewBox="0 0 22 22" className="h-[18px] w-[22px]" aria-hidden="true" dangerouslySetInnerHTML={{ __html: weatherIconSvg(kind) }} />
-              {weatherWords(baseSymbol(now.symbol!), lang).split(" (")[0]}
+              {kind && <svg viewBox="0 0 22 22" className="h-[18px] w-[22px]" aria-hidden="true" dangerouslySetInnerHTML={{ __html: weatherIconSvg(kind) }} />}
+              {kind && <>{weatherWords(baseSymbol(now.symbol!), lang).split(" (")[0]}</>}
+              {temp !== null && (
+                <span>
+                  <span className="font-data">{temp}</span> °C
+                </span>
+              )}
             </span>
           )}
           <div>{sunNote}</div>

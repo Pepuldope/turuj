@@ -22,7 +22,7 @@ import { clock, hourOf, zonedDate } from "@/lib/zoned";
 import type { BBox, Closure, LatLng } from "@/lib/types";
 import { FilterChips, KidsRow } from "@/components/FilterChips";
 import { NavHandoff } from "@/components/NavHandoff";
-import { SaveTripButton } from "@/components/SaveTripButton";
+import { AppPromo, SaveTripButton } from "@/components/SaveTripButton";
 import type { ShareInfo } from "@/components/ShareButton";
 import { PlanStep, PlanStepsProvider, StepInfo } from "@/components/PlanStep";
 import type { StepDef } from "@/components/PlanStep";
@@ -71,6 +71,8 @@ interface Props extends ShareInfo {
   places?: ReactNode;
   /** The trip has places on or near the walk that can be added as stops. */
   hasPlaces?: boolean;
+  /** The GPX download, an action of the "Vyraziť" card. */
+  gpxAction?: ReactNode;
   /** The walk, kept with the saved trip for the trail screen ("Začať výlet"). */
   trail?: SavedTrail;
   /** The trip is in the Tatras: TANAP allows walking outside villages only from sunrise to sunset. */
@@ -94,7 +96,7 @@ function meetingAt(date: string, hhmm: string): Date {
   return zonedDate(y, mo, d, h, mi);
 }
 
-export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, closures = [], walk, intro, children, outro, routeCount = 1, routesStep, accessMap, placesMap, places, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
+export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction = null, bbox, closures = [], walk, intro, children, outro, routeCount = 1, routesStep, accessMap, placesMap, places, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
   const { start } = useUserLocation();
   const { today, update, withKids } = useTripSettings();
   const t = useT();
@@ -464,7 +466,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
 
         </PlanStepsProvider>
 
-        <div id="vas-den" className="flex scroll-mt-3 flex-col gap-4">
+        <div id="vas-den" className="flex scroll-mt-[calc(64px+env(safe-area-inset-top))] flex-col gap-4 lg:scroll-mt-3">
         {plan && (
           <section aria-label={t("Priebeh dňa")} className="flex flex-col gap-4 border-t border-[var(--border)] pt-4">
             {sun && (
@@ -515,15 +517,21 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
           </section>
         )}
 
-        <section aria-label={t("Uložiť a zdieľať")} className="flex flex-col gap-3">
-          <SaveTripButton gpxUrl={gpxUrl} bbox={bbox} sun={sun} tripPlan={tripPlan} profile={profile} trail={trail} closures={closures} where={calendarPlace} {...trip} nav={<NavHandoff slug={trip.slug} drive={destination} start={start} walkFrom={walkStart} walk={walk} join={trailJoin} />} />
-        </section>
         </div>
       </section>
 
+      {/* Its own card (Peter, 2026-11-11): save, share, navigate and the GPX are what you do with a finished plan. */}
+      <section data-nosnippet aria-label={t("Vyraziť")} className={`${part} [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer`}>
+        <h2 className="text-[1.35rem] leading-tight font-bold">{t("Vyraziť")}</h2>
+        <SaveTripButton gpxUrl={gpxUrl} bbox={bbox} sun={sun} tripPlan={tripPlan} profile={profile} trail={trail} closures={closures} where={calendarPlace} {...trip} nav={<NavHandoff slug={trip.slug} drive={destination} start={start} walkFrom={walkStart} walk={walk} join={trailJoin} />} gpx={gpxAction} />
+      </section>
+      <AppPromo />
+
+      {/* The "no closure data" box stands alone between the cards, not as a row among the trail's facts. */}
+      {children}
+
       <section aria-label={t("Dobré vedieť pred výletom")} className={part}>
         <h2 className="px-1 text-base font-semibold text-[var(--foreground)]">{t("Dobré vedieť pred výletom")}</h2>
-        {children}
 
         {outro}
         <p className="text-xs text-[var(--muted)]">

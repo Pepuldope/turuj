@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { DayPlan } from "@/lib/dayPlan";
 import { approachMin } from "@/lib/dayPlan";
 import { formatDuration, formatFromUser, formatTime, stopLabel, TRANSIT_LABEL } from "@/lib/format";
@@ -13,6 +14,7 @@ import type { TransitStop } from "@/lib/types";
 import { clock } from "@/lib/zoned";
 import { focusOnMap } from "@/lib/mapFocus";
 import { useTripAccess } from "@/components/TripAccess";
+import { ShowMore, shownRows } from "@/components/ShowMore";
 import { UiIcon } from "@/components/UiIcon";
 import { useLang, useT } from "@/lib/i18n";
 import { decimal, tr } from "@/lib/lang";
@@ -47,16 +49,19 @@ export function StopOptions() {
   const { stops, stopChoice, chooseStop, transit, trailStart } = useTripAccess();
   const t = useT();
   const lang = useLang();
+  const [all, setAll] = useState(false);
   if (!transit) return null;
   const options = stops.slice(0, MAX_OPTIONS);
+  const rows = shownRows(options.length, all, [stopChoice]);
 
   return (
     <div className="flex flex-col gap-2">
       {options.length === 0 && <p className="text-sm">{t("Pri trase sme nenašli zastávku vlaku ani autobusu.")}</p>}
-      {options.length > 1 && <p className="text-sm text-[var(--muted)]">{t("Vyberte, kde vystúpite. Cesta pešo aj plán sa prepočítajú.")}</p>}
+      {options.length > 1 && <p className="text-[13px] leading-snug text-[var(--muted)]">{t("Vyberte, kde vystúpite. Cesta pešo aj plán sa prepočítajú.")}</p>}
       {options.length > 0 && (
         <ul className="flex flex-col gap-1.5" role="radiogroup" aria-label={t("Zastávka")}>
           {options.map((s, i) => {
+            if (!rows.includes(i)) return null;
             const selected = i === stopChoice;
             return (
               <li key={s.id}>
@@ -69,16 +74,16 @@ export function StopOptions() {
                     focusOnMap({ location: s.location, scope: "access", context: s.join?.location ?? trailStart ?? undefined });
                   }}
                   disabled={options.length === 1}
-                  className={`flex min-h-11 w-full items-start gap-3 rounded-xl border px-3 py-2 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:cursor-default ${
+                  className={`flex min-h-11 w-full items-start gap-2.5 rounded-xl border px-2.5 py-1.5 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:cursor-default ${
                     selected ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--border)] hover:border-[var(--accent)]"
                   }`}
                 >
                   <span className="mt-pin mt-pin-transit shrink-0" aria-hidden>
                     <StopIcon mode={s.mode} />
                   </span>
-                  <span className="flex flex-col">
+                  <span className="flex flex-col leading-snug">
                     <span className="font-semibold">{stopLabel(s.name)}</span>
-                    <span className="text-[var(--muted)]">
+                    <span className="text-[13px] text-[var(--muted)]">
                       {t(TRANSIT_LABEL[s.mode])}, {walkLabel(s, lang)}
                     </span>
                   </span>
@@ -88,6 +93,7 @@ export function StopOptions() {
           })}
         </ul>
       )}
+      <ShowMore hidden={options.length - rows.length} open={all} onToggle={() => setAll((v) => !v)} />
     </div>
   );
 }

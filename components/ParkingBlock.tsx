@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { formatDuration, formatWalk } from "@/lib/format";
 import { focusOnMap } from "@/lib/mapFocus";
 import { useTripAccess } from "@/components/TripAccess";
 import { approachMin } from "@/lib/dayPlan";
 import type { ParkingLot } from "@/lib/types";
+import { ShowMore, shownRows } from "@/components/ShowMore";
 import { useLang, useT } from "@/lib/i18n";
 import { decimal, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
@@ -41,7 +43,9 @@ export function ParkingOptions() {
   const options = parkingLots.slice(0, MAX_OPTIONS);
   const t = useT();
   const lang = useLang();
+  const [all, setAll] = useState(false);
   if (transit || walking) return null;
+  const rows = shownRows(options.length, all, [choice]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -51,10 +55,11 @@ export function ParkingOptions() {
           {stops.length > 0 && ` ${t("Skúste aj vlak alebo autobus.")}`}
         </p>
       )}
-      {options.length > 1 && <p className="text-sm text-[var(--muted)]">{t("Vyberte, kde zaparkujete. Cesta autom aj pešo sa prepočíta.")}</p>}
+      {options.length > 1 && <p className="text-[13px] leading-snug text-[var(--muted)]">{t("Vyberte, kde zaparkujete. Cesta autom aj pešo sa prepočíta.")}</p>}
       {options.length > 0 && (
         <ul className="flex flex-col gap-1.5" role="radiogroup" aria-label={t("Parkovisko")}>
           {options.map((p, i) => {
+            if (!rows.includes(i)) return null;
             const selected = i === choice;
             const fee = feeLabel(p, lang);
             return (
@@ -69,16 +74,16 @@ export function ParkingOptions() {
                     focusOnMap({ location: p.location, scope: "access", context: p.join?.location ?? trailStart ?? undefined });
                   }}
                   disabled={options.length === 1}
-                  className={`flex min-h-11 w-full items-start gap-3 rounded-xl border px-3 py-2 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:cursor-default ${
+                  className={`flex min-h-11 w-full items-start gap-2.5 rounded-xl border px-2.5 py-1.5 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:cursor-default ${
                     selected ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--border)] hover:border-[var(--accent)]"
                   }`}
                 >
                   <span className="mt-pin mt-pin-parking shrink-0" aria-hidden>
                     P
                   </span>
-                  <span className="flex flex-col">
+                  <span className="flex flex-col leading-snug">
                     <span className="font-semibold">{t(p.name)}</span>
-                    <span className="text-[var(--muted)]">
+                    <span className="text-[13px] text-[var(--muted)]">
                       {walkLabel(p, lang)}
                       {fee ? `, ${fee}` : ""}
                     </span>
@@ -89,10 +94,11 @@ export function ParkingOptions() {
           })}
         </ul>
       )}
+      <ShowMore hidden={options.length - rows.length} open={all} onToggle={() => setAll((v) => !v)} />
       {parking && (
-        <p className="text-xs text-[var(--muted)]">
+        <p className="text-[11px] text-[var(--muted)]">
           {t("Súradnice:")}{" "}
-          <span className="font-data select-all text-sm">
+          <span className="font-data select-all text-xs">
             {parking.location.lat.toFixed(5)}, {parking.location.lon.toFixed(5)}
           </span>{" "}
           · {t("Zdroj: OpenStreetMap")}

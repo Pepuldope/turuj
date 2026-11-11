@@ -32,9 +32,10 @@ export function ClosureBanner({ closures, region = null }: Props) {
   if (closures.length === 0) {
     const park = region ? PARK_CLOSURES[region] : undefined;
     return (
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4">
-        <p className="font-semibold">{t("Stav chodníka neoverený")}</p>
-        <p className="text-sm opacity-70">
+      // Neutral grey box of its own (design brief: "unknown", not a warning and not good news), set apart from the trip's facts.
+      <div className="flex flex-col gap-1.5 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--neutral-bg)] p-4">
+        <p className="text-base font-bold">{t("Stav chodníka neoverený")}</p>
+        <p className="text-sm text-[var(--muted)]">
           {t("Pre túto trasu nemáme žiadne údaje o uzáverách. Pred výletom si stav overte na inom zdroji.")}
         </p>
         {park && (
