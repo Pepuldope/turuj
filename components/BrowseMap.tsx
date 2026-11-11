@@ -300,15 +300,27 @@ const line = (coords: number[][] | undefined): GeoJSON.FeatureCollection =>
  */
 function declutter(els: HTMLElement[]) {
   const taken: DOMRect[] = [];
-  const hits = (r: DOMRect) => taken.some((t) => r.left < t.right && r.right > t.left && r.top < t.bottom && r.bottom > t.top);
+  // A name cut off by the map's edge (more than a hairline) counts as not fitting too.
+  const box = els[0]?.closest(".maplibregl-map")?.getBoundingClientRect();
+  const out = (r: DOMRect) => !!box && (r.left < box.left - 3 || r.right > box.right + 3 || r.top < box.top - 3 || r.bottom > box.bottom + 3);
+  const hits = (r: DOMRect) => out(r) || taken.some((t) => r.left < t.right && r.right > t.left && r.top < t.bottom && r.bottom > t.top);
+  // Every dot is placed first, so no name ever covers a dot.
   els.forEach((el, i) => {
     el.style.zIndex = String(els.length - i);
+    taken.push((el.firstElementChild as HTMLElement).getBoundingClientRect());
+  });
+  // Then each name tries below its dot, then right, left and above (Peter, 2026-11-11: on a phone most
+  // names were hidden); only a name that fits nowhere is hidden.
+  els.forEach((el) => {
     const label = el.lastElementChild as HTMLElement;
     label.style.visibility = "";
-    taken.push((el.firstElementChild as HTMLElement).getBoundingClientRect());
-    const r = label.getBoundingClientRect();
-    if (hits(r)) label.style.visibility = "hidden";
-    else taken.push(r);
+    for (const side of ["", "right", "left", "above"]) {
+      el.dataset.side = side;
+      const r = label.getBoundingClientRect();
+      if (!hits(r)) return void taken.push(r);
+    }
+    el.dataset.side = "";
+    label.style.visibility = "hidden";
   });
 }
 
@@ -831,6 +843,8 @@ export function BrowseMap({
   useEffect(() => {
     if (!ctx) return;
     const { ml, map } = ctx;
+    // The dot's centre sits on the spot: half its height up (30 px dots; 18 px on phones, see globals.css).
+    const half = window.matchMedia("(max-width: 767px)").matches ? 9 : 15;
     const markers = areas.map((a) => {
       const el = document.createElement("button");
       el.type = "button";
@@ -847,7 +861,7 @@ export function BrowseMap({
         el.addEventListener("mouseenter", () => hoverAreaRef.current(a.id!));
         el.addEventListener("mouseleave", () => hoverAreaRef.current(null));
       }
-      return new ml.Marker({ element: el, anchor: "top", offset: [0, -15] }).setLngLat([a.location.lon, a.location.lat]).addTo(map);
+      return new ml.Marker({ element: el, anchor: "top", offset: [0, -half] }).setLngLat([a.location.lon, a.location.lat]).addTo(map);
     });
     areaEls.current = markers.map((m) => m.getElement());
     requestAnimationFrame(() => declutter(areaEls.current));
