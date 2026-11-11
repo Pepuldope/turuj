@@ -236,9 +236,17 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
     const peak = altAt((sunrise + sunset) / 2);
     const arcH = Math.min(HOR - 10, Math.max(80, rise + 48) + 18 * Math.min(1, peak / 66));
     const y = (alt: number) => HOR - ((Math.max(alt, -3) - h0) / (peak - h0)) * arcH;
-    const arcPts: [number, number][] = [[x(sunrise), HOR]];
-    for (let t = sunrise + 5 * MIN; t < sunset - 2 * MIN; t += 5 * MIN) arcPts.push([x(t), y(altAt(t))]);
-    arcPts.push([x(sunset), HOR]);
+    // With the walk lens the arc is drawn on an even clock across the picture, not through the lens:
+    // through it, two hours around noon (when the sun hardly climbs) were stretched over most of the
+    // width and the rides squeezed beside them, so the arc became a flat table with sharp corners
+    // (Peter, 2026-11-11). The sun glides along this arc above the time line (`sunY`); the walk, the
+    // ruler and the sky colours keep the real times and heights.
+    const tLin = (px: number) => lo + ((px - PAD) / inner) * (hi - lo);
+    const arcX = lens ? (t: number) => PAD + ((t - lo) / (hi - lo)) * inner : x;
+    const sunY = (px: number) => y(altAt(lens ? tLin(px) : tAt(px)));
+    const arcPts: [number, number][] = [[arcX(sunrise), HOR]];
+    for (let t = sunrise + 5 * MIN; t < sunset - 2 * MIN; t += 5 * MIN) arcPts.push([arcX(t), y(altAt(t))]);
+    arcPts.push([arcX(sunset), HOR]);
     const arc = arcPts.map(([px, py], i) => `${i ? "L" : "M"}${px.toFixed(1)},${py.toFixed(1)}`).join("");
     // Dashes sized so the line starts and ends with a dash on the dots, not a gap.
     let arcLen = 0;
@@ -326,7 +334,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
       return { t0, t1, name: pa.name, kind: pa.kind, icon: pa.icon, x: x((t0 + t1) / 2), x0: x(t0), x1: x(t1), y: walk[i].y };
     });
 
-    return { lo, hi, x, tAt, y, walk, pauses, sky, goal: walk[goalIndex], goalT: walk[goalIndex].t, arc, dash, ridge, hill, ticks, breaks, season, deco, snow, capY, capEdge };
+    return { lo, hi, x, tAt, y, arcX, sunY, walk, pauses, sky, goal: walk[goalIndex], goalT: walk[goalIndex].t, arc, dash, ridge, hill, ticks, breaks, season, deco, snow, capY, capEdge };
   }, [first, home, hs, he, sunrise, sunset, dusk, plan.dawn, profile, sun.lat, sun.lon, weather]);
   const land = LAND[scene.season];
   const sunR = 8.5 * land.sunScale;
@@ -406,7 +414,8 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
     const v = travel ? ((px / W) * sliderW - knob) / travel : (px - PAD) / (W - 2 * PAD);
     return Math.round(Math.max(0, Math.min(1, v)) * SLIDE);
   };
-  const sy = scene.y(alt);
+  // On the drawn arc right above the time line (with the walk lens that is not quite the height at t).
+  const sy = scene.sunY(sx);
 
   const onTrail = t >= hs && t <= he;
   // In the dark sky the car turns light.
@@ -725,9 +734,9 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
           .filter(([at]) => +at >= scene.lo && +at <= scene.hi)
           .map(([at, word]) => (
           <g key={word}>
-            <circle cx={scene.x(+at)} cy={HOR} r={2.6} fill="#f4a51c" stroke="#fff" />
+            <circle cx={scene.arcX(+at)} cy={HOR} r={2.6} fill="#f4a51c" stroke="#fff" />
             <text
-              x={label(scene.x(+at))}
+              x={label(scene.arcX(+at))}
               y={HOR - 7}
               textAnchor="middle"
               fontSize={11}
