@@ -372,6 +372,78 @@ h2,
   box-shadow: 0 1px 3px rgba(20, 35, 59, 0.2);
 }
 
+/* Where the name sits when below the dot would cover another (BrowseMap declutter): beside or above
+   the dot, centred on it. --dot is the dot's size. No `position` here: MapLibre's marker class makes it
+   absolute (the names' containing block), and overriding that moves every dot off its spot. */
+.mt-area {
+  --dot: 30px;
+}
+.mt-area[data-side="right"] span:last-child,
+.mt-area[data-side="left"] span:last-child,
+.mt-area[data-side="above"] span:last-child,
+.mt-area[data-side="br"] span:last-child,
+.mt-area[data-side="bl"] span:last-child,
+.mt-area[data-side="ar"] span:last-child,
+.mt-area[data-side="al"] span:last-child {
+  position: absolute;
+}
+/* The four corners: the name starts at the dot's corner (below-right, below-left, above-right, above-left). */
+.mt-area[data-side="br"] span:last-child {
+  left: calc(50% + var(--dot) / 2 - 4px);
+  top: calc(var(--dot) - 2px);
+}
+.mt-area[data-side="bl"] span:last-child {
+  right: calc(50% + var(--dot) / 2 - 4px);
+  top: calc(var(--dot) - 2px);
+}
+.mt-area[data-side="ar"] span:last-child {
+  left: calc(50% + var(--dot) / 2 - 4px);
+  bottom: calc(100% - 2px);
+}
+.mt-area[data-side="al"] span:last-child {
+  right: calc(50% + var(--dot) / 2 - 4px);
+  bottom: calc(100% - 2px);
+}
+.mt-area[data-side="right"] span:last-child {
+  left: calc(50% + var(--dot) / 2 + 3px);
+  top: calc(var(--dot) / 2);
+  transform: translateY(-50%);
+}
+.mt-area[data-side="left"] span:last-child {
+  right: calc(50% + var(--dot) / 2 + 3px);
+  top: calc(var(--dot) / 2);
+  transform: translateY(-50%);
+}
+.mt-area[data-side="above"] span:last-child {
+  left: 50%;
+  bottom: calc(100% + 3px);
+  transform: translateX(-50%);
+}
+
+/* Phones (Peter, 2026-11-11): twenty 30 px dots covered Slovakia and hid most names. Smaller dots,
+   tighter names, so most names fit; BrowseMap's area-dot effect anchors the smaller dot to match. */
+@media (max-width: 767px) {
+  .mt-area {
+    --dot: 18px;
+    gap: 2px;
+  }
+  .mt-area span:first-child {
+    width: 18px;
+    height: 18px;
+    border-width: 2px;
+    box-shadow: 0 1px 3px rgba(20, 35, 59, 0.3);
+  }
+  .mt-area span:first-child svg {
+    width: 10px;
+    height: 10px;
+  }
+  .mt-area span:last-child {
+    font-size: 11px;
+    padding: 1px 5px;
+    border-radius: 5px;
+  }
+}
+
 .maplibregl-popup-content {
   color: #17213a;
   font-family: var(--font-figtree), system-ui, sans-serif;
