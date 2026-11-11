@@ -298,24 +298,32 @@ const line = (coords: number[][] | undefined): GeoJSON.FeatureCollection =>
  * Hides area names that would overlap a bigger area's dot or name. Areas come
  * biggest first and sit higher, so a big area is never hidden behind a small one.
  */
-function declutter(els: HTMLElement[]) {
+function declutter(all: HTMLElement[]) {
+  // Dots that are switched off (zoomed in past the areas) take no space and have no name to place.
+  const els = all.filter((el) => el.style.display !== "none");
   const taken: DOMRect[] = [];
   // A name cut off by the map's edge (more than a hairline) counts as not fitting too.
   const box = els[0]?.closest(".maplibregl-map")?.getBoundingClientRect();
   const out = (r: DOMRect) => !!box && (r.left < box.left - 3 || r.right > box.right + 3 || r.top < box.top - 3 || r.bottom > box.bottom + 3);
-  const hits = (r: DOMRect) => out(r) || taken.some((t) => r.left < t.right && r.right > t.left && r.top < t.bottom && r.bottom > t.top);
+  // A name may touch a dot or another name by a few pixels (its box includes the padding and the rounded corners, which are empty
+  // at the ends): strict boxes hid names until the very last zoom level before the dots switch off.
+  const OVERLAP_X = 4;
+  const OVERLAP_Y = 2;
+  const hits = (r: DOMRect) =>
+    out(r) ||
+    taken.some((t) => r.left + OVERLAP_X < t.right && r.right - OVERLAP_X > t.left && r.top + OVERLAP_Y < t.bottom && r.bottom - OVERLAP_Y > t.top);
   // Every dot is placed first, so no name ever covers a dot.
   els.forEach((el, i) => {
     el.style.zIndex = String(els.length - i);
     taken.push((el.firstElementChild as HTMLElement).getBoundingClientRect());
   });
   // Then each name tries below its dot, then right, left, above and the four corners (Peter, 2026-11-11: on a phone most
-  // names were hidden); only a name that fits nowhere is hidden.
+  // names were hidden); only a name that fits nowhere is hidden. The answer depends only on the view (always the same order of
+  // sides, never "the side it had"), so the same view shows the same names however it was reached.
   els.forEach((el) => {
     const label = el.lastElementChild as HTMLElement;
     label.style.visibility = "";
-    // A name keeps the side it had while that still fits, so names don't jump around between zooms.
-    for (const side of new Set([el.dataset.side ?? "", "", "right", "left", "above", "br", "bl", "ar", "al"])) {
+    for (const side of ["", "right", "left", "above", "br", "bl", "ar", "al"]) {
       el.dataset.side = side;
       const r = label.getBoundingClientRect();
       if (!hits(r)) return void taken.push(r);
@@ -351,6 +359,8 @@ export function BrowseMap({
   const tripsRef = useRef(trips);
   const areasRef = useRef(areas);
   const areaEls = useRef<HTMLElement[]>([]);
+  // Places the names again once the view has settled (set by the map's setup, called when the dots are rebuilt).
+  const declutterRef = useRef<() => void>(() => {});
   // Whether the hover outline and the picked trip are drawn now: an empty one needs no redraw.
   const hoverShown = useRef(false);
   const selShown = useRef(false);
@@ -565,6 +575,9 @@ export function BrowseMap({
             void loadLines(m);
           }
         });
+        // The names depend on the view: place them again whenever it has settled (a pan moves names towards the edge too).
+        m.on("moveend", () => showAreas(m.getZoom()));
+        m.on("resize", () => showAreas(m.getZoom()));
         m.on("zoom", () => {
           showAreas(m.getZoom());
           void feedGap(m);
@@ -790,6 +803,7 @@ export function BrowseMap({
 
     // ---- areas: HTML dots made once, shown or hidden by zoom (never rebuilt, so they don't blink)
     let declutterSoon: ReturnType<typeof setTimeout> | undefined;
+    declutterRef.current = () => showAreas(map?.getZoom() ?? 99);
     function showAreas(z: number) {
       for (const el of areaEls.current) el.style.display = z < areaZoom && !fewRef.current ? "" : "none";
       // Measuring the names makes the browser lay out the page, too slow for
@@ -867,7 +881,8 @@ export function BrowseMap({
       return new ml.Marker({ element: el, anchor: "top", offset: [0, -half] }).setLngLat([a.location.lon, a.location.lat]).addTo(map);
     });
     areaEls.current = markers.map((m) => m.getElement());
-    requestAnimationFrame(() => declutter(areaEls.current));
+    // Rebuilt dots (the area outlines arrived): the same settled placement as after a zoom, not a one-off in the next frame.
+    declutterRef.current();
     return () => {
       markers.forEach((m) => m.remove());
       areaEls.current = [];
