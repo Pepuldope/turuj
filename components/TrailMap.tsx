@@ -344,13 +344,24 @@ export function TrailMap({
       map.touchZoomRotate.disableRotation();
       // The compact attribution opens by itself at first (it covered pins and popups on the small step maps):
       // start it as the little "i" and open it only on a tap. The credit stays one tap away.
+      // MapLibre re-opens it by itself whenever new map data brings its credits (the trail tiles arriving), so a
+      // watcher folds it back each time, until the visitor taps the "i" themselves.
+      const attrib = containerRef.current?.querySelector(".maplibregl-ctrl-attrib");
+      let tapped = false;
       const closeAttribution = () => {
-        const el = containerRef.current?.querySelector(".maplibregl-ctrl-attrib");
-        el?.classList.remove("maplibregl-compact-show");
-        el?.removeAttribute("open");
+        if (tapped || !attrib) return;
+        // Only touch what is actually set: classList.remove rewrites the class attribute even when the class
+        // isn't there, which would wake the watcher below again and loop forever (it froze the page).
+        if (attrib.classList.contains("maplibregl-compact-show")) attrib.classList.remove("maplibregl-compact-show");
+        if (attrib.hasAttribute("open")) attrib.removeAttribute("open");
       };
+      attrib?.querySelector(".maplibregl-ctrl-attrib-button")?.addEventListener("click", () => {
+        tapped = true;
+      });
+      const attribWatch = attrib ? new MutationObserver(closeAttribution) : null;
+      if (attrib) attribWatch!.observe(attrib, { attributes: true, attributeFilter: ["class", "open"] });
+      map.once("remove", () => attribWatch?.disconnect());
       closeAttribution();
-      map.once("load", closeAttribution);
       map.on("moveend", () => {
         if (!map) return;
         const c = map.getCenter();

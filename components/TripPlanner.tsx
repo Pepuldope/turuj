@@ -464,7 +464,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, bbox, clo
 
         </PlanStepsProvider>
 
-        <div id="vas-den" className="flex scroll-mt-3 flex-col gap-4">
+        <div id="vas-den" className="flex scroll-mt-[calc(64px+env(safe-area-inset-top))] flex-col gap-4 lg:scroll-mt-3">
         {plan && (
           <section aria-label={t("Priebeh dňa")} className="flex flex-col gap-4 border-t border-[var(--border)] pt-4">
             {sun && (

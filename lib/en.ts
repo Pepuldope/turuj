@@ -801,6 +801,7 @@ export const EN: Record<string, string> = {
   "Áno": "Yes",
   "Nie": "No",
   "Hotovo": "Done",
+  "hotovo": "done",
   "Zavrieť": "Close",
   "Zastaviť": "Stop",
 

@@ -29,7 +29,14 @@ interface StepsApi {
   go: (from: string, to: string) => void;
   /** Scrolls to the plan's result: the sun dial, the times and Uložiť. */
   toResult: () => void;
+  /** The step was left forward with "Ďalej" (its number shows a tick). */
+  isDone: (id: string) => boolean;
 }
+
+/** How long a step takes to fold or unfold (the CSS transition on its body uses the same). */
+const FOLD_MS = 250;
+/** Finished steps, kept across a route pick like the open steps are (a new page, the same plan). */
+let keptDone: Record<string, boolean> = {};
 
 const StepsContext = createContext<StepsApi | null>(null);
 
@@ -41,8 +48,16 @@ const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matc
  */
 export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDef[]; resultId: string; children: ReactNode }) {
   // After picking a route (a new page, same plan) the steps stay as they were.
-  const [open, setOpen] = useState<Record<string, boolean>>(() => stepsKeptFromRoutePick() ?? Object.fromEntries(steps.map((s) => [s.id, !!s.open])));
+  const [open, setOpen] = useState<Record<string, boolean>>(() => {
+    const kept = stepsKeptFromRoutePick();
+    if (!kept) keptDone = {};
+    return kept ?? Object.fromEntries(steps.map((s) => [s.id, !!s.open]));
+  });
   useEffect(() => rememberOpenSteps(open), [open]);
+  const [done, setDone] = useState<Record<string, boolean>>(() => keptDone);
+  useEffect(() => {
+    keptDone = done;
+  }, [done]);
   // The new route's page may be taller or shorter above the plan: put the route step back where it stood in the window,
   // so a pick doesn't move the visitor.
   useLayoutEffect(() => {
@@ -78,18 +93,25 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       pending.current = to;
       const fit = fitFor(to);
       if (fit) fitOnMap(fit);
+      // Forward ("Ďalej") marks the step left behind as done; "Späť" leaves the ticks as they are.
+      if (steps.findIndex((s) => s.id === to) > steps.findIndex((s) => s.id === from)) setDone((d) => ({ ...d, [from]: true }));
       setOpen((o) => ({ ...o, [from]: false, [to]: true }));
     },
     toResult: () => document.getElementById(resultId)?.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" }),
+    isDone: (id) => !!done[id],
   };
-  // After the new state is on screen: the next step's header gets the focus and the view.
+  // After the new state is on screen: the next step's header gets the focus, and the view once the
+  // step being left has finished folding (scrolling during the fold would land short).
   useEffect(() => {
     const id = pending.current;
     if (!id) return;
     pending.current = null;
     const header = document.getElementById(`plan-step-${id}`);
     header?.focus({ preventScroll: true });
-    header?.closest("section")?.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" });
+    const scroll = () => header?.closest("section")?.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" });
+    if (reduced()) return scroll();
+    const later = setTimeout(scroll, FOLD_MS + 20);
+    return () => clearTimeout(later);
   }, [open]);
   return <StepsContext.Provider value={api}>{children}</StepsContext.Provider>;
 }
@@ -119,13 +141,29 @@ export function PlanStep({
 }) {
   const api = useContext(StepsContext)!;
   const open = api.isOpen(id);
+  const done = api.isDone(id);
   const t = useT();
+  // Peter, 2026-11-11: steps glide open and shut. The body stays in the page while it folds
+  // (`mounted`), and `expanded` flips a frame after mounting so the opening is animated too.
+  const [mounted, setMounted] = useState(open);
+  const [expanded, setExpanded] = useState(open);
+  useEffect(() => {
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMounted(true);
+      const frame = requestAnimationFrame(() => requestAnimationFrame(() => setExpanded(true)));
+      return () => cancelAnimationFrame(frame);
+    }
+    setExpanded(false);
+    const later = setTimeout(() => setMounted(false), reduced() ? 0 : FOLD_MS);
+    return () => clearTimeout(later);
+  }, [open]);
   const bodyId = useId();
   const at = api.steps.findIndex((s) => s.id === id);
   const next = api.steps[at + 1];
   const prev = api.steps[at - 1];
   return (
-    <section aria-label={title} className="scroll-mt-3 overflow-hidden rounded-[14px] border-[1.5px] border-[var(--accent)] bg-[var(--card-bg)]">
+    <section aria-label={title} className="scroll-mt-[calc(64px+env(safe-area-inset-top))] overflow-hidden lg:scroll-mt-3 rounded-[14px] border-[1.5px] border-[var(--accent)] bg-[var(--card-bg)]">
       <button
         type="button"
         id={`plan-step-${id}`}
@@ -134,9 +172,16 @@ export function PlanStep({
         onClick={() => api.toggle(id)}
         className="flex min-h-[56px] w-full cursor-pointer items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-[var(--segment-bg)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--accent)]"
       >
-        <span aria-hidden className="font-data grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full bg-[var(--accent-soft)] text-[15px] font-extrabold text-[var(--accent)]">
-          {n}
+        {/* Done (left with "Ďalej"): the number becomes a tick on the accent, with a short pop. */}
+        <span
+          aria-hidden
+          className={`font-data grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full text-[15px] font-extrabold transition-colors duration-200 ${
+            done ? "step-done bg-[var(--accent)] text-[var(--accent-contrast)]" : "bg-[var(--accent-soft)] text-[var(--accent)]"
+          }`}
+        >
+          {done ? <UiIcon name="check" size={16} /> : n}
         </span>
+        {done && <span className="sr-only">{t("hotovo")}</span>}
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="text-[17px] leading-tight font-bold">{title}</span>
           <span className={`flex min-w-0 items-center gap-1.5 text-[13.5px] leading-snug font-semibold ${warn ? "text-[var(--warn)]" : "text-[var(--muted)]"}`}>
@@ -151,7 +196,14 @@ export function PlanStep({
           </span>
         </span>
       </button>
-      {open && (
+      {mounted && (
+        // Height glides with the grid-rows trick (0fr ↔ 1fr), plus a fade; off with reduced motion.
+        <div
+          className={`grid transition-[grid-template-rows,opacity] duration-[250ms] ease-out motion-reduce:transition-none ${
+            expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          }`}
+        >
+        <div className="min-h-0 overflow-hidden">
         <div id={bodyId} className="flex flex-col gap-3 px-3 pb-3">
           {children}
           {/* On to the next choice: a secondary button (Uložiť výlet stays the only primary one). */}
@@ -174,6 +226,8 @@ export function PlanStep({
               </button>
             )}
           </div>
+        </div>
+        </div>
         </div>
       )}
     </section>
