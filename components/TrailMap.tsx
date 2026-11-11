@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import type { GeoJSONSource, Map as MlMap, Marker, StyleSpecification } from "maplibre-gl";
 import type { BBox, LatLng } from "@/lib/types";
 import { MAP_STYLE_URL, mapPixelRatio } from "@/lib/mapLayers";
-import { onMapFocus } from "@/lib/mapFocus";
+import { onMapFocus, recentFocus } from "@/lib/mapFocus";
+import type { MapFocus } from "@/lib/mapFocus";
+import type { MapFit } from "@/lib/mapFocus";
 import { keepInSlovakia } from "@/lib/slovakia";
 import { UI_ICON } from "@/lib/uiIcons";
 import { POPULARITY_RAMP, POPULARITY_TOP_OUTLINE } from "@/lib/palette";
@@ -64,6 +66,14 @@ interface Props {
   markers: MapMarker[];
   /** The map re-fits to this box whenever it changes. */
   bounds: BBox | null;
+  /** Changes to fit `bounds` again although the box itself stayed the same (a plan step opened again). */
+  refit?: number;
+  /** Which plan step this map belongs to: it answers only "show it on the map" events of that scope (lib/mapFocus.ts). The big map has none and answers all. */
+  scope?: MapFit;
+  /** The frame of a step's default view: the least zoomed-out a centred pick may be. */
+  focusFloor?: (scope?: MapFit) => BBox | null;
+  /** On first view, centre on this (a parking picked earlier) instead of fitting `bounds`. */
+  openOn?: { location: LatLng; context?: LatLng };
   onSelectTrail?: (slug: string) => void;
   /** The pointer moved onto a track (its slug) or off every track (null). */
   onHoverTrail?: (slug: string | null) => void;
@@ -204,6 +214,43 @@ function fit(map: MlMap, b: BBox, duration = 0) {
   );
 }
 
+const reducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** Never closer than this when centring on a pick. */
+const CENTRE_MAX_ZOOM = 16;
+
+/**
+ * Centre on `item` at a zoom that shows `context` too (the trailhead, the join point): the box around
+ * both, mirrored about the item so it stays in the middle. Not closer than 16, not wider than `floor`
+ * (the step's default view).
+ */
+function centreOn(map: MlMap, item: LatLng, context: LatLng | undefined, floor: BBox | null, duration: number) {
+  let zoom = CENTRE_MAX_ZOOM;
+  if (context) {
+    const lons = [context.lon, 2 * item.lon - context.lon];
+    const lats = [context.lat, 2 * item.lat - context.lat];
+    const cam = map.cameraForBounds(
+      [
+        [Math.min(...lons), Math.min(...lats)],
+        [Math.max(...lons), Math.max(...lats)],
+      ],
+      { padding: 40, maxZoom: CENTRE_MAX_ZOOM }
+    );
+    if (cam?.zoom !== undefined) zoom = Math.min(zoom, cam.zoom);
+  }
+  if (floor) {
+    const base = map.cameraForBounds(
+      [
+        [floor.sw.lon, floor.sw.lat],
+        [floor.ne.lon, floor.ne.lat],
+      ],
+      { padding: FIT_PADDING, maxZoom: 15 }
+    );
+    if (base?.zoom !== undefined) zoom = Math.max(zoom, base.zoom);
+  }
+  map.easeTo({ center: [item.lon, item.lat], zoom: Math.min(zoom, CENTRE_MAX_ZOOM), duration, essential: true });
+}
+
 /**
  * Where the last trip map stood. Opening another route is a new page, so its map is a new
  * one; it starts where the last left off and glides to its trail instead of jumping there.
@@ -230,6 +277,10 @@ export function TrailMap({
   tracks,
   markers,
   bounds,
+  refit = 0,
+  scope,
+  focusFloor,
+  openOn,
   onSelectTrail,
   onHoverTrail,
   driveLeg,
@@ -246,6 +297,10 @@ export function TrailMap({
   const fittedRef = useRef(false);
   const networkRef = useRef(network);
   const boundsRef = useRef<BBox | null>(bounds);
+  // The view was centred on a pick: a resize keeps it instead of fitting the step's default view again.
+  const centredRef = useRef(false);
+  const floorRef = useRef(focusFloor);
+  const openOnRef = useRef(openOn);
   const markerRefs = useRef<Marker[]>([]);
   const markerIds = useRef<string[]>([]);
   const userMarkerRefs = useRef<Marker[]>([]);
@@ -254,7 +309,9 @@ export function TrailMap({
   useEffect(() => {
     onSelectRef.current = onSelectTrail;
     onHoverRef.current = onHoverTrail;
-  }, [onSelectTrail, onHoverTrail]);
+    floorRef.current = focusFloor;
+    openOnRef.current = openOn;
+  }, [onSelectTrail, onHoverTrail, focusFloor, openOn]);
 
   // Create the map once; tear it down on unmount.
   useEffect(() => {
@@ -285,6 +342,15 @@ export function TrailMap({
         pixelRatio: mapPixelRatio(),
       });
       map.touchZoomRotate.disableRotation();
+      // The compact attribution opens by itself at first (it covered pins and popups on the small step maps):
+      // start it as the little "i" and open it only on a tap. The credit stays one tap away.
+      const closeAttribution = () => {
+        const el = containerRef.current?.querySelector(".maplibregl-ctrl-attrib");
+        el?.classList.remove("maplibregl-compact-show");
+        el?.removeAttribute("open");
+      };
+      closeAttribution();
+      map.once("load", closeAttribution);
       map.on("moveend", () => {
         if (!map) return;
         const c = map.getCenter();
@@ -456,7 +522,7 @@ export function TrailMap({
           return;
         }
         map.resize();
-        if (boundsRef.current) fit(map, boundsRef.current);
+        if (boundsRef.current && !centredRef.current) fit(map, boundsRef.current);
       });
       observer.observe(containerRef.current);
     }
@@ -484,11 +550,15 @@ export function TrailMap({
     boundsRef.current = bounds;
     if (!ctx || !bounds) return;
     // The first view appears at once; later changes (another route) glide there.
-    fit(ctx.map, bounds, fittedRef.current ? 700 : 0);
+    // A step map opened after a parking was picked starts centred on it.
+    const first = openOnRef.current;
+    centredRef.current = !fittedRef.current && !!first;
+    if (centredRef.current) centreOn(ctx.map, first!.location, first!.context, bounds, 0);
+    else fit(ctx.map, bounds, fittedRef.current ? 700 : 0);
     fittedRef.current = true;
     // `bounds` is tracked via boundsKey so a new-but-equal object doesn't refit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ctx, boundsKey]);
+  }, [ctx, boundsKey, refit]);
 
   // Tracks: dimmed first, then the picked line, other routes thin on top.
   useEffect(() => {
@@ -600,18 +670,40 @@ export function TrailMap({
   }, [ctx, markers]);
 
 
-  // A row in a list below ("Na trase") asks for its place: bring the map into view, glide there, open the pin.
+  // A row in a list below, or a pick in a plan step, asks for its place: bring the map into view, centre on it
+  // with the trail in view, open the pin. Only the map of that step answers (the big map answers all).
   useEffect(() => {
     if (!ctx) return;
     const { map } = ctx;
-    return onMapFocus(({ id, location }) => {
-      containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      map.flyTo({ center: [location.lon, location.lat], zoom: Math.max(map.getZoom(), 15), essential: true });
+    // `replay`: the request came just before this map mounted; jump there without scrolling or gliding.
+    const apply = ({ id, location, scope: asked, context, fit: points }: MapFocus, replay = false) => {
+      if (scope && (asked ? asked !== scope : scope !== "places")) return;
+      // A route pick fits the line where the map is: the page must not move.
+      if (!replay && !points?.length) containerRef.current?.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "nearest" });
+      const duration = replay || reducedMotion() ? 0 : 600;
+      centredRef.current = !points?.length;
+      if (points?.length) {
+        const lons = points.map((p) => p.lon);
+        const lats = points.map((p) => p.lat);
+        map.fitBounds(
+          [
+            [Math.min(...lons), Math.min(...lats)],
+            [Math.max(...lons), Math.max(...lats)],
+          ],
+          { padding: 40, maxZoom: CENTRE_MAX_ZOOM, duration }
+        );
+        return;
+      }
       for (const m of markerRefs.current) if (m.getPopup()?.isOpen()) m.togglePopup();
-      const i = markerIds.current.indexOf(id);
+      const i = id ? markerIds.current.indexOf(id) : -1;
       if (i >= 0) map.once("moveend", () => markerRefs.current[i]?.togglePopup());
-    });
-  }, [ctx]);
+      if (context || asked) centreOn(map, location, context, floorRef.current?.(asked ?? scope) ?? null, duration);
+      else map.flyTo({ center: [location.lon, location.lat], zoom: Math.max(map.getZoom(), 15), essential: true, duration });
+    };
+    const recent = recentFocus(4000);
+    if (recent) apply(recent, true);
+    return onMapFocus((target) => apply(target));
+  }, [ctx, scope]);
 
   // Start pin (typed place) and "you are here" dot (GPS).
   useEffect(() => {

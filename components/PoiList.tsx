@@ -4,7 +4,7 @@ import { KindIcon } from "@/components/KindIcon";
 import { poiIcon, poiLabel } from "@/lib/food";
 import { focusOnMap } from "@/lib/mapFocus";
 import { POI_COLOUR } from "@/lib/palette";
-import type { Poi } from "@/lib/types";
+import type { LatLng, Poi } from "@/lib/types";
 import { UiIcon } from "@/components/UiIcon";
 import { stopFor, useTripStops, visits } from "@/lib/tripStops";
 import type { TripStop } from "@/lib/tripStops";
@@ -26,10 +26,13 @@ export function PoiList({
   pois,
   slug,
   loop,
+  near = {},
 }: {
   pois: Poi[];
   slug: string;
   loop: boolean;
+  /** Each place's nearest point on the walk (by id): the map shows it with the place. */
+  near?: Record<string, LatLng>;
 }) {
   const stops = useTripStops(slug);
   const t = useT();
@@ -40,11 +43,8 @@ export function PoiList({
   const word =
     lang === "en" ? (pois.length === 1 ? "place" : "places") : pois.length === 1 ? "miesto" : pois.length < 5 ? "miesta" : "miest";
   return (
-    <details
-      open
-      className="group rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)]"
-    >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-base font-bold [&::-webkit-details-marker]:hidden">
+    <div className="flex flex-col gap-1">
+      <p className="flex items-baseline justify-between gap-2 text-sm font-bold">
         {t(on.length === 0
           ? "Kúsok bokom"
           : off.length > 0
@@ -53,18 +53,19 @@ export function PoiList({
         <span className="ml-auto text-sm font-medium text-[var(--muted)]">
           {pois.length} {word}
         </span>
-        <span className="text-[var(--muted)] transition-transform group-open:rotate-90">
-          <UiIcon name="chev" size={16} />
-        </span>
-      </summary>
-      <ul className="flex flex-col gap-0.5 px-4 pb-3">
+      </p>
+      <ul className="flex flex-col gap-0.5">
         {on.map((p) => (
           <PoiRow
             key={p.id}
             p={p}
             stop={stops.stops.find((s) => s.id === p.id) ?? null}
             loop={loop}
-            onToggle={() => stops.toggle(stopFor(p))}
+            near={near[p.id]}
+            onToggle={() => {
+              if (!stops.has(p.id)) focusOnMap({ location: p.location, scope: "places", context: near[p.id] });
+              stops.toggle(stopFor(p));
+            }}
             onWay={(way) => stops.setWay(p.id, way)}
           />
         ))}
@@ -79,12 +80,16 @@ export function PoiList({
             p={p}
             stop={stops.stops.find((s) => s.id === p.id) ?? null}
             loop={loop}
-            onToggle={() => stops.toggle(stopFor(p))}
+            near={near[p.id]}
+            onToggle={() => {
+              if (!stops.has(p.id)) focusOnMap({ location: p.location, scope: "places", context: near[p.id] });
+              stops.toggle(stopFor(p));
+            }}
             onWay={(way) => stops.setWay(p.id, way)}
           />
         ))}
       </ul>
-    </details>
+    </div>
   );
 }
 
@@ -92,10 +97,12 @@ function PoiRow({
   p,
   stop,
   loop,
+  near,
   onToggle,
   onWay,
 }: {
   p: Poi;
+  near?: LatLng;
   stop: TripStop | null;
   loop: boolean;
   onToggle: () => void;
@@ -110,7 +117,7 @@ function PoiRow({
         <button
           type="button"
           onClick={() =>
-            focusOnMap({ id: `poi-${p.id}`, location: p.location })
+            focusOnMap({ id: `poi-${p.id}`, location: p.location, scope: "places", context: near })
           }
           className="-ml-2 flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-1 text-left hover:bg-[var(--segment-bg)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
         >
@@ -143,10 +150,10 @@ function PoiRow({
             added ? t("Odobrať zastávku {name}", { name: t(p.name) }) : t("Pridať zastávku {name}", { name: t(p.name) })
           }
           title={added ? t("Odobrať zo zastávok") : t("Pridať ako zastávku")}
-          className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-lg leading-none font-extrabold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
+          className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg leading-none font-extrabold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
             added
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "bg-[var(--accent-soft)] text-[var(--accent)]"
+              ? "bg-[var(--accent)] text-[var(--accent-contrast)] hover:opacity-85"
+              : "bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
           }`}
         >
           {added ? "✓" : "+"}

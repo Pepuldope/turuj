@@ -2,7 +2,7 @@
 
 import type { DayPlan } from "@/lib/dayPlan";
 import { approachMin } from "@/lib/dayPlan";
-import { formatDuration, formatFromUser, formatWalk, formatTime, stopLabel, TRANSIT_LABEL } from "@/lib/format";
+import { formatDuration, formatFromUser, formatTime, stopLabel, TRANSIT_LABEL } from "@/lib/format";
 import { appleTransitUrl, cpSkBackUrl, cpSkUrl, googleTransitUrl, startTown } from "@/lib/links";
 import type { RailJourney } from "@/lib/rail";
 import type { RailTrip } from "@/lib/useRailTrip";
@@ -11,6 +11,7 @@ import { useHomeStop } from "@/lib/useHomeStop";
 import { useUserLocation } from "@/lib/userLocation";
 import type { TransitStop } from "@/lib/types";
 import { clock } from "@/lib/zoned";
+import { focusOnMap } from "@/lib/mapFocus";
 import { useTripAccess } from "@/components/TripAccess";
 import { UiIcon } from "@/components/UiIcon";
 import { useLang, useT } from "@/lib/i18n";
@@ -22,7 +23,7 @@ const hhmm = clock;
 const link = "w-fit text-sm font-semibold text-[var(--accent)] underline";
 
 /** How many stops to offer; the rest are far or duplicates. */
-const MAX_OPTIONS = 4;
+export const MAX_OPTIONS = 4;
 
 function walkLabel(s: TransitStop, lang: Lang): string {
   const m = s.join?.walk_m ?? s.distance_m;
@@ -39,66 +40,55 @@ export function StopIcon({ mode, size = 16 }: { mode: TransitStop["mode"]; size?
 }
 
 /**
- * By train or bus: which stop near the trail to get off at. The walk to the
- * trail, the plan and the cp.sk searches follow the pick.
+ * By train or bus: which stop near the trail to get off at, as the options of the "Ako sa tam
+ * dostanete" step. The walk to the trail, the plan and the cp.sk searches follow the pick.
  */
-export function StopsBlock() {
-  const { stops, stopChoice, chooseStop, stop, transit } = useTripAccess();
+export function StopOptions() {
+  const { stops, stopChoice, chooseStop, transit, trailStart } = useTripAccess();
   const t = useT();
   const lang = useLang();
   if (!transit) return null;
   const options = stops.slice(0, MAX_OPTIONS);
 
   return (
-    <details className="group rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)]">
-      <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-base font-bold [&::-webkit-details-marker]:hidden">
-        <span className="mt-pin mt-pin-transit shrink-0 scale-90" aria-hidden>
-          <StopIcon mode={stop?.mode ?? "autobus"} />
-        </span>
-        {t("Zastávky pri trase")}
-        <span className="ml-auto truncate text-sm font-medium text-[var(--muted)]">
-          {stop ? t(stop.join ? "{m} k trase" : "{m} k štartu", { m: formatWalk(stop.join?.walk_m ?? stop.distance_m, lang) }) : t("bez zastávky")}
-        </span>
-        <span className="text-[var(--muted)] transition-transform group-open:rotate-90">
-          <UiIcon name="chev" size={16} />
-        </span>
-      </summary>
-      <div className="flex flex-col gap-2 px-4 pb-3.5">
-        {options.length === 0 && <p className="text-sm">{t("Pri trase sme nenašli zastávku vlaku ani autobusu.")}</p>}
-        {options.length > 1 && <p className="text-sm text-[var(--muted)]">{t("Vyberte, kde vystúpite. Cesta pešo aj plán sa prepočítajú.")}</p>}
-        {options.length > 0 && (
-          <ul className="flex flex-col gap-1.5" role="radiogroup" aria-label={t("Zastávka")}>
-            {options.map((s, i) => {
-              const selected = i === stopChoice;
-              return (
-                <li key={s.id}>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    onClick={() => chooseStop(i)}
-                    disabled={options.length === 1}
-                    className={`flex w-full items-start gap-3 rounded-xl border px-3 py-2 text-left text-sm disabled:cursor-default ${
-                      selected ? "border-[var(--accent)] bg-[var(--background)]" : "border-[var(--border)] hover:border-[var(--accent)]"
-                    }`}
-                  >
-                    <span className="mt-pin mt-pin-transit shrink-0" aria-hidden>
-                      <StopIcon mode={s.mode} />
+    <div className="flex flex-col gap-2">
+      {options.length === 0 && <p className="text-sm">{t("Pri trase sme nenašli zastávku vlaku ani autobusu.")}</p>}
+      {options.length > 1 && <p className="text-sm text-[var(--muted)]">{t("Vyberte, kde vystúpite. Cesta pešo aj plán sa prepočítajú.")}</p>}
+      {options.length > 0 && (
+        <ul className="flex flex-col gap-1.5" role="radiogroup" aria-label={t("Zastávka")}>
+          {options.map((s, i) => {
+            const selected = i === stopChoice;
+            return (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => {
+                    chooseStop(i);
+                    focusOnMap({ location: s.location, scope: "access", context: s.join?.location ?? trailStart ?? undefined });
+                  }}
+                  disabled={options.length === 1}
+                  className={`flex min-h-11 w-full items-start gap-3 rounded-xl border px-3 py-2 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:cursor-default ${
+                    selected ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--border)] hover:border-[var(--accent)]"
+                  }`}
+                >
+                  <span className="mt-pin mt-pin-transit shrink-0" aria-hidden>
+                    <StopIcon mode={s.mode} />
+                  </span>
+                  <span className="flex flex-col">
+                    <span className="font-semibold">{stopLabel(s.name)}</span>
+                    <span className="text-[var(--muted)]">
+                      {t(TRANSIT_LABEL[s.mode])}, {walkLabel(s, lang)}
                     </span>
-                    <span className="flex flex-col">
-                      <span className="font-semibold">{stopLabel(s.name)}</span>
-                      <span className="text-[var(--muted)]">
-                        {t(TRANSIT_LABEL[s.mode])}, {walkLabel(s, lang)}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-    </details>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }
 

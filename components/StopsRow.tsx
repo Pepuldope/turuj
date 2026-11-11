@@ -94,14 +94,14 @@ export function StopsRow({
         <button
           type="button"
           onClick={() => toggle(LUNCH)}
-          className="w-fit rounded-full border border-[var(--border)] bg-[var(--segment-bg)] px-3 py-1 text-[13px] font-semibold focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+          className="min-h-10 w-fit rounded-full border border-[var(--border)] bg-[var(--segment-bg)] px-3 py-1 text-[13px] font-semibold transition-colors hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
         >
           + {t("Prestávka na obed")}
         </button>
       )}
       <p className="text-xs text-[var(--muted)]">
         {minutes > 0
-          ? t("Zastávky predĺžia deň o {t}, časy aj obrázok dňa vyššie ich už rátajú.", { t: formatDurationShort(minutes) })
+          ? t("Zastávky predĺžia deň o {t}, časy aj obrázok dňa nižšie ich už rátajú.", { t: formatDurationShort(minutes) })
           : hasPlaces
             ? t("Zastávku pridáte tlačidlom + pri mieste na trase alebo na mape.")
             : t("Pridajte prestávku, časy sa posunú.")}

@@ -7,6 +7,8 @@ import { useTripSettings } from "@/lib/tripSettings";
 import { formatKm, isClearlyShorter, pickWalk, walkMinutes } from "@/lib/walkFacts";
 import type { RouteWalk } from "@/lib/walkFacts";
 import { useTripAccess } from "@/components/TripAccess";
+import { focusOnMap } from "@/lib/mapFocus";
+import { markRoutePicked } from "@/lib/planUi";
 import { setHoveredRoute, useHoveredRoute } from "@/lib/routeHover";
 import { BusOk, Dot, NoParkingChip, routeAccess, routeLabel } from "@/components/routeBits";
 import { LangLink, useLang, useT } from "@/lib/i18n";
@@ -54,8 +56,16 @@ export function RouteRows({ routes, at, walks }: { routes: RouteBrief[]; at: num
         scroll={false}
         onMouseEnter={() => setHoveredRoute(i === at ? null : r.slug)}
         onMouseLeave={() => setHoveredRoute(null)}
-        onClick={() => setHoveredRoute(null)}
-        className={`flex items-center gap-3 px-3.5 py-2.5 outline-offset-[-2px] ${i === at ? "bg-[var(--accent-soft)]" : ""} ${
+        onClick={(e) => {
+          setHoveredRoute(null);
+          // The page changes to that route's, the plan card stays as it is (lib/planUi.ts).
+          markRoutePicked(r.slug, e.currentTarget.closest("section")?.getBoundingClientRect().top ?? 0);
+          // The map beside it fits the chosen route's whole line.
+          const lons = r.up.map((p) => p[0]);
+          const lats = r.up.map((p) => p[1]);
+          if (r.up.length > 1) focusOnMap({ scope: "routes", location: { lat: lats[0], lon: lons[0] }, fit: [{ lat: Math.min(...lats), lon: Math.min(...lons) }, { lat: Math.max(...lats), lon: Math.max(...lons) }] });
+        }}
+        className={`flex items-center gap-3 px-3.5 py-2.5 outline-offset-[-2px] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${i === at ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--segment-bg)]"} ${
           hovered === r.slug ? "outline-2 outline-[var(--accent)] outline" : ""
         }`}
       >

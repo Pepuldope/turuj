@@ -193,6 +193,8 @@ interface HeaderProps {
   closures: Closure[];
   /** When the trip data was built: "2026-11-02". */
   updated: string | null;
+  /** Show only the closure line: car park and stop are the "Ako sa tam dostanete" step of the plan now (TripAnswers still has both). */
+  only?: "closure";
 }
 
 /**
@@ -200,11 +202,11 @@ interface HeaderProps {
  * header's own style, as a definition list. The labels are read by crawlers and screen readers: visually hidden.
  * Length, climb and time are already in the header above; they are repeated here hidden, as plain text.
  */
-export function TripHeaderFacts({ lang, walk, starts, parking, stops, closures, updated }: HeaderProps) {
-  const items: { label: string; value: string; icon: "car" | "train" | "bus" | "lock" | "warn" }[] = [
+export function TripHeaderFacts({ lang, walk, starts, parking, stops, closures, updated, only }: HeaderProps) {
+  const items: { label: string; value: string; icon: "car" | "train" | "bus" | "lock" | "warn"; closure?: true }[] = [
     { label: tr(lang, "Parkovanie"), value: parkingTeaser(lang, parking), icon: "car" },
     { label: tr(lang, "Vlak/autobus"), value: transitTeaser(lang, stops), icon: stops[0]?.mode === "vlak" ? "train" : "bus" },
-    { label: tr(lang, "Sezónna uzávera"), value: closureTeaser(lang, closures), icon: closures.length > 0 ? "lock" : "warn" },
+    { label: tr(lang, "Sezónna uzávera"), value: closureTeaser(lang, closures), icon: closures.length > 0 ? "lock" : "warn", closure: true },
   ];
   return (
     <div className="flex flex-col gap-1.5">
@@ -224,7 +226,7 @@ export function TripHeaderFacts({ lang, walk, starts, parking, stops, closures, 
           <dt>{tr(lang, starts.length > 1 ? "Štarty" : "Štart")}</dt>
           <dd>{starts.join("; ")}</dd>
         </div>
-        {items.map((it) => (
+        {items.filter((it) => !only || it.closure).map((it) => (
           <div key={it.label} className="flex items-start gap-2">
             <UiIcon name={it.icon} size={16} className="mt-px" />
             <dt className="sr-only">{it.label}</dt>
