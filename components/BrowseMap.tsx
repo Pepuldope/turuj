@@ -309,12 +309,13 @@ function declutter(els: HTMLElement[]) {
     el.style.zIndex = String(els.length - i);
     taken.push((el.firstElementChild as HTMLElement).getBoundingClientRect());
   });
-  // Then each name tries below its dot, then right, left and above (Peter, 2026-11-11: on a phone most
+  // Then each name tries below its dot, then right, left, above and the four corners (Peter, 2026-11-11: on a phone most
   // names were hidden); only a name that fits nowhere is hidden.
   els.forEach((el) => {
     const label = el.lastElementChild as HTMLElement;
     label.style.visibility = "";
-    for (const side of ["", "right", "left", "above"]) {
+    // A name keeps the side it had while that still fits, so names don't jump around between zooms.
+    for (const side of new Set([el.dataset.side ?? "", "", "right", "left", "above", "br", "bl", "ar", "al"])) {
       el.dataset.side = side;
       const r = label.getBoundingClientRect();
       if (!hits(r)) return void taken.push(r);
@@ -794,7 +795,9 @@ export function BrowseMap({
       // Measuring the names makes the browser lay out the page, too slow for
       // every frame of a pinch: a few times a second is enough, and the last
       // check always comes after the zoom stops.
-      if (z >= areaZoom || declutterSoon) return;
+      // Only once the zoom has stopped (Peter, 2026-11-11: names hopped from side to side mid-pinch).
+      clearTimeout(declutterSoon);
+      if (z >= areaZoom) return;
       declutterSoon = setTimeout(() => {
         declutterSoon = undefined;
         declutter(areaEls.current);

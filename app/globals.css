@@ -380,8 +380,29 @@ h2,
 }
 .mt-area[data-side="right"] span:last-child,
 .mt-area[data-side="left"] span:last-child,
-.mt-area[data-side="above"] span:last-child {
+.mt-area[data-side="above"] span:last-child,
+.mt-area[data-side="br"] span:last-child,
+.mt-area[data-side="bl"] span:last-child,
+.mt-area[data-side="ar"] span:last-child,
+.mt-area[data-side="al"] span:last-child {
   position: absolute;
+}
+/* The four corners: the name starts at the dot's corner (below-right, below-left, above-right, above-left). */
+.mt-area[data-side="br"] span:last-child {
+  left: calc(50% + var(--dot) / 2 - 4px);
+  top: calc(var(--dot) - 2px);
+}
+.mt-area[data-side="bl"] span:last-child {
+  right: calc(50% + var(--dot) / 2 - 4px);
+  top: calc(var(--dot) - 2px);
+}
+.mt-area[data-side="ar"] span:last-child {
+  left: calc(50% + var(--dot) / 2 - 4px);
+  bottom: calc(100% - 2px);
+}
+.mt-area[data-side="al"] span:last-child {
+  right: calc(50% + var(--dot) / 2 - 4px);
+  bottom: calc(100% - 2px);
 }
 .mt-area[data-side="right"] span:last-child {
   left: calc(50% + var(--dot) / 2 + 3px);
