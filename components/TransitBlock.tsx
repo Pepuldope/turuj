@@ -201,8 +201,10 @@ export function TransitLegs({ plan, rail }: { plan: DayPlan; rail: RailTrip }) {
 
   if (!stop) {
     return (
-      <p className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2.5 text-sm">
-        {t("Pri začiatku trasy sme nenašli zastávku vlaku ani autobusu. Táto túra je lepšia autom.")}
+      // A warning item of its own, with its sign (Peter, 2026-11-12); it says the way out: go by car.
+      <p className="flex items-start gap-1.5 rounded-xl bg-[var(--warn-bg)] px-3 py-2.5 text-sm font-semibold text-[var(--warn)]">
+        <UiIcon name="warn" size={16} className="mt-0.5" />
+        <span>{t("Pri začiatku trasy sme nenašli zastávku vlaku ani autobusu. Táto túra je lepšia autom.")}</span>
       </p>
     );
   }
@@ -244,7 +246,10 @@ export function TransitLegs({ plan, rail }: { plan: DayPlan; rail: RailTrip }) {
                 <Legs journey={trainBack} />
               </>
             ) : (
-              <p className="flex items-start gap-1.5 font-semibold text-[var(--warn)]"><UiIcon name="warn" size={16} className="mt-0.5" /><span>{t("Po túre už v tento deň nejde vlak späť. Skúste skorší odchod alebo autobus.")}</span></p>
+              <p className="flex items-start gap-1.5 rounded-xl bg-[var(--warn-bg)] px-3 py-2 text-sm font-semibold text-[var(--warn)]">
+                <UiIcon name="warn" size={16} className="mt-0.5" />
+                <span>{t("Po túre už v tento deň nejde vlak späť. Skúste skorší odchod alebo autobus.")}</span>
+              </p>
             )}
           </div>
           <p className="text-xs text-[var(--muted)]">{t("Časy vlakov podľa cestovného poriadku ŽSR. Výluky a meškania overte na cp.sk.")}</p>

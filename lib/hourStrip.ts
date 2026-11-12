@@ -64,58 +64,6 @@ export function hourStrip(
   return cells;
 }
 
-/** The index of the hour the walk starts in (the nearest hour to the start), or -1 when none is shown. */
-export function startHourIndex(cells: HourCell[], hikeStart: Date): number {
-  let best = -1;
-  let gap = Infinity;
-  cells.forEach((c, i) => {
-    const d = Math.abs(c.t - hikeStart.getTime());
-    if (d < gap) {
-      gap = d;
-      best = i;
-    }
-  });
-  return best;
-}
-
-/**
- * The departure (HH:MM, to 5 minutes) that makes the walk start at the top of hour `t`, keeping
- * the ride as it is now: `lead` is the ms from leaving to the start of the walk.
- */
-export function departureFor(t: number, lead: number): string {
-  const at = Math.round((t - lead) / (5 * MIN)) * 5 * MIN;
-  const w = wallClock(at);
-  return `${String(w.h).padStart(2, "0")}:${String(w.mi).padStart(2, "0")}`;
-}
-
-/** Whether the hour is dark: its middle is before sunrise or after sunset. */
-export function isDarkHour(t: number, sunrise: Date, sunset: Date): boolean {
-  const mid = t + 30 * MIN;
-  return mid < sunrise.getTime() || mid > sunset.getTime();
-}
-
-/** How much rain the hour has, for the track's shading: 0 none, 1 light (< 0.5 mm), 2 moderate (< 2 mm), 3 heavy. */
-export function rainStrength(mm: number): 0 | 1 | 2 | 3 {
-  if (mm < 0.05) return 0;
-  return mm < 0.5 ? 1 : mm < 2 ? 2 : 3;
-}
-
-/** Where `t` falls between `from` and `to`, 0..1 (not clamped). */
-export function timeFraction(t: number, from: number, to: number): number {
-  return (t - from) / (to - from);
-}
-
-/** `t` rounded to the nearest `stepMin` minutes. */
-export function snapTime(t: number, stepMin = 15): number {
-  const step = stepMin * MIN;
-  return Math.round(t / step) * step;
-}
-
-/** The walk's start kept so that a walk `len` ms long stays inside [from, to]. */
-export function clampStart(start: number, len: number, from: number, to: number): number {
-  return Math.min(Math.max(start, from), Math.max(from, to - len));
-}
-
 /** warn: rain, snow or sleet; danger: a storm or heavy rain or snow. */
 export type BadLevel = "warn" | "danger";
 
@@ -131,15 +79,8 @@ export function badHoursInSpan(cells: HourCell[], from: number, to: number): (Ba
   return cells.map((c) => (c.t < to && c.t + HOUR > from ? badLevel(c) : null));
 }
 
-/** Worse sky first, for picking the one glyph that stands for the walk. */
-const KIND_ORDER: SkyKind[] = ["thunder", "heavysnow", "snow", "sleet", "heavyrain", "rain", "lightsnow", "lightrain", "fog", "cloudy", "partly", "fair", "clear"];
-
-/** The worst sky among the walk's hours; null when none has a forecast. */
-export function worstWalkKind(cells: HourCell[]): SkyKind | null {
-  let best: SkyKind | null = null;
-  for (const c of cells) {
-    if (c.part !== "walk" || !c.kind) continue;
-    if (best === null || KIND_ORDER.indexOf(c.kind) < KIND_ORDER.indexOf(best)) best = c.kind;
-  }
-  return best;
+/** `t` rounded to the nearest `stepMin` minutes. */
+export function snapTime(t: number, stepMin = 15): number {
+  const step = stepMin * MIN;
+  return Math.round(t / step) * step;
 }

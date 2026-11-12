@@ -9,6 +9,10 @@ import type { RouteWalk } from "@/lib/walkFacts";
 import { useTripAccess } from "@/components/TripAccess";
 import { focusOnMap } from "@/lib/mapFocus";
 import { markRoutePicked } from "@/lib/planUi";
+import { usePlanDay } from "@/lib/planDay";
+import { routeNote } from "@/lib/routeNote";
+import type { RouteNote } from "@/lib/routeNote";
+import { UiIcon } from "@/components/UiIcon";
 import { setHoveredRoute, useHoveredRoute } from "@/lib/routeHover";
 import { BusOk, Dot, NoParkingChip, routeAccess, routeLabel } from "@/components/routeBits";
 import { LangLink, useLang, useT } from "@/lib/i18n";
@@ -50,6 +54,7 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
   const numbers = useRouteNumbers(routes, walks, routes[at]?.slug ?? null);
   const t = useT();
   const lang = useLang();
+  const day = usePlanDay();
   // The tapped row is marked at once; the new page (a server render) takes a moment and only then changes `at`.
   const [tapped, setTapped] = useState<{ slug: string; at: number } | null>(null);
   const picked = tapped && tapped.at === at ? tapped.slug : null;
@@ -91,6 +96,8 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
           <span className="text-[13px] text-[var(--muted)]">
             {t("štart {name}", { name: r.start_name })} · {r.parking ? t(routeAccess(r)) : <BusOk />}
           </span>
+          {/* The chosen day's light for this route's walk, not tied to a time: Kedy comes after this step (Peter, 2026-11-12). */}
+          {day && !day.loading && day.plan && <DayNote note={routeNote(day.plan.sunrise, day.plan.sunset, numbers[i].min)} dayWord={day.dayNa} />}
         </span>
         <span className="font-data ml-auto shrink-0 text-right text-[16px] leading-tight">
           {formatDuration(numbers[i].min)}
@@ -101,6 +108,34 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
       </LangLink>
     </li>
   ));
+}
+
+/** One small pill: the route fits the day's light, needs an early start, or is too long for the day. */
+function DayNote({ note, dayWord }: { note: RouteNote; dayWord: string }) {
+  const t = useT();
+  const base = "mt-1 flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-[12.5px] leading-tight font-semibold";
+  if (note.kind === "ok") {
+    return (
+      <span className={`${base} bg-[var(--ok-bg)] text-[var(--ok)]`}>
+        <UiIcon name="check" size={14} />
+        {t("stihnete za svetla")}
+      </span>
+    );
+  }
+  return (
+    <span className={`${base} bg-[var(--warn-bg)] text-[var(--warn)]`}>
+      <UiIcon name="warn" size={14} />
+      <span>
+        {note.kind === "too-long" ? (
+          t("na {day} pridlhá", { day: dayWord })
+        ) : (
+          <>
+            {t("dlhá, túru začnite do")}&nbsp;<span className="font-data">{note.latest}</span>
+          </>
+        )}
+      </span>
+    </span>
+  );
 }
 
 /**

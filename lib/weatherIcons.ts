@@ -63,3 +63,20 @@ export function hourSkySvg(kind: SkyKind): string {
       return badSkySvg("thunder", true);
   }
 }
+
+/**
+ * The same glyphs for an hour in the dark (the Kedy step's hour row): the sun becomes a moon, a cloud with the sun
+ * a cloud with the moon; clouds and what falls from them stay as they are. Drawn in currentColor.
+ */
+export function nightSkySvg(kind: SkyKind): string {
+  const c = "currentColor";
+  switch (kind) {
+    case "clear":
+      return `<path d="M19.5 14.6A8 8 0 1 1 9.4 4.5a6.4 6.4 0 0 0 10.1 10.1z" fill="${c}"/>`;
+    case "fair":
+    case "partly":
+      return `<path d="M14.2 9.6A5 5 0 1 1 8.4 3.6a4 4 0 0 0 5.8 6z" fill="${c}"/><path d="M7.5 21a4 4 0 0 1-.5-7.97A5.3 5.3 0 0 1 17.2 13.4 3.8 3.8 0 0 1 16.8 21z" fill="${c}" stroke="var(--sky-night)" stroke-width="1.4"/>`;
+    default:
+      return hourSkySvg(kind);
+  }
+}

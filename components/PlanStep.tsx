@@ -366,11 +366,12 @@ export function PlanStep({
 }
 
 /** A fact that is not a choice (a trip with a single route): title and plain text, no frame, no Zmeniť. */
-export function StepInfo({ title, children }: { title: string; children: ReactNode }) {
+export function StepInfo({ title, children, extra }: { title: string; children: ReactNode; /** More content under the line (the kids switch of a one-route trip). */ extra?: ReactNode }) {
   return (
     <div className="flex flex-col px-1">
       <span className="text-[17px] leading-tight font-bold">{title}</span>
       <span className="text-[13.5px] leading-snug font-semibold text-[var(--muted)]">{children}</span>
+      {extra && <div className="pt-2.5">{extra}</div>}
     </div>
   );
 }

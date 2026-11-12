@@ -20,6 +20,7 @@
   --segment-bg: #edf3f9;      /* track behind segmented buttons */
   --sky-night: #14233b;
   --sky-twilight: #f7c9b5;
+  --night-ink: #d6e4f7;       /* text and moons on --sky-night, 12:1 (17:1 in dark mode, where the night is darker still) */
   --sky-day: #fbe3a8;
   --drive: #55627a;           /* road legs in the sun arc */
   --ground: #f2f6ef;          /* ground under the sun arc */
@@ -543,6 +544,25 @@ h2,
 .time-slider:focus-visible { outline: none; }
 .time-slider:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--accent); outline-offset: 2px; }
 .time-slider:focus-visible::-moz-range-thumb { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/*
+ * The Kedy step's start slider (components/KedyStep.tsx): the native range sits invisibly on top of a drawn track and
+ * thumb. Its thumb is fixed at 32 px so the 16 px the input overhangs each side maps the fixed 6-20 scale exactly
+ * onto the weather row under it; touch, drag and keys all stay the browser's own.
+ */
+.kedy-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  height: 44px;
+  margin: 0;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.kedy-range::-webkit-slider-runnable-track { height: 44px; background: transparent; }
+.kedy-range::-moz-range-track { height: 44px; background: transparent; }
+.kedy-range::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; margin-top: 6px; border: 0; background: transparent; }
+.kedy-range::-moz-range-thumb { width: 32px; height: 32px; border: 0; background: transparent; }
 
 /* The confirm card by a freshly placed start pin: a short pop, so the eye catches it. */
 .mt-pick-card {
