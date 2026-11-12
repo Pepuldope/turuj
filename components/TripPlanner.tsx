@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { outsideDaylight } from "@/lib/dayPlan";
 import type { DayPlan, Verdict } from "@/lib/dayPlan";
 import { EARLIEST_DEPARTURE_HOUR, addDaysIso, dayAfterNa, dayStrip, floorTo5, longDay } from "@/lib/days";
-import { badDays, weatherNotes } from "@/lib/weather";
+import { badDays, tripWeatherReport, weatherNotes } from "@/lib/weather";
 import { collectPlanWarnings } from "@/lib/planWarnings";
 import { formatDuration, formatDurationShort, formatTime, stopLabel } from "@/lib/format";
 import { haversineM } from "@/lib/geo";
@@ -32,7 +32,7 @@ import { StartPill } from "@/components/StartPill";
 import { StopsRow } from "@/components/StopsRow";
 import { SunArc } from "@/components/SunArc";
 import { useTripAccess } from "@/components/TripAccess";
-import { WeatherReport, useTripWeather } from "@/components/WeatherBlock";
+import { WeatherReport, useTripWeather, wetText } from "@/components/WeatherBlock";
 import { StopOptions, TransitHandoff, TransitLegs } from "@/components/TransitBlock";
 import { TravelSwitch } from "@/components/TravelSwitch";
 import { GOAL_WORDS, trimProfile, withApproach, withStops } from "@/lib/tripProfile";
@@ -317,6 +317,11 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
   const lateRow = ready && (late || !!latestPassed);
   const tanapLate = ready && tanap ? outsideDaylight(plan) : null;
   const weatherRows = ready && weather.below && !weather.loading ? weatherNotes(weather.below, weather.above, plan.hikeStart, plan.hikeEnd, lang) : [];
+  // Rain or snow, worded as in step 1's box, which shows it only when no storm warning covers it.
+  const wet =
+    ready && weather.below && !weather.loading && !weatherRows.some((n) => n.strong)
+      ? tripWeatherReport(weather.below, weather.above, transit ? plan.segments[0].start : plan.hikeStart, transit ? plan.segments[plan.segments.length - 1].end : plan.hikeEnd, { from: plan.hikeStart, to: plan.hikeEnd }, lang)?.wet ?? null
+      : null;
   const warnings = collectPlanWarnings([
     // Kedy
     lateRow && { key: "late", step: "when", tone: "warn", text: lateText(plan.verdict, { latestPassed: !!latestPassed, tooLong, noTrain: !!plan.noTrainInLight, startWord, latest: formatTime(latest!) }, lang) },
@@ -330,6 +335,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
           ? t("V TANAP-e sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte skôr alebo vyberte kratší výlet.")
           : t("V TANAP-e sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte až po východe slnka."),
     },
+    !!wet && { key: "wet", step: "when", tone: "warn", text: wetText(wet, lang) },
     ...weatherRows.map((n, i) => ({ key: `weather-${i}`, step: "when", tone: n.strong ? ("danger" as const) : ("warn" as const), text: n.text })),
     // Kadiaľ pôjdete / Ako sa tam dostanete: no car park at this route's start (another route can fix it), no stop, no train back.
     noCar && { key: "no-car", step: routeChoice ? "route" : "access", tone: "warn", text: `${t("Autom sa sem nedá.")} ${t("Pri štarte tejto cesty nie je kde nechať auto, preto plánujeme cestu autobusom alebo vlakom. Ak chcete ísť autom, vyberte inú cestu s parkoviskom.")}` },

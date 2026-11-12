@@ -1,6 +1,5 @@
 "use client";
 
-import { HourStrip } from "@/components/HourStrip";
 import { UiIcon } from "@/components/UiIcon";
 import { useState } from "react";
 import type { ReactNode } from "react";
@@ -11,10 +10,9 @@ import { useCachedJson } from "@/lib/useDriveRoute";
 import { addDaysIso, dayInSentence, isoDate } from "@/lib/days";
 import { activeClosures } from "@/lib/closures";
 import { getSunTimes } from "@/lib/sun";
-import { hourStrip } from "@/lib/hourStrip";
 import { clock } from "@/lib/zoned";
 import { FORECAST_DAYS, betterDay, betterTime, summarize, tripWeatherReport, weatherNotes, weatherWords } from "@/lib/weather";
-import type { BetterDay, BetterTime, WeatherForecast } from "@/lib/weather";
+import type { BetterDay, BetterTime, TripWeatherReport, WeatherForecast } from "@/lib/weather";
 import { badSkySvg } from "@/lib/weatherIcons";
 import type { Closure, LatLng } from "@/lib/types";
 import { useLang, useT } from "@/lib/i18n";
@@ -132,18 +130,6 @@ export function WeatherReport({
   const r = tripWeatherReport(weather.below, weather.above, from, to, { from: plan.hikeStart, to: plan.hikeEnd }, lang);
   if (!r) return null;
   const notes = weatherNotes(weather.below, weather.above, plan.hikeStart, plan.hikeEnd, lang);
-  // The hours of the day's light (wider where the plan reaches outside it), one cell each.
-  const leaveAt = plan.segments[0].start;
-  const homeAt = plan.segments[plan.segments.length - 1].end;
-  const cells = hourStrip(
-    weather.below,
-    { from: new Date(Math.min(plan.sunrise.getTime(), leaveAt.getTime() - 3600000)), to: new Date(Math.max(plan.sunset.getTime() + 3600000, homeAt.getTime() + 3600000)) },
-    leaveAt,
-    plan.hikeStart,
-    plan.hikeEnd,
-    homeAt
-  );
-  const strip = onPickTime && cells.some((c) => c.kind !== null);
   const stormy = notes.some((n) => n.strong);
   const range = temps(r, lang);
   // A wet or stormy walk always gets a next step: the nearest dry day in the forecast, same start time.
@@ -171,23 +157,17 @@ export function WeatherReport({
 
   return (
     <section aria-label={t("Počasie")} className="flex flex-col gap-1.5 text-sm">
-      {strip && <HourStrip cells={cells} hikeStart={plan.hikeStart} lead={plan.hikeStart.getTime() - leaveAt.getTime()} onPickTime={onPickTime!} dayKey={isoDate(plan.hikeStart)} />}
-      {strip ? (
-        // The strip shows the hours; only what it can't (the cold at the top) is said in words.
-        r.topMin !== null && <p className="font-semibold">{t("Na vrchole až {t} °C", { t: String(r.topMin).replace("-", "\u2212") })}</p>
-      ) : (
-        <p>
-          <span className="font-semibold">{t(wholeDay ? "Počasie počas výletu:" : "Počasie počas túry:")}</span> {range}
-          {r.topMin !== null && goal ? t(", {goal} až {t} °C", { goal: goal.name, t: r.topMin }) : ""}
-          {/* Rain, snow and storms get their own warning lines below. */}
-          {r.wet ? "." : r.worstWhen ? t(", najhoršie {what} {when}.", { what: r.worst, when: r.worstWhen }) : `, ${r.worst}.`}
-        </p>
-      )}
+      {/* The hour strip (HourStrip) is off until the step 1 weather redesign, option A (Peter, 2026-11-12). */}
+      <p>
+        <span className="font-semibold">{t(wholeDay ? "Počasie počas výletu:" : "Počasie počas túry:")}</span> {range}
+        {r.topMin !== null && goal ? t(", {goal} až {t} °C", { goal: goal.name, t: r.topMin }) : ""}
+        {/* Rain, snow and storms get their own warning lines below. */}
+        {r.wet ? "." : r.worstWhen ? t(", najhoršie {what} {when}.", { what: r.worst, when: r.worstWhen }) : `, ${r.worst}.`}
+      </p>
       {/* Warnings in a box with a sign (Peter: plain coloured text was easy to overlook). */}
       {r.wet && !stormy && (
         <Warning kind={r.wet.snow ? "snow" : "rain"}>
-          {t(r.wet.snow ? "Môže snežiť" : "Môže pršať")} {r.wet.when}
-          {r.wet.mmPerHour >= 0.1 ? t(" ({how}, do {mm} mm/h)", { how: t(r.wet.mmPerHour < 0.5 ? "slabo" : r.wet.mmPerHour < 2 ? "mierne" : "výdatne"), mm: decimal(lang, r.wet.mmPerHour) }) : ""}. {t("Vezmite si nepremokavú bundu.")}
+          {wetText(r.wet, lang)}
         </Warning>
       )}
       {notes.map((n) => (
@@ -203,6 +183,12 @@ export function WeatherReport({
       )}
     </section>
   );
+}
+
+/** "Môže pršať 8:00–10:00 (mierne, do 0,8 mm/h). Vezmite si nepremokavú bundu." Also the warnings recap's line. */
+export function wetText(wet: NonNullable<TripWeatherReport["wet"]>, lang: Lang): string {
+  const how = wet.mmPerHour >= 0.1 ? tr(lang, " ({how}, do {mm} mm/h)", { how: tr(lang, wet.mmPerHour < 0.5 ? "slabo" : wet.mmPerHour < 2 ? "mierne" : "výdatne"), mm: decimal(lang, wet.mmPerHour) }) : "";
+  return `${tr(lang, wet.snow ? "Môže snežiť" : "Môže pršať")} ${wet.when}${how}. ${tr(lang, "Vezmite si nepremokavú bundu.")}`;
 }
 
 const SIGN: Record<"rain" | "snow" | "storm" | "warn", string> = {
