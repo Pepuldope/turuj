@@ -1,26 +1,31 @@
 /**
  * The numbers behind the "Kedy" step (Peter picked mockup round 6, M1, on 2026-11-12): a trip bar and an
- * hour row on ONE fixed 6:00-20:00 scale that never stretches with the chosen time, the option cards, the
- * warnings with their way out, and the folded summary. Pure and JSX-free, so it is unit tested; the words
+ * hour row on ONE fixed 0:00-24:00 scale (it scrolls sideways, about 14 hours at a time; it never stretches with
+ * the chosen time), the day tiles, the option cards, the warnings with their way out, and the folded summary. Pure and JSX-free, so it is unit tested; the words
  * come from components/KedyStep.tsx.
  *
  * Every time here is the WALK START (Peter, 2026-11-12), never the departure.
  */
 import type { DayPlan, Segment, SegmentKind } from "@/lib/dayPlan";
 import { SAFE_MARGIN_MIN } from "@/lib/dayPlan";
-import { floorTo5 } from "@/lib/days";
+import { addDaysIso, daysBetween, floorTo5 } from "@/lib/days";
 import { badHoursInSpan } from "@/lib/hourStrip";
 import type { BadLevel, HourCell } from "@/lib/hourStrip";
-import { FORECAST_DAYS, betterDay, betterTime, skyKind, summarize, tripWeatherReport, weatherAt, weatherNotes, wetWalk } from "@/lib/weather";
+import { betterTime, shiftDays, skyKind, summarize, tripWeatherReport, weatherAt, weatherNotes, wetWalk } from "@/lib/weather";
 import type { SkyKind, WeatherForecast } from "@/lib/weather";
 import { clock, clockShort, wallClock, zonedDate } from "@/lib/zoned";
 
 const MIN = 60000;
 const HOUR = 3600000;
 
-/** The fixed scale, minutes after midnight: 14 hour cells, 6:00 to 20:00 (the last cell is the "19" one). */
-export const SCALE_FROM_MIN = 6 * 60;
-export const SCALE_TO_MIN = 20 * 60;
+/**
+ * The fixed scale, minutes after midnight: the whole day, 24 hour cells. The screen shows about 14 of them and the
+ * track scrolls sideways (Peter, 2026-11-12), so every hour keeps the width it had on the 6-20 scale.
+ */
+export const SCALE_FROM_MIN = 0;
+export const SCALE_TO_MIN = 24 * 60;
+/** How many hours fit on screen at once: the track is 24 / VISIBLE_HOURS times as wide as the card. */
+export const VISIBLE_HOURS = 14;
 const SPAN = SCALE_TO_MIN - SCALE_FROM_MIN;
 /** The hour numbers of the row. */
 export const SCALE_HOURS = Array.from({ length: SPAN / 60 }, (_, i) => SCALE_FROM_MIN / 60 + i);
@@ -33,7 +38,7 @@ export function dayMinutes(at: Date | number, ref: Date | number): number {
   return days * 1440 + a.h * 60 + a.mi;
 }
 
-/** Where a minute of the day falls on the scale, 0..1, clamped: segments outside 6-20 are cut at the edge. */
+/** Where a minute of the day falls on the scale, 0..1, clamped: segments outside the day are cut at the edge. */
 export function scalePos(min: number): number {
   return Math.min(1, Math.max(0, (min - SCALE_FROM_MIN) / SPAN));
 }
@@ -148,6 +153,33 @@ export function barEnds(plan: DayPlan): BarEnds {
   };
 }
 
+export interface DarkSpan {
+  left: number;
+  width: number;
+  /** The end of the trip this span reaches: it is rounded there, like the bar. */
+  outer: "left" | "right";
+}
+
+/**
+ * Everything of the trip in the dark (after sunset, before sunrise) as ONE span each, across the legs' boundaries: Peter
+ * (2026-11-12) disliked a seam where the hike meets the drive. Drawn as a single night tint with an amber outline.
+ */
+export function darkSpans(plan: DayPlan): DarkSpan[] {
+  const from = dayMinutes(plan.segments[0].start, plan.hikeStart);
+  const to = dayMinutes(plan.segments[plan.segments.length - 1].end, plan.hikeStart);
+  const rise = dayMinutes(plan.sunrise, plan.hikeStart);
+  const set = dayMinutes(plan.sunset, plan.hikeStart);
+  const out: DarkSpan[] = [];
+  const add = (a: number, b: number, outer: DarkSpan["outer"]) => {
+    const left = scalePos(a);
+    const width = scalePos(b) - left;
+    if (b > a && width > 0) out.push({ left, width, outer });
+  };
+  add(from, Math.min(to, rise), "left");
+  add(Math.max(from, set), to, "right");
+  return out;
+}
+
 // ---------------------------------------------------------------------------------------------------------
 // Hour row
 
@@ -162,23 +194,27 @@ export interface RowCell {
   state: CellState;
 }
 
-/** The scale's hours as `hourStrip` cells (6:00 to 19:00 of the plan's day). */
+/** The scale's hours as `hourStrip` cells (0:00 to 23:00 of the plan's day). */
 export function rowRange(plan: DayPlan): { from: Date; to: Date } {
   const w = wallClock(plan.hikeStart);
   return { from: zonedDate(w.y, w.mo, w.d, SCALE_FROM_MIN / 60, 0), to: zonedDate(w.y, w.mo, w.d, SCALE_TO_MIN / 60 - 1, 30) };
 }
 
-/** What each hour cell of the row shows. Dark hours win over rain: a night hour of the hike is a ring. */
+/** What each hour cell of the row shows: always one per hour 0..23 (a clock-change day has 23 or 25 hours; the extra one is dropped). Dark hours win over rain: a night hour of the hike is a ring. */
 export function rowCells(plan: DayPlan, cells: HourCell[]): RowCell[] {
   const a = plan.hikeStart.getTime();
   const b = plan.hikeEnd.getTime();
   const bad = badHoursInSpan(cells, a, b);
-  return cells.map((c, i) => {
-    const mid = c.t + HOUR / 2;
+  const base = rowRange(plan).from.getTime();
+  return SCALE_HOURS.map((h) => {
+    const i = cells.findIndex((c) => wallClock(c.t).h === h);
+    const c = cells[i];
+    const t = c ? c.t : base + h * HOUR;
+    const mid = t + HOUR / 2;
     const dark = mid < plan.sunrise.getTime() || mid > plan.sunset.getTime();
-    const underHike = c.t < b && c.t + HOUR > a;
+    const underHike = t < b && t + HOUR > a;
     const state: CellState = underHike && dark ? "ring" : bad[i] === "danger" ? "storm" : bad[i] ? "rain" : "plain";
-    return { h: wallClock(c.t).h, t: c.t, kind: c.kind, dark, state };
+    return { h, t, kind: c?.kind ?? null, dark, state };
   });
 }
 
@@ -279,8 +315,6 @@ export interface KedyCardInput {
   now: Date;
   /** Sunrise and sunset of another day (the trailhead's); null where unknown. */
   sunFor: (iso: string) => { sunrise: Date; sunset: Date } | null;
-  /** A walk moved to another day still works there (no closure, daylight, ...). */
-  fits: (from: Date, to: Date) => boolean;
 }
 
 /** The wet part of a walk, in the words of its first and last hour. */
@@ -354,17 +388,11 @@ function clockDate(at: Date): string {
   return `${w.y}-${String(w.mo).padStart(2, "0")}-${String(w.d).padStart(2, "0")}`;
 }
 
-/** The day `offset` days from `iso`, for the better-day card. */
-function addDays(iso: string, n: number): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
-}
-
 /**
- * The selected card (the current choice) first, then up to two others: a drier time the same day (nearest
+ * The selected card (the current choice) first, then up to two others on the SAME day: a drier time (nearest
  * first, one that stays in daylight before one that ends in the dark: Peter's mockup shows the dark one with
- * its consequence), a drier day, then the choices made before. When you pick a card the one you leave stays on the
- * list, so the choice can be undone with a tap.
+ * its consequence), then the choices made before. When you pick a card the one you leave stays on the
+ * list, so the choice can be undone with a tap. Other days are the day tiles' job (dayTiles).
  */
 export function kedyCards(input: KedyCardInput): KedyCard[] {
   const { plan, forecast, now } = input;
@@ -393,10 +421,8 @@ export function kedyCards(input: KedyCardInput): KedyCard[] {
       const start = wetWalk(forecast.below, forecast.above, a, new Date(snapped + len)) ? raw : snapped;
       found.push({ c: { date, start: clock(new Date(start)) }, suggested: true });
     }
-    const better = betterDay(forecast.below, forecast.above, plan.hikeStart, plan.hikeEnd, now, { leadMin: lead / MIN, fits: input.fits });
-    if (better && better.offset < FORECAST_DAYS) found.push({ c: { date: addDays(date, better.offset), start: here.start, best: true }, suggested: true });
   }
-  for (const k of input.kept) found.push({ c: k, suggested: false });
+  for (const k of input.kept) if (k.date === date) found.push({ c: k, suggested: false });
 
   const seen = new Set([current.key]);
   const others: KedyCard[] = [];
@@ -471,3 +497,77 @@ export function summaryParts(plan: DayPlan): SummaryParts {
 
 /** A short word for the way: the labels over the bar's ends and the home word ("auto", "autobus", "vlak", "pešo"). */
 export type Way = "car" | "bus" | "train" | "foot";
+
+// ---------------------------------------------------------------------------------------------------------
+// Day tiles (Peter, 2026-11-12: the day choice blends in and people skip it, so it shows the weather of every day)
+
+export interface DayTile {
+  iso: string;
+  /** Dnes, Zajtra, or a plain date (the component writes it). */
+  when: "today" | "tomorrow" | "date";
+  /** The sky of that day's walk (same start time), null where the forecast does not reach. */
+  kind: SkyKind | null;
+  tempMax: number | null;
+  /** Rain in the walk, mm; null without a forecast. */
+  rainMm: number | null;
+  /** The forecast covers the walk and it has no rain, snow or storm. */
+  dry: boolean;
+  /** short: the walk would end too close to (or after) sunset that day; closed: a closure applies. Both show washed out. */
+  state: "ok" | "short" | "closed";
+  /** The driest day that works (ties: the earliest), shown with the "najlepšie" pill. */
+  best: boolean;
+  selected: boolean;
+}
+
+export interface DayTilesInput {
+  plan: DayPlan;
+  forecast: KedyForecast;
+  today: string;
+  now: Date;
+  /** Days to show from today: the forecast range. */
+  count: number;
+  sunFor: (iso: string) => { sunrise: Date; sunset: Date } | null;
+  closed: (iso: string) => boolean;
+}
+
+/**
+ * One tile per day from today to the end of the forecast: the weather of the walk at the chosen start time moved to that
+ * day, whether the day's light and closures allow it, and the best day. A day whose departure has already gone by is
+ * never "best"; a day with no forecast has no sky and is never "best" either.
+ */
+export function dayTiles(input: DayTilesInput): DayTile[] {
+  const { plan, forecast, today, now } = input;
+  const planDate = clockDate(plan.hikeStart);
+  const lead = leadMs(plan);
+  const tiles: DayTile[] = Array.from({ length: input.count }, (_, i) => {
+    const iso = addDaysIso(today, i);
+    const offset = daysBetween(planDate, iso);
+    const a = shiftDays(plan.hikeStart, offset);
+    const b = shiftDays(plan.hikeEnd, offset);
+    const below = forecast.below;
+    const report = below ? tripWeatherReport(below, forecast.above, a, b) : null;
+    const sum = below && report ? summarize(below, a, b) : null;
+    const sun = iso === planDate ? { sunrise: plan.sunrise, sunset: plan.sunset } : input.sunFor(iso);
+    const short = !!sun && b.getTime() > sun.sunset.getTime() - SAFE_MARGIN_MIN * MIN;
+    const closed = input.closed(iso);
+    return {
+      iso,
+      when: i === 0 ? "today" : i === 1 ? "tomorrow" : "date",
+      kind: sum ? skyKind(sum.symbol) : null,
+      tempMax: sum?.tempMax ?? null,
+      rainMm: sum?.rainMm ?? null,
+      dry: !!below && !!report && !wetWalk(below, forecast.above, a, b),
+      state: closed ? "closed" : short ? "short" : "ok",
+      best: false,
+      selected: iso === planDate,
+    } satisfies DayTile;
+  });
+  let best = -1;
+  tiles.forEach((tile, i) => {
+    const gone = shiftDays(plan.hikeStart, daysBetween(planDate, tile.iso)).getTime() - lead < now.getTime();
+    if (tile.state !== "ok" || tile.rainMm === null || gone) return;
+    if (best < 0 || tile.rainMm < tiles[best].rainMm!) best = i;
+  });
+  if (best >= 0 && tiles[best].dry) tiles[best].best = true;
+  return tiles;
+}

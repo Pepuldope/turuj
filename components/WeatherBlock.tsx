@@ -1,17 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { SAFE_MARGIN_MIN } from "@/lib/dayPlan";
 import type { DayPlan } from "@/lib/dayPlan";
 import { useCachedJson } from "@/lib/useDriveRoute";
-import { isoDate } from "@/lib/days";
-import { activeClosures } from "@/lib/closures";
-import { getSunTimes } from "@/lib/sun";
-import type { SkyKind } from "@/lib/weather";
-import { FORECAST_DAYS, betterDay } from "@/lib/weather";
-import type { BetterDay, TripWeatherReport, WeatherForecast } from "@/lib/weather";
-import { badSkySvg, hourSkySvg } from "@/lib/weatherIcons";
-import type { Closure, LatLng } from "@/lib/types";
+import { FORECAST_DAYS } from "@/lib/weather";
+import type { TripWeatherReport, WeatherForecast } from "@/lib/weather";
+import type { LatLng } from "@/lib/types";
 import { decimal, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 
@@ -41,54 +35,6 @@ export function useTripWeather(plan: DayPlan | null, start: LatLng | null, goal:
   const below = useCachedJson<WeatherForecast>(start ? url(start, startEle) : null);
   const above = useCachedJson<WeatherForecast>(inRange && goal?.ele ? url(goal, goal.ele) : null);
   return { below: inRange ? below.data : null, above: above.data, loading: inRange && below.status === "loading", strip: below.data };
-}
-
-/**
- * The nearest day with a dry walk at the same clock time, when the planned walk is wet or stormy (WeatherReport's
- * tip, and the one-line weather above the steps). Another day keeps the clock time, so it is checked again:
- * shorter light in autumn (a whole hour across the clock change), a closure starting that day, a departure already gone.
- */
-export function findBetterDay(plan: DayPlan, weather: TripWeather, sunAt: LatLng | null, closures: Closure[], now: Date): BetterDay | null {
-  if (!weather.below) return null;
-  const lead = plan.hikeStart.getTime() - plan.segments[0].start.getTime();
-  const fits = (a: Date, b: Date) => {
-    const iso = isoDate(a);
-    if (activeClosures(closures, iso).length > 0) return false;
-    if (!sunAt) return true;
-    const [y, m, d] = iso.split("-").map(Number);
-    const sun = getSunTimes(new Date(Date.UTC(y, m - 1, d)), sunAt.lat, sunAt.lon);
-    return !!sun && b.getTime() <= sun.sunset.getTime() - SAFE_MARGIN_MIN * 60000;
-  };
-  return betterDay(weather.below, weather.above, plan.hikeStart, plan.hikeEnd, now, { leadMin: lead / 60000, fits });
-}
-
-const BAD_KIND: Partial<Record<SkyKind, Parameters<typeof badSkySvg>[0]>> = {
-  lightrain: "rain",
-  rain: "rain",
-  heavyrain: "rain",
-  sleet: "sleet",
-  lightsnow: "snow",
-  snow: "snow",
-  heavysnow: "snow",
-  fog: "fog",
-  thunder: "thunder",
-};
-
-/** A sky as a glyph: wet, foggy and stormy skies coloured, sun in the sun yellow, cloud grey. */
-export function SkyGlyph({ kind, size }: { kind: SkyKind; size: number }) {
-  const bad = BAD_KIND[kind];
-  const color = kind === "clear" || kind === "fair" || kind === "partly" ? "var(--sun)" : "var(--muted)";
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width={size}
-      height={size}
-      className="shrink-0"
-      style={{ color }}
-      aria-hidden="true"
-      dangerouslySetInnerHTML={{ __html: bad ? badSkySvg(bad, false) : hourSkySvg(kind) }}
-    />
-  );
 }
 
 /** "Môže pršať 8:00–10:00 (mierne, do 0,8 mm/h). Vezmite si nepremokavú bundu." Also the warnings recap's line. The span never breaks at its dash (word joiners). */

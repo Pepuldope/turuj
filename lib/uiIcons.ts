@@ -47,9 +47,9 @@ export const UI_ICON = {
   menu: '<path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
   globe: '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
   logout: '<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
-  // Sun on the horizon with an arrow (the Kedy step's sunrise and sunset marks, 2026-11-12).
-  sunrise: '<path d="M12 9V3.2M9.4 5.8 12 3.2l2.6 2.6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 19a5.5 5.5 0 0 1 11 0M3 21.5h18M4.3 13.8l1.6 1.4M19.7 13.8l-1.6 1.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
-  sunset: '<path d="M12 3.2V9M9.4 6.4 12 9l2.6-2.6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 19a5.5 5.5 0 0 1 11 0M3 21.5h18M4.3 13.8l1.6 1.4M19.7 13.8l-1.6 1.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+  // The Kedy step's sunrise and sunset marks (Peter picked option 1, 2026-11-12): the sun's half disc is a fill in --sun.
+  sunrise: '<path d="M3 18h18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 18a5 5 0 0 1 10 0z" style="fill:var(--sun)" stroke="none"/><path d="M7 18a5 5 0 0 1 10 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 6v2M5.6 9.6l1.4 1.4M18.4 9.6 17 11M2.5 14h1.6M20 14h1.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  sunset: '<path d="M3 18h18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 18a3.5 3.5 0 0 1 7 0z" style="fill:var(--sun)" stroke="none"/><path d="M8.5 18a3.5 3.5 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 21h12" opacity=".5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
 } as const;
 
 export type UiIconName = keyof typeof UI_ICON;

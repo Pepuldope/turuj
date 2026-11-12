@@ -113,27 +113,21 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
   ));
 }
 
-/** One small pill: the route fits the day's light, needs an early start, or is too long for the day. */
+/** One small note: the route fits the day's light, needs an early start, or is too long for the day. */
 function DayNote({ note, dayWord }: { note: RouteNote; dayWord: string }) {
   const t = useT();
-  const base = "mt-1.5 flex w-fit items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[12.5px] leading-tight font-semibold";
-  if (note.kind === "ok") {
-    return (
-      <span className={`${base} bg-[var(--ok-bg)] text-[var(--ok)]`}>
-        <UiIcon name="check" size={14} />
-        {t("stihnete za svetla")}
-      </span>
-    );
-  }
+  // A note, not a warning (DESIGN-BRIEF §2, Peter 2026-11-12): plain muted text with a clock, no colour, no sign.
   return (
-    <span className={`${base} bg-[var(--warn-bg)] text-[var(--warn)]`}>
-      <UiIcon name="warn" size={14} />
+    <span className="mt-1.5 flex items-center gap-1 text-[12.5px] leading-tight text-[var(--muted)]">
+      <UiIcon name="clock" size={14} />
       <span>
-        {note.kind === "too-long" ? (
+        {note.kind === "ok" ? (
+          t("stihnete za svetla")
+        ) : note.kind === "too-long" ? (
           t("na {day} pridlhá", { day: dayWord })
         ) : (
           <>
-            {t("dlhá, túru začnite do")}&nbsp;<span className="font-data">{note.latest.replace(/^0/, "")}</span>
+            {t("dlhá · začnite do")}&nbsp;<span className="font-data">{note.latest.replace(/^0/, "")}</span>
           </>
         )}
       </span>

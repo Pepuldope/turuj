@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import { planDay } from "@/lib/dayPlan";
 import { hourStrip } from "@/lib/hourStrip";
 import {
+  VISIBLE_HOURS,
   barEnds,
   barSegments,
+  darkSpans,
+  dayTiles,
   dayBand,
   dayMinutes,
   dryFix,
@@ -52,16 +55,19 @@ const input = (plan = planFor("08:00"), kept: KedyCardInput["kept"] = []): KedyC
   kept,
   now: at(12, 12),
   sunFor: () => null,
-  fits: () => true,
 });
 
 describe("the fixed scale", () => {
-  it("puts 6:00 at the left and 20:00 at the right, and clamps what lies outside", () => {
-    expect(scalePos(360)).toBe(0);
-    expect(scalePos(1200)).toBe(1);
-    expect(scalePos(540)).toBeCloseTo(3 / 14);
-    expect(scalePos(300)).toBe(0);
-    expect(scalePos(1300)).toBe(1);
+  it("covers the whole day: 0:00 at the left, 24:00 at the right, clamped beyond", () => {
+    expect(scalePos(0)).toBe(0);
+    expect(scalePos(1440)).toBe(1);
+    expect(scalePos(480)).toBeCloseTo(1 / 3);
+    expect(scalePos(-30)).toBe(0);
+    expect(scalePos(1500)).toBe(1);
+  });
+  it("keeps every hour as wide as on the old 6-20 scale: the track is 24/14 of the card", () => {
+    expect(VISIBLE_HOURS).toBe(14);
+    expect(scalePos(61) - scalePos(1)).toBeCloseTo(1 / 24);
   });
   it("counts minutes from the day of a reference instant, a later day past 1440", () => {
     expect(dayMinutes(at(13, 8, 5), at(13, 0))).toBe(485);
@@ -112,16 +118,16 @@ describe("the trip bar", () => {
   });
   it("does not move the scale with the chosen time", () => {
     // The same clock time is always the same place; only the boxes move.
-    expect(scalePos(8 * 60)).toBeCloseTo(2 / 14);
+    expect(scalePos(8 * 60)).toBeCloseTo(1 / 3);
     expect(barSegments(planFor("10:00"), strip)[1].left).toBeGreaterThan(barSegments(plan, strip)[1].left);
   });
 });
 
 describe("the hour row", () => {
-  it("has 14 hours, 6 to 19, and rain hours of the hike filled", () => {
+  it("has one cell for each of the 24 hours, and rain hours of the hike filled", () => {
     const plan = planFor("08:00");
     const cells = rowCells(plan, hourStrip(forecast, rowRange(plan), plan.segments[0].start, plan.hikeStart, plan.hikeEnd, plan.segments[2].end));
-    expect(cells.map((c) => c.h)).toEqual(Array.from({ length: 14 }, (_, i) => 6 + i));
+    expect(cells.map((c) => c.h)).toEqual(Array.from({ length: 24 }, (_, i) => i));
     expect(cells.filter((c) => c.state === "rain").map((c) => c.h)).toEqual([8, 9]);
     expect(cells.filter((c) => c.state === "ring")).toEqual([]);
   });
@@ -163,35 +169,30 @@ describe("the latest start", () => {
 });
 
 describe("the option cards", () => {
-  it("offers the current choice, a dry time later the same day and the nearest dry day", () => {
+  it("offers the current choice and a dry time later the same day (other days are the day tiles)", () => {
     const cards = kedyCards(input());
     expect(cards.map((c) => [c.date, c.start, c.selected])).toEqual([
       [DAY, "08:00", true],
       [DAY, "10:00", false],
-      ["2026-11-14", "08:00", false],
     ]);
     expect(cards[0].wet).toMatchObject({ kind: "sleet", atStart: true });
     expect(cards[1].wet).toBeNull();
     expect(cards[1].afterSunset).toBe(true);
     expect(cards[1].homeText).toBe("18:05");
-    expect(cards[2].best).toBe(true);
-    expect(cards[2].tempMin).toBe(2);
     expect(cards[0].skies.length).toBe(4);
   });
   it("keeps the card you left, so the choice can be undone (mockup M1b)", () => {
     const first = kedyCards(input());
     const kept = keptAfterPick(first, first[1]);
-    expect(kept.map((k) => [k.date, k.start])).toEqual([[DAY, "08:00"], ["2026-11-14", "08:00"]]);
+    expect(kept.map((k) => [k.date, k.start])).toEqual([[DAY, "08:00"]]);
     const after = kedyCards(input(planFor("10:00"), kept));
     expect(after.map((c) => [c.date, c.start, c.selected])).toEqual([
       [DAY, "10:00", true],
       [DAY, "08:00", false],
-      ["2026-11-14", "08:00", false],
     ]);
     expect(after[1].wet?.atStart).toBe(true);
     expect(after[1].homeText).toBe("16:05");
     expect(after[1].afterSunset).toBe(false);
-    expect(after[2].best).toBe(true);
   });
   it("offers only the current choice without a forecast", () => {
     const cards = kedyCards({ ...input(), forecast: { below: null, above: null } });
@@ -199,10 +200,9 @@ describe("the option cards", () => {
     expect(cards[0].known).toBe(false);
     expect(cards[0].skies).toEqual([]);
   });
-  it("offers the way out of rain as a tap: the drier time first, else the drier day", () => {
+  it("offers the way out of rain as a tap: the drier time the same day", () => {
     const cards = kedyCards(input());
     expect(dryFix(cards)).toEqual({ kind: "time", start: "10:00", way: "dry" });
-    expect(dryFix(cards.filter((c) => c.sameDay === false || c.selected))).toEqual({ kind: "day", date: "2026-11-14", start: "08:00" });
     expect(dryFix([cards[0]])).toBeNull();
   });
 });
@@ -215,5 +215,58 @@ describe("the folded header", () => {
   it("has no home time when there is no way back", () => {
     const p = planDay({ date: DAY, start: "08:00", driveMin: null, hikeMin: 430, location: TATRY })!;
     expect(summaryParts(p).home).toBeNull();
+  });
+});
+
+describe("the night tint of the bar", () => {
+  it("is one span from sunset to home across the legs, none when the trip ends by day", () => {
+    const late = planFor("10:00");
+    const spans = darkSpans(late);
+    expect(spans).toHaveLength(1);
+    expect(spans[0].outer).toBe("right");
+    expect(spans[0].left).toBeCloseTo(scalePos(dayMinutes(late.sunset, late.hikeStart)));
+    expect(spans[0].left + spans[0].width).toBeCloseTo(scalePos(18 * 60 + 5));
+    expect(darkSpans(planDay({ date: DAY, start: "08:00", driveMin: 55, hikeMin: 300, location: TATRY })!)).toEqual([]);
+  });
+  it("also covers a start before sunrise, rounded at the left", () => {
+    const early = planFor("06:00");
+    const spans = darkSpans(early);
+    expect(spans[0].outer).toBe("left");
+    expect(spans[0].left).toBeCloseTo(scalePos(5 * 60 + 5));
+  });
+});
+
+describe("the day tiles", () => {
+  const tiles = (plan = planFor("08:00"), over: Partial<Parameters<typeof dayTiles>[0]> = {}) =>
+    dayTiles({ plan, forecast: { below: forecast, above: null }, today: "2026-11-12", now: at(12, 12), count: 9, sunFor: () => null, closed: () => false, ...over });
+  it("has one tile per day from today, the picked one selected", () => {
+    const t = tiles();
+    expect(t).toHaveLength(9);
+    expect(t.map((x) => x.when).slice(0, 3)).toEqual(["today", "tomorrow", "date"]);
+    expect(t.find((x) => x.selected)!.iso).toBe(DAY);
+  });
+  it("shows the walk's weather at the chosen start on each day, and marks the wet one", () => {
+    const t = tiles();
+    expect(t[1].kind).toBe("sleet");
+    expect(t[1].dry).toBe(false);
+    expect(t[2].kind).toBe("partly");
+    expect(t[2].dry).toBe(true);
+    expect(t[2].tempMax).toBe(2);
+    expect(t[7].kind).toBeNull(); // past the forecast
+  });
+  it("marks the driest day that works as best: the earliest of the dry ones, never one already gone or without a forecast", () => {
+    const t = tiles();
+    // Today 12 Nov 8:00 is already behind (it is noon), the 13th is wet: the 14th is the first dry day.
+    expect(t.filter((x) => x.best).map((x) => x.iso)).toEqual(["2026-11-14"]);
+  });
+  it("washes out a day too short for the walk, or closed, and never picks it as best", () => {
+    const t = tiles(planFor("08:00"), { sunFor: (iso) => (iso === "2026-11-14" ? { sunrise: at(14, 6, 50), sunset: at(14, 15, 0) } : null), closed: (iso) => iso === "2026-11-15" });
+    expect(t[2].state).toBe("short");
+    expect(t[3].state).toBe("closed");
+    expect(t.filter((x) => x.best).map((x) => x.iso)).toEqual(["2026-11-16"]);
+  });
+  it("has no best day when every day is wet", () => {
+    const rainy: WeatherForecast = { updated: "", steps: forecast.steps.map((s) => ({ ...s, rain: 0.5, symbol: "rain" })) };
+    expect(tiles(planFor("08:00"), { forecast: { below: rainy, above: null } }).some((x) => x.best)).toBe(false);
   });
 });

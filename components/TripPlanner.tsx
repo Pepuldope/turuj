@@ -34,7 +34,6 @@ import type { ShareInfo } from "@/components/ShareButton";
 import { PlanStep, PlanStepsProvider, PlanWarningsRecap, StepInfo } from "@/components/PlanStep";
 import type { StepDef } from "@/components/PlanStep";
 import { ParkingOptions, feeLabel, summaryWalk } from "@/components/ParkingBlock";
-import { PlanWeatherLine } from "@/components/PlanWeatherLine";
 import { NoStartNote, PlanStartAsk } from "@/components/PlanStartAsk";
 import { StopsRow } from "@/components/StopsRow";
 import { SunArc } from "@/components/SunArc";
@@ -452,8 +451,6 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
         <h2 className="text-[1.35rem] leading-tight font-bold">{t("Váš plán")}</h2>
         {/* Quiet once there is a start (Peter, 2026-11-11); without one a card asks for it (2026-11-12). */}
         <PlanStartAsk />
-        {/* The walk's weather first: the steps below decide the day around it (Peter, 2026-11-12). */}
-        <PlanWeatherLine plan={plan} weather={weather} dayWord={dayWord} sunAt={sun} closures={closures} />
 
         <PlanDayProvider value={planDay}>
         <PlanStepsProvider steps={steps} resultId="vas-den">
@@ -648,7 +645,7 @@ function lateText(
 ): string {
   const t = (sk: string, vars?: Record<string, string>) => tr(lang, sk, vars);
   if (o.tooLong && o.noTrain) return t("Vlakom to v tento deň za svetla nestihnete: žiadny vlak nepríde dosť skoro. Skúste autobus, kratšiu trasu alebo iný deň.");
-  if (o.tooLong) return t("V tento deň je táto túra na denné svetlo pridlhá. Skúste deň s dlhším svetlom alebo si vyberte kratšiu trasu.");
+  if (o.tooLong) return t("Na tento deň je túra pridlhá, za svetla ju nestihnete. Skúste deň s dlhším svetlom alebo kratšiu trasu.");
   if (o.latestPassed) return t("Na dnes je to už neskoro, späť by ste boli po tme. Skúste zajtra ráno.");
   const leave = t("{start} najneskôr o {time}.", { start: o.startWord, time: o.latest });
   if (verdict === "tight") return t("Stihnete to tesne pred západom slnka. Pre rezervu {start} najneskôr o {time}.", { start: `${o.startWord.charAt(0).toLowerCase()}${o.startWord.slice(1)}`, time: o.latest });

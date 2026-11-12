@@ -57,8 +57,8 @@ export function PlanStartAsk() {
 }
 
 /**
- * One muted line at the top of a step while there is no start (Peter, 2026-11-12: every step's data depends on it a little):
- * what that step can't work out (already translated by the caller), and a link up to the card that asks.
+ * A box at the top of a step while there is no start (Peter, 2026-11-12: every step's data depends on it a little):
+ * what that step can't work out (already translated by the caller), and a button up to the card that asks.
  */
 export function NoStartNote({ children }: { children: string }) {
   const { ready, start } = useUserLocation();
@@ -71,16 +71,16 @@ export function NoStartNote({ children }: { children: string }) {
     card.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
   };
   return (
-    <p className="flex items-start gap-1.5 text-sm text-[var(--muted)]">
+    <div className="flex items-start gap-3 rounded-xl bg-[var(--accent-soft)] p-3">
       <span className="mt-0.5 shrink-0 text-[var(--accent)]">
-        <UiIcon name="pin" size={14} />
+        <UiIcon name="pin" size={18} />
       </span>
-      <span>
-        {children}{" "}
-        <button type="button" onClick={toCard} className="cursor-pointer font-semibold text-[var(--accent)] hover:underline focus-visible:outline-2 focus-visible:outline-[var(--accent)]">
-          {t("Zadať, odkiaľ vyrážate")} ›
+      <div className="flex min-w-0 flex-col items-start gap-2">
+        <p className="text-sm text-[var(--foreground)]">{children}</p>
+        <button type="button" onClick={toCard} className="min-h-10 cursor-pointer rounded-full bg-[var(--accent)] px-3 py-1.5 text-sm font-bold text-[var(--accent-contrast)] transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]">
+          {t("Zadať štart")}
         </button>
-      </span>
-    </p>
+      </div>
+    </div>
   );
 }

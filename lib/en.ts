@@ -292,7 +292,7 @@ export const EN: Record<string, string> = {
   "Späť by ste boli po západe slnka.": "You'd be back after sunset.",
   "Túra začína pred východom slnka, vezmite si čelovku.": "The hike starts before sunrise, take a head torch.",
   "To je uprostred noci, cesta by začínala po tme. Nemysleli ste ráno?": "That's the middle of the night, the trip would start in the dark. Did you mean the morning?",
-  "V tento deň je táto túra na denné svetlo pridlhá. Skúste deň s dlhším svetlom alebo si vyberte kratšiu trasu.": "This hike is too long for the daylight on this day. Try a day with more light or a shorter route.",
+  "Na tento deň je túra pridlhá, za svetla ju nestihnete. Skúste deň s dlhším svetlom alebo kratšiu trasu.": "This hike is too long for the daylight on this day. Try a day with more light or a shorter route.",
   "Vyrazte": "Leave",
   "vyrazte do": "leave by",
   "Začnite túru": "Start the hike",
@@ -1123,22 +1123,14 @@ export const EN: Record<string, string> = {
   "Dobré vedieť pred výletom": "Good to know before you go",
   "Zatiaľ žiadna nevybraná": "None picked yet",
   "Prestávka na obed? Pridajte ju nižšie": "Lunch break? Add it below",
-  // Plan order (2026-11-12): the weather line above the steps and the route rows' day notes.
-  "{day}: {text}": "{day}: {text}",
-  "lepšie {day}": "better {day}",
-  "{what} do {time}": "{what} until {time}",
-  "{what} od {time}": "{what} from {time}",
-  "{what} {when}": "{what} {when}",
-  "na vrchole {t} °C": "{t} °C at the summit",
-  "mráz, {t} °C": "frost, {t} °C",
+  // Plan order (2026-11-12): the route rows' day notes.
   "na {day} pridlhá": "too long for {day}",
   "dnes": "today",
   "zajtra": "tomorrow",
-  "dlhá, túru začnite do": "long, start the walk by",
+  "dlhá · začnite do": "long · start by",
   // No start yet (2026-11-12): the plan's card and the line in every step.
   "Dopočítame cestu autom, kedy vyraziť a kedy budete doma.": "We'll work out the drive, when to leave and when you'll be home.",
   "Vybrať mesto…": "Pick a town…",
-  "Zadať, odkiaľ vyrážate": "Set where you're starting from",
   "Časy trás platia od parkoviska, cestu k nemu bez štartu nepočítame.": "Route times count from the car park; without a start we can't work out the way there.",
   "Návrat počítame bez cesty autom.": "We work out the return without the drive.",
   "Bez štartu nepočítame cestu autom ani autobusom.": "Without a start we can't work out the journey by car or bus.",
@@ -1171,4 +1163,8 @@ export const EN: Record<string, string> = {
   "auto": "car",
   "autobus": "bus",
   "pešo": "on foot",
+  // Kedy day tiles (components/KedyDays.tsx), 2026-11-12.
+  "Ktorý deň?": "Which day?",
+  "krátky deň": "short day",
+  "uzávera": "closure",
 };

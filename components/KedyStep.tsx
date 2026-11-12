@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
-import { FilterChips } from "@/components/FilterChips";
+import type { CSSProperties, PointerEvent, ReactNode, RefObject } from "react";
+import { KedyDays } from "@/components/KedyDays";
+import { ScrollStrip } from "@/components/ScrollStrip";
 import { UiIcon } from "@/components/UiIcon";
 import { wetText } from "@/components/WeatherBlock";
 import type { TripWeather } from "@/components/WeatherBlock";
-import { SAFE_MARGIN_MIN } from "@/lib/dayPlan";
 import type { DayPlan } from "@/lib/dayPlan";
 import { activeClosures } from "@/lib/closures";
 import { addDaysIso, dayInSentence, isoDate, longDay, shortDate } from "@/lib/days";
@@ -16,12 +16,15 @@ import type { HourCell } from "@/lib/hourStrip";
 import { useLang, useT } from "@/lib/i18n";
 import type { Lang } from "@/lib/lang";
 import {
-  SCALE_FROM_MIN,
   SCALE_HOURS,
   SCALE_TO_MIN,
+  VISIBLE_HOURS,
   barEnds,
   barSegments,
+  darkSpans,
   dayBand,
+  dayMinutes,
+  dayTiles,
   dryFix,
   hhmmToMin,
   keptAfterPick,
@@ -40,7 +43,7 @@ import { getSunTimes } from "@/lib/sun";
 import { useTripSettings } from "@/lib/tripSettings";
 import type { Closure, LatLng, TransitMode } from "@/lib/types";
 import type { BadSky, SkyKind } from "@/lib/weather";
-import { tripWeatherReport, weatherNotes } from "@/lib/weather";
+import { FORECAST_DAYS, tripWeatherReport, weatherNotes } from "@/lib/weather";
 import { badSkySvg, hourSkySvg, nightSkySvg } from "@/lib/weatherIcons";
 import { clock, clockShort } from "@/lib/zoned";
 
@@ -111,23 +114,13 @@ function sunForDay(at: LatLng | null) {
   };
 }
 
-function dayFits(p: KedyProps) {
-  return (a: Date, b: Date) => {
-    const iso = isoDate(a);
-    if (activeClosures(p.closures ?? [], iso).length > 0) return false;
-    if (!p.sun) return true;
-    const [y, m, d] = iso.split("-").map(Number);
-    const sun = getSunTimes(new Date(Date.UTC(y, m - 1, d)), p.sun.lat, p.sun.lon);
-    return !!sun && b.getTime() <= sun.sunset.getTime() - SAFE_MARGIN_MIN * MIN;
-  };
-}
-
 /**
  * Each warning on its own (Peter, 2026-11-12: never rain, frost and after-dark in one box), with its cause and,
  * where there is one, its way out as a tap. Nothing the old step or the recap showed is dropped: the late start,
  * a start before sunrise, the TANAP daylight rule, rain or snow, storms, wind and frost. `cards` null: only the list is needed.
  */
-export function kedyWarnings(p: KedyProps, t: T, lang: Lang, cards: KedyCard[] | null): KedyWarning[] {
+/** `dayFix`: the best dry day from the day tiles, offered when no drier time the same day exists. */
+export function kedyWarnings(p: KedyProps, t: T, lang: Lang, cards: KedyCard[] | null, dayFix: WarnFix | null = null): KedyWarning[] {
   const plan = p.plan;
   if (!plan || p.loading) return [];
   const out: KedyWarning[] = [];
@@ -160,7 +153,7 @@ export function kedyWarnings(p: KedyProps, t: T, lang: Lang, cards: KedyCard[] |
     const from = p.transit ? plan.segments[0].start : plan.hikeStart;
     const to = p.transit ? plan.segments[plan.segments.length - 1].end : plan.hikeEnd;
     const wet = tripWeatherReport(below, p.weather.above, from, to, { from: plan.hikeStart, to: plan.hikeEnd }, lang)?.wet ?? null;
-    const dry = cards ? dryFix(cards) : null;
+    const dry = cards ? (dryFix(cards) ?? dayFix) : null;
     if (wet && !stormy) out.push({ key: "wet", tone: "warn", text: wetText(wet, lang), fix: dry });
     notes.forEach((n, i) => out.push({ key: `weather-${i}`, tone: n.strong ? "danger" : "warn", text: n.text, fix: n.strong ? dry : null }));
   }
@@ -356,25 +349,44 @@ function temps(a: number, b: number, lang: Lang): string {
 // ---------------------------------------------------------------------------------------------------------
 // The control: field and slider
 
-/** The start: a time field and, right under it, a plain slider on the fixed 6:00-20:00 scale (the row's own). */
-function StartControl({ plan, onSet, onTyped }: { plan: DayPlan; onSet: (hhmm: string) => void; onTyped?: (hhmm: string) => void }) {
+/**
+ * The start: a time field (above the track), and the track: ONE sideways-scrolling strip holding the slider, the trip bar and
+ * the hour row on the same 0:00-24:00 scale, so they stay aligned while you swipe (Peter, 2026-11-12). About 14 hours fit on
+ * screen, as before; it opens with the trip (leaving an hour earlier) at the left edge.
+ */
+function StartBlock({
+  plan,
+  strip,
+  cells,
+  way,
+  late,
+  onSet,
+  onTyped,
+}: {
+  plan: DayPlan;
+  strip: HourCell[] | null;
+  cells: RowCell[];
+  way: ReturnType<typeof wayOf>;
+  late: boolean;
+  onSet: (hhmm: string) => void;
+  onTyped?: (hhmm: string) => void;
+}) {
   const t = useT();
   const current = clock(plan.hikeStart);
   const [typed, setTyped] = useState<string | null>(null);
   const [dragged, setDragged] = useState<string | null>(null);
   const shown = dragged ?? typed ?? current;
-  const min = Math.min(SCALE_TO_MIN, Math.max(SCALE_FROM_MIN, hhmmToMin(shown)));
-  const pos = scalePos(min);
-  const label = `${t("Začiatok túry")} ${clockShort(plan.hikeStart)}`;
-  const releaseSlider = () => setDragged(null);
+  const min = Math.min(SCALE_TO_MIN - 5, Math.max(0, hhmmToMin(shown)));
   const field = useRef<HTMLInputElement>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  const leaveMin = dayMinutes(plan.segments[0].start, plan.hikeStart);
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between gap-3">
         <label htmlFor="kedy-start" className="shrink-0 text-[15px] font-bold whitespace-nowrap">
           {t("Začiatok túry")}
         </label>
-        <span className="relative min-w-0 max-w-[9.5rem] flex-1">
+        <span className="relative max-w-[9.5rem] min-w-0 flex-1">
           <input
             ref={field}
             id="kedy-start"
@@ -388,8 +400,8 @@ function StartControl({ plan, onSet, onTyped }: { plan: DayPlan; onSet: (hhmm: s
               onTyped?.(e.target.value);
             }}
             onBlur={() => setTyped(null)}
-                        // The browser's own clock button is hidden (it was a second icon next to ours); ours opens the same picker.
-            className="font-data w-full min-w-0 rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] py-1.5 pr-11 pl-3 text-[1.45rem] min-[380px]:text-[1.6rem] leading-tight font-semibold focus-visible:outline-2 focus-visible:outline-[var(--accent)] [&::-webkit-calendar-picker-indicator]:hidden"
+            // The browser's own clock button is hidden (it was a second icon next to ours); ours opens the same picker.
+            className="font-data w-full min-w-0 rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] py-1.5 pr-11 pl-3 text-[1.45rem] leading-tight font-semibold focus-visible:outline-2 focus-visible:outline-[var(--accent)] min-[380px]:text-[1.6rem] [&::-webkit-calendar-picker-indicator]:hidden"
           />
           <button
             type="button"
@@ -408,33 +420,124 @@ function StartControl({ plan, onSet, onTyped }: { plan: DayPlan; onSet: (hhmm: s
           </button>
         </span>
       </div>
-      {/* The slider sits in the row's own coordinates: the native input overhangs 16 px each side (its 32 px thumb), so 6:00 is the row's left edge. */}
-      <div className="relative h-11">
-        <span aria-hidden="true" className="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-[var(--border)]" />
-        <span aria-hidden="true" className="absolute top-1/2 left-0 h-2 -translate-y-1/2 rounded-full bg-[var(--accent)]" style={{ width: `${pos * 100}%` }} />
-        <input
-          type="range"
-          min={SCALE_FROM_MIN}
-          max={SCALE_TO_MIN}
-          step={5}
-          value={min}
-          aria-label={t("Začiatok túry")}
-          aria-valuetext={label}
-          onChange={(e) => {
-            const v = minToHhmm(snapTime(Number(e.target.value) * MIN, 5) / MIN);
-            setDragged(v);
-            onSet(v);
-          }}
-          onPointerUp={releaseSlider}
-          onKeyUp={releaseSlider}
-          onBlur={releaseSlider}
-          className="kedy-range peer absolute top-0 left-[-16px] z-10 w-[calc(100%+32px)] opacity-0"
-        />
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full border-[5px] border-[var(--accent)] bg-[var(--card-bg)] shadow-[var(--shadow-card)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent)]"
-          style={{ left: `${pos * 100}%` }}
-        />
+      {/* The strip reaches into the card's padding (so a thumb at the day's ends is whole); the track is 24/14 of the card's inner width. */}
+      <ScrollStrip scrollerRef={scroller} className="-mx-4 px-4" startAt={(el) => scalePos(leaveMin - 60) * ((el.firstElementChild as HTMLElement | null)?.offsetWidth ?? 0)}>
+        <div className="relative" style={{ width: `${(24 / VISIBLE_HOURS) * 100}%` }}>
+          <TrackSlider
+            min={min}
+            valueText={`${t("Začiatok túry")} ${clockShort(plan.hikeStart)}`}
+            label={t("Začiatok túry")}
+            scroller={scroller}
+            onChange={(v) => {
+              setDragged(v);
+              onSet(v);
+            }}
+            onRelease={() => setDragged(null)}
+          />
+          <BarLabels plan={plan} way={way} late={late} />
+          <TripBar plan={plan} strip={strip ?? []} way={way} />
+          <div className="mt-2">
+            <HourRow plan={plan} cells={cells} />
+          </div>
+        </div>
+      </ScrollStrip>
+    </div>
+  );
+}
+
+/**
+ * The slider in the track's own coordinates. A swipe on the track scrolls it; only a drag on the thumb changes the time
+ * (the thumb has touch-action none and captures the pointer). The native range stays for keyboard and screen readers: hidden
+ * and not pointer-reachable, its focus ring is drawn on the thumb. Near the visible edge a drag scrolls the track along.
+ */
+function TrackSlider({
+  min,
+  label,
+  valueText,
+  scroller,
+  onChange,
+  onRelease,
+}: {
+  min: number;
+  label: string;
+  valueText: string;
+  scroller: RefObject<HTMLDivElement | null>;
+  onChange: (hhmm: string) => void;
+  onRelease: () => void;
+}) {
+  const pos = scalePos(min);
+  const rail = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ dx: number; x: number; raf: number } | null>(null);
+  const timeAt = (x: number, dx: number) => {
+    const r = rail.current!.getBoundingClientRect();
+    const f = Math.min(1, Math.max(0, (x - dx - r.left) / r.width));
+    return minToHhmm(Math.min(SCALE_TO_MIN - 5, snapTime(f * SCALE_TO_MIN * MIN, 5) / MIN));
+  };
+  const stop = () => {
+    const d = drag.current;
+    if (d) cancelAnimationFrame(d.raf);
+    drag.current = null;
+    onRelease();
+  };
+  useEffect(
+    () => () => {
+      if (drag.current) cancelAnimationFrame(drag.current.raf);
+    },
+    []
+  );
+  const tick = () => {
+    const d = drag.current;
+    const el = scroller.current;
+    if (!d || !el) return;
+    // 16 px in from the strip's edges (its padding) is where the track's visible part starts.
+    const r = el.getBoundingClientRect();
+    const dir = d.x < r.left + 16 + 32 ? -1 : d.x > r.right - 16 - 32 ? 1 : 0;
+    if (dir) {
+      el.scrollBy({ left: dir * 8 });
+      onChange(timeAt(d.x, d.dx));
+    }
+    d.raf = requestAnimationFrame(tick);
+  };
+  const down = (e: PointerEvent<HTMLDivElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const box = e.currentTarget.getBoundingClientRect();
+    drag.current = { dx: e.clientX - (box.left + box.width / 2), x: e.clientX, raf: 0 };
+    // Auto-scroll is movement the visitor did not ask for twice: not with reduced motion (they swipe the track instead).
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) drag.current.raf = requestAnimationFrame(tick);
+  };
+  const move = (e: PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d) return;
+    d.x = e.clientX;
+    onChange(timeAt(d.x, d.dx));
+  };
+  return (
+    <div className="relative h-11">
+      <div ref={rail} aria-hidden="true" className="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-[var(--border)]" />
+      <span aria-hidden="true" className="absolute top-1/2 left-0 h-2 -translate-y-1/2 rounded-full bg-[var(--accent)]" style={{ width: `${pos * 100}%` }} />
+      <input
+        type="range"
+        min={0}
+        max={SCALE_TO_MIN - 5}
+        step={5}
+        value={min}
+        aria-label={label}
+        aria-valuetext={valueText}
+        onChange={(e) => onChange(minToHhmm(Number(e.target.value)))}
+        onKeyUp={onRelease}
+        onBlur={onRelease}
+        className="peer pointer-events-none sr-only"
+      />
+      <div
+        aria-hidden="true"
+        onPointerDown={down}
+        onPointerMove={move}
+        onPointerUp={stop}
+        onPointerCancel={stop}
+        className="absolute top-1/2 z-10 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 cursor-grab touch-none place-items-center peer-focus-visible:[&>span]:outline-2 peer-focus-visible:[&>span]:outline-offset-2 peer-focus-visible:[&>span]:outline-[var(--accent)]"
+        style={{ left: `${pos * 100}%` }}
+      >
+        <span className="h-8 w-8 rounded-full border-[5px] border-[var(--accent)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]" />
       </div>
     </div>
   );
@@ -444,19 +547,21 @@ function StartControl({ plan, onSet, onTyped }: { plan: DayPlan; onSet: (hhmm: s
 // The trip bar (display only)
 
 const LEG_BG = "color-mix(in srgb, var(--accent) 24%, var(--card-bg))";
-const HATCH = "repeating-linear-gradient(135deg, var(--sun) 0 5px, color-mix(in srgb, var(--sun) 40%, var(--card-bg)) 5px 10px)";
+/** After dark: one night tint over every leg (70 % so the legs' colours still read), outlined in amber. */
+const NIGHT_TINT = "color-mix(in srgb, var(--sky-night) 70%, transparent)";
 
-function pieceStyle(tone: BarPiece["tone"], leg: boolean): CSSProperties {
+/** The colour of a piece of the bar and the ink of what is written on it. Rain is amber, a storm red; the dark part keeps its leg's colour (the night tint covers it) with light ink. */
+function pieceStyle(tone: BarPiece["tone"], leg: boolean): { background: string; color: string } {
+  const base = leg ? { background: LEG_BG, color: "var(--accent)" } : { background: "var(--accent)", color: "var(--accent-contrast)" };
   switch (tone) {
     case "dark":
-      // Hatched amber: after sunset (or before sunrise). Meaning, not decoration, so it stays a pattern.
-      return { background: HATCH, color: "var(--sky-night)" };
+      return { background: base.background, color: "var(--night-ink)" };
     case "rain":
       return { background: "var(--sun)", color: "var(--sky-night)" };
     case "storm":
       return { background: "var(--danger)", color: "var(--accent-contrast)" };
     default:
-      return leg ? { background: LEG_BG, color: "var(--accent)" } : { background: "var(--accent)", color: "var(--accent-contrast)" };
+      return base;
   }
 }
 
@@ -479,20 +584,44 @@ function Fit({ options }: { options: { minPx: number; node: ReactNode }[] }) {
   );
 }
 
+/**
+ * The legs of the day on the fixed scale, display only: the colours, then ONE night tint over everything after sunset (no seam
+ * where the hike meets the drive), then the icons and the walk's length on top.
+ */
 function TripBar({ plan, strip, way }: { plan: DayPlan; strip: HourCell[]; way: ReturnType<typeof wayOf> }) {
   const t = useT();
   const segs = barSegments(plan, strip);
+  const dark = darkSpans(plan);
   const hikeText = formatDuration(Math.round((plan.hikeEnd.getTime() - plan.hikeStart.getTime()) / MIN));
+  const box = (s: (typeof segs)[number], i: number) => ({
+    className: `absolute inset-y-0 flex overflow-hidden ${i === 0 ? "rounded-l-lg" : i === segs.length - 1 ? "rounded-r-lg" : ""}`,
+    style: { left: `${s.left * 100}%`, width: `${s.width * 100}%` } as CSSProperties,
+  });
   return (
     <div className="relative h-10 w-full" aria-hidden="true">
+      {segs.map((s, i) =>
+        s.width <= 0 ? null : (
+          <div key={`c-${s.kind}`} {...box(s, i)}>
+            {s.pieces.map((p, j) => (
+              <span key={j} className="min-w-0" style={{ background: pieceStyle(p.tone, s.kind !== "hike").background, width: `${(p.width / s.width) * 100}%` }} />
+            ))}
+          </div>
+        )
+      )}
+      {dark.map((d) => (
+        <div
+          key={d.outer}
+          className={`absolute inset-y-0 ${d.outer === "right" ? "rounded-r-lg" : "rounded-l-lg"}`}
+          style={{ left: `${d.left * 100}%`, width: `${d.width * 100}%`, background: NIGHT_TINT, boxShadow: "inset 0 0 0 1.5px var(--sun)" }}
+        />
+      ))}
       {segs.map((s, i) => {
         if (s.width <= 0) return null;
         const hike = s.kind === "hike";
         // The piece that carries the icon and the label: the widest one.
         const widest = s.pieces.reduce((best, p, j) => (p.width > (s.pieces[best]?.width ?? 0) ? j : best), 0);
-        const round = i === 0 ? "rounded-l-lg" : i === segs.length - 1 ? "rounded-r-lg" : "";
         return (
-          <div key={s.kind} className={`absolute inset-y-0 flex overflow-hidden ${round}`} style={{ left: `${s.left * 100}%`, width: `${s.width * 100}%` }}>
+          <div key={`i-${s.kind}`} {...box(s, i)}>
             {s.pieces.map((p, j) => {
               const wet = hike && (p.tone === "rain" || p.tone === "storm");
               const icon = wet ? (
@@ -510,7 +639,7 @@ function TripBar({ plan, strip, way }: { plan: DayPlan; strip: HourCell[]; way: 
                     ]
                   : [{ minPx: 28, node: icon }];
               return (
-                <span key={j} className="min-w-0 overflow-hidden" style={{ ...pieceStyle(p.tone, !hike), width: `${(p.width / s.width) * 100}%` }}>
+                <span key={j} className="min-w-0 overflow-hidden" style={{ color: pieceStyle(p.tone, !hike).color, width: `${(p.width / s.width) * 100}%` }}>
                   {(wet || j === widest) && <Fit options={options} />}
                 </span>
               );
@@ -596,8 +725,8 @@ function HourRow({ plan, cells }: { plan: DayPlan; cells: RowCell[] }) {
       </div>
       <div aria-hidden="true" className="relative h-12">
         {marks.map((m) => {
-          // Near the right edge the time goes to the left of the glyph, so it stays inside the card.
-          const flip = m.left > 0.78;
+          // At the track's right end the time goes to the left of the glyph, so it stays inside the track.
+          const flip = m.left > 0.92;
           return (
             <div key={m.kind} className="absolute top-0" style={{ left: `${m.left * 100}%` }}>
               <span className="absolute top-0 left-0 h-3 w-0.5 -translate-x-1/2 bg-[var(--sun)]" />
@@ -646,16 +775,29 @@ export function KedyBody(p: KedyProps) {
           kept: memo && memo.date === date ? memo.kept : [],
           now: new Date(),
           sunFor: sunForDay(p.sun),
-          fits: dayFits(p),
         })
       : [];
-  const warnings = kedyWarnings(p, t, lang, cards);
+  // One tile per day to the end of the forecast; the best dry day is also the way out of a wet walk (when no drier time exists).
+  const tiles =
+    plan && today
+      ? dayTiles({
+          plan,
+          forecast: { below: known ? p.weather.below : null, above: p.weather.above },
+          today,
+          now: new Date(),
+          count: FORECAST_DAYS,
+          sunFor: sunForDay(p.sun),
+          closed: (iso) => activeClosures(p.closures ?? [], iso).length > 0,
+        })
+      : [];
+  const bestDay = tiles.find((x) => x.best && !x.selected);
+  const warnings = kedyWarnings(p, t, lang, cards, plan && bestDay ? { kind: "day", date: bestDay.iso, start: clock(plan.hikeStart) } : null);
   // The hours of the scale with their forecast; the row, the bar's wet parts and the card all read from it.
   const strip =
     plan && p.weather.below
       ? hourStrip(p.weather.below, rowRange(plan), plan.segments[0].start, plan.hikeStart, plan.hikeEnd, plan.segments[plan.segments.length - 1].end)
       : null;
-  const cells = plan && strip ? rowCells(plan, strip) : null;
+  const cells = plan ? rowCells(plan, strip ?? []) : null;
 
   const setStart = (hhmm: string) => day?.setWalkStart(hhmm);
   const apply = (fix: WarnFix) => {
@@ -675,7 +817,7 @@ export function KedyBody(p: KedyProps) {
 
   return (
     <>
-      <FilterChips variant="trip" activeDate={date ?? undefined} dayWeather={p.dayWeather} />
+      {plan && tiles.length > 0 && <KedyDays tiles={tiles} current={date} />}
       {plan && cards.length ? (
         <div className="flex flex-col gap-2.5">
           {cards.map((card) => (
@@ -684,18 +826,8 @@ export function KedyBody(p: KedyProps) {
             <Card key={card.selected ? "selected" : card.key} card={card} today={today} onPick={() => pick(card)}>
               {card.selected && (
                 <>
-                  <StartControl plan={plan} onSet={setStart} onTyped={p.onTyped} />
-                  <div className="flex flex-col">
-                    {cells && <BarLabels plan={plan} way={way} late={homeAfterSunset} />}
-                    {strip && <TripBar plan={plan} strip={strip} way={way} />}
-                    {cells ? (
-                      <div className="mt-2">
-                        <HourRow plan={plan} cells={cells} />
-                      </div>
-                    ) : (
-                      <p className="text-sm text-[var(--muted)]">{p.weather.loading ? t("Načítavame predpoveď počasia…") : p.weather.strip ? t("Predpoveď na tento deň ešte nie je.") : ""}</p>
-                    )}
-                  </div>
+                  <StartBlock plan={plan} strip={strip} cells={cells!} way={way} late={homeAfterSunset} onSet={setStart} onTyped={p.onTyped} />
+                  {!strip && <p className="text-sm text-[var(--muted)]">{p.weather.loading ? t("Načítavame predpoveď počasia…") : p.weather.strip ? t("Predpoveď na tento deň ešte nie je.") : ""}</p>}
                   <Warnings warnings={warnings} onFix={apply} />
                   {limit && (
                     <p className="text-[13.5px] text-[var(--muted)]">
