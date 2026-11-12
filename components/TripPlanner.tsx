@@ -35,7 +35,7 @@ import { PlanStep, PlanStepsProvider, PlanWarningsRecap, StepInfo } from "@/comp
 import type { StepDef } from "@/components/PlanStep";
 import { ParkingOptions, feeLabel, summaryWalk } from "@/components/ParkingBlock";
 import { PlanWeatherLine } from "@/components/PlanWeatherLine";
-import { StartPill } from "@/components/StartPill";
+import { NoStartNote, PlanStartAsk } from "@/components/PlanStartAsk";
 import { StopsRow } from "@/components/StopsRow";
 import { SunArc } from "@/components/SunArc";
 import { useTripAccess } from "@/components/TripAccess";
@@ -450,8 +450,8 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
       {/* Buttons and links here are pointer targets (Tailwind 4 leaves buttons on the arrow); a washed-out one keeps its own cursor. */}
       <section data-nosnippet aria-label={t("Váš plán")} className={`${part} [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer`}>
         <h2 className="text-[1.35rem] leading-tight font-bold">{t("Váš plán")}</h2>
-        {/* Quiet: the home screen already asked where from (Peter, 2026-11-11). */}
-        <StartPill quiet />
+        {/* Quiet once there is a start (Peter, 2026-11-11); without one a card asks for it (2026-11-12). */}
+        <PlanStartAsk />
         {/* The walk's weather first: the steps below decide the day around it (Peter, 2026-11-12). */}
         <PlanWeatherLine plan={plan} weather={weather} dayWord={dayWord} sunAt={sun} closures={closures} />
 
@@ -461,7 +461,15 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
           routesStep
         ) : (
           // The kids' switch changes this walk time, so it sits here and not in Kedy (Peter, 2026-11-12).
-          <StepInfo title={t("Kadiaľ pôjdete")} extra={<KidsRow />}>
+          <StepInfo
+            title={t("Kadiaľ pôjdete")}
+            extra={
+              <div className="flex flex-col gap-2.5">
+                <NoStartNote>{t("Časy trás platia od parkoviska, cestu k nemu bez štartu nepočítame.")}</NoStartNote>
+                <KidsRow />
+              </div>
+            }
+          >
             <span className="font-data">{formatDuration(walkMinutes(onFoot, withKids))}</span> · <span className="font-data">{formatKm(onFoot.m, lang)}</span> · <span className="font-data">+{onFoot.ascentM} m</span>
             {withKids ? ` · ${t("s deťmi")}` : ""}
           </StepInfo>
@@ -483,12 +491,14 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
             )
           }
         >
+          <NoStartNote>{t("Návrat počítame bez cesty autom.")}</NoStartNote>
           {placesMap}
           <StopsRow slug={trip.slug} hasPlaces={hasPlaces} loop={!!walkProfile?.loop} lunch={lunch} />
           {places}
         </PlanStep>
 
         <PlanStep id="access" n={accessN} title={t("Ako sa tam dostanete")} summary={accessSummary}>
+          <NoStartNote>{t("Bez štartu nepočítame cestu autom ani autobusom.")}</NoStartNote>
           <TravelSwitch roadMin={roadMin} trainMin={rail.status === "ok" ? driveMin : null} noCar={noCar} noBus={noBus} walkMin={walkThere} walking={walking} onWalk={setOnFoot} />
           {transit && <TransitHandoff />}
           {accessMap}
@@ -496,6 +506,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
         </PlanStep>
 
         <PlanStep id="when" n={whenN} title={t("Kedy")} warn={kedy.warn} summary={kedy.summary}>
+          <NoStartNote>{t("Bez štartu nevieme, kedy vyraziť ani kedy budete doma.")}</NoStartNote>
           <KedyBody {...kedyProps} />
         </PlanStep>
 

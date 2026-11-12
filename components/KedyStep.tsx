@@ -626,10 +626,12 @@ export function KedyBody(p: KedyProps) {
   const [memo, setMemo] = useState<{ date: string; kept: KedyCandidate[] } | null>(null);
   const date = plan ? isoDate(plan.hikeStart) : null;
   const ready = !!plan && !p.loading;
-  const known = ready && !!p.weather.below && !p.weather.loading;
+  const known = !!plan && !!p.weather.below && !p.weather.loading;
 
+  // Cards (and the slider inside the selected one) stay up while a new start re-plans the ride: hiding them
+  // while loading unmounted the slider mid-drag. Warnings still wait for `ready`.
   const cards =
-    plan && ready && date
+    plan && date
       ? kedyCards({
           plan,
           forecast: { below: known ? p.weather.below : null, above: p.weather.above },
@@ -666,10 +668,12 @@ export function KedyBody(p: KedyProps) {
   return (
     <>
       <FilterChips variant="trip" activeDate={date ?? undefined} dayWeather={p.dayWeather} />
-      {plan && ready ? (
+      {plan && cards.length ? (
         <div className="flex flex-col gap-2.5">
           {cards.map((card) => (
-            <Card key={card.key} card={card} today={today} onPick={() => pick(card)}>
+            // The selected card keeps one key while its time changes: keyed by time, every slider step remounted
+            // it and the browser dropped the drag after the first step (Peter, 12 Nov: "only moves when I click").
+            <Card key={card.selected ? "selected" : card.key} card={card} today={today} onPick={() => pick(card)}>
               {card.selected && (
                 <>
                   <StartControl plan={plan} onSet={setStart} onTyped={p.onTyped} />

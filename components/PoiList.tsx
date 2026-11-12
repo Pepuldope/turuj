@@ -18,9 +18,12 @@ import type { Lang } from "@/lib/lang";
 import { usePlanDay } from "@/lib/planDay";
 import { stopsAdvice } from "@/lib/stopsAdvice";
 
-/** "pri štarte" / "pri 1,5 km" for a place on the walk, "odbočka 2 min" for a side trip. */
+/**
+ * "pri štarte" / "pri 1,5 km": where along the walk (for a side trip, where it turns off). No side-trip minutes here:
+ * the row's one number is the whole extra time, there and back plus the stay (Peter, 12 Nov 2026: a second, smaller
+ * number next to it read as a wrong sum).
+ */
 function whereText(p: Poi, lang: Lang): string {
-  if (p.detour_min !== null) return tr(lang, "odbočka {t}", { t: formatDurationShort(p.detour_min) });
   if (p.along_m === null) return "";
   if (p.along_m < 150) return tr(lang, "pri štarte");
   const km = (p.along_m / 1000).toLocaleString(lang === "en" ? "en-GB" : "sk-SK", { maximumFractionDigits: 1, minimumFractionDigits: 1 });

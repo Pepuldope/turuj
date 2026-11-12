@@ -6,6 +6,7 @@ import type { RouteBrief } from "@/lib/tripSchema";
 import type { RouteWalk } from "@/lib/walkFacts";
 import { formatDuration } from "@/lib/format";
 import { KidsRow } from "@/components/FilterChips";
+import { NoStartNote } from "@/components/PlanStartAsk";
 import { PlanStep } from "@/components/PlanStep";
 import { RouteRows, useRouteNumbers } from "@/components/RouteRows";
 import { routeLabel } from "@/components/routeBits";
@@ -71,6 +72,7 @@ export function RoutesStep({ n, slug, routes, walks, map }: Props) {
         </>
       }
     >
+      <NoStartNote>{t("Časy trás platia od parkoviska, cestu k nemu bez štartu nepočítame.")}</NoStartNote>
       {map}
       {/* The first and last rows follow the list's corners (12 px card minus the 1 px border), so their hover outline isn't cut off. */}
       <ul className="flex flex-col divide-y divide-[var(--border)] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card-bg)] [&>li:first-child>a]:rounded-t-[11px] [&>li:last-child>a]:rounded-b-[11px]">
