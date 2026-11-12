@@ -44,13 +44,21 @@ export function ScrollStrip({
       const next = { left: el.scrollLeft > 1, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 1 };
       setFade((f) => (f.left === next.left && f.right === next.right ? f : next));
     };
-    // Once per key, at the first moment there is something to scroll: instant, so it is never an animation.
+    // Opens at `startAt` (instant, never an animation) and keeps re-applying it while the layout settles (the track
+    // gets its real width a frame or two later: applying it only once left the strip at ~1:00, 12 Nov 2026), until
+    // the visitor touches the strip; then it is theirs until the key changes.
+    applied.current = null;
     const open = () => {
       if (applied.current === startKey || !latest.current || el.clientWidth === 0 || el.scrollWidth <= el.clientWidth) return;
-      applied.current = startKey;
       el.scrollTo({ left: Math.max(0, Math.min(latest.current(el), el.scrollWidth - el.clientWidth)), behavior: "instant" });
     };
+    const mine = () => {
+      applied.current = startKey;
+    };
     open();
+    const frame = requestAnimationFrame(open);
+    const late = setTimeout(open, 400);
+    for (const ev of ["pointerdown", "wheel", "touchstart", "keydown"] as const) el.addEventListener(ev, mine, { passive: true });
     el.addEventListener("scroll", sync, { passive: true });
     const ro = new ResizeObserver(() => {
       open();
@@ -59,6 +67,9 @@ export function ScrollStrip({
     ro.observe(el);
     if (el.firstElementChild) ro.observe(el.firstElementChild);
     return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(late);
+      for (const ev of ["pointerdown", "wheel", "touchstart", "keydown"] as const) el.removeEventListener(ev, mine);
       el.removeEventListener("scroll", sync);
       ro.disconnect();
     };
