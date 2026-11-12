@@ -88,8 +88,50 @@ export function departureFor(t: number, lead: number): string {
   return `${String(w.h).padStart(2, "0")}:${String(w.mi).padStart(2, "0")}`;
 }
 
-/** Rain height in the cell, 0..1: 2 mm an hour fills it; any rain at all shows a sliver. */
-export function rainFill(mm: number): number {
+/** Whether the hour is dark: its middle is before sunrise or after sunset. */
+export function isDarkHour(t: number, sunrise: Date, sunset: Date): boolean {
+  const mid = t + 30 * MIN;
+  return mid < sunrise.getTime() || mid > sunset.getTime();
+}
+
+/** How much rain the hour has, for the track's shading: 0 none, 1 light (< 0.5 mm), 2 moderate (< 2 mm), 3 heavy. */
+export function rainStrength(mm: number): 0 | 1 | 2 | 3 {
   if (mm < 0.05) return 0;
-  return Math.max(0.12, Math.min(1, mm / 2));
+  return mm < 0.5 ? 1 : mm < 2 ? 2 : 3;
+}
+
+/** The first and last cell index of the walk, or null when no hour is the walk's. */
+export function walkSpan(cells: HourCell[]): { from: number; to: number } | null {
+  const from = cells.findIndex((c) => c.part === "walk");
+  if (from < 0) return null;
+  let to = from;
+  cells.forEach((c, i) => {
+    if (c.part === "walk") to = i;
+  });
+  return { from, to };
+}
+
+/** Runs of consecutive cells of one part: [first index, count]. */
+export function partRuns(cells: HourCell[], part: HourCell["part"]): [number, number][] {
+  const runs: [number, number][] = [];
+  cells.forEach((c, i) => {
+    if (c.part !== part) return;
+    const last = runs[runs.length - 1];
+    if (last && last[0] + last[1] === i) last[1]++;
+    else runs.push([i, 1]);
+  });
+  return runs;
+}
+
+/** Worse sky first, for picking the one glyph that stands for the walk. */
+const KIND_ORDER: SkyKind[] = ["thunder", "heavysnow", "snow", "sleet", "heavyrain", "rain", "lightsnow", "lightrain", "fog", "cloudy", "partly", "fair", "clear"];
+
+/** The worst sky among the walk's hours; null when none has a forecast. */
+export function worstWalkKind(cells: HourCell[]): SkyKind | null {
+  let best: SkyKind | null = null;
+  for (const c of cells) {
+    if (c.part !== "walk" || !c.kind) continue;
+    if (best === null || KIND_ORDER.indexOf(c.kind) < KIND_ORDER.indexOf(best)) best = c.kind;
+  }
+  return best;
 }

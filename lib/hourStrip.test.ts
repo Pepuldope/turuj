@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { departureFor, hourStrip, rainFill, startHourIndex } from "@/lib/hourStrip";
+import { departureFor, hourStrip, isDarkHour, partRuns, rainStrength, startHourIndex, walkSpan, worstWalkKind } from "@/lib/hourStrip";
 import type { WeatherForecast } from "@/lib/weather";
 import { clock, zonedDate } from "@/lib/zoned";
 
@@ -50,11 +50,44 @@ describe("departureFor", () => {
   });
 });
 
-describe("rainFill", () => {
-  it("shows a sliver for light rain and fills at 2 mm an hour", () => {
-    expect(rainFill(0)).toBe(0);
-    expect(rainFill(0.1)).toBe(0.12);
-    expect(rainFill(1)).toBe(0.5);
-    expect(rainFill(5)).toBe(1);
+describe("isDarkHour", () => {
+  it("is dark when the hour's middle is before sunrise or after sunset", () => {
+    const rise = at(5, 40);
+    const set = at(20, 10);
+    expect(isDarkHour(at(5).getTime(), rise, set)).toBe(true); // middle 05:30
+    expect(isDarkHour(at(6).getTime(), rise, set)).toBe(false);
+    expect(isDarkHour(at(19).getTime(), rise, set)).toBe(false); // middle 19:30
+    expect(isDarkHour(at(20).getTime(), rise, set)).toBe(true); // middle 20:30 is after 20:10
+  });
+});
+
+describe("rainStrength", () => {
+  it("has three strengths and none", () => {
+    expect(rainStrength(0)).toBe(0);
+    expect(rainStrength(0.1)).toBe(1);
+    expect(rainStrength(0.5)).toBe(2);
+    expect(rainStrength(1.9)).toBe(2);
+    expect(rainStrength(2)).toBe(3);
+  });
+});
+
+describe("walk helpers", () => {
+  const cells = hourStrip(forecast, { from: at(6, 20), to: at(15, 10) }, at(7, 40), at(8, 30), at(12, 50), at(14, 10));
+  it("finds the walk's span and the way's runs", () => {
+    const hour = (i: number) => clock(cells[i].t);
+    const span = walkSpan(cells)!;
+    expect(hour(span.from)).toBe("08:00");
+    expect(hour(span.to)).toBe("12:00");
+    expect(partRuns(cells, "way").map(([i, n]) => [hour(i), n])).toEqual([
+      ["13:00", 1],
+    ]);
+  });
+  it("has no span without a walk", () => {
+    expect(walkSpan([])).toBeNull();
+  });
+  it("picks the worst sky of the walk only", () => {
+    expect(worstWalkKind(cells)).toBe("clear");
+    const wet = hourStrip(forecast, { from: at(6, 20), to: at(15, 10) }, at(7, 40), at(8, 30), at(14, 10), at(15, 0));
+    expect(worstWalkKind(wet)).toBe("rain");
   });
 });

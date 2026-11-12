@@ -248,7 +248,7 @@ export interface TripWeatherReport {
   /** When the worst weather comes ("13:00–15:00"); null when it is the whole time or it is fine weather. */
   worstWhen: string | null;
   /** Any rain, sleet or snow at all: when and the most per hour. */
-  wet: { when: string; mmPerHour: number; snow: boolean } | null;
+  wet: { when: string; mmPerHour: number; snow: boolean; sleet: boolean } | null;
 }
 
 /**
@@ -299,6 +299,7 @@ export function tripWeatherReport(
           when: span(wetSteps),
           mmPerHour: Math.round(Math.max(...wetSteps.map((s) => s.rain / s.hours)) * 10) / 10,
           snow: wetSteps.every((s) => /snow/.test(s.symbol!)),
+          sleet: wetSteps.some((s) => /sleet/.test(s.symbol!)),
         }
       : null,
   };

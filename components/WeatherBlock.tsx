@@ -1,19 +1,22 @@
 "use client";
 
 import { UiIcon } from "@/components/UiIcon";
+import { WeatherTimeline } from "@/components/WeatherTimeline";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { SAFE_MARGIN_MIN } from "@/lib/dayPlan";
 import type { DayPlan } from "@/lib/dayPlan";
 import { formatTime } from "@/lib/format";
 import { useCachedJson } from "@/lib/useDriveRoute";
-import { addDaysIso, dayInSentence, isoDate } from "@/lib/days";
+import { addDaysIso, isoDate, longDay } from "@/lib/days";
 import { activeClosures } from "@/lib/closures";
 import { getSunTimes } from "@/lib/sun";
+import { hourStrip, worstWalkKind } from "@/lib/hourStrip";
 import { clock } from "@/lib/zoned";
-import { FORECAST_DAYS, betterDay, betterTime, summarize, tripWeatherReport, weatherNotes, weatherWords } from "@/lib/weather";
+import type { SkyKind } from "@/lib/weather";
+import { FORECAST_DAYS, betterDay, betterTime, skyKind, summarize, tripWeatherReport, weatherNotes, weatherWords } from "@/lib/weather";
 import type { BetterDay, BetterTime, TripWeatherReport, WeatherForecast } from "@/lib/weather";
-import { badSkySvg } from "@/lib/weatherIcons";
+import { badSkySvg, hourSkySvg } from "@/lib/weatherIcons";
 import type { Closure, LatLng } from "@/lib/types";
 import { useLang, useT } from "@/lib/i18n";
 import { decimal, tr } from "@/lib/lang";
@@ -155,40 +158,101 @@ export function WeatherReport({
       })
     : null;
 
+  // The hours of the day's light (wider where the plan reaches outside it), one cell each.
+  const homeAt = plan.segments[plan.segments.length - 1].end;
+  const cells = hourStrip(
+    weather.below,
+    { from: new Date(Math.min(plan.sunrise.getTime(), leave.getTime() - 3600000)), to: new Date(Math.max(plan.sunset.getTime() + 3600000, homeAt.getTime() + 3600000)) },
+    leave,
+    plan.hikeStart,
+    plan.hikeEnd,
+    homeAt
+  );
+  const timeline = !!onPickTime && cells.some((c) => c.kind !== null);
+  const warnings = [...(r.wet && !stormy ? [wetText(r.wet, lang)] : []), ...notes.map((n) => n.text)];
+  const wetKind = r.wet && !stormy ? (r.wet.snow ? "snow" : "rain") : "warn";
+
   return (
-    <section aria-label={t("Počasie")} className="flex flex-col gap-1.5 text-sm">
-      {/* The hour strip (HourStrip) is off until the step 1 weather redesign, option A (Peter, 2026-11-12). */}
-      <p>
-        <span className="font-semibold">{t(wholeDay ? "Počasie počas výletu:" : "Počasie počas túry:")}</span> {range}
-        {r.topMin !== null && goal ? t(", {goal} až {t} °C", { goal: goal.name, t: r.topMin }) : ""}
-        {/* Rain, snow and storms get their own warning lines below. */}
-        {r.wet ? "." : r.worstWhen ? t(", najhoršie {what} {when}.", { what: r.worst, when: r.worstWhen }) : `, ${r.worst}.`}
-      </p>
-      {/* Warnings in a box with a sign (Peter: plain coloured text was easy to overlook). */}
-      {r.wet && !stormy && (
-        <Warning kind={r.wet.snow ? "snow" : "rain"}>
-          {wetText(r.wet, lang)}
-        </Warning>
+    <section aria-label={t("Počasie")} className="flex flex-col gap-2 text-sm">
+      {timeline ? (
+        <>
+          <WalkSummary r={r} kind={worstWalkKind(cells)} wholeDay={wholeDay} />
+          <WeatherTimeline cells={cells} hikeStart={plan.hikeStart} hikeEnd={plan.hikeEnd} sunrise={plan.sunrise} sunset={plan.sunset} lead={lead} onPickTime={onPickTime!} />
+        </>
+      ) : (
+        <p>
+          <span className="font-semibold">{t(wholeDay ? "Počasie počas výletu:" : "Počasie počas túry:")}</span> {range}
+          {r.topMin !== null && goal ? t(", {goal} až {t} °C", { goal: goal.name, t: r.topMin }) : ""}
+          {/* Rain, snow and storms get their own warning lines below. */}
+          {r.wet ? "." : r.worstWhen ? t(", najhoršie {what} {when}.", { what: r.worst, when: r.worstWhen }) : `, ${r.worst}.`}
+        </p>
       )}
-      {notes.map((n) => (
-        <Warning key={n.text} kind={n.strong ? "storm" : "warn"}>
-          {n.text}
-        </Warning>
-      ))}
-      {(sooner || better) && (
-        <div className="flex flex-col gap-3 rounded-xl bg-[var(--accent-soft)] px-3 py-2.5">
-          {sooner && <BetterTimeTip better={sooner} leave={leave} onPickTime={onPickTime!} />}
-          {better && <BetterDayTip better={better} hikeStart={plan.hikeStart} onPickDay={onPickDay!} alsoTime={!!sooner} />}
-        </div>
-      )}
+      {/* All warnings in one box with a sign (Peter: plain coloured text was easy to overlook); red when any is strong. */}
+      {warnings.length > 0 && <Warning kind={stormy ? "storm" : wetKind} lines={warnings} />}
+      {sooner && <BetterTimeTip better={sooner} leave={leave} onPickTime={onPickTime!} />}
+      {better && <BetterDayTip better={better} hikeStart={plan.hikeStart} onPickDay={onPickDay!} />}
     </section>
+  );
+}
+
+/** "Počas túry 2 °C" and under it the worst weather and when, with the glyph of that weather beside it. */
+function WalkSummary({ r, kind, wholeDay }: { r: TripWeatherReport; kind: SkyKind | null; wholeDay: boolean }) {
+  const t = useT();
+  const lang = useLang();
+  const minus = (n: number) => String(n).replace("-", "\u2212");
+  const range = (r.tempMin === r.tempMax ? `${minus(r.tempMin)} °C` : tr(lang, "{a} až {b} °C", { a: minus(r.tempMin), b: minus(r.tempMax) })).replaceAll(" °C", "\u00a0°C");
+  const worst = r.wet ? `${r.worst} ${r.wet.when}` : r.worstWhen ? `${r.worst} ${r.worstWhen}` : r.worst;
+  return (
+    <div className="flex items-center gap-3">
+      {kind && <SkyGlyph kind={kind} size={38} />}
+      <div className="flex min-w-0 flex-col">
+        <p className="text-base font-bold">
+          <span className="whitespace-nowrap">
+            {t(wholeDay ? "Počas výletu" : "Počas túry")} {range}
+            {r.topMin !== null ? "," : ""}
+          </span>
+          {r.topMin !== null && " "}
+          {r.topMin !== null && <span className="whitespace-nowrap">{t("na vrchole až {t} °C", { t: minus(r.topMin).replace(" ", "\u00a0") })}</span>}
+        </p>
+        <p className="text-sm text-[var(--muted)]">{worst}</p>
+      </div>
+    </div>
+  );
+}
+
+const BAD_KIND: Partial<Record<SkyKind, Parameters<typeof badSkySvg>[0]>> = {
+  lightrain: "rain",
+  rain: "rain",
+  heavyrain: "rain",
+  sleet: "sleet",
+  lightsnow: "snow",
+  snow: "snow",
+  heavysnow: "snow",
+  fog: "fog",
+  thunder: "thunder",
+};
+
+/** A sky as a glyph: wet, foggy and stormy skies coloured, sun in the sun yellow, cloud grey. */
+function SkyGlyph({ kind, size }: { kind: SkyKind; size: number }) {
+  const bad = BAD_KIND[kind];
+  const color = kind === "clear" || kind === "fair" || kind === "partly" ? "var(--sun)" : "var(--muted)";
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      className="shrink-0"
+      style={{ color }}
+      aria-hidden="true"
+      dangerouslySetInnerHTML={{ __html: bad ? badSkySvg(bad, false) : hourSkySvg(kind) }}
+    />
   );
 }
 
 /** "Môže pršať 8:00–10:00 (mierne, do 0,8 mm/h). Vezmite si nepremokavú bundu." Also the warnings recap's line. */
 export function wetText(wet: NonNullable<TripWeatherReport["wet"]>, lang: Lang): string {
   const how = wet.mmPerHour >= 0.1 ? tr(lang, " ({how}, do {mm} mm/h)", { how: tr(lang, wet.mmPerHour < 0.5 ? "slabo" : wet.mmPerHour < 2 ? "mierne" : "výdatne"), mm: decimal(lang, wet.mmPerHour) }) : "";
-  return `${tr(lang, wet.snow ? "Môže snežiť" : "Môže pršať")} ${wet.when}${how}. ${tr(lang, "Vezmite si nepremokavú bundu.")}`;
+  return `${tr(lang, wet.snow ? "Môže snežiť" : wet.sleet ? "Môže pršať so snehom" : "Môže pršať")} ${wet.when}${how}. ${tr(lang, "Vezmite si nepremokavú bundu.")}`;
 }
 
 const SIGN: Record<"rain" | "snow" | "storm" | "warn", string> = {
@@ -198,68 +262,90 @@ const SIGN: Record<"rain" | "snow" | "storm" | "warn", string> = {
   warn: '<path d="M12 3 22 20H2z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M12 9.5v4.5M12 16.8v.4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
 };
 
-/** A weather warning: a coloured box with a thick edge and its sign; storms in red, the rest amber. */
-function Warning({ kind, children }: { kind: keyof typeof SIGN; children: ReactNode }) {
+/** The weather warnings in one coloured box with a thick edge and its sign; storms in red, the rest amber. One line each. */
+function Warning({ kind, lines }: { kind: keyof typeof SIGN; lines: string[] }) {
   const red = kind === "storm";
   return (
-    <p
+    <div
       className={`flex items-start gap-2.5 rounded-xl border-2 px-3 py-2.5 font-semibold ${
         red ? "border-[var(--danger)] bg-[var(--danger-bg)] text-[var(--danger)]" : "border-[var(--warn)] bg-[var(--warn-bg)] text-[var(--warn)]"
       }`}
     >
       {/* Constant markup (lib/weatherIcons.ts and the triangle above). */}
       <svg viewBox="0 0 24 24" className="mt-px h-6 w-6 shrink-0" aria-hidden="true" dangerouslySetInnerHTML={{ __html: SIGN[kind] }} />
-      <span>{children}</span>
-    </p>
+      <div className="flex flex-col gap-1.5">
+        {lines.map((l) => (
+          <p key={l}>{l}</p>
+        ))}
+      </div>
+    </div>
   );
 }
 
-/** "Lepšie vyzerá v nedeľu: polojasno, 7 až 11 °C, bez zrážok." and a button that moves the plan there. */
-function BetterDayTip({ better, hikeStart, onPickDay, alsoTime }: { better: BetterDay; hikeStart: Date; onPickDay: (iso: string) => void; alsoTime: boolean }) {
+/** A tip as a tappable card: the sky of that day or time, what it is, the weather, and "Prepnúť" on the right. */
+function TipCard({ kind, title, text, onPick }: { kind: SkyKind | null; title: ReactNode; text: ReactNode; onPick: () => void }) {
+  const t = useT();
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2.5 text-left hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+    >
+      {kind && <SkyGlyph kind={kind} size={28} />}
+      {/* "Prepnúť" sits on the title's line, so the weather line gets the full width (it wrapped to three lines at 360 px). */}
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="flex items-baseline gap-2">
+          <span className="min-w-0 flex-1 font-bold">{title}</span>
+          <span className="shrink-0 font-bold whitespace-nowrap text-[var(--accent)]">{t("Prepnúť")} &rsaquo;</span>
+        </span>
+        <span className="text-[var(--muted)]">{text}</span>
+      </span>
+    </button>
+  );
+}
+
+/** "Sobota 17. 10." / "polojasno · −1 až 4 °C · bez zrážok": a card that moves the plan to that day. */
+function BetterDayTip({ better, hikeStart, onPickDay }: { better: BetterDay; hikeStart: Date; onPickDay: (iso: string) => void }) {
   const t = useT();
   const lang = useLang();
   const iso = addDaysIso(isoDate(hikeStart), better.offset);
-  const when = dayInSentence(iso, new Date(), lang);
-  const s = better.summary;
+  const day = longDay(iso, lang);
   return (
-    <div className="flex flex-col items-start gap-2">
-      <p>
-        <span className="font-semibold">{alsoTime ? t("Alebo iný deň, {when}:", { when }) : t("Lepšie vyzerá {when}:", { when })}</span> {weatherWords(s.symbol, lang)}, {temps(s, lang)}, {t("bez zrážok.")}
-      </p>
-      <button
-        type="button"
-        onClick={() => onPickDay(iso)}
-        className={TIP_BUTTON}
-      >
-        {/* "v nedeľu 1. 11." -> "Prepnúť na nedeľu" */}
-        {t("Prepnúť na {day}", { day: when.replace(/^(vo?|on) /, "").replace(/ \d.*$/, "") })}
-      </button>
-    </div>
+    <TipCard
+      kind={skyKind(better.summary.symbol)}
+      title={`${day.charAt(0).toUpperCase()}${day.slice(1)}`}
+      text={tipText(better.summary, lang, t("bez zrážok."))}
+      onPick={() => onPickDay(iso)}
+    />
   );
 }
 
-const TIP_BUTTON =
-  "rounded-[10px] bg-[var(--accent)] px-3 py-2 text-sm font-bold text-[var(--accent-contrast)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]";
+/** "polojasno · −1 až 4 °C · bez zrážok": each part stays whole when the line wraps. */
+function tipText(s: BetterDay["summary"], lang: Lang, dry: string): ReactNode {
+  const parts = [weatherWords(s.symbol, lang), temps(s, lang).replace(/(^|\s)-(?=\d)/g, "$1\u2212").replace(" °C", "\u00a0°C"), dry.replace(/\.$/, "")];
+  return parts.map((p, i) => (
+    <span key={i}>
+      {i > 0 && " \u00b7 "}
+      <span className="whitespace-nowrap">{p}</span>
+    </span>
+  ));
+}
 
-/** "Suchšie pri odchode o 11:30: polojasno, 7 až 11 °C, bez zrážok." and a button that moves the departure there. */
+/** "Suchšie pri odchode o 11:30": a card that moves the departure there. */
 function BetterTimeTip({ better, leave, onPickTime }: { better: BetterTime; leave: Date; onPickTime: (time: string) => void }) {
   const at = new Date(leave.getTime() + better.shiftMin * 60000);
-  // HH:MM for the time box, Slovak time.
-  const time = clock(at);
-  const s = better.summary;
   const t = useT();
   const lang = useLang();
   return (
-    <div className="flex flex-col items-start gap-2">
-      <p>
-        <span className="font-semibold">
-          {t("Suchšie pri odchode o")} <span className="font-data">{formatTime(at)}</span>:
-        </span>{" "}
-        {weatherWords(s.symbol, lang)}, {temps(s, lang)}, {t("bez zrážok.")}
-      </p>
-      <button type="button" onClick={() => onPickTime(time)} className={TIP_BUTTON}>
-        {t("Vyraziť o")} <span className="font-data">{formatTime(at)}</span>
-      </button>
-    </div>
+    <TipCard
+      kind={skyKind(better.summary.symbol)}
+      title={
+        <>
+          {t("Suchšie pri odchode o")} <span className="font-data">{formatTime(at)}</span>
+        </>
+      }
+      text={tipText(better.summary, lang, t("bez zrážok."))}
+      onPick={() => onPickTime(clock(at))}
+    />
   );
 }
