@@ -243,11 +243,18 @@ function consequence(c: KedyCard, t: T): ReactNode | null {
   return (
     <>
       {wet}
-      {wet && c.homeText ? " · " : ""}
-      {c.homeText && (
+      {wet && (c.homeText || c.afterSunset) ? " · " : ""}
+      {/* Without a start there is no "doma": the walk's end is what falls after sunset. */}
+      {c.homeText ? (
         <>
           {t("doma")} <span className="font-data">{c.homeText}</span>
         </>
+      ) : (
+        c.afterSunset && (
+          <>
+            {t("koniec túry")} <span className="font-data">{c.endText}</span>
+          </>
+        )
       )}
       {c.afterSunset ? `, ${t("po západe slnka")}` : ""}
     </>
@@ -539,7 +546,8 @@ function BarLabels({ plan, way, late }: { plan: DayPlan; way: ReturnType<typeof 
       >
         <div className="whitespace-nowrap">
           <span className="block text-[13px] leading-tight">
-            {t("odchod")} <span className="font-data text-[19px] font-semibold">{clockShort(plan.segments[0].start)}</span>
+            {/* No ride (no start set, or on foot from the door): the left end is the walk's start, not a departure. */}
+            {ends.leave.rideMin > 0 ? t("odchod") : t("začiatok túry")} <span className="font-data text-[19px] font-semibold">{clockShort(plan.segments[0].start)}</span>
           </span>
           {ride(ends.leave.rideMin)}
         </div>
