@@ -97,6 +97,8 @@ export function KedyDays({ tiles, current }: { tiles: DayTile[]; current: string
                     <span className="text-[11.5px] leading-tight text-[var(--muted)]">{t("krátky deň")}</span>
                   ) : x.state === "closed" ? (
                     <span className="text-[11.5px] leading-tight text-[var(--muted)]">{t("uzávera")}</span>
+                  ) : x.state === "gone" ? (
+                    <span className="text-[11.5px] leading-tight text-[var(--muted)]">{t("dnes neskoro")}</span>
                   ) : null}
                 </span>
               </button>

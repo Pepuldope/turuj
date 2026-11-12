@@ -349,6 +349,9 @@ function temps(a: number, b: number, lang: Lang): string {
 // ---------------------------------------------------------------------------------------------------------
 // The control: field and slider
 
+/** The plan's day, to open the track again at the trip when the day changes. */
+const clockDateKey = (plan: DayPlan) => isoDate(plan.hikeStart);
+
 /**
  * The start: a time field (above the track), and the track: ONE sideways-scrolling strip holding the slider, the trip bar and
  * the hour row on the same 0:00-24:00 scale, so they stay aligned while you swipe (Peter, 2026-11-12). About 14 hours fit on
@@ -421,7 +424,7 @@ function StartBlock({
         </span>
       </div>
       {/* The strip reaches into the card's padding (so a thumb at the day's ends is whole); the track is 24/14 of the card's inner width. */}
-      <ScrollStrip scrollerRef={scroller} className="-mx-4 px-4" startAt={(el) => scalePos(leaveMin - 60) * ((el.firstElementChild as HTMLElement | null)?.offsetWidth ?? 0)}>
+      <ScrollStrip scrollerRef={scroller} className="-mx-4 px-4" startKey={clockDateKey(plan)} startAt={(el) => scalePos(leaveMin - 60) * ((el.firstElementChild as HTMLElement | null)?.offsetWidth ?? 0)}>
         <div className="relative" style={{ width: `${(24 / VISIBLE_HOURS) * 100}%` }}>
           <TrackSlider
             min={min}
@@ -534,7 +537,7 @@ function TrackSlider({
         onPointerMove={move}
         onPointerUp={stop}
         onPointerCancel={stop}
-        className="absolute top-1/2 z-10 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 cursor-grab touch-none place-items-center peer-focus-visible:[&>span]:outline-2 peer-focus-visible:[&>span]:outline-offset-2 peer-focus-visible:[&>span]:outline-[var(--accent)]"
+        className="absolute top-1/2 z-10 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 cursor-grab touch-none select-none place-items-center peer-focus-visible:[&>span]:outline-2 peer-focus-visible:[&>span]:outline-offset-2 peer-focus-visible:[&>span]:outline-[var(--accent)]"
         style={{ left: `${pos * 100}%` }}
       >
         <span className="h-8 w-8 rounded-full border-[5px] border-[var(--accent)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]" />

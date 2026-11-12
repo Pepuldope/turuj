@@ -260,10 +260,20 @@ describe("the day tiles", () => {
     expect(t.filter((x) => x.best).map((x) => x.iso)).toEqual(["2026-11-14"]);
   });
   it("washes out a day too short for the walk, or closed, and never picks it as best", () => {
-    const t = tiles(planFor("08:00"), { sunFor: (iso) => (iso === "2026-11-14" ? { sunrise: at(14, 6, 50), sunset: at(14, 15, 0) } : null), closed: (iso) => iso === "2026-11-15" });
+    const t = tiles(planFor("08:00"), { sunFor: (iso) => (iso === "2026-11-14" ? { sunrise: at(14, 6, 50), sunset: at(14, 14, 0) } : null), closed: (iso) => iso === "2026-11-15" });
     expect(t[2].state).toBe("short");
     expect(t[3].state).toBe("closed");
     expect(t.filter((x) => x.best).map((x) => x.iso)).toEqual(["2026-11-16"]);
+  });
+  it("calls a day short only when the walk cannot be done in daylight at all, not from the chosen start", () => {
+    // 7 h 10 min of walking: sunrise 6:50 and sunset 16:04 leave room (the latest start 8:24 is after sunrise).
+    expect(tiles(planFor("08:43")).filter((x) => x.state === "short")).toEqual([]);
+    expect(tiles(planFor("08:00")).filter((x) => x.state === "short")).toEqual([]);
+  });
+  it("says a doable day whose departure has gone is gone, still washed out", () => {
+    const t = tiles(planFor("08:00"));
+    expect(t[0].state).toBe("gone");
+    expect(t[0].best).toBe(false);
   });
   it("has no best day when every day is wet", () => {
     const rainy: WeatherForecast = { updated: "", steps: forecast.steps.map((s) => ({ ...s, rain: 0.5, symbol: "rain" })) };

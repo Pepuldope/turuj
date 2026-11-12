@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode, RefObject } from "react";
 
 /** The soft fade at an edge, px. */
@@ -13,22 +13,30 @@ export function scrollBehavior(): ScrollBehavior {
 
 /**
  * A strip that scrolls sideways (a swipe, a trackpad, the keyboard when focused): no scrollbar, and a soft fade at an
- * edge only when there is more content that way. `startAt` gives the first scroll position, once, when it appears.
- * The caller owns the scroller's ref (for scrolling it itself).
+ * edge only when there is more content that way. `startAt` gives the scroll position to open at: applied once per `startKey`,
+ * as soon as the strip really has a width (a step that opens later, a card that mounts closed, has none at first), never
+ * while the visitor is scrolling. The caller owns the scroller's ref (for scrolling it itself).
  */
 export function ScrollStrip({
   scrollerRef,
   className = "",
   startAt,
+  startKey = "",
   children,
 }: {
   scrollerRef: RefObject<HTMLDivElement | null>;
   className?: string;
   startAt?: (el: HTMLDivElement) => number;
+  /** Open at `startAt` again when this changes (the day, for the trip track). */
+  startKey?: string;
   children: ReactNode;
 }) {
   const [fade, setFade] = useState({ left: false, right: false });
-  const [start] = useState(() => startAt);
+  const latest = useRef(startAt);
+  const applied = useRef<string | null>(null);
+  useEffect(() => {
+    latest.current = startAt;
+  });
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -36,16 +44,25 @@ export function ScrollStrip({
       const next = { left: el.scrollLeft > 1, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 1 };
       setFade((f) => (f.left === next.left && f.right === next.right ? f : next));
     };
-    if (start) el.scrollLeft = Math.max(0, Math.min(start(el), el.scrollWidth - el.clientWidth));
+    // Once per key, at the first moment there is something to scroll: instant, so it is never an animation.
+    const open = () => {
+      if (applied.current === startKey || !latest.current || el.clientWidth === 0 || el.scrollWidth <= el.clientWidth) return;
+      applied.current = startKey;
+      el.scrollTo({ left: Math.max(0, Math.min(latest.current(el), el.scrollWidth - el.clientWidth)), behavior: "instant" });
+    };
+    open();
     el.addEventListener("scroll", sync, { passive: true });
-    const ro = new ResizeObserver(sync);
+    const ro = new ResizeObserver(() => {
+      open();
+      sync();
+    });
     ro.observe(el);
     if (el.firstElementChild) ro.observe(el.firstElementChild);
     return () => {
       el.removeEventListener("scroll", sync);
       ro.disconnect();
     };
-  }, [scrollerRef, start]);
+  }, [scrollerRef, startKey]);
   const mask = `linear-gradient(to right, ${fade.left ? "transparent" : "black"} 0, black ${FADE}px, black calc(100% - ${FADE}px), ${fade.right ? "transparent" : "black"} 100%)`;
   return (
     <div

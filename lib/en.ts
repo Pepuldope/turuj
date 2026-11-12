@@ -1167,4 +1167,5 @@ export const EN: Record<string, string> = {
   "Ktorý deň?": "Which day?",
   "krátky deň": "short day",
   "uzávera": "closure",
+  "dnes neskoro": "too late today",
 };

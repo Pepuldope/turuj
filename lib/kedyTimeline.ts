@@ -512,8 +512,11 @@ export interface DayTile {
   rainMm: number | null;
   /** The forecast covers the walk and it has no rain, snow or storm. */
   dry: boolean;
-  /** short: the walk would end too close to (or after) sunset that day; closed: a closure applies. Both show washed out. */
-  state: "ok" | "short" | "closed";
+  /**
+   * short: the walk cannot be done in daylight at all that day (even starting at sunrise it ends within the safety margin of
+   * sunset), whatever start is chosen; closed: a closure applies; gone: today's departure has already passed. All show washed out.
+   */
+  state: "ok" | "short" | "closed" | "gone";
   /** The driest day that works (ties: the earliest), shown with the "najlepšie" pill. */
   best: boolean;
   selected: boolean;
@@ -532,8 +535,7 @@ export interface DayTilesInput {
 
 /**
  * One tile per day from today to the end of the forecast: the weather of the walk at the chosen start time moved to that
- * day, whether the day's light and closures allow it, and the best day. A day whose departure has already gone by is
- * never "best"; a day with no forecast has no sky and is never "best" either.
+ * day, whether the day's light and closures allow it, and the best day. A washed-out day (short, closed, gone) or one with no forecast is never "best".
  */
 export function dayTiles(input: DayTilesInput): DayTile[] {
   const { plan, forecast, today, now } = input;
@@ -548,7 +550,8 @@ export function dayTiles(input: DayTilesInput): DayTile[] {
     const report = below ? tripWeatherReport(below, forecast.above, a, b) : null;
     const sum = below && report ? summarize(below, a, b) : null;
     const sun = iso === planDate ? { sunrise: plan.sunrise, sunset: plan.sunset } : input.sunFor(iso);
-    const short = !!sun && b.getTime() > sun.sunset.getTime() - SAFE_MARGIN_MIN * MIN;
+    const short = !!sun && sun.sunset.getTime() - SAFE_MARGIN_MIN * MIN - (plan.hikeEnd.getTime() - plan.hikeStart.getTime()) < sun.sunrise.getTime();
+    const gone = a.getTime() - lead < now.getTime();
     const closed = input.closed(iso);
     return {
       iso,
@@ -557,15 +560,14 @@ export function dayTiles(input: DayTilesInput): DayTile[] {
       tempMax: sum?.tempMax ?? null,
       rainMm: sum?.rainMm ?? null,
       dry: !!below && !!report && !wetWalk(below, forecast.above, a, b),
-      state: closed ? "closed" : short ? "short" : "ok",
+      state: closed ? "closed" : short ? "short" : gone ? "gone" : "ok",
       best: false,
       selected: iso === planDate,
     } satisfies DayTile;
   });
   let best = -1;
   tiles.forEach((tile, i) => {
-    const gone = shiftDays(plan.hikeStart, daysBetween(planDate, tile.iso)).getTime() - lead < now.getTime();
-    if (tile.state !== "ok" || tile.rainMm === null || gone) return;
+    if (tile.state !== "ok" || tile.rainMm === null) return;
     if (best < 0 || tile.rainMm < tiles[best].rainMm!) best = i;
   });
   if (best >= 0 && tiles[best].dry) tiles[best].best = true;
