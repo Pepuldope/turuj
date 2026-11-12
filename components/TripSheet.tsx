@@ -322,7 +322,8 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
             closures={closures}
             hasPlaces={detail.pois.length > 0}
             routeCount={routes.length}
-            routesStep={routes.length > 1 ? <RoutesStep key="routes-step" n={2} slug={current} routes={routes} walks={walks} map={<StepMap key="routes" {...mapProps} focus="routes" />} /> : null}
+            // Kadiaľ pôjdete is the first step since 2026-11-12 (TripPlanner numbers the others from it).
+            routesStep={routes.length > 1 ? <RoutesStep key="routes-step" n={1} slug={current} routes={routes} walks={walks} map={<StepMap key="routes" {...mapProps} focus="routes" />} /> : null}
             accessMap={<StepMap key="access" {...mapProps} focus="access" />}
             placesMap={detail.pois.length > 0 ? <StepMap key="places" {...mapProps} focus="places" /> : null}
             places={<PoiList key="places-list" pois={detail.pois} slug={trail.slug} loop={trip.route === "okruh"} near={near} />}

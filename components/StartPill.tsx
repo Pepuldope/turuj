@@ -19,13 +19,6 @@ export function StartPill({ quiet = false }: { /** A full-width start row ("Vyr�
   const [open, setOpen] = useState(false);
   const t = useT();
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
-
   return (
     <>
       {quiet ? (
@@ -66,14 +59,25 @@ export function StartPill({ quiet = false }: { /** A full-width start row ("Vyr�
         <span className="shrink-0 pl-1 font-bold text-[var(--accent)]">{ready && !start ? t("Vybrať štart") : t("Zmeniť štart")}</span>
       </button>
       )}
-      {open && (
-        <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label={t("Odkiaľ vyrážate")}>
-          <div className="absolute inset-0 bg-black/45" onClick={() => setOpen(false)} />
-          <div className="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-[20px] bg-[var(--card-bg)] px-4 pt-[18px] pb-[max(28px,env(safe-area-inset-bottom))] shadow-[var(--shadow-float)] lg:w-[460px]">
-            <StartChip onDone={() => setOpen(false)} />
-          </div>
-        </div>
-      )}
+      {open && <StartSheet onClose={() => setOpen(false)} />}
     </>
+  );
+}
+
+/** The start picker as a panel from the bottom (Escape or a tap outside closes it); the pill and the plan's "where from" card open the same one. */
+export function StartSheet({ onClose }: { onClose: () => void }) {
+  const t = useT();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label={t("Odkiaľ vyrážate")}>
+      <div className="absolute inset-0 bg-black/45" onClick={onClose} />
+      <div className="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-[20px] bg-[var(--card-bg)] px-4 pt-[18px] pb-[max(28px,env(safe-area-inset-bottom))] shadow-[var(--shadow-float)] lg:w-[460px]">
+        <StartChip onDone={onClose} />
+      </div>
+    </div>
   );
 }

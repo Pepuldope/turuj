@@ -315,9 +315,9 @@ export function PlanStep({
         {done && <span className="sr-only">{t("hotovo")}</span>}
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="text-[17px] leading-tight font-bold">{title}</span>
-          <span className={`flex min-w-0 items-center gap-1.5 text-[13.5px] leading-snug font-semibold ${warn ? "text-[var(--warn)]" : "text-[var(--muted)]"}`}>
-            {warn && <UiIcon name="warn" size={14} className="shrink-0" />}
-            <span className="min-w-0 truncate">{summary}</span>
+          <span className={`flex min-w-0 items-start gap-1.5 text-[13.5px] leading-snug font-semibold ${warn ? "text-[var(--warn)]" : "text-[var(--muted)]"}`}>
+            {warn && <UiIcon name="warn" size={14} className="mt-0.5 shrink-0" />}
+            <span className="line-clamp-2 min-w-0">{summary}</span>
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-0.5 text-[13.5px] font-bold text-[var(--accent)]">
@@ -366,11 +366,12 @@ export function PlanStep({
 }
 
 /** A fact that is not a choice (a trip with a single route): title and plain text, no frame, no Zmeniť. */
-export function StepInfo({ title, children }: { title: string; children: ReactNode }) {
+export function StepInfo({ title, children, extra }: { title: string; children: ReactNode; /** More content under the line (the kids switch of a one-route trip). */ extra?: ReactNode }) {
   return (
     <div className="flex flex-col px-1">
       <span className="text-[17px] leading-tight font-bold">{title}</span>
       <span className="text-[13.5px] leading-snug font-semibold text-[var(--muted)]">{children}</span>
+      {extra && <div className="pt-2.5">{extra}</div>}
     </div>
   );
 }

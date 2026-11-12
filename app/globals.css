@@ -20,6 +20,7 @@
   --segment-bg: #edf3f9;      /* track behind segmented buttons */
   --sky-night: #14233b;
   --sky-twilight: #f7c9b5;
+  --night-ink: #d6e4f7;       /* text and moons on --sky-night, 12:1 (17:1 in dark mode, where the night is darker still) */
   --sky-day: #fbe3a8;
   --drive: #55627a;           /* road legs in the sun arc */
   --ground: #f2f6ef;          /* ground under the sun arc */

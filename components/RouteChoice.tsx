@@ -5,12 +5,15 @@ import type { ReactNode } from "react";
 import type { RouteBrief } from "@/lib/tripSchema";
 import type { RouteWalk } from "@/lib/walkFacts";
 import { formatDuration } from "@/lib/format";
+import { KidsRow } from "@/components/FilterChips";
+import { NoStartNote } from "@/components/PlanStartAsk";
 import { PlanStep } from "@/components/PlanStep";
 import { RouteRows, useRouteNumbers } from "@/components/RouteRows";
 import { routeLabel } from "@/components/routeBits";
 import { ShowMore, shownRows } from "@/components/ShowMore";
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { routeNameIn } from "@/lib/lang";
+import { useTripSettings } from "@/lib/tripSettings";
 
 interface Props {
   /** The step's number in the plan. */
@@ -41,6 +44,7 @@ const unfolded = new Set<string>();
 export function RoutesStep({ n, slug, routes, walks, map }: Props) {
   const t = useT();
   const lang = useLang();
+  const { withKids } = useTripSettings();
   const at = Math.max(0, routes.findIndex((r) => r.slug === slug));
   const numbers = useRouteNumbers(routes, walks, routes[at]?.slug ?? null);
   const place = routes[0]?.slug ?? slug;
@@ -64,9 +68,11 @@ export function RoutesStep({ n, slug, routes, walks, map }: Props) {
       summary={
         <>
           {routeNameIn(lang, routeLabel(current))} · <span className="font-data">{formatDuration(numbers[at].min)}</span>
+          {withKids ? ` · ${t("s deťmi")}` : ""}
         </>
       }
     >
+      <NoStartNote>{t("Časy trás platia od parkoviska, cestu k nemu bez štartu nepočítame.")}</NoStartNote>
       {map}
       {/* The first and last rows follow the list's corners (12 px card minus the 1 px border), so their hover outline isn't cut off. */}
       <ul className="flex flex-col divide-y divide-[var(--border)] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card-bg)] [&>li:first-child>a]:rounded-t-[11px] [&>li:last-child>a]:rounded-b-[11px]">
@@ -77,6 +83,10 @@ export function RoutesStep({ n, slug, routes, walks, map }: Props) {
         <LangLink href={`/trasa/${slug}/cesty`} className="flex min-h-10 w-fit self-end items-center gap-1.5 text-sm font-bold whitespace-nowrap text-[var(--accent)]">
           {t("Porovnať na mape")} ›
         </LangLink>
+      </div>
+      {/* The kids' pace changes the walk times above, so the switch lives here (Peter, 2026-11-12). */}
+      <div className="border-t border-[var(--border)] pt-2.5">
+        <KidsRow />
       </div>
     </PlanStep>
   );

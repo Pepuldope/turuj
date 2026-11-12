@@ -2,10 +2,11 @@
 
 import { KindIcon } from "@/components/KindIcon";
 import { formatDurationShort } from "@/lib/format";
+import { useEffect, useSyncExternalStore } from "react";
 import type { PoiIcon } from "@/lib/food";
 import { POI_COLOUR } from "@/lib/palette";
 import type { PoiKind } from "@/lib/types";
-import { LUNCH, useTripStops, visits } from "@/lib/tripStops";
+import { LUNCH, useTripStops } from "@/lib/tripStops";
 import type { StopWay, TripStop } from "@/lib/tripStops";
 import { useT } from "@/lib/i18n";
 
@@ -25,50 +26,50 @@ const WAYS: [StopWay, string][] = [
   ["oboje", "Tam aj späť"],
 ];
 
+// StopsRow and PoiList are siblings in the plan card, and the lunch row sits in PoiList's "Vybrané" box
+// (Peter, 12 Nov 2026), so StopsRow hands the planner's lunch choices over through this small store.
+const LUNCH_EVENT = "turuj-lunch-pick";
+let published: Record<string, LunchPick | undefined> = {};
+
+function subscribeLunch(cb: () => void) {
+  window.addEventListener(LUNCH_EVENT, cb);
+  return () => window.removeEventListener(LUNCH_EVENT, cb);
+}
+
+function publishLunch(slug: string, pick: LunchPick | undefined) {
+  if (published[slug] === pick) return;
+  published = { ...published, [slug]: pick };
+  window.dispatchEvent(new Event(LUNCH_EVENT));
+}
+
+/** The lunch choices StopsRow was given for this trip (undefined until it has mounted). */
+export function useLunchPick(slug: string): LunchPick | undefined {
+  return useSyncExternalStore(subscribeLunch, () => published[slug], () => undefined);
+}
+
 /**
- * The stops the group added (Peter 2026-10-23), each with its time; a lunch break is one tap.
- * On a there-and-back walk each place can be a stop on the way there, back, or both times.
+ * The top of "Zastávky po ceste": the lunch break in one tap and the hint. The stops themselves are in
+ * PoiList's "Vybrané" box, with the places to add (Peter, 12 Nov 2026: keep the map and structure, add the rest).
  */
 export function StopsRow({
   slug,
   hasPlaces,
-  loop,
   lunch,
 }: {
   slug: string;
   hasPlaces: boolean;
-  loop: boolean;
+  /** Kept for the planner's call; the way picker now sits on each stop's row in PoiList. */
+  loop?: boolean;
   lunch?: LunchPick;
 }) {
-  const { stops, toggle, setWay, patch, lunchAt, has, minutes } = useTripStops(slug);
+  const { stops, lunchAt, has, toggle, minutes } = useTripStops(slug);
   const t = useT();
+  useEffect(() => {
+    publishLunch(slug, lunch);
+    return () => publishLunch(slug, undefined);
+  }, [slug, lunch]);
   return (
     <div id="zastavky" className="flex flex-col gap-1.5 scroll-mt-24">
-      {stops.length > 0 && (
-        <ul className="flex flex-col gap-1.5" aria-label={t("Zastávky")}>
-          {stops.map((s) => (
-            <li key={s.id} className="flex min-w-0">
-              {/* One chip per stop, the way picker inside it: a separate switch wrapped onto its own line (Peter, 2026-10-24). */}
-              <span className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-[var(--accent)] bg-[var(--accent-soft)] py-1 pr-1 pl-3 text-[13px] font-semibold text-[var(--accent)]">
-                <span className="truncate">{t(s.name)}</span>
-                <span className="font-data shrink-0">+{formatDurationShort(s.min * visits(s))}</span>
-                {!loop && s.id !== LUNCH.id && <WaySwitch name={s.name} way={s.way} onPick={(way) => setWay(s.id, way)} />}
-                {s.id === LUNCH.id && lunch && (
-                  <LunchTime lunch={lunch} at={s.at} onPick={(at) => patch(LUNCH.id, { at })} />
-                )}
-                <button
-                  type="button"
-                  onClick={() => toggle(s)}
-                  aria-label={t("Odobrať zastávku {name}", { name: t(s.name) })}
-                  className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-base leading-none hover:bg-[var(--card-bg)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
-                >
-                  ×
-                </button>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
       {has(LUNCH.id) && lunch && lunch.foods.length > 0 && (
         <div className="flex flex-col gap-1">
           <p className="text-xs font-semibold text-[var(--muted)]">{t("Okolo obeda idete popri:")}</p>
@@ -100,18 +101,18 @@ export function StopsRow({
         </button>
       )}
       <p className="text-xs text-[var(--muted)]">
-        {minutes > 0
-          ? t("Zastávky predĺžia deň o {t}, časy aj obrázok dňa nižšie ich už rátajú.", { t: formatDurationShort(minutes) })
-          : hasPlaces
-            ? t("Zastávku pridáte tlačidlom + pri mieste na trase alebo na mape.")
-            : t("Pridajte prestávku, časy sa posunú.")}
+        {hasPlaces
+          ? t("Zastávku pridáte tlačidlom + pri mieste na trase alebo na mape.")
+          : stops.length === 0
+            ? t("Pridajte prestávku, časy sa posunú.")
+            : t("Zastávky predĺžia deň o {t}, časy aj obrázok dňa nižšie ich už rátajú.", { t: formatDurationShort(minutes) })}
       </p>
     </div>
   );
 }
 
 /** When to eat: at the goal (default) or a half hour during the walk. */
-function LunchTime({ lunch, at, onPick }: { lunch: LunchPick; at: string | undefined; onPick: (at: string | undefined) => void }) {
+export function LunchTime({ lunch, at, onPick }: { lunch: LunchPick; at: string | undefined; onPick: (at: string | undefined) => void }) {
   const t = useT();
   return (
     // The pill shows the choice at 13 px; the phone's own picker sits on top, invisible, at 16 px, because

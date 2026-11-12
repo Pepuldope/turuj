@@ -9,6 +9,10 @@ import type { RouteWalk } from "@/lib/walkFacts";
 import { useTripAccess } from "@/components/TripAccess";
 import { focusOnMap } from "@/lib/mapFocus";
 import { markRoutePicked } from "@/lib/planUi";
+import { usePlanDay } from "@/lib/planDay";
+import { routeNote } from "@/lib/routeNote";
+import type { RouteNote } from "@/lib/routeNote";
+import { UiIcon } from "@/components/UiIcon";
 import { setHoveredRoute, useHoveredRoute } from "@/lib/routeHover";
 import { BusOk, Dot, NoParkingChip, routeAccess, routeLabel } from "@/components/routeBits";
 import { LangLink, useLang, useT } from "@/lib/i18n";
@@ -50,6 +54,7 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
   const numbers = useRouteNumbers(routes, walks, routes[at]?.slug ?? null);
   const t = useT();
   const lang = useLang();
+  const day = usePlanDay();
   // The tapped row is marked at once; the new page (a server render) takes a moment and only then changes `at`.
   const [tapped, setTapped] = useState<{ slug: string; at: number } | null>(null);
   const picked = tapped && tapped.at === at ? tapped.slug : null;
@@ -78,10 +83,11 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
           const lats = r.up.map((p) => p[1]);
           if (r.up.length > 1) focusOnMap({ scope: "routes", location: { lat: lats[0], lon: lons[0] }, fit: [{ lat: Math.min(...lats), lon: Math.min(...lons) }, { lat: Math.max(...lats), lon: Math.max(...lons) }] });
         }}
-        className={`flex items-center gap-2.5 px-3 py-2 select-none outline-offset-[-2px] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${(picked ? r.slug === picked : i === at) ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--segment-bg)]"} ${
+        className={`flex flex-col px-3 py-2 select-none outline-offset-[-2px] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${(picked ? r.slug === picked : i === at) ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--segment-bg)]"} ${
           hovered === r.slug ? "outline-2 outline-[var(--accent)] outline" : ""
         }`}
       >
+        <span className="flex items-center gap-2.5">
         <Dot i={i} />
         <span className="flex min-w-0 flex-col leading-snug">
           <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[15px] font-bold">
@@ -98,9 +104,35 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
             {numbers[i].km} · +{numbers[i].ascentM} m
           </span>
         </span>
+        </span>
+        {/* Its own line under the row, so it has the full width (3 lines at 360 px beside the text). */}
+          {/* The chosen day's light for this route's walk, not tied to a time: Kedy comes after this step (Peter, 2026-11-12). */}
+          {day && !day.loading && day.plan && <DayNote note={routeNote(day.plan.sunrise, day.plan.sunset, numbers[i].min)} dayWord={day.dayWord} />}
       </LangLink>
     </li>
   ));
+}
+
+/** One small note: the route fits the day's light, needs an early start, or is too long for the day. */
+function DayNote({ note, dayWord }: { note: RouteNote; dayWord: string }) {
+  const t = useT();
+  // A note, not a warning (DESIGN-BRIEF §2, Peter 2026-11-12): plain muted text with a clock, no colour, no sign.
+  return (
+    <span className="mt-1.5 flex items-center gap-1 text-[12.5px] leading-tight text-[var(--muted)]">
+      <UiIcon name="clock" size={14} />
+      <span>
+        {note.kind === "ok" ? (
+          t("stihnete za svetla")
+        ) : note.kind === "too-long" ? (
+          t("na {day} pridlhá", { day: dayWord })
+        ) : (
+          <>
+            {t("dlhá · začnite do")}&nbsp;<span className="font-data">{note.latest.replace(/^0/, "")}</span>
+          </>
+        )}
+      </span>
+    </span>
+  );
 }
 
 /**
