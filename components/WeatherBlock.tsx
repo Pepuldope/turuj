@@ -168,7 +168,7 @@ export function WeatherReport({
     plan.hikeEnd,
     homeAt
   );
-  const timeline = !!onPickTime && cells.some((c) => c.kind !== null);
+  const timeline = SHOW_TIMELINE && !!onPickTime && cells.some((c) => c.kind !== null);
   const warnings = [...(r.wet && !stormy ? [wetText(r.wet, lang)] : []), ...notes.map((n) => n.text)];
   const wetKind = r.wet && !stormy ? (r.wet.snow ? "snow" : "rain") : "warn";
 
@@ -248,6 +248,12 @@ function SkyGlyph({ kind, size }: { kind: SkyKind; size: number }) {
     />
   );
 }
+
+/**
+ * The weather timeline (WeatherTimeline) is off on the live site: Peter (2026-11-12) wants a fixed-range day
+ * timeline with the drive in it and "Kedy" as the last step, mocked up first. Until then, step 1 says the weather in one line.
+ */
+const SHOW_TIMELINE = false;
 
 /** "Môže pršať 8:00–10:00 (mierne, do 0,8 mm/h). Vezmite si nepremokavú bundu." Also the warnings recap's line. The span never breaks at its dash (word joiners). */
 export function wetText(wet: NonNullable<TripWeatherReport["wet"]>, lang: Lang): string {
