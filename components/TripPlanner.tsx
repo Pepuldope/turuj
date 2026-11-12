@@ -579,6 +579,9 @@ const UNUSUAL_BEFORE_HOUR = 4;
 const NIGHT_FIX = "08:00";
 
 /** "Naozaj o 16:30?": change to the latest good start, or keep the odd time. */
+/** "09:40" as the rest of the plan writes it: "9:40". Display only. */
+const shortTime = (hhmm: string) => hhmm.replace(/^0/, "");
+
 function UnusualTime({ time, text, better, onBetter, onKeep }: { time: string; text: string; better: string | null; onBetter: () => void; onKeep: () => void }) {
   const t = useT();
   useEffect(() => {
@@ -597,7 +600,7 @@ function UnusualTime({ time, text, better, onBetter, onKeep }: { time: string; t
             <path d="M12 9.5v4.5M12 16.8v.4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
           </svg>
           <span>
-            {t("Naozaj o")} <span className="font-data">{time}</span>?
+            {t("Naozaj o")} <span className="font-data">{shortTime(time)}</span>?
           </span>
         </h2>
         <p className="text-[15px]">{text}</p>
@@ -609,7 +612,7 @@ function UnusualTime({ time, text, better, onBetter, onKeep }: { time: string; t
               autoFocus
               className="rounded-xl bg-[var(--accent)] px-4 py-3 text-[15px] font-bold text-[var(--accent-contrast)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
             >
-              {t("Zmeniť na")} <span className="font-data">{better}</span>
+              {t("Zmeniť na")} <span className="font-data">{shortTime(better)}</span>
             </button>
           )}
           <button
@@ -618,7 +621,7 @@ function UnusualTime({ time, text, better, onBetter, onKeep }: { time: string; t
             autoFocus={!better}
             className="rounded-xl border border-[var(--border)] px-4 py-3 text-[15px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
           >
-            {t("Ponechať")} <span className="font-data">{time}</span>
+            {t("Ponechať")} <span className="font-data">{shortTime(time)}</span>
           </button>
         </div>
       </div>

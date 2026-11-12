@@ -83,10 +83,11 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
           const lats = r.up.map((p) => p[1]);
           if (r.up.length > 1) focusOnMap({ scope: "routes", location: { lat: lats[0], lon: lons[0] }, fit: [{ lat: Math.min(...lats), lon: Math.min(...lons) }, { lat: Math.max(...lats), lon: Math.max(...lons) }] });
         }}
-        className={`flex items-center gap-2.5 px-3 py-2 select-none outline-offset-[-2px] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${(picked ? r.slug === picked : i === at) ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--segment-bg)]"} ${
+        className={`flex flex-col px-3 py-2 select-none outline-offset-[-2px] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${(picked ? r.slug === picked : i === at) ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--segment-bg)]"} ${
           hovered === r.slug ? "outline-2 outline-[var(--accent)] outline" : ""
         }`}
       >
+        <span className="flex items-center gap-2.5">
         <Dot i={i} />
         <span className="flex min-w-0 flex-col leading-snug">
           <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[15px] font-bold">
@@ -96,8 +97,6 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
           <span className="text-[13px] text-[var(--muted)]">
             {t("štart {name}", { name: r.start_name })} · {r.parking ? t(routeAccess(r)) : <BusOk />}
           </span>
-          {/* The chosen day's light for this route's walk, not tied to a time: Kedy comes after this step (Peter, 2026-11-12). */}
-          {day && !day.loading && day.plan && <DayNote note={routeNote(day.plan.sunrise, day.plan.sunset, numbers[i].min)} dayWord={day.dayNa} />}
         </span>
         <span className="font-data ml-auto shrink-0 text-right text-[16px] leading-tight">
           {formatDuration(numbers[i].min)}
@@ -105,6 +104,10 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
             {numbers[i].km} · +{numbers[i].ascentM} m
           </span>
         </span>
+        </span>
+        {/* Its own line under the row, so it has the full width (3 lines at 360 px beside the text). */}
+          {/* The chosen day's light for this route's walk, not tied to a time: Kedy comes after this step (Peter, 2026-11-12). */}
+          {day && !day.loading && day.plan && <DayNote note={routeNote(day.plan.sunrise, day.plan.sunset, numbers[i].min)} dayWord={day.dayWord} />}
       </LangLink>
     </li>
   ));
@@ -113,7 +116,7 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
 /** One small pill: the route fits the day's light, needs an early start, or is too long for the day. */
 function DayNote({ note, dayWord }: { note: RouteNote; dayWord: string }) {
   const t = useT();
-  const base = "mt-1 flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-[12.5px] leading-tight font-semibold";
+  const base = "mt-1.5 flex w-fit items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[12.5px] leading-tight font-semibold";
   if (note.kind === "ok") {
     return (
       <span className={`${base} bg-[var(--ok-bg)] text-[var(--ok)]`}>
@@ -130,7 +133,7 @@ function DayNote({ note, dayWord }: { note: RouteNote; dayWord: string }) {
           t("na {day} pridlhá", { day: dayWord })
         ) : (
           <>
-            {t("dlhá, túru začnite do")}&nbsp;<span className="font-data">{note.latest}</span>
+            {t("dlhá, túru začnite do")}&nbsp;<span className="font-data">{note.latest.replace(/^0/, "")}</span>
           </>
         )}
       </span>

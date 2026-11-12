@@ -1157,6 +1157,7 @@ export const EN: Record<string, string> = {
   "je bez dažďa": "is dry",
   "Začnite do": "Start by",
   "Začnite o": "Start at",
+  "Vybrať čas": "Pick a time",
   "auto": "car",
   "autobus": "bus",
   "pešo": "on foot",

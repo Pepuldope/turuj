@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { FilterChips } from "@/components/FilterChips";
 import { UiIcon } from "@/components/UiIcon";
@@ -26,7 +26,6 @@ import {
   hhmmToMin,
   keptAfterPick,
   kedyCards,
-  labelsOverlap,
   latestWalkStart,
   minToHhmm,
   rowCells,
@@ -178,7 +177,7 @@ export function kedySummary(p: KedyProps, t: T, lang: Lang): { summary: ReactNod
   return {
     summary: (
       <>
-        {p.dayWord} · {t("túra")} <span className="font-data">{span(s.start, s.end)}</span>
+        {p.dayWord} · <span className="font-data">{span(s.start, s.end)}</span>
         {s.home && (
           <>
             {" · "}
@@ -361,14 +360,16 @@ function StartControl({ plan, onSet, onTyped }: { plan: DayPlan; onSet: (hhmm: s
   const pos = scalePos(min);
   const label = `${t("Začiatok túry")} ${clockShort(plan.hikeStart)}`;
   const releaseSlider = () => setDragged(null);
+  const field = useRef<HTMLInputElement>(null);
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between gap-3">
-        <label htmlFor="kedy-start" className="text-base font-bold">
+        <label htmlFor="kedy-start" className="text-[15px] font-bold whitespace-nowrap">
           {t("Začiatok túry")}
         </label>
         <span className="relative">
           <input
+            ref={field}
             id="kedy-start"
             type="time"
             step={300}
@@ -380,9 +381,24 @@ function StartControl({ plan, onSet, onTyped }: { plan: DayPlan; onSet: (hhmm: s
               onTyped?.(e.target.value);
             }}
             onBlur={() => setTyped(null)}
-            className="font-data w-[8.5rem] rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] py-1.5 pr-10 pl-4 text-[30px] leading-tight font-semibold focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+                        // The browser's own clock button is hidden (it was a second icon next to ours); ours opens the same picker.
+            className="font-data w-[9.5rem] rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] py-1.5 pr-11 pl-3 text-[1.6rem] leading-tight font-semibold focus-visible:outline-2 focus-visible:outline-[var(--accent)] [&::-webkit-calendar-picker-indicator]:hidden"
           />
-          <UiIcon name="clock" size={22} className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-[var(--accent)]" />
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label={t("Vybrať čas")}
+            onClick={() => {
+              try {
+                field.current?.showPicker();
+              } catch {
+                field.current?.focus();
+              }
+            }}
+            className="absolute top-1/2 right-1 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+          >
+            <UiIcon name="clock" size={22} />
+          </button>
         </span>
       </div>
       {/* The slider sits in the row's own coordinates: the native input overhangs 16 px each side (its 32 px thumb), so 6:00 is the row's left edge. */}
@@ -437,9 +453,29 @@ function pieceStyle(tone: BarPiece["tone"], leg: boolean): CSSProperties {
   }
 }
 
+/** What fits in a box as wide as it measures (largest first): content that does not fit is dropped, never clipped. */
+function Fit({ options }: { options: { minPx: number; node: ReactNode }[] }) {
+  const box = useRef<HTMLSpanElement>(null);
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setWidth(el.clientWidth));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const fit = options.find((o) => o.minPx <= width);
+  return (
+    <span ref={box} className="flex h-full w-full min-w-0 items-center justify-center gap-1.5 overflow-hidden whitespace-nowrap">
+      {fit?.node}
+    </span>
+  );
+}
+
 function TripBar({ plan, strip, way }: { plan: DayPlan; strip: HourCell[]; way: ReturnType<typeof wayOf> }) {
   const t = useT();
   const segs = barSegments(plan, strip);
+  const hikeText = formatDuration(Math.round((plan.hikeEnd.getTime() - plan.hikeStart.getTime()) / MIN));
   return (
     <div className="relative h-10 w-full" aria-hidden="true">
       {segs.map((s, i) => {
@@ -451,24 +487,24 @@ function TripBar({ plan, strip, way }: { plan: DayPlan; strip: HourCell[]; way: 
         return (
           <div key={s.kind} className={`absolute inset-y-0 flex overflow-hidden ${round}`} style={{ left: `${s.left * 100}%`, width: `${s.width * 100}%` }}>
             {s.pieces.map((p, j) => {
-              const px = p.width * 300;
               const wet = hike && (p.tone === "rain" || p.tone === "storm");
+              const icon = wet ? (
+                <svg viewBox="0 0 24 24" width={20} height={20} aria-hidden="true" className="shrink-0" dangerouslySetInnerHTML={{ __html: badSkySvg("rain", true) }} />
+              ) : (
+                <UiIcon name={hike ? "walker" : WAY_ICON[way]} size={20} />
+              );
+              // "túra 7 h 10 min", then "7 h 10 min", then the icon alone, then nothing, by the width the piece really has.
+              const options =
+                hike && !wet
+                  ? [
+                      { minPx: 150, node: <>{icon}<span className="font-data text-[17px] font-semibold">{t("túra")} {hikeText}</span></> },
+                      { minPx: 108, node: <>{icon}<span className="font-data text-[17px] font-semibold">{hikeText}</span></> },
+                      { minPx: 28, node: icon },
+                    ]
+                  : [{ minPx: 28, node: icon }];
               return (
-                <span
-                  key={j}
-                  className="flex min-w-0 items-center justify-center gap-1.5 overflow-hidden whitespace-nowrap"
-                  style={{ ...pieceStyle(p.tone, !hike), width: `${(p.width / s.width) * 100}%` }}
-                >
-                  {wet ? (
-                    px > 20 && <svg viewBox="0 0 24 24" width={20} height={20} aria-hidden="true" className="shrink-0" dangerouslySetInnerHTML={{ __html: badSkySvg("rain", true) }} />
-                  ) : (
-                    j === widest && px > 22 && <UiIcon name={hike ? "walker" : WAY_ICON[way]} size={20} />
-                  )}
-                  {hike && j === widest && px > 120 && (
-                    <span className="font-data text-[17px] font-semibold">
-                      {t("túra")} {formatDuration(Math.round((plan.hikeEnd.getTime() - plan.hikeStart.getTime()) / MIN))}
-                    </span>
-                  )}
+                <span key={j} className="min-w-0 overflow-hidden" style={{ ...pieceStyle(p.tone, !hike), width: `${(p.width / s.width) * 100}%` }}>
+                  {(wet || j === widest) && <Fit options={options} />}
                 </span>
               );
             })}
@@ -479,40 +515,50 @@ function TripBar({ plan, strip, way }: { plan: DayPlan; strip: HourCell[]; way: 
   );
 }
 
-/** The end labels over the bar: "odchod 7:05 / auto 55 min" and "doma 16:05 / auto 55 min", with a tick down to the bar. */
+/**
+ * The end labels over the bar: "odchod 7:05 / auto 55 min" at the left end and "doma 16:05 / auto 55 min" at the right.
+ * One wrapping row spanning the bar: the labels cannot overlap, and when they do not fit side by side "doma" drops
+ * to its own line at the right. Near the scale's right edge the row reaches left instead of overflowing.
+ */
 function BarLabels({ plan, way, late }: { plan: DayPlan; way: ReturnType<typeof wayOf>; late: boolean }) {
   const t = useT();
   const ends = barEnds(plan);
   const word = wayWord(way, t);
   const ride = (min: number) =>
     min > 0 && (
-      <span className="block text-[13px] leading-tight text-[var(--muted)]">
-        {word} <span className="font-data text-[15px] font-semibold">{min}</span>
-        {NB}min
+      <span className="block text-[13px] leading-tight whitespace-nowrap text-[var(--muted)]">
+        {word} <span className="font-data text-[15px] font-semibold">{formatDuration(min)}</span>
       </span>
     );
-  const stack = labelsOverlap(ends);
+  const right = ends.home ? ends.home.left : ends.leave.left;
   return (
-    <div aria-hidden="true" className={`relative w-full ${stack ? "h-[5.5rem]" : "h-11"}`}>
-      <div className="absolute top-0" style={{ left: `${ends.leave.left * 100}%` }}>
-        <span className="block text-[13px] leading-tight whitespace-nowrap">
-          {t("odchod")} <span className="font-data text-[19px] font-semibold">{clockShort(plan.segments[0].start)}</span>
-        </span>
-        {ride(ends.leave.rideMin)}
-      </div>
-      {ends.home && (
-        <div className={`absolute text-right ${stack ? "top-11" : "top-0"}`} style={{ right: `${(1 - ends.home.left) * 100}%` }}>
-          <span className="block text-[13px] leading-tight whitespace-nowrap">
-            {t("doma")}{" "}
-            <span className="font-data text-[19px] font-semibold" style={late ? { color: "var(--time)" } : undefined}>
-              {clockShort(plan.segments[plan.segments.length - 1].end)}
-            </span>
+    <div aria-hidden="true" className="w-full">
+      <div
+        className="flex flex-wrap justify-between gap-x-3 gap-y-1"
+        style={{ marginLeft: `min(${ends.leave.left * 100}%, calc(100% - 13rem))`, marginRight: `${(1 - right) * 100}%` }}
+      >
+        <div className="whitespace-nowrap">
+          <span className="block text-[13px] leading-tight">
+            {t("odchod")} <span className="font-data text-[19px] font-semibold">{clockShort(plan.segments[0].start)}</span>
           </span>
-          {ride(ends.home.rideMin)}
+          {ride(ends.leave.rideMin)}
         </div>
-      )}
-      <span className="absolute bottom-0 h-2 w-px bg-[var(--muted)]" style={{ left: `${ends.leave.left * 100}%` }} />
-      {ends.home && <span className="absolute bottom-0 h-2 w-px bg-[var(--muted)]" style={{ left: `${ends.home.left * 100}%` }} />}
+        {ends.home && (
+          <div className="ml-auto text-right whitespace-nowrap">
+            <span className="block text-[13px] leading-tight">
+              {t("doma")}{" "}
+              <span className="font-data text-[19px] font-semibold" style={late ? { color: "var(--time)" } : undefined}>
+                {clockShort(plan.segments[plan.segments.length - 1].end)}
+              </span>
+            </span>
+            {ride(ends.home.rideMin)}
+          </div>
+        )}
+      </div>
+      <div className="relative h-2">
+        <span className="absolute bottom-0 h-2 w-px bg-[var(--muted)]" style={{ left: `${ends.leave.left * 100}%` }} />
+        {ends.home && <span className="absolute bottom-0 h-2 w-px bg-[var(--muted)]" style={{ left: `${ends.home.left * 100}%` }} />}
+      </div>
     </div>
   );
 }

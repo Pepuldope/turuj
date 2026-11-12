@@ -11,7 +11,7 @@ import { SAFE_MARGIN_MIN } from "@/lib/dayPlan";
 import { floorTo5 } from "@/lib/days";
 import { badHoursInSpan } from "@/lib/hourStrip";
 import type { BadLevel, HourCell } from "@/lib/hourStrip";
-import { FORECAST_DAYS, betterDay, betterTime, skyKind, summarize, tripWeatherReport, weatherAt, weatherNotes } from "@/lib/weather";
+import { FORECAST_DAYS, betterDay, betterTime, skyKind, summarize, tripWeatherReport, weatherAt, weatherNotes, wetWalk } from "@/lib/weather";
 import type { SkyKind, WeatherForecast } from "@/lib/weather";
 import { clock, clockShort, wallClock, zonedDate } from "@/lib/zoned";
 
@@ -131,11 +131,6 @@ export interface BarEnds {
   leave: { min: number; left: number; rideMin: number };
   /** Null when the way home is unknown (a train with none back). */
   home: { min: number; left: number; rideMin: number } | null;
-}
-
-/** The two end labels would run into each other (a short trip): the second goes on its own line. */
-export function labelsOverlap(ends: BarEnds): boolean {
-  return !!ends.home && ends.home.left - ends.leave.left < 0.6;
 }
 
 /** The two ends of the bar: "odchod 7:05 / auto 55 min" and "doma 16:05 / auto 55 min". */
@@ -388,7 +383,16 @@ export function kedyCards(input: KedyCardInput): KedyCard[] {
     const sooner =
       inLight ??
       betterTime(forecast.below, forecast.above, plan.hikeStart, plan.hikeEnd, { earliest, latest: new Date(plan.sunset.getTime() + 2 * HOUR) });
-    if (sooner) found.push({ c: { date, start: clock(new Date(plan.hikeStart.getTime() + sooner.shiftMin * MIN)) }, suggested: true });
+    if (sooner) {
+      // To 5 minutes (a start of 10:13 is odd to ask for): later times round up, earlier ones down, so the walk stays on the dry side.
+      const step = 5 * MIN;
+      const raw = plan.hikeStart.getTime() + sooner.shiftMin * MIN;
+      const snapped = sooner.shiftMin > 0 ? Math.ceil(raw / step) * step : Math.floor(raw / step) * step;
+      const len = plan.hikeEnd.getTime() - plan.hikeStart.getTime();
+      const a = new Date(snapped);
+      const start = wetWalk(forecast.below, forecast.above, a, new Date(snapped + len)) ? raw : snapped;
+      found.push({ c: { date, start: clock(new Date(start)) }, suggested: true });
+    }
     const better = betterDay(forecast.below, forecast.above, plan.hikeStart, plan.hikeEnd, now, { leadMin: lead / MIN, fits: input.fits });
     if (better && better.offset < FORECAST_DAYS) found.push({ c: { date: addDays(date, better.offset), start: here.start, best: true }, suggested: true });
   }

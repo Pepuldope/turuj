@@ -208,7 +208,8 @@ function Meta({ p }: { p: Poi }) {
       <span className="kind-ink font-bold" style={hold(POI_COLOUR[p.kind])}>
         {t(poiLabel(p))}
       </span>
-      {where && ` · ${where}`}
+      {/* Wraps only between the kind word and this part, never inside "pri 0,4 km" (360 px, 12 Nov 2026). */}
+      {where && <span className="whitespace-nowrap"> · {where}</span>}
     </span>
   );
 }
@@ -216,7 +217,7 @@ function Meta({ p }: { p: Poi }) {
 const showOnMap = (p: Poi, near?: LatLng) => focusOnMap({ id: `poi-${p.id}`, location: p.location, scope: "places", context: near });
 
 const nameBtn =
-  "-ml-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-1 pl-1 text-left hover:bg-[var(--segment-bg)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]";
+  "-ml-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-1 pl-1 text-left focus-visible:outline-2 focus-visible:outline-[var(--accent)]";
 
 /** A place not chosen yet: tile, name, kind and where, its minutes, a round "+". */
 function FreeRow({ p, near, onAdd }: { p: Poi; near?: LatLng; onAdd: () => void }) {

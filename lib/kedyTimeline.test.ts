@@ -10,7 +10,6 @@ import {
   hhmmToMin,
   kedyCards,
   keptAfterPick,
-  labelsOverlap,
   latestWalkStart,
   minToHhmm,
   rowCells,
@@ -74,6 +73,8 @@ describe("the fixed scale", () => {
   });
 });
 
+const hikeStrip = (p: ReturnType<typeof planFor>) => hourStrip(forecast, rowRange(p), p.segments[0].start, p.hikeStart, p.hikeEnd, p.segments[p.segments.length - 1].end);
+
 describe("the trip bar", () => {
   const plan = planFor("08:00");
   const strip = hourStrip(forecast, rowRange(plan), plan.segments[0].start, plan.hikeStart, plan.hikeEnd, plan.segments[2].end);
@@ -94,14 +95,20 @@ describe("the trip bar", () => {
     expect(segs[1].pieces.map((p) => p.tone)).toEqual(["base", "dark"]);
     expect(segs[2].pieces.map((p) => p.tone)).toEqual(["dark"]);
   });
-  it("labels both ends with the ride minutes, and stacks them when the trip is short", () => {
+  it("paints rain on the hike only, never on a ride leg (by bus, 8:00-9:20 ride, walk from 9:20)", () => {
+    const bus = planDay({ date: DAY, start: "08:00", driveMin: null, hikeMin: 300, location: TATRY, travelMode: "transit", fixed: { there: { leave: 480, arrive: 560 }, back: { leave: 860, home: 940 } } })!;
+    const s = hikeStrip(bus);
+    const segs = barSegments(bus, s);
+    expect(segs[0].kind).toBe("drive-there");
+    expect(segs[0].pieces.every((p) => p.tone === "base")).toBe(true);
+    expect(segs[1].pieces.some((p) => p.tone === "rain")).toBe(true);
+    expect(segs[2].pieces.every((p) => p.tone === "base")).toBe(true);
+  });
+  it("labels both ends with the ride minutes", () => {
     const ends = barEnds(plan);
     expect(ends.leave.rideMin).toBe(55);
     expect(ends.home?.rideMin).toBe(55);
     expect(clock(plan.segments[0].start)).toBe("07:05");
-    expect(labelsOverlap(ends)).toBe(false);
-    const short = planDay({ date: DAY, start: "09:00", driveMin: 10, hikeMin: 60, location: TATRY })!;
-    expect(labelsOverlap(barEnds(short))).toBe(true);
   });
   it("does not move the scale with the chosen time", () => {
     // The same clock time is always the same place; only the boxes move.
@@ -135,6 +142,16 @@ describe("the hour row", () => {
     expect(marks.map((m) => m.kind)).toEqual(["rise", "set"]);
     expect(Math.floor(marks[0].min / 60)).toBe(6);
     expect(Math.floor(marks[1].min / 60)).toBe(16);
+  });
+});
+
+describe("suggested starts", () => {
+  it("are on 5 minutes, rounded to the dry side, while the current start keeps its own minutes", () => {
+    const cards = kedyCards(input(planFor("08:43")));
+    expect(cards[0].start).toBe("08:43");
+    const time = cards.find((c) => c.suggested && c.sameDay);
+    expect(time).toBeDefined();
+    expect(Number(time!.start.slice(3)) % 5).toBe(0);
   });
 });
 
