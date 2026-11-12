@@ -100,27 +100,35 @@ export function rainStrength(mm: number): 0 | 1 | 2 | 3 {
   return mm < 0.5 ? 1 : mm < 2 ? 2 : 3;
 }
 
-/** The first and last cell index of the walk, or null when no hour is the walk's. */
-export function walkSpan(cells: HourCell[]): { from: number; to: number } | null {
-  const from = cells.findIndex((c) => c.part === "walk");
-  if (from < 0) return null;
-  let to = from;
-  cells.forEach((c, i) => {
-    if (c.part === "walk") to = i;
-  });
-  return { from, to };
+/** Where `t` falls between `from` and `to`, 0..1 (not clamped). */
+export function timeFraction(t: number, from: number, to: number): number {
+  return (t - from) / (to - from);
 }
 
-/** Runs of consecutive cells of one part: [first index, count]. */
-export function partRuns(cells: HourCell[], part: HourCell["part"]): [number, number][] {
-  const runs: [number, number][] = [];
-  cells.forEach((c, i) => {
-    if (c.part !== part) return;
-    const last = runs[runs.length - 1];
-    if (last && last[0] + last[1] === i) last[1]++;
-    else runs.push([i, 1]);
-  });
-  return runs;
+/** `t` rounded to the nearest `stepMin` minutes. */
+export function snapTime(t: number, stepMin = 15): number {
+  const step = stepMin * MIN;
+  return Math.round(t / step) * step;
+}
+
+/** The walk's start kept so that a walk `len` ms long stays inside [from, to]. */
+export function clampStart(start: number, len: number, from: number, to: number): number {
+  return Math.min(Math.max(start, from), Math.max(from, to - len));
+}
+
+/** warn: rain, snow or sleet; danger: a storm or heavy rain or snow. */
+export type BadLevel = "warn" | "danger";
+
+/** How bad the hour's weather is for a walk; null when it is nothing to warn about. */
+export function badLevel(c: HourCell): BadLevel | null {
+  if (c.kind === "thunder" || c.kind === "heavyrain" || c.kind === "heavysnow" || c.rain >= 2) return "danger";
+  if (c.rain >= 0.05 || c.kind === "lightrain" || c.kind === "rain" || c.kind === "sleet" || c.kind === "lightsnow" || c.kind === "snow") return "warn";
+  return null;
+}
+
+/** For each hour the walk [from, to) touches, how bad its weather is; null for hours outside the walk or with nothing bad. */
+export function badHoursInSpan(cells: HourCell[], from: number, to: number): (BadLevel | null)[] {
+  return cells.map((c) => (c.t < to && c.t + HOUR > from ? badLevel(c) : null));
 }
 
 /** Worse sky first, for picking the one glyph that stands for the walk. */

@@ -31,6 +31,7 @@
   --time: #a35200;            /* departure times as text, 5.6:1 on --sun-soft */
   --ok: #17663a;              /* "stihnete", 6.2:1 on --ok-bg */
   --neutral-bg: #eceef1;      /* "nestihnete" pill */
+  --night-bg: #aebbcc;        /* hours of darkness on the weather timeline */
   --off-bg: #d5dde7;          /* a choice that is not possible here (car with no car park) */
   --off-fg: #4d596a;          /* 5.2:1 on --off-bg */
   --danger: #b3261e;          /* closures, 5.6:1 on --danger-bg */
@@ -79,6 +80,7 @@
     --time: #ffc23d;          /* 10:1 on --sun-soft */
     --ok: #5cc283;
     --neutral-bg: #253041;
+    --night-bg: #0b1322;
     --off-bg: #0b1322;
     --off-fg: #8794a8;
     --danger: #ff8a80;

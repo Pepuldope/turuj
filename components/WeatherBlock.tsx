@@ -249,10 +249,10 @@ function SkyGlyph({ kind, size }: { kind: SkyKind; size: number }) {
   );
 }
 
-/** "Môže pršať 8:00–10:00 (mierne, do 0,8 mm/h). Vezmite si nepremokavú bundu." Also the warnings recap's line. */
+/** "Môže pršať 8:00–10:00 (mierne, do 0,8 mm/h). Vezmite si nepremokavú bundu." Also the warnings recap's line. The span never breaks at its dash (word joiners). */
 export function wetText(wet: NonNullable<TripWeatherReport["wet"]>, lang: Lang): string {
   const how = wet.mmPerHour >= 0.1 ? tr(lang, " ({how}, do {mm} mm/h)", { how: tr(lang, wet.mmPerHour < 0.5 ? "slabo" : wet.mmPerHour < 2 ? "mierne" : "výdatne"), mm: decimal(lang, wet.mmPerHour) }) : "";
-  return `${tr(lang, wet.snow ? "Môže snežiť" : wet.sleet ? "Môže pršať so snehom" : "Môže pršať")} ${wet.when}${how}. ${tr(lang, "Vezmite si nepremokavú bundu.")}`;
+  return `${tr(lang, wet.snow ? "Môže snežiť" : wet.sleet ? "Môže pršať so snehom" : "Môže pršať")} ${wet.when.replace("–", "\u2060–\u2060")}${how}. ${tr(lang, "Vezmite si nepremokavú bundu.")}`;
 }
 
 const SIGN: Record<"rain" | "snow" | "storm" | "warn", string> = {

@@ -9,6 +9,7 @@ import { hasKeptMap, keptMapKey } from "@/lib/keptMap";
 import { pickedAnchor, rememberOpenSteps, stepsKeptFromRoutePick } from "@/lib/planUi";
 import type { MapFit } from "@/lib/mapFocus";
 import { useT } from "@/lib/i18n";
+import { groupPlanWarnings } from "@/lib/planWarnings";
 import type { PlanWarning } from "@/lib/planWarnings";
 
 /** One step as the provider knows it. */
@@ -207,26 +208,32 @@ export function PlanWarningsRecap({ warnings }: { warnings: PlanWarning[] }) {
   const api = useContext(StepsContext)!;
   const t = useT();
   if (warnings.length === 0) return null;
+  const groups = groupPlanWarnings(warnings, Object.fromEntries(api.steps.map((s) => [s.id, s.n])));
   return (
     <section aria-label={t("Pred odchodom skontrolujte")} className="flex flex-col gap-2">
       <h3 className="text-base font-bold">{t("Pred odchodom skontrolujte")}</h3>
       <ul className="flex flex-col gap-2">
-        {warnings.map((w) => {
-          const step = api.steps.find((s) => s.id === w.step);
-          const red = w.tone === "danger";
+        {groups.map((g) => {
+          const step = api.steps.find((s) => s.id === g.step);
+          const red = g.tone === "danger";
           return (
             <li
-              key={w.key}
+              key={g.step}
               className={`flex flex-col gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold ${red ? "bg-[var(--danger-bg)] text-[var(--danger)]" : "bg-[var(--warn-bg)] text-[var(--warn)]"}`}
             >
               <span className="flex items-start gap-1.5">
                 <UiIcon name="warn" size={16} className="mt-0.5 shrink-0" />
-                <span>{w.text}</span>
+                <span className="flex flex-col gap-1">
+                  {step && <span className="font-bold">{t("V kroku {n} skontrolujte:", { n: String(step.n) })}</span>}
+                  {g.warnings.map((w) => (
+                    <span key={w.key}>{w.text}</span>
+                  ))}
+                </span>
               </span>
               {step && (
                 <button
                   type="button"
-                  onClick={() => api.openStep(w.step)}
+                  onClick={() => api.openStep(g.step)}
                   className="min-h-10 w-fit cursor-pointer self-start rounded-full bg-[var(--accent)] px-4 text-sm font-bold text-[var(--accent-contrast)] transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
                 >
                   {t("Upraviť v kroku {n}", { n: String(step.n) })}

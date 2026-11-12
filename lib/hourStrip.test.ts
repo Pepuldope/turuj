@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { departureFor, hourStrip, isDarkHour, partRuns, rainStrength, startHourIndex, walkSpan, worstWalkKind } from "@/lib/hourStrip";
+import { departureFor, hourStrip, badHoursInSpan, badLevel, clampStart, isDarkHour, rainStrength, snapTime, startHourIndex, timeFraction, worstWalkKind } from "@/lib/hourStrip";
 import type { WeatherForecast } from "@/lib/weather";
 import { clock, zonedDate } from "@/lib/zoned";
 
@@ -71,23 +71,40 @@ describe("rainStrength", () => {
   });
 });
 
-describe("walk helpers", () => {
+describe("worstWalkKind", () => {
   const cells = hourStrip(forecast, { from: at(6, 20), to: at(15, 10) }, at(7, 40), at(8, 30), at(12, 50), at(14, 10));
-  it("finds the walk's span and the way's runs", () => {
-    const hour = (i: number) => clock(cells[i].t);
-    const span = walkSpan(cells)!;
-    expect(hour(span.from)).toBe("08:00");
-    expect(hour(span.to)).toBe("12:00");
-    expect(partRuns(cells, "way").map(([i, n]) => [hour(i), n])).toEqual([
-      ["13:00", 1],
-    ]);
-  });
-  it("has no span without a walk", () => {
-    expect(walkSpan([])).toBeNull();
-  });
   it("picks the worst sky of the walk only", () => {
     expect(worstWalkKind(cells)).toBe("clear");
     const wet = hourStrip(forecast, { from: at(6, 20), to: at(15, 10) }, at(7, 40), at(8, 30), at(14, 10), at(15, 0));
     expect(worstWalkKind(wet)).toBe("rain");
+  });
+});
+
+describe("slider helpers", () => {
+  it("turns a time into a fraction of the range", () => {
+    expect(timeFraction(at(9).getTime(), at(6).getTime(), at(18).getTime())).toBe(0.25);
+  });
+  it("snaps to 15 minutes", () => {
+    expect(clock(snapTime(at(8, 7).getTime()))).toBe("08:00");
+    expect(clock(snapTime(at(8, 8).getTime()))).toBe("08:15");
+  });
+  it("keeps the walk inside the range", () => {
+    const len = 4 * 3600000;
+    expect(clampStart(at(5).getTime(), len, at(6).getTime(), at(18).getTime())).toBe(at(6).getTime());
+    expect(clampStart(at(16).getTime(), len, at(6).getTime(), at(18).getTime())).toBe(at(14).getTime());
+    expect(clampStart(at(10).getTime(), len, at(6).getTime(), at(18).getTime())).toBe(at(10).getTime());
+  });
+  it("finds the bad hours the walk touches, and no others", () => {
+    const cells = hourStrip(forecast, { from: at(11, 0), to: at(15, 0) }, at(11), at(11), at(11), at(11));
+    expect(badLevel(cells.find((c) => clock(c.t) === "13:00")!)).toBe("warn");
+    const inWalk = badHoursInSpan(cells, at(12).getTime(), at(14).getTime());
+    expect(cells.map((c, i) => (inWalk[i] ? clock(c.t) : null)).filter(Boolean)).toEqual(["13:00"]);
+    expect(badHoursInSpan(cells, at(8).getTime(), at(12).getTime()).every((x) => x === null)).toBe(true);
+  });
+  it("calls a storm or 2 mm an hour danger", () => {
+    const c = { t: 0, temp: 5, kind: "thunder", symbol: "heavyrainandthunder", rain: 0, part: "walk" } as const;
+    expect(badLevel(c)).toBe("danger");
+    expect(badLevel({ ...c, kind: "rain", rain: 2 })).toBe("danger");
+    expect(badLevel({ ...c, kind: "cloudy", rain: 0 })).toBeNull();
   });
 });
