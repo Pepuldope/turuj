@@ -96,7 +96,7 @@ export function PoiList({
           />
         ))}
       </ul>
-      <ShowMore hidden={pois.length - seen.length} open={all} onToggle={() => setAll((v) => !v)} />
+      <ShowMore kind="places" hidden={pois.length - seen.length} open={all} onToggle={() => setAll((v) => !v)} />
     </div>
   );
 }

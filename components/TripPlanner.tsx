@@ -6,7 +6,8 @@ import type { ReactNode } from "react";
 import { outsideDaylight } from "@/lib/dayPlan";
 import type { DayPlan, Verdict } from "@/lib/dayPlan";
 import { EARLIEST_DEPARTURE_HOUR, addDaysIso, dayAfterNa, dayStrip, floorTo5, longDay } from "@/lib/days";
-import { badDays } from "@/lib/weather";
+import { badDays, tripWeatherReport, weatherNotes } from "@/lib/weather";
+import { collectPlanWarnings } from "@/lib/planWarnings";
 import { formatDuration, formatDurationShort, formatTime, stopLabel } from "@/lib/format";
 import { haversineM } from "@/lib/geo";
 import { walkThereMinutes } from "@/lib/walkThere";
@@ -24,14 +25,14 @@ import { FilterChips, KidsRow } from "@/components/FilterChips";
 import { NavHandoff } from "@/components/NavHandoff";
 import { AppPromo, SaveTripButton } from "@/components/SaveTripButton";
 import type { ShareInfo } from "@/components/ShareButton";
-import { PlanStep, PlanStepsProvider, StepInfo } from "@/components/PlanStep";
+import { PlanStep, PlanStepsProvider, PlanWarningsRecap, StepInfo } from "@/components/PlanStep";
 import type { StepDef } from "@/components/PlanStep";
 import { ParkingOptions, feeLabel, summaryWalk } from "@/components/ParkingBlock";
 import { StartPill } from "@/components/StartPill";
 import { StopsRow } from "@/components/StopsRow";
 import { SunArc } from "@/components/SunArc";
 import { useTripAccess } from "@/components/TripAccess";
-import { WeatherReport, useTripWeather } from "@/components/WeatherBlock";
+import { WeatherReport, useTripWeather, wetText } from "@/components/WeatherBlock";
 import { StopOptions, TransitHandoff, TransitLegs } from "@/components/TransitBlock";
 import { TravelSwitch } from "@/components/TravelSwitch";
 import { GOAL_WORDS, trimProfile, withApproach, withStops } from "@/lib/tripProfile";
@@ -310,6 +311,39 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
     { id: "access", n: accessN, title: t("Ako sa tam dostanete"), fit: "access" as const },
     { id: "places", n: accessN + 1, title: t("Zastávky po ceste"), fit: "places" as const },
   ];
+  // The recap "Pred odchodom skontrolujte": every warning the steps show now, in their own words, each with the step that fixes it.
+  // Closures are not repeated: the red line next to Uložiť (ClosureGuard) already says it where it is acted on.
+  const ready = plan !== null && !tripPlan.loading;
+  const lateRow = ready && (late || !!latestPassed);
+  const tanapLate = ready && tanap ? outsideDaylight(plan) : null;
+  const weatherRows = ready && weather.below && !weather.loading ? weatherNotes(weather.below, weather.above, plan.hikeStart, plan.hikeEnd, lang) : [];
+  // Rain or snow, worded as in step 1's box, which shows it only when no storm warning covers it.
+  const wet =
+    ready && weather.below && !weather.loading && !weatherRows.some((n) => n.strong)
+      ? tripWeatherReport(weather.below, weather.above, transit ? plan.segments[0].start : plan.hikeStart, transit ? plan.segments[plan.segments.length - 1].end : plan.hikeEnd, { from: plan.hikeStart, to: plan.hikeEnd }, lang)?.wet ?? null
+      : null;
+  const warnings = collectPlanWarnings([
+    // Kedy
+    lateRow && { key: "late", step: "when", tone: "warn", text: lateText(plan.verdict, { latestPassed: !!latestPassed, tooLong, noTrain: !!plan.noTrainInLight, startWord, latest: formatTime(latest!) }, lang) },
+    ready && plan.startsInDark && { key: "dark", step: "when", tone: "warn", text: t("Túra začína pred východom slnka, vezmite si čelovku.") },
+    !!tanapLate && {
+      key: "tanap",
+      step: "when",
+      tone: "warn",
+      text:
+        tanapLate === "late"
+          ? t("V TANAP-e sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte skôr alebo vyberte kratší výlet.")
+          : t("V TANAP-e sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte až po východe slnka."),
+    },
+    !!wet && { key: "wet", step: "when", tone: "warn", text: wetText(wet, lang) },
+    ...weatherRows.map((n, i) => ({ key: `weather-${i}`, step: "when", tone: n.strong ? ("danger" as const) : ("warn" as const), text: n.text })),
+    // Kadiaľ pôjdete / Ako sa tam dostanete: no car park at this route's start (another route can fix it), no stop, no train back.
+    noCar && { key: "no-car", step: routeChoice ? "route" : "access", tone: "warn", text: `${t("Autom sa sem nedá.")} ${t("Pri štarte tejto cesty nie je kde nechať auto, preto plánujeme cestu autobusom alebo vlakom. Ak chcete ísť autom, vyberte inú cestu s parkoviskom.")}` },
+    ready && transit && !stop && { key: "no-stop", step: "access", tone: "warn", text: t("Pri začiatku trasy sme nenašli zastávku vlaku ani autobusu. Táto túra je lepšia autom.") },
+    ready && transit && !!stop && rail.status === "ok" && !rail.back[rail.backChoice] && { key: "no-train-back", step: "access", tone: "warn", text: t("Po túre už v tento deň nejde vlak späť. Skúste skorší odchod alebo autobus.") },
+    ready && transit && !!stop && rail.status === "no-day" && !!rail.changeDay && { key: "rail-change", step: "access", tone: "warn", text: t("Cestovný poriadok sa mení {day} Spoj si overte na cp.sk.", { day: rail.changeDay }) },
+  ]);
+
   // Car, bus or on foot changes what the "how you get there" map shows: the big map frames it again.
   const wayKey = `${transit}-${walking}`;
   const lastWay = useRef(wayKey);
@@ -464,8 +498,6 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
           {places}
         </PlanStep>
 
-        </PlanStepsProvider>
-
         <div id="vas-den" className="flex scroll-mt-[calc(64px+env(safe-area-inset-top))] flex-col gap-4 lg:scroll-mt-3">
         {plan && (
           <section aria-label={t("Priebeh dňa")} className="flex flex-col gap-4 border-t border-[var(--border)] pt-4">
@@ -498,16 +530,9 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
               <Step label={t(transit && stop ? "na zastávke" : hasDrive ? "pri aute" : "späť")} time={plan.hikeEnd} />
               {plan.segments[plan.segments.length - 1].kind === "drive-back" && <Step label={t("doma")} time={plan.segments[plan.segments.length - 1].end} />}
             </ol>
-            {tanap && !tripPlan.loading && outsideDaylight(plan) && (
-              <p role="status" className="flex items-start gap-1.5 rounded-xl bg-[var(--warn-bg)] p-3 text-sm font-semibold text-[var(--warn)]">
-                <UiIcon name="warn" size={16} className="mt-0.5 shrink-0" />
-                <span>
-                  {outsideDaylight(plan) === "late"
-                    ? t("V TANAP-e sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte skôr alebo vyberte kratší výlet.")
-                    : t("V TANAP-e sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte až po východe slnka.")}
-                </span>
-              </p>
-            )}
+            {/* The TANAP daylight rule is one of the recap's rows (same condition and words), so its separate box
+                here is gone: it showed the same text twice in a row. */}
+            <PlanWarningsRecap warnings={warnings} />
             {transit && <TransitLegs plan={plan} rail={rail} />}
             {transit && rail.status === "ok" && <p className="text-xs text-[var(--muted)]">{t("Podľa cestovného poriadku vlakov, spoj si vyberiete nižšie.")}</p>}
             {driveApprox && !transit && (
@@ -518,6 +543,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
         )}
 
         </div>
+        </PlanStepsProvider>
       </section>
 
       {/* Its own card (Peter, 2026-11-11): save, share, navigate and the GPX are what you do with a finished plan. */}

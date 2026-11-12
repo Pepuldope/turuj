@@ -31,12 +31,27 @@ interface Props {
  * and doesn't render this (TripPlanner says the one route as plain info). Folded, it names the
  * route on screen and its walk; it links to the map comparison.
  */
+/**
+ * Whether a place's route list was unfolded. Switching routes loads another route's page, which mounts this
+ * step anew; kept here (per place, for this visit) so the list stays open (Peter, 2026-11-12). Module state, not
+ * storage: a fresh page load starts folded on server and client alike.
+ */
+const unfolded = new Set<string>();
+
 export function RoutesStep({ n, slug, routes, walks, map }: Props) {
   const t = useT();
   const lang = useLang();
   const at = Math.max(0, routes.findIndex((r) => r.slug === slug));
   const numbers = useRouteNumbers(routes, walks, routes[at]?.slug ?? null);
-  const [all, setAll] = useState(false);
+  const place = routes[0]?.slug ?? slug;
+  const [all, setAllState] = useState(() => unfolded.has(place));
+  const setAll = (next: (v: boolean) => boolean) =>
+    setAllState((v) => {
+      const on = next(v);
+      if (on) unfolded.add(place);
+      else unfolded.delete(place);
+      return on;
+    });
   if (routes.length < 2) return null;
   const current = routes[at];
   const shown = shownRows(routes.length, all, [at]);
@@ -57,9 +72,9 @@ export function RoutesStep({ n, slug, routes, walks, map }: Props) {
       <ul className="flex flex-col divide-y divide-[var(--border)] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card-bg)] [&>li:first-child>a]:rounded-t-[11px] [&>li:last-child>a]:rounded-b-[11px]">
         <RouteRows routes={routes} at={at} walks={walks} shown={shown} />
       </ul>
-      <div className="flex items-center justify-between gap-x-3">
-        <ShowMore hidden={routes.length - shown.length} open={all} onToggle={() => setAll((v) => !v)} />
-        <LangLink href={`/trasa/${slug}/cesty`} className="ml-auto flex min-h-10 w-fit items-center gap-1.5 text-sm font-bold whitespace-nowrap text-[var(--accent)]">
+      <div className="flex flex-col gap-1">
+        <ShowMore kind="routes" hidden={routes.length - shown.length} open={all} onToggle={() => setAll((v) => !v)} />
+        <LangLink href={`/trasa/${slug}/cesty`} className="flex min-h-10 w-fit self-end items-center gap-1.5 text-sm font-bold whitespace-nowrap text-[var(--accent)]">
           {t("Porovnať na mape")} ›
         </LangLink>
       </div>

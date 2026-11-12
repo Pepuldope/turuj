@@ -31,6 +31,7 @@
   --time: #a35200;            /* departure times as text, 5.6:1 on --sun-soft */
   --ok: #17663a;              /* "stihnete", 6.2:1 on --ok-bg */
   --neutral-bg: #eceef1;      /* "nestihnete" pill */
+  --night-bg: #aebbcc;        /* hours of darkness on the weather timeline */
   --off-bg: #d5dde7;          /* a choice that is not possible here (car with no car park) */
   --off-fg: #4d596a;          /* 5.2:1 on --off-bg */
   --danger: #b3261e;          /* closures, 5.6:1 on --danger-bg */
@@ -79,6 +80,7 @@
     --time: #ffc23d;          /* 10:1 on --sun-soft */
     --ok: #5cc283;
     --neutral-bg: #253041;
+    --night-bg: #0b1322;
     --off-bg: #0b1322;
     --off-fg: #8794a8;
     --danger: #ff8a80;
@@ -606,4 +608,29 @@ h2,
   .step-done {
     animation: none;
   }
+}
+
+/* The start row lights up once when the start was found on its own (lib/startFlash.ts). */
+.start-flash {
+  animation: start-flash 1300ms ease-out;
+}
+@keyframes start-flash {
+  0%,
+  55% {
+    box-shadow: 0 0 0 3px var(--accent);
+    background-color: var(--accent-soft);
+  }
+  100% {
+    box-shadow: 0 0 0 3px transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .start-flash {
+    animation: none;
+  }
+}
+
+/* Small phone maps (components/PhoneTripMap.tsx): no +/- buttons, pinch and scroll still zoom. */
+[data-small-map] .maplibregl-ctrl-top-right {
+  display: none;
 }

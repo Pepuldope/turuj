@@ -105,7 +105,7 @@ describe("trip weather report", () => {
     const r = tripWeatherReport(forecast, null, at(7), at(11))!;
     expect(r.tempMin).toBe(4);
     expect(r.tempMax).toBe(9);
-    expect(r.wet).toEqual({ when: `${hm(at(9))}–${hm(at(10))}`, mmPerHour: 0.4, snow: false });
+    expect(r.wet).toEqual({ when: `${hm(at(9))}–${hm(at(10))}`, mmPerHour: 0.4, snow: false, sleet: false });
   });
 
   it("reports nothing wet on a dry window and no hours for fine weather", () => {

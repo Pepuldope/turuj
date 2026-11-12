@@ -9,6 +9,8 @@ import { hasKeptMap, keptMapKey } from "@/lib/keptMap";
 import { pickedAnchor, rememberOpenSteps, stepsKeptFromRoutePick } from "@/lib/planUi";
 import type { MapFit } from "@/lib/mapFocus";
 import { useT } from "@/lib/i18n";
+import { groupPlanWarnings } from "@/lib/planWarnings";
+import type { PlanWarning } from "@/lib/planWarnings";
 
 /** One step as the provider knows it. */
 export interface StepDef {
@@ -28,6 +30,8 @@ interface StepsApi {
   toggle: (id: string) => void;
   /** Folds `from`, opens `to` and brings its header into view (focus moves there too). */
   go: (from: string, to: string) => void;
+  /** Opens `id` (the others stay as they are), brings its header into view under the top bar and moves focus there. */
+  openStep: (id: string) => void;
   /** Scrolls to the plan's result: the sun dial, the times and Uložiť. */
   toResult: () => void;
   /** The step was left forward with "Ďalej" (its number shows a tick). */
@@ -166,6 +170,13 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       if (forward) setDone((d) => ({ ...d, [from]: true }));
       setOpen((o) => ({ ...o, [from]: false, [to]: true }));
     },
+    openStep: (id) => {
+      pending.current = { to: id, from: id, forward: false };
+      const fit = fitFor(id);
+      if (fit) fitOnMap(fit);
+      // A new object even when it is open already, so the effect below runs and brings it into view.
+      setOpen((o) => ({ ...o, [id]: true }));
+    },
     toResult: () => scrollUnderBar(document.getElementById(resultId)),
     isDone: (id) => !!done[id],
   };
@@ -186,6 +197,54 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     return glideUnderBar(section, FOLD_MS + 150, left ?? null);
   }, [open]);
   return <StepsContext.Provider value={api}>{children}</StepsContext.Provider>;
+}
+
+/**
+ * The recap of the warnings the steps show, repeated where the plan is read through (people miss them while
+ * setting the steps up): one row each with its sign and "Upraviť v kroku n", which opens that step. Nothing at all
+ * when there is no warning (no known problem is not good news).
+ */
+export function PlanWarningsRecap({ warnings }: { warnings: PlanWarning[] }) {
+  const api = useContext(StepsContext)!;
+  const t = useT();
+  if (warnings.length === 0) return null;
+  const groups = groupPlanWarnings(warnings, Object.fromEntries(api.steps.map((s) => [s.id, s.n])));
+  return (
+    <section aria-label={t("Pred odchodom skontrolujte")} className="flex flex-col gap-2">
+      <h3 className="text-base font-bold">{t("Pred odchodom skontrolujte")}</h3>
+      <ul className="flex flex-col gap-2">
+        {groups.map((g) => {
+          const step = api.steps.find((s) => s.id === g.step);
+          const red = g.tone === "danger";
+          return (
+            <li
+              key={g.step}
+              className={`flex flex-col gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold ${red ? "bg-[var(--danger-bg)] text-[var(--danger)]" : "bg-[var(--warn-bg)] text-[var(--warn)]"}`}
+            >
+              <span className="flex items-start gap-1.5">
+                <UiIcon name="warn" size={16} className="mt-0.5 shrink-0" />
+                <span className="flex flex-col gap-1">
+                  {step && <span className="font-bold">{t("V kroku {n} skontrolujte:", { n: String(step.n) })}</span>}
+                  {g.warnings.map((w) => (
+                    <span key={w.key}>{w.text}</span>
+                  ))}
+                </span>
+              </span>
+              {step && (
+                <button
+                  type="button"
+                  onClick={() => api.openStep(g.step)}
+                  className="min-h-10 w-fit cursor-pointer self-start rounded-full bg-[var(--accent)] px-4 text-sm font-bold text-[var(--accent-contrast)] transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+                >
+                  {t("Upraviť v kroku {n}", { n: String(step.n) })}
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
 }
 
 /**

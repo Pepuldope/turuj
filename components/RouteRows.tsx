@@ -63,6 +63,9 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
         prefetch={i !== at && ++ahead <= PREFETCH_MAX ? true : undefined}
         aria-current={(picked ? r.slug === picked : i === at) ? "page" : undefined}
         scroll={false}
+        // A mouse that drifts a few pixels between press and release starts dragging the link instead of
+        // clicking it ("I hover instead of clicking", Peter, 2026-11-11): the rows are not draggable.
+        draggable={false}
         onMouseEnter={() => setHoveredRoute(i === at ? null : r.slug)}
         onMouseLeave={() => setHoveredRoute(null)}
         onClick={(e) => {
@@ -75,7 +78,7 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
           const lats = r.up.map((p) => p[1]);
           if (r.up.length > 1) focusOnMap({ scope: "routes", location: { lat: lats[0], lon: lons[0] }, fit: [{ lat: Math.min(...lats), lon: Math.min(...lons) }, { lat: Math.max(...lats), lon: Math.max(...lons) }] });
         }}
-        className={`flex items-center gap-2.5 px-3 py-2 outline-offset-[-2px] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${(picked ? r.slug === picked : i === at) ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--segment-bg)]"} ${
+        className={`flex items-center gap-2.5 px-3 py-2 select-none outline-offset-[-2px] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${(picked ? r.slug === picked : i === at) ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--segment-bg)]"} ${
           hovered === r.slug ? "outline-2 outline-[var(--accent)] outline" : ""
         }`}
       >

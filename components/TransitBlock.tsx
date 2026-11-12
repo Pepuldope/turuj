@@ -93,7 +93,7 @@ export function StopOptions() {
           })}
         </ul>
       )}
-      <ShowMore hidden={options.length - rows.length} open={all} onToggle={() => setAll((v) => !v)} />
+      <ShowMore kind="stops" hidden={options.length - rows.length} open={all} onToggle={() => setAll((v) => !v)} />
     </div>
   );
 }
