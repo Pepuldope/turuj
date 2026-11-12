@@ -76,6 +76,12 @@ export function WeatherTimeline({
   const anyRain = cells.some((c) => rainStrength(c.rain) > 0);
   const anyDark = dark.some(Boolean);
   const anyBad = bad.some(Boolean);
+  // The part of the walk in the dark (before sunrise, after sunset), to the minute: it stands out like bad weather,
+  // so the "Späť by ste boli až po tme" warning shows where it comes from (Peter, 2026-11-12).
+  const darkSpans = [
+    [start, Math.min(end, sunrise.getTime())],
+    [Math.max(start, sunset.getTime()), end],
+  ].filter(([a, b]) => b > a);
   const even = (c: HourCell) => wallClock(c.t).h % 2 === 0;
   const markers = [
     { at: sunrise.getTime(), up: true },
@@ -173,6 +179,13 @@ export function WeatherTimeline({
               ) : null
             )}
           </div>
+          {darkSpans.map(([a, b]) => (
+            <span
+              key={a}
+              className="pointer-events-none absolute -top-[3px] -bottom-[3px] rounded-[3px] ring-2 ring-[var(--warn)]"
+              style={{ left: pct(a), width: `${(frac(b) - frac(a)) * 100}%`, background: "repeating-linear-gradient(135deg, var(--warn) 0 3px, var(--night-bg) 3px 6px)" }}
+            />
+          ))}
           {markers.map((m) => (
             <span key={m.up ? "up" : "down"} className="absolute -top-0.5 -bottom-0.5 w-0.5 -translate-x-1/2 bg-[var(--sun)]" style={{ left: pct(m.at) }} />
           ))}
@@ -234,6 +247,7 @@ export function WeatherTimeline({
         {anyRain && <Swatch color="color-mix(in srgb, var(--accent) 65%, var(--segment-bg))" label={t("zrážky")} />}
         {anyBad && <Swatch color="var(--warn)" label={t("zrážky počas túry")} />}
         {anyDark && <Swatch color="var(--night-bg)" label={t("tma")} />}
+        {darkSpans.length > 0 && <Swatch color="repeating-linear-gradient(135deg, var(--warn) 0 2px, var(--night-bg) 2px 4px)" label={t("tma počas túry")} />}
         <span>{t("Posuňte túru na lepší čas.")}</span>
       </p>
     </div>

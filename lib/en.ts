@@ -68,6 +68,7 @@ export const EN: Record<string, string> = {
   "Ťuknutím na hodinu posuniete začiatok túry.": "Tap an hour to move the start of the hike.",
   "zrážky": "rain",
   "zrážky počas túry": "rain during the hike",
+  "tma počas túry": "dark during the hike",
   "Počas výletu": "During the trip",
   "na vrchole až {t} °C": "down to {t} °C at the top",
   "Prepnúť": "Switch",
