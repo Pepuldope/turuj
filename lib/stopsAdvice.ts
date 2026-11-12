@@ -13,8 +13,8 @@ export interface AdviceStop {
 export interface StopsAdvice {
   /** Minutes the stops added to the walk. */
   stopMin: number;
-  /** Remove this one stop: the walk then ends at `backAt`. */
-  removal: { id: string; name: string; backAt: Date } | null;
+  /** Remove these stops (one if that is enough, else the fewest that are): the walk then ends at `backAt`. Null if even all of them would not do. */
+  removal: { ids: string[]; names: string[]; backAt: Date } | null;
   /** Start the walk at `start` (on a 5-minute mark) and it ends at `backAt`; null when that is before sunrise. */
   earlier: { start: Date; backAt: Date } | null;
 }
@@ -31,14 +31,23 @@ export function stopsAdvice(
   if (stopMin <= 0 || plan.hikeEnd <= plan.sunset) return null;
   if (plan.hikeEnd.getTime() - stopMin * MIN > plan.sunset.getTime()) return null;
 
-  // The stop whose removal alone gets us back by sunset: the cheapest such one. None alone does it:
-  // the biggest one, which gets closest (its "späť" shows the time anyway).
-  const back = (s: AdviceStop) => new Date(plan.hikeEnd.getTime() - s.minutes * MIN);
-  const enough = stops.filter((s) => s.minutes > 0 && back(s) <= plan.sunset);
-  const pick = enough.length
-    ? enough.reduce((a, b) => (b.minutes < a.minutes ? b : a))
-    : stops.reduce((a, b) => (b.minutes > a.minutes ? b : a));
-  const removal = { id: pick.id, name: pick.name, backAt: back(pick) };
+  // One stop whose removal alone gets us back by sunset: the cheapest such one. None alone does it: the
+  // fewest stops that do, biggest first (Peter 12 Nov 2026: a "way out" that is still after sunset is none).
+  const endWithout = (gone: AdviceStop[]) =>
+    new Date(plan.hikeEnd.getTime() - gone.reduce((sum, s) => sum + s.minutes, 0) * MIN);
+  const enough = stops.filter((s) => s.minutes > 0 && endWithout([s]) <= plan.sunset);
+  let gone: AdviceStop[] = [];
+  if (enough.length) {
+    gone = [enough.reduce((a, b) => (b.minutes < a.minutes ? b : a))];
+  } else {
+    const biggestFirst = [...stops].filter((s) => s.minutes > 0).sort((a, b) => b.minutes - a.minutes);
+    for (const s of biggestFirst) {
+      gone.push(s);
+      if (endWithout(gone) <= plan.sunset) break;
+    }
+    if (endWithout(gone) > plan.sunset) gone = [];
+  }
+  const removal = gone.length ? { ids: gone.map((s) => s.id), names: gone.map((s) => s.name), backAt: endWithout(gone) } : null;
 
   // Earlier start by exactly what is late, then down to the 5 minutes (Slovak offsets are whole 5-minute multiples).
   const lateMs = plan.hikeEnd.getTime() - plan.sunset.getTime();

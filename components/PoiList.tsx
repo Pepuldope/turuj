@@ -11,7 +11,7 @@ import { LUNCH, stopFor, useTripStops, visits } from "@/lib/tripStops";
 import type { TripStop } from "@/lib/tripStops";
 import { ShowMore, shownRows } from "@/components/ShowMore";
 import { LunchTime, WaySwitch, useLunchPick } from "@/components/StopsRow";
-import { formatDurationShort, formatTime } from "@/lib/format";
+import { formatDurationShort, formatTime as clock } from "@/lib/format";
 import { useLang, useT } from "@/lib/i18n";
 import { tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
@@ -26,6 +26,9 @@ function whereText(p: Poi, lang: Lang): string {
   const km = (p.along_m / 1000).toLocaleString(lang === "en" ? "en-GB" : "sk-SK", { maximumFractionDigits: 1, minimumFractionDigits: 1 });
   return tr(lang, "pri {km}", { km: `${km} km` });
 }
+
+/** "7:45", not "07:45" (Peter, 12 Nov 2026), for every time shown in the box. */
+const formatTime = (d: Date) => clock(d).replace(/^0/, "");
 
 const hold = (colour: string) => ({ "--kind": colour }) as React.CSSProperties;
 
@@ -76,7 +79,7 @@ export function PoiList({
   const advice = plan
     ? stopsAdvice(plan, stops.stops.map((s) => ({ id: s.id, name: t(s.name), minutes: s.min * visits(s) })))
     : null;
-  const removal = advice?.removal ? stops.stops.find((s) => s.id === advice.removal!.id) : undefined;
+  const removal = advice?.removal ? stops.stops.filter((s) => advice.removal!.ids.includes(s.id)) : [];
 
   return (
     <div className="flex flex-col gap-4">
@@ -149,15 +152,17 @@ export function PoiList({
             </div>
           </div>
           <div className="mt-1.5 flex flex-col gap-2">
-            {removal && advice.removal && (
+            {removal.length > 0 && advice.removal && (
               <button
                 type="button"
-                onClick={() => stops.toggle(removal)}
+                onClick={() => removal.forEach((s) => stops.toggle(s))}
                 className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-2.5 text-left text-sm font-semibold text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
               >
                 <UiIcon name="close" size={16} />
                 <span>
-                  {t("Odstrániť {name}", { name: t(removal.name) })}{" "}
+                  {removal.length === 1
+                    ? t("Odstrániť {name}", { name: t(removal[0].name) })
+                    : t(removal.length < 5 ? "Odstrániť {n} zastávky" : "Odstrániť {n} zastávok", { n: removal.length })}{" "}
                   <span className="text-[var(--foreground)]">
                     ({t("späť")} <span className="font-data">{formatTime(advice.removal.backAt)}</span>)
                   </span>
@@ -167,7 +172,7 @@ export function PoiList({
             {advice.earlier && day && (
               <button
                 type="button"
-                onClick={() => day.setWalkStart(formatTime(advice.earlier!.start))}
+                onClick={() => day.setWalkStart(clock(advice.earlier!.start))}
                 className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-2.5 text-left text-sm font-semibold text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
               >
                 <UiIcon name="clock" size={16} />
@@ -209,7 +214,12 @@ function Meta({ p }: { p: Poi }) {
         {t(poiLabel(p))}
       </span>
       {/* Wraps only between the kind word and this part, never inside "pri 0,4 km" (360 px, 12 Nov 2026). */}
-      {where && <span className="whitespace-nowrap"> · {where}</span>}
+      {where && (
+        <>
+          {" "}
+          <span className="inline-block whitespace-nowrap">· {where}</span>
+        </>
+      )}
     </span>
   );
 }

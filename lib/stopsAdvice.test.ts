@@ -31,19 +31,22 @@ describe("stopsAdvice", () => {
   it("offers the cheapest stop whose removal is enough", () => {
     const a = stopsAdvice(plan("16:07"), stops)!; // 57 min of stops, 3 min late
     expect(a.stopMin).toBe(57);
-    expect(a.removal?.id).toBe("b"); // 10 min is enough and the fewest
+    expect(a.removal?.ids).toEqual(["b"]); // 10 min is enough and the fewest
     expect(hh(a.removal!.backAt)).toBe("15:57");
   });
 
-  it("offers the biggest stop when no single one is enough", () => {
-    const a = stopsAdvice(plan("16:50"), [
+  it("offers the fewest stops that are enough, biggest first, when no single one is", () => {
+    const a = stopsAdvice(plan("16:58"), [
       { id: "a", name: "A", minutes: 30 },
-      { id: "b", name: "B", minutes: 20 },
+      { id: "b", name: "B", minutes: 30 },
       { id: "c", name: "C", minutes: 5 },
-    ])!;
-    // 55 min of stops, 46 late: removing A (30) is not enough, but it gets closest.
-    expect(a.removal?.id).toBe("a");
-    expect(hh(a.removal!.backAt)).toBe("16:20");
+    ])!; // 65 min of stops, 54 late: one stop leaves 16:28, two reach 15:58
+    expect(a.removal?.ids).toEqual(["a", "b"]);
+    expect(hh(a.removal!.backAt)).toBe("15:58");
+  });
+
+  it("says nothing when the stops are not the cause, so never advises a removal that would not help", () => {
+    expect(stopsAdvice(plan("17:30"), [{ id: "a", name: "A", minutes: 20 }])).toBeNull();
   });
 
   it("starts earlier by what is late, rounded down to 5 minutes", () => {

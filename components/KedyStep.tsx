@@ -364,10 +364,10 @@ function StartControl({ plan, onSet, onTyped }: { plan: DayPlan; onSet: (hhmm: s
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between gap-3">
-        <label htmlFor="kedy-start" className="text-[15px] font-bold whitespace-nowrap">
+        <label htmlFor="kedy-start" className="shrink-0 text-[15px] font-bold whitespace-nowrap">
           {t("Začiatok túry")}
         </label>
-        <span className="relative">
+        <span className="relative min-w-0 max-w-[9.5rem] flex-1">
           <input
             ref={field}
             id="kedy-start"
@@ -382,7 +382,7 @@ function StartControl({ plan, onSet, onTyped }: { plan: DayPlan; onSet: (hhmm: s
             }}
             onBlur={() => setTyped(null)}
                         // The browser's own clock button is hidden (it was a second icon next to ours); ours opens the same picker.
-            className="font-data w-[9.5rem] rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] py-1.5 pr-11 pl-3 text-[1.6rem] leading-tight font-semibold focus-visible:outline-2 focus-visible:outline-[var(--accent)] [&::-webkit-calendar-picker-indicator]:hidden"
+            className="font-data w-full min-w-0 rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] py-1.5 pr-11 pl-3 text-[1.45rem] min-[380px]:text-[1.6rem] leading-tight font-semibold focus-visible:outline-2 focus-visible:outline-[var(--accent)] [&::-webkit-calendar-picker-indicator]:hidden"
           />
           <button
             type="button"
@@ -535,7 +535,7 @@ function BarLabels({ plan, way, late }: { plan: DayPlan; way: ReturnType<typeof 
     <div aria-hidden="true" className="w-full">
       <div
         className="flex flex-wrap justify-between gap-x-3 gap-y-1"
-        style={{ marginLeft: `min(${ends.leave.left * 100}%, calc(100% - 13rem))`, marginRight: `${(1 - right) * 100}%` }}
+        style={{ marginLeft: `min(${ends.leave.left * 100}%, calc(100% - 13rem))`, marginRight: `max(0px, min(${(1 - right) * 100}%, calc(100% - ${ends.leave.left * 100}% - 16rem)))` }}
       >
         <div className="whitespace-nowrap">
           <span className="block text-[13px] leading-tight">

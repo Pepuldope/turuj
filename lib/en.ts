@@ -342,6 +342,8 @@ export const EN: Record<string, string> = {
   "Pridať {name}": "Add {name}",
   "Odobrať {name}": "Remove {name}",
   "Odstrániť {name}": "Remove {name}",
+  "Odstrániť {n} zastávky": "Remove {n} stops",
+  "Odstrániť {n} zastávok": "Remove {n} stops",
   "Návrat": "Back at",
   "západ slnka": "sunset",
   "Zastávky pridali": "The stops added",
