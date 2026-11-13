@@ -35,7 +35,7 @@ export function summaryWalk(p: ParkingLot, lang: Lang): string {
 }
 
 /**
- * Where to leave the car, as the options of the "Ako sa tam dostanete" step. With several parking
+ * Where to leave the car, as the options of the "Ako pôjdete" step. With several parking
  * spots near the start the visitor picks one; the drive, the walk to the trail and the plan follow.
  */
 export function ParkingOptions() {
@@ -55,7 +55,6 @@ export function ParkingOptions() {
           {stops.length > 0 && ` ${t("Skúste aj vlak alebo autobus.")}`}
         </p>
       )}
-      {options.length > 1 && <p className="text-[13px] leading-snug text-[var(--muted)]">{t("Vyberte, kde zaparkujete. Cesta autom aj pešo sa prepočíta.")}</p>}
       {options.length > 0 && (
         <ul className="flex flex-col gap-1.5" role="radiogroup" aria-label={t("Parkovisko")}>
           {options.map((p, i) => {

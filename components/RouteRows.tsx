@@ -107,14 +107,22 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
         </span>
         {/* Its own line under the row, so it has the full width (3 lines at 360 px beside the text). */}
           {/* The chosen day's light for this route's walk, not tied to a time: Kedy comes after this step (Peter, 2026-11-12). */}
-          {day && !day.loading && day.plan && <DayNote note={routeNote(day.plan.sunrise, day.plan.sunset, numbers[i].min)} dayWord={day.dayWord} />}
+          {day && !day.loading && day.plan && <DayNote note={routeNote(day.plan.sunrise, day.plan.sunset, numbers[i].min)} dayWord={day.dayWord} leadMs={day.leadMs} />}
       </LangLink>
     </li>
   ));
 }
 
+/** "09:50" less the ride, to the 5 minutes before, as "7:25"; the time itself without one. */
+function leaveBy(latestWalk: string, leadMs: number): string {
+  const [h, m] = latestWalk.split(":").map(Number);
+  const min = leadMs > 0 ? Math.floor((h * 60 + m - leadMs / 60000) / 5) * 5 : h * 60 + m;
+  const at = Math.max(0, min);
+  return `${Math.floor(at / 60)}:${String(at % 60).padStart(2, "0")}`;
+}
+
 /** One small note: the route fits the day's light, needs an early start, or is too long for the day. */
-function DayNote({ note, dayWord }: { note: RouteNote; dayWord: string }) {
+function DayNote({ note, dayWord, leadMs }: { note: RouteNote; dayWord: string; leadMs: number }) {
   const t = useT();
   // A note, not a warning (DESIGN-BRIEF §2, Peter 2026-11-12): plain muted text with a clock, no colour, no sign.
   return (
@@ -127,7 +135,8 @@ function DayNote({ note, dayWord }: { note: RouteNote; dayWord: string }) {
           t("na {day} pridlhá", { day: dayWord })
         ) : (
           <>
-            {t("dlhá · začnite do")}&nbsp;<span className="font-data">{note.latest.replace(/^0/, "")}</span>
+            {/* With a leg before the walk (a drive, the way to the stop) the note speaks the departure, like the Kedy step (Peter, 2026-11-13). */}
+            {t(leadMs > 0 ? "dlhá · vyrazte do" : "dlhá · začnite do")}&nbsp;<span className="font-data">{leaveBy(note.latest, leadMs)}</span>
           </>
         )}
       </span>

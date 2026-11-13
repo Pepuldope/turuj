@@ -4,6 +4,7 @@ import { useState } from "react";
 import { transitMinutes } from "@/lib/drive";
 import { formatDurationShort } from "@/lib/format";
 import { useTripSettings } from "@/lib/tripSettings";
+import { useUserLocation } from "@/lib/userLocation";
 import type { Travel } from "@/lib/tripSettings";
 import type { UiIconName } from "@/lib/uiIcons";
 import { UiIcon } from "@/components/UiIcon";
@@ -12,19 +13,16 @@ import { useT } from "@/lib/i18n";
 
 const OPTIONS: { value: Travel; label: string; icon: UiIconName }[] = [
   { value: "car", label: "Autom", icon: "car" },
-  { value: "transit", label: "Bus/vlak", icon: "bus" },
+  { value: "transit", label: "Bus / vlak", icon: "bus" },
 ];
 
 /**
- * Car or public transport, as two equal options: the plan, times and the way
- * back follow. Remembered across visits, so the home list follows it too.
- * With no car park at the start (`noCar`) the car is greyed out with the warning
- * and the bus is the only choice, without changing what is remembered; tapping the
- * greyed car says why. With no stop near the start (`noBus`) it is the same the other way round.
+ * Car or public transport (and Pešo, when offered) as big selectable tiles (Peter, 2026-11-13, mockup D1): icon, label, the
+ * travel time big and a small line under it. The plan, times and the way back follow. Remembered across visits, so the home
+ * list follows it too. With no car park at the start (`noCar`) the car tile is greyed out with the warning and the bus is the
+ * only choice, without changing what is remembered; tapping the greyed car says why. With no stop near the start (`noBus`) it is
+ * the same the other way round.
  */
-/** Three options (Pešo offered): label and minutes stacked so they fit a phone. */
-const stack = (three: boolean) => (three ? "flex-col gap-0 py-1.5 leading-tight" : "gap-1.5 py-2.5");
-
 export function TravelSwitch({
   roadMin = null,
   trainMin = null,
@@ -45,19 +43,45 @@ export function TravelSwitch({
 }) {
   const settings = useTripSettings();
   const t = useT();
+  const { start } = useUserLocation();
   const { update } = settings;
   const travel: Travel = noCar ? "transit" : noBus ? "car" : settings.travel;
   const [why, setWhy] = useState(false);
   const three = walkMin !== null;
+  // With three tiles on a phone the time is a little smaller and the padding tighter.
+  const pad = three ? "px-2.5 py-3 min-[400px]:px-3" : "px-3.5 py-3.5";
+  const timeSize = three ? "text-[19px] min-[400px]:text-[22px]" : "text-[22px]";
+  const town = start ? t(start.label.split(",")[0]) : null;
+
+  const tile = (key: string, o: { label: string; icon: UiIconName; time: string | null; sub: string | null; on: boolean; onPick: () => void }) => (
+    <button
+      key={key}
+      type="button"
+      role="radio"
+      aria-checked={o.on}
+      onClick={o.onPick}
+      className={`relative flex min-w-0 flex-col items-start gap-0.5 rounded-[14px] text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${pad} ${
+        o.on ? "border-2 bg-[var(--accent-soft)] border-[var(--accent)]" : "border-[1.5px] border-[var(--border)] bg-[var(--card-bg)] hover:border-[var(--accent)]"
+      }`}
+    >
+      {o.on && (
+        <span aria-hidden="true" className="absolute top-2 right-2 grid h-[22px] w-[22px] place-items-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)]">
+          <UiIcon name="check" size={14} />
+        </span>
+      )}
+      <span className={o.on ? "text-[var(--accent)]" : "text-[var(--muted)]"}>
+        <UiIcon name={o.icon} size={28} />
+      </span>
+      <span className="mt-1 text-base leading-tight font-bold text-[var(--foreground)]">{o.label}</span>
+      {o.time && <span className={`font-data ${timeSize} leading-none font-semibold text-[var(--foreground)]`}>{o.time}</span>}
+      {o.sub && <span className="text-[12.5px] leading-tight text-[var(--muted)]">{o.sub}</span>}
+    </button>
+  );
+
   return (
     <div className="flex flex-col gap-2">
-      <div
-        role="radiogroup"
-        aria-label={t("Ako sa dopravíte")}
-        className={`grid ${walkMin !== null ? "grid-cols-3" : "grid-cols-2"} gap-[3px] rounded-xl bg-[var(--segment-bg)] p-[3px]`}
-      >
+      <div role="radiogroup" aria-label={t("Ako sa dopravíte")} className={`grid ${three ? "grid-cols-3" : "grid-cols-2"} gap-2`}>
         {OPTIONS.map((o) => {
-          const on = !walking && travel === o.value;
           if ((noCar && o.value === "car") || (noBus && o.value === "transit"))
             return (
               <button
@@ -67,62 +91,35 @@ export function TravelSwitch({
                 aria-checked={false}
                 aria-disabled
                 onClick={() => setWhy((w) => !w)}
-                className="inline-flex cursor-help flex-wrap items-center justify-center gap-x-1.5 gap-y-1 rounded-[10px] bg-[var(--off-bg)] px-2 py-2 text-sm font-semibold text-[var(--off-fg)]"
+                className={`flex min-w-0 cursor-help flex-col items-start gap-1 rounded-[14px] border-[1.5px] border-transparent bg-[var(--off-bg)] text-left text-[var(--off-fg)] ${pad}`}
               >
-                <UiIcon name={o.icon} size={18} />
-                <span className="line-through">{t(o.label)}</span>
+                <UiIcon name={o.icon} size={28} />
+                <span className="mt-1 text-base leading-tight font-bold line-through">{t(o.label)}</span>
                 {o.value === "car" ? <NoParkingChip /> : <NoStopChip />}
               </button>
             );
-          return (
-            <button
-              key={o.value}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              onClick={() => {
-                onWalk?.(false);
-                update({ travel: o.value });
-              }}
-              className={`inline-flex items-center justify-center ${stack(three)} rounded-[10px] px-2 text-sm font-semibold whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
-                on
-                  ? "bg-[var(--card-bg)] text-[var(--foreground)] shadow-sm"
-                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
-              }`}
-            >
-              <span className={on ? "text-[var(--accent)]" : ""}>
-                <UiIcon name={o.icon} size={18} />
-              </span>
-              {t(o.label)}
-              {roadMin !== null && (
-                <span className="font-data text-[13px] font-semibold text-[var(--muted)]">
-                  {o.value === "car"
-                    ? formatDurationShort(roadMin)
-                    : trainMin !== null
-                      ? formatDurationShort(trainMin)
-                      : `~${formatDurationShort(transitMinutes(roadMin))}`}
-                </span>
-              )}
-            </button>
-          );
+          const on = !walking && travel === o.value;
+          const time =
+            roadMin === null
+              ? null
+              : o.value === "car"
+                ? formatDurationShort(roadMin)
+                : trainMin !== null
+                  ? formatDurationShort(trainMin)
+                  : `~${formatDurationShort(transitMinutes(roadMin))}`;
+          return tile(o.value, {
+            label: t(o.label),
+            icon: o.icon,
+            time,
+            sub: o.value === "car" && town && time ? t("z {start}", { start: town }) : null,
+            on,
+            onPick: () => {
+              onWalk?.(false);
+              update({ travel: o.value });
+            },
+          });
         })}
-        {walkMin !== null && (
-          <button
-            type="button"
-            role="radio"
-            aria-checked={walking}
-            onClick={() => onWalk?.(true)}
-            className={`inline-flex items-center justify-center ${stack(three)} rounded-[10px] px-2 text-sm font-semibold whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
-              walking ? "bg-[var(--card-bg)] text-[var(--foreground)] shadow-sm" : "text-[var(--muted)] hover:text-[var(--foreground)]"
-            }`}
-          >
-            <span className={walking ? "text-[var(--accent)]" : ""}>
-              <UiIcon name="walker" size={18} />
-            </span>
-            {t("Pešo")}
-            <span className="font-data text-[13px] font-semibold text-[var(--muted)]">{formatDurationShort(walkMin)}</span>
-          </button>
-        )}
+        {walkMin !== null && tile("walk", { label: t("Pešo"), icon: "walker", time: formatDurationShort(walkMin), sub: null, on: walking, onPick: () => onWalk?.(true) })}
       </div>
       {noBus && why && (
         <p

@@ -13,6 +13,8 @@ import {
   hhmmToMin,
   kedyCards,
   keptAfterPick,
+  hasLeg,
+  latestSetStart,
   latestWalkStart,
   minToHhmm,
   rowCells,
@@ -153,8 +155,9 @@ describe("the hour row", () => {
 
 describe("suggested starts", () => {
   it("are on 5 minutes, rounded to the dry side, while the current start keeps its own minutes", () => {
+    // The walk starts 8:43, so the departure (what the card sets) is 7:48.
     const cards = kedyCards(input(planFor("08:43")));
-    expect(cards[0].start).toBe("08:43");
+    expect(cards[0].start).toBe("07:48");
     const time = cards.find((c) => c.suggested && c.sameDay);
     expect(time).toBeDefined();
     expect(Number(time!.start.slice(3)) % 5).toBe(0);
@@ -172,9 +175,12 @@ describe("the option cards", () => {
   it("offers the current choice and a dry time later the same day (other days are the day tiles)", () => {
     const cards = kedyCards(input());
     expect(cards.map((c) => [c.date, c.start, c.selected])).toEqual([
-      [DAY, "08:00", true],
-      [DAY, "10:00", false],
+      [DAY, "07:05", true],
+      [DAY, "09:05", false],
     ]);
+    // The card's headline is the departure; the walk's own start is the sub-line.
+    expect(cards[1].startText).toBe("9:05");
+    expect(cards[1].walkText).toBe("10:00");
     expect(cards[0].wet).toMatchObject({ kind: "sleet", atStart: true });
     expect(cards[1].wet).toBeNull();
     expect(cards[1].afterSunset).toBe(true);
@@ -184,11 +190,11 @@ describe("the option cards", () => {
   it("keeps the card you left, so the choice can be undone (mockup M1b)", () => {
     const first = kedyCards(input());
     const kept = keptAfterPick(first, first[1]);
-    expect(kept.map((k) => [k.date, k.start])).toEqual([[DAY, "08:00"]]);
+    expect(kept.map((k) => [k.date, k.start])).toEqual([[DAY, "07:05"]]);
     const after = kedyCards(input(planFor("10:00"), kept));
     expect(after.map((c) => [c.date, c.start, c.selected])).toEqual([
-      [DAY, "10:00", true],
-      [DAY, "08:00", false],
+      [DAY, "09:05", true],
+      [DAY, "07:05", false],
     ]);
     expect(after[1].wet?.atStart).toBe(true);
     expect(after[1].homeText).toBe("16:05");
@@ -202,15 +208,19 @@ describe("the option cards", () => {
   });
   it("offers the way out of rain as a tap: the drier time the same day", () => {
     const cards = kedyCards(input());
-    expect(dryFix(cards)).toEqual({ kind: "time", start: "10:00", way: "dry" });
+    expect(dryFix(cards)).toEqual({ kind: "time", start: "09:05", way: "dry" });
     expect(dryFix([cards[0]])).toBeNull();
   });
 });
 
 describe("the folded header", () => {
-  it("gives the walk's span and when you are home", () => {
-    expect(summaryParts(planFor("08:00"))).toEqual({ start: "8:00", end: "15:10", home: "16:05" });
-    expect(summaryParts(planFor("10:00"))).toEqual({ start: "10:00", end: "17:10", home: "18:05" });
+  it("gives the departure, the walk's span and when you are home", () => {
+    expect(summaryParts(planFor("08:00"))).toEqual({ leave: "7:05", start: "8:00", end: "15:10", home: "16:05" });
+    expect(summaryParts(planFor("10:00"))).toEqual({ leave: "9:05", start: "10:00", end: "17:10", home: "18:05" });
+  });
+  it("has no departure without a leg: the times are the walk's own", () => {
+    const p = planDay({ date: DAY, start: "08:00", driveMin: null, hikeMin: 430, location: TATRY })!;
+    expect(summaryParts(p).leave).toBeNull();
   });
   it("has no home time when there is no way back", () => {
     const p = planDay({ date: DAY, start: "08:00", driveMin: null, hikeMin: 430, location: TATRY })!;
@@ -278,5 +288,36 @@ describe("the day tiles", () => {
   it("has no best day when every day is wet", () => {
     const rainy: WeatherForecast = { updated: "", steps: forecast.steps.map((s) => ({ ...s, rain: 0.5, symbol: "rain" })) };
     expect(tiles(planFor("08:00"), { forecast: { below: rainy, above: null } }).some((x) => x.best)).toBe(false);
+  });
+});
+
+describe("departure mode (Peter, 13 Nov 2026): with a leg every time is the departure, without one the walk start", () => {
+  const noLeg = () => planDay({ date: DAY, start: "08:00", driveMin: null, hikeMin: 430, location: TATRY })!;
+  it("sees a leg only when the ride comes before the walk", () => {
+    expect(hasLeg(planFor("08:00"))).toBe(true);
+    expect(hasLeg(noLeg())).toBe(false);
+  });
+  it("with a leg the latest time to set is the latest departure, not the walk start", () => {
+    const plan = planFor("08:00");
+    expect(clock(latestSetStart(plan))).toBe("07:25");
+    expect(clock(latestWalkStart(plan))).toBe("08:20");
+  });
+  it("without a leg it is the walk start, as before", () => {
+    const plan = noLeg();
+    expect(clock(latestSetStart(plan))).toBe(clock(latestWalkStart(plan)));
+  });
+  it("a card sets the departure and keeps the walk's times as its sub-line", () => {
+    const [card] = kedyCards(input(planFor("08:00")));
+    expect([card.start, card.startText, card.walkText, card.endText, card.homeText]).toEqual(["07:05", "7:05", "8:00", "15:10", "16:05"]);
+  });
+  it("a card without a leg sets the walk start", () => {
+    const [card] = kedyCards(input(noLeg()));
+    expect([card.start, card.startText, card.walkText]).toEqual(["08:00", "8:00", "8:00"]);
+    expect(card.homeText).toBeNull();
+  });
+  it("a suggested time is a departure on 5 minutes, and its walk is dry", () => {
+    const time = kedyCards(input()).find((c) => c.suggested && c.sameDay)!;
+    expect(time.start).toBe("09:05");
+    expect(time.wet).toBeNull();
   });
 });

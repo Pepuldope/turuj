@@ -22,10 +22,15 @@ export interface PlanDay {
   /** Minutes the chosen stops add to the walk (already included in plan.hikeEnd). */
   stopMin: number;
   /**
-   * Move the start so the WALK starts at this time ("HH:MM"). Converts to the stored setting itself
-   * (departure by car / on foot, time at the stop by bus or train).
+   * The ride before the walk in ms (the drive, or the way to the stop); 0 when there is no leg (no start set, or on foot).
+   * With a leg, every time the Kedy step and its shortcuts speak is the departure from home (Peter, 2026-11-13).
    */
-  setWalkStart: (hhmm: string) => void;
+  leadMs: number;
+  /**
+   * Move the start to this time ("HH:MM"): the departure when there is a leg, else the walk start. It is the stored
+   * setting as it is (departure by car, time at the stop by bus or train), no conversion.
+   */
+  setStart: (hhmm: string) => void;
 }
 
 const PlanDayContext = createContext<PlanDay | null>(null);

@@ -42,8 +42,8 @@ export function StopIcon({ mode, size = 16 }: { mode: TransitStop["mode"]; size?
 }
 
 /**
- * By train or bus: which stop near the trail to get off at, as the options of the "Ako sa tam
- * dostanete" step. The walk to the trail, the plan and the cp.sk searches follow the pick.
+ * By train or bus: which stop near the trail to get off at, as the options of the "Ako pôjdete" step.
+ * The walk to the trail, the plan and the cp.sk searches follow the pick.
  */
 export function StopOptions() {
   const { stops, stopChoice, chooseStop, transit, trailStart } = useTripAccess();
