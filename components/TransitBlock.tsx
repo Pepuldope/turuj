@@ -57,7 +57,6 @@ export function StopOptions() {
   return (
     <div className="flex flex-col gap-2">
       {options.length === 0 && <p className="text-sm">{t("Pri trase sme nenašli zastávku vlaku ani autobusu.")}</p>}
-      {options.length > 1 && <p className="text-[13px] leading-snug text-[var(--muted)]">{t("Vyberte, kde vystúpite. Cesta pešo aj plán sa prepočítajú.")}</p>}
       {options.length > 0 && (
         <ul className="flex flex-col gap-1.5" role="radiogroup" aria-label={t("Zastávka")}>
           {options.map((s, i) => {

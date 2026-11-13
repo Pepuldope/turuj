@@ -845,7 +845,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
         )}
         {hasDrive && (
           <li className="inline-flex items-center gap-1.5">
-            <svg width="16" height="8" aria-hidden="true"><rect x="0.5" y="0.5" width="15" height="7" rx="3.5" fill={INK} /></svg>
+            <svg width="16" height="8" aria-hidden="true"><rect x="0.5" y="0.5" width="15" height="7" rx="3.5" fill={INK} stroke="var(--foreground)" strokeWidth="1" /></svg>
             {tx(byTrain ? "vo vlaku" : byBus ? "v autobuse" : "v aute")}
           </li>
         )}

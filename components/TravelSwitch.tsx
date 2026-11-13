@@ -4,7 +4,6 @@ import { useState } from "react";
 import { transitMinutes } from "@/lib/drive";
 import { formatDurationShort } from "@/lib/format";
 import { useTripSettings } from "@/lib/tripSettings";
-import { useUserLocation } from "@/lib/userLocation";
 import type { Travel } from "@/lib/tripSettings";
 import type { UiIconName } from "@/lib/uiIcons";
 import { UiIcon } from "@/components/UiIcon";
@@ -43,7 +42,6 @@ export function TravelSwitch({
 }) {
   const settings = useTripSettings();
   const t = useT();
-  const { start } = useUserLocation();
   const { update } = settings;
   const travel: Travel = noCar ? "transit" : noBus ? "car" : settings.travel;
   const [why, setWhy] = useState(false);
@@ -51,9 +49,8 @@ export function TravelSwitch({
   // With three tiles on a phone the time is a little smaller and the padding tighter.
   const pad = three ? "px-2.5 py-3 min-[400px]:px-3" : "px-3.5 py-3.5";
   const timeSize = three ? "text-[19px] min-[400px]:text-[22px]" : "text-[22px]";
-  const town = start ? t(start.label.split(",")[0]) : null;
 
-  const tile = (key: string, o: { label: string; icon: UiIconName; time: string | null; sub: string | null; on: boolean; onPick: () => void }) => (
+  const tile = (key: string, o: { label: string; icon: UiIconName; time: string | null; on: boolean; onPick: () => void }) => (
     <button
       key={key}
       type="button"
@@ -74,7 +71,6 @@ export function TravelSwitch({
       </span>
       <span className="mt-1 text-base leading-tight font-bold text-[var(--foreground)]">{o.label}</span>
       {o.time && <span className={`font-data ${timeSize} leading-none font-semibold text-[var(--foreground)]`}>{o.time}</span>}
-      {o.sub && <span className="text-[12.5px] leading-tight text-[var(--muted)]">{o.sub}</span>}
     </button>
   );
 
@@ -111,7 +107,6 @@ export function TravelSwitch({
             label: t(o.label),
             icon: o.icon,
             time,
-            sub: o.value === "car" && town && time ? t("z {start}", { start: town }) : null,
             on,
             onPick: () => {
               onWalk?.(false);
@@ -119,7 +114,7 @@ export function TravelSwitch({
             },
           });
         })}
-        {walkMin !== null && tile("walk", { label: t("Pešo"), icon: "walker", time: formatDurationShort(walkMin), sub: null, on: walking, onPick: () => onWalk?.(true) })}
+        {walkMin !== null && tile("walk", { label: t("Pešo"), icon: "walker", time: formatDurationShort(walkMin), on: walking, onPick: () => onWalk?.(true) })}
       </div>
       {noBus && why && (
         <p

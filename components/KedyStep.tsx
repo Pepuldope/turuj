@@ -293,7 +293,8 @@ function Card({ card, today, onPick, children }: { card: KedyCard; today: string
           {title && <span className="mr-1.5 text-base font-bold">{title}</span>}
           <span className="font-data text-[28px] leading-none font-semibold">{card.startText}</span>
         </span>
-        {words && <span className="min-w-0 text-[13.5px] leading-tight font-bold">· {words}</span>}
+        {/* Its own line under the time: wrapped beside it, it started with a lone "·" (13 Nov preview). */}
+        {words && <span className="mt-1 min-w-0 basis-full text-[13.5px] leading-tight font-bold">{words}</span>}
       </span>
       <span className="mt-1 flex shrink-0 items-center gap-0.5">{skies}</span>
     </span>
