@@ -273,7 +273,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
 
   const hasDrive = driveMin !== null;
   // The day map above the sun dial reads the same plan (lib/dayClock.ts).
-  usePublishDay({ plan, profile, fullProfile, skip, approachShare: approachMin / Math.max(1, baseHikeMin), mode: walking ? "foot" : transit ? (rail.status === "ok" ? "train" : "bus") : "car" });
+  usePublishDay({ plan, profile, fullProfile, skip, approachShare: approachMin / Math.max(1, baseHikeMin), mode: walking ? "foot" : transit ? (rail.status === "ok" ? "train" : "bus") : "car", startName: start ? (start.label.trim() ? t(start.label.split(",")[0]) : t("Vaša poloha")) : null });
   // The walk starts where the ride ends: the parking (or the trail start, with no parking) or the stop.
   const walkStart = walking ? start : (walkFrom ?? destination);
   const latest = plan ? floorTo5(plan.latestStart) : null;
@@ -467,7 +467,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
             title={t("Kadiaľ pôjdete")}
             extra={
               <div className="flex flex-col gap-2.5">
-                <KidsRow />
+                <KidsRow boxed />
                 <NoStartNote>{t("Časy trás platia od parkoviska, cestu k nemu bez štartu nepočítame.")}</NoStartNote>
               </div>
             }
@@ -535,20 +535,24 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
         <div id="vas-den" className="flex scroll-mt-[calc(64px+env(safe-area-inset-top))] flex-col gap-4 lg:scroll-mt-3">
         {plan && (
           <section aria-label={t("Priebeh dňa")} className="flex flex-col gap-4 border-t border-[var(--border)] pt-4">
-            {dayMap && (
+            {(dayMap || sun) && (
+              // The map and the sun dial are one block (Peter, 2026-11-13: a legend between them made the map feel
+              // disconnected), with one legend under it for both.
               <div className="flex flex-col gap-2">
-                {dayMap}
+                {/* Framed inside the card: the dial's sky would otherwise blend into the page. */}
+                <div className="overflow-hidden rounded-xl border border-[var(--border)]">
+                  {dayMap}
+                  {sun && <SunArc key={date ?? ""} plan={plan} profile={profile} sun={sun} hasDrive={hasDrive} byBus={transit} byTrain={transit && rail.status === "ok"} weather={weather.below} legend={false} />}
+                </div>
                 <DayMapLegend
-                  colours={profile ? trailColours(profile, plan.hikeStart.getTime(), plan.hikeEnd.getTime(), plan.sunset.getTime()) : []}
+                  colours={dayMap && profile ? trailColours(profile, plan.hikeStart.getTime(), plan.hikeEnd.getTime(), plan.sunset.getTime()) : []}
                   mode={walking ? "foot" : transit ? (rail.status === "ok" ? "train" : "bus") : "car"}
-                  stopKinds={[...new Set(stops.flatMap((s) => (s.id === LUNCH.id ? ["obcerstvenie" as const] : walkProfile?.places?.find((p) => p.id === s.id)?.kind ?? [])))]}
+                  stopKinds={dayMap ? [...new Set(stops.flatMap((s) => (s.id === LUNCH.id ? ["obcerstvenie" as const] : walkProfile?.places?.find((p) => p.id === s.id)?.kind ?? [])))] : []}
+                  map={!!dayMap}
+                  sun={!!sun}
+                  hasDrive={hasDrive}
+                  late={plan.hikeEnd > plan.sunset}
                 />
-              </div>
-            )}
-            {sun && (
-              // Framed inside the card: its sky would otherwise blend into the page.
-              <div className="overflow-hidden rounded-xl">
-                <SunArc key={date ?? ""} plan={plan} profile={profile} sun={sun} hasDrive={hasDrive} byBus={transit} byTrain={transit && rail.status === "ok"} weather={weather.below} />
               </div>
             )}
             {plan.startsInDark && (

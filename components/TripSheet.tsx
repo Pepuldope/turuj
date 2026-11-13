@@ -326,7 +326,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
             routesStep={routes.length > 1 ? <RoutesStep key="routes-step" n={1} slug={current} routes={routes} walks={walks} map={<StepMap key="routes" {...mapProps} focus="routes" />} /> : null}
             accessMap={<StepMap key="access" {...mapProps} focus="access" />}
             placesMap={detail.pois.length > 0 ? <StepMap key="places" {...mapProps} focus="places" /> : null}
-            dayMap={<StepMap key="day" {...mapProps} focus="day" always />}
+            dayMap={<StepMap key="day" {...mapProps} focus="day" always joined />}
             places={<PoiList key="places-list" pois={detail.pois} slug={trail.slug} loop={trip.route === "okruh"} near={near} />}
             intro={
               <>

@@ -21,6 +21,7 @@ export function usePublishDay({
   skip,
   approachShare,
   mode,
+  startName,
 }: {
   plan: DayPlan | null;
   profile: TripProfile | null;
@@ -29,6 +30,8 @@ export function usePublishDay({
   /** The walk to the trail and back as a share of the walking time (TripPlanner's `withApproach` argument). */
   approachShare: number;
   mode: DayModel["mode"];
+  /** The start's name (already in the page's language), for the label where the ride leaves the map; null without a start. */
+  startName: string | null;
 }) {
   const model = useMemo<DayModel | null>(() => {
     if (!plan) return null;
@@ -39,6 +42,12 @@ export function usePublishDay({
       if (!pa.kind) continue;
       byName.set(pa.name, [...(byName.get(pa.name) ?? []), hs + pa.from * (he - hs)]);
     }
+    const ms = (k: "drive-there" | "drive-back") => {
+      const s = plan.segments.find((x) => x.kind === k);
+      return s ? { from: s.start.getTime(), to: s.end.getTime() } : null;
+    };
+    const there = ms("drive-there");
+    const back = ms("drive-back");
     return {
       hs,
       he,
@@ -49,8 +58,9 @@ export function usePublishDay({
       goalTime: profile ? goalTime(plan, profile).getTime() : null,
       stops: [...byName].map(([name, times]) => ({ name, times })),
       mode,
+      ride: startName && mode !== "foot" && (there || back) ? { name: startName, there, back } : null,
     };
-  }, [plan, profile, fullProfile, skip, approachShare, mode]);
+  }, [plan, profile, fullProfile, skip, approachShare, mode, startName]);
   useEffect(() => {
     setDayModel(model);
     return () => setDayModel(null);

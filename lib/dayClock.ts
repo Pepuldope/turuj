@@ -29,6 +29,11 @@ export interface DayModel {
   stops: { name: string; times: number[] }[];
   /** How you get to the walk's start: the car, the bus, the train, or you walk from the start. */
   mode: "car" | "bus" | "train" | "foot";
+  /**
+   * The ride from the start to the parking (or stop) and back, for the drive line on the day map: the start's
+   * name, and when each ride runs (ms). Null without a start, or on foot.
+   */
+  ride?: { name: string; there: { from: number; to: number } | null; back: { from: number; to: number } | null } | null;
 }
 
 let model: DayModel | null = null;

@@ -73,7 +73,7 @@ export function RoutesStep({ n, slug, routes, walks, map }: Props) {
       }
     >
       {/* The first decision of the step: the kids' pace changes every walk time below (Peter, 2026-11-12; first since 2026-11-13). */}
-      <KidsRow />
+      <KidsRow boxed />
       <NoStartNote>{t("Časy trás platia od parkoviska, cestu k nemu bez štartu nepočítame.")}</NoStartNote>
       {map}
       {/* The first and last rows follow the list's corners (12 px card minus the 1 px border), so their hover outline isn't cut off. */}

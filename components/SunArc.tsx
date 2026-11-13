@@ -109,6 +109,8 @@ interface Props {
   byTrain?: boolean;
   /** Forecast at the trail start, asked for at the start's height; drawn into the sky when given. */
   weather?: WeatherForecast | null;
+  /** Draw its own small legend under the slider. The plan turns it off and shows one combined legend under the map and the dial (DayMapLegend). */
+  legend?: boolean;
 }
 
 interface WalkPoint {
@@ -124,7 +126,7 @@ interface WalkPoint {
  * a timeline of the whole trip, and the walk is drawn as the trail's own
  * height profile. Hover (or drag on touch) to move through the day.
  */
-export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = false, weather = null }: Props) {
+export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = false, weather = null, legend = true }: Props) {
   // `t` is the moment on the dial here, so the translator is `tx`.
   const tx = useT();
   const lang = useLang();
@@ -835,6 +837,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
       </div>
 
       {/* What the colours mean (Peter, 2026-10-26: "make it obvious what each one means"): only what this day's picture shows. */}
+      {legend && (
       <ul className="flex flex-wrap gap-x-3 gap-y-1 px-4 pb-2 text-[11.5px] text-[var(--muted)]" aria-label={tx("Vysvetlivky")}>
         {/* The trail colours are named under the day map above (components/DayMapLegend.tsx). */}
         {scene.walk.some((p) => p.t > sunset) && (
@@ -854,6 +857,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
           {tx("dráha slnka")}
         </li>
       </ul>
+      )}
 
       <div className="flex justify-between gap-3 border-t border-[var(--border)] px-4 pt-2.5 pb-3.5 text-sm">
         <div className="min-w-0">
