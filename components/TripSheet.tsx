@@ -316,7 +316,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
             }}
             profile={profile}
             gpxUrl={gpxUrl}
-            // A visible action of the "Vyraziť" card (still in the server HTML: the link is a plain anchor).
+            // A visible action of the "Uložiť a navigovať" card (still in the server HTML: the link is a plain anchor).
             gpxAction={gpxUrl ? <GpxDownload gpxUrl={gpxUrl} slug={trail.slug} name={gpxName} /> : null}
             bbox={trail.bbox}
             closures={closures}

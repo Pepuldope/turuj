@@ -78,7 +78,7 @@ interface Props extends ShareInfo {
   places?: ReactNode;
   /** The trip has places on or near the walk that can be added as stops. */
   hasPlaces?: boolean;
-  /** The GPX download, an action of the "Vyraziť" card. */
+  /** The GPX download, an action of the "Uložiť a navigovať" card. */
   gpxAction?: ReactNode;
   /** The walk, kept with the saved trip for the trail screen ("Začať výlet"). */
   trail?: SavedTrail;
@@ -462,8 +462,8 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
             title={t("Kadiaľ pôjdete")}
             extra={
               <div className="flex flex-col gap-2.5">
-                <NoStartNote>{t("Časy trás platia od parkoviska, cestu k nemu bez štartu nepočítame.")}</NoStartNote>
                 <KidsRow />
+                <NoStartNote>{t("Časy trás platia od parkoviska, cestu k nemu bez štartu nepočítame.")}</NoStartNote>
               </div>
             }
           >
@@ -556,9 +556,9 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
         </PlanDayProvider>
       </section>
 
-      {/* Its own card (Peter, 2026-11-11): save, share, navigate and the GPX are what you do with a finished plan. */}
-      <section data-nosnippet aria-label={t("Vyraziť")} className={`${part} [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer`}>
-        <h2 className="text-[1.35rem] leading-tight font-bold">{t("Vyraziť")}</h2>
+      {/* Its own card (Peter, 2026-11-11): save, share, navigate and the GPX are what you do with a finished plan. Named "Uložiť a navigovať" (Peter, 2026-11-13; was "Vyraziť"). */}
+      <section data-nosnippet aria-label={t("Uložiť a navigovať")} className={`${part} [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer`}>
+        <h2 className="text-[1.35rem] leading-tight font-bold">{t("Uložiť a navigovať")}</h2>
         <SaveTripButton gpxUrl={gpxUrl} bbox={bbox} sun={sun} tripPlan={tripPlan} profile={profile} trail={trail} closures={closures} where={calendarPlace} {...trip} nav={<NavHandoff slug={trip.slug} drive={destination} start={start} walkFrom={walkStart} walk={walk} join={trailJoin} />} gpx={gpxAction} />
       </section>
       <AppPromo />

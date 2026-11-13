@@ -72,6 +72,8 @@ export function RoutesStep({ n, slug, routes, walks, map }: Props) {
         </>
       }
     >
+      {/* The first decision of the step: the kids' pace changes every walk time below (Peter, 2026-11-12; first since 2026-11-13). */}
+      <KidsRow />
       <NoStartNote>{t("Časy trás platia od parkoviska, cestu k nemu bez štartu nepočítame.")}</NoStartNote>
       {map}
       {/* The first and last rows follow the list's corners (12 px card minus the 1 px border), so their hover outline isn't cut off. */}
@@ -83,10 +85,6 @@ export function RoutesStep({ n, slug, routes, walks, map }: Props) {
         <LangLink href={`/trasa/${slug}/cesty`} className="flex min-h-10 w-fit self-end items-center gap-1.5 text-sm font-bold whitespace-nowrap text-[var(--accent)]">
           {t("Porovnať na mape")} ›
         </LangLink>
-      </div>
-      {/* The kids' pace changes the walk times above, so the switch lives here (Peter, 2026-11-12). */}
-      <div className="border-t border-[var(--border)] pt-2.5">
-        <KidsRow />
       </div>
     </PlanStep>
   );

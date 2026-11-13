@@ -213,7 +213,7 @@ export const EN: Record<string, string> = {
   "Po trase ide po značených chodníkoch hore aj späť k zastávke.": "Follows the marked trails up and back down to the stop.",
   "Stiahnuť GPX": "Download GPX",
   "do hodiniek alebo Mapy.com": "to a watch or Mapy.com",
-  "Vyraziť": "Set off",
+  "Uložiť a navigovať": "Save and navigate",
   "Stiahnuť GPX trasu": "Download GPX route",
   "Celá mapa": "Whole map",
   "Mapa a dáta:": "Map and data:",
