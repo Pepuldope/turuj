@@ -6,8 +6,8 @@ import type { LatLng } from "@/lib/types";
 // glide to that place and open its pin. The map listens; the list needs no handle on it.
 const EVENT = "turuj-map-focus";
 
-/** What a plan step's map frames: all the routes, the parking (or stops) on offer, the places on the way. */
-export type MapFit = "routes" | "access" | "places";
+/** What a plan step's map frames: all the routes, the parking (or stops) on offer, the places on the way, or ("day", under Priebeh dňa) the whole hike with its parking and chosen stops. */
+export type MapFit = "routes" | "access" | "places" | "day";
 
 export interface MapFocus {
   /** The pin's id on the map (MapMarker.id), to open its label. */
