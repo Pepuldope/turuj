@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { DayPlan } from "@/lib/dayPlan";
 import { formatDuration, formatDurationShort, formatTime } from "@/lib/format";
+import { publishDayMoment, UNMARKED_COLOUR } from "@/lib/dayClock";
 import { LAND, seasonDetails, seasonOf, seeded, snowSvg } from "@/lib/season";
 import { UI_ICON, iconEdge } from "@/lib/uiIcons";
 import { MARKING_COLOR, MARKING_LABEL } from "@/lib/mapLayers";
@@ -54,18 +55,8 @@ const EDGE = {
 // The white night car keeps its headlights: amber instead of the icon's white.
 const CAR_AT_NIGHT = UI_ICON.car.replaceAll('fill="#fff"', 'fill="#f4a51c"');
 
-const UNMARKED = "#55627a";
+const UNMARKED = UNMARKED_COLOUR;
 const LATE = "#9a4a06";
-/** The marking colours as the legend names them. */
-const MARKING_WORD: Record<string, string> = {
-  [MARKING_COLOR.red]: "červená značka",
-  [MARKING_COLOR.blue]: "modrá značka",
-  [MARKING_COLOR.green]: "zelená značka",
-  [MARKING_COLOR.yellow]: "žltá značka",
-  [MARKING_COLOR.black]: "čierna značka",
-  [UNMARKED]: "bez značky",
-};
-
 /** The marking you are on as the readout says it ("po červenej"); unmarked is said plainly. */
 const MARKING_SHORT: Record<string, string> = {
   [MARKING_COLOR.red]: MARKING_LABEL.red,
@@ -395,6 +386,9 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   };
 
   const t = Math.max(scene.lo, Math.min(scene.hi, scrub ?? intro ?? restT));
+  // The day map above follows this moment with its walker (lib/dayClock.ts).
+  useEffect(() => publishDayMoment(t), [t]);
+  useEffect(() => () => publishDayMoment(null), []);
   const alt = sunAltitude(new Date(t), sun.lat, sun.lon);
   // The weather at this moment greys the sky and dims the sun.
   const now = weather ? weatherAt(weather, t) : null;
@@ -456,14 +450,6 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   // The trail sign you are on: a small KST mark (white, colour, white) and its word.
   const markText = markColour ? tx(MARKING_SHORT[markColour] ?? "bez značky") : null;
 
-  // The trail colours worth naming: a few metres of another colour at a junction would only puzzle.
-  const legendColours = useMemo(() => {
-    const share = new Map<string, number>();
-    const w = scene.walk;
-    for (let i = 1; i < w.length; i++) if (w[i].t <= sunset) share.set(w[i].colour, (share.get(w[i].colour) ?? 0) + (w[i].x - w[i - 1].x));
-    const total = [...share.values()].reduce((a, b) => a + b, 0) || 1;
-    return [...share].filter(([, len]) => len / total >= 0.05).map(([c]) => c);
-  }, [scene.walk, sunset]);
   // Standing at an added stop: the walker shows as that place's pin.
   const atPause = onTrail ? scene.pauses.find((pa) => pa.kind && t >= pa.t0 && t <= pa.t1) : undefined;
   const marker = onTrail ? "walker" : inCar ? (byBus ? (byTrain ? "train" : "bus") : "car") : "dot";
@@ -850,12 +836,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
 
       {/* What the colours mean (Peter, 2026-10-26: "make it obvious what each one means"): only what this day's picture shows. */}
       <ul className="flex flex-wrap gap-x-3 gap-y-1 px-4 pb-2 text-[11.5px] text-[var(--muted)]" aria-label={tx("Vysvetlivky")}>
-        {legendColours.map((c) => (
-          <li key={c} className="inline-flex items-center gap-1.5">
-            <svg width="16" height="6" aria-hidden="true"><line x1="1.5" x2="14.5" y1="3" y2="3" stroke={c} strokeWidth="2.6" strokeLinecap="round" /></svg>
-            {tx(MARKING_WORD[c] ?? "bez značky")}
-          </li>
-        ))}
+        {/* The trail colours are named under the day map above (components/DayMapLegend.tsx). */}
         {scene.walk.some((p) => p.t > sunset) && (
           <li className="inline-flex items-center gap-1.5">
             <svg width="16" height="6" aria-hidden="true"><line x1="1.5" x2="14.5" y1="3" y2="3" stroke={LATE} strokeWidth="2.6" strokeDasharray="3 2" /></svg>

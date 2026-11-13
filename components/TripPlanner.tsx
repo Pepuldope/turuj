@@ -4,7 +4,7 @@ import { UiIcon } from "@/components/UiIcon";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { outsideDaylight } from "@/lib/dayPlan";
-import type { DayPlan, Verdict } from "@/lib/dayPlan";
+import type { Verdict } from "@/lib/dayPlan";
 import { EARLIEST_DEPARTURE_HOUR, addDaysIso, dayAfterNa, dayStrip, floorTo5, longDay } from "@/lib/days";
 import { badDays } from "@/lib/weather";
 import { collectPlanWarnings } from "@/lib/planWarnings";
@@ -37,6 +37,9 @@ import { ParkingOptions, feeLabel, summaryWalk } from "@/components/ParkingBlock
 import { NoStartNote, PlanStartAsk } from "@/components/PlanStartAsk";
 import { StopsRow } from "@/components/StopsRow";
 import { SunArc } from "@/components/SunArc";
+import { DayMapLegend } from "@/components/DayMapLegend";
+import { goalTime, trailColours } from "@/lib/dayClock";
+import { usePublishDay } from "@/lib/usePublishDay";
 import { useTripAccess } from "@/components/TripAccess";
 import { useTripWeather } from "@/components/WeatherBlock";
 import { StopOptions, TransitHandoff, TransitLegs } from "@/components/TransitBlock";
@@ -74,6 +77,8 @@ interface Props extends ShareInfo {
   /** A phone's map for the "Ako pôjdete" step, and for the "Zastávky po ceste" one. */
   accessMap?: ReactNode;
   placesMap?: ReactNode;
+  /** The small map above the sun dial: the whole day on a map, with a walker that follows the dial (components/TripSheet.tsx). */
+  dayMap?: ReactNode;
   /** The places on the way, with their "+" buttons (components/PoiList.tsx). */
   places?: ReactNode;
   /** The trip has places on or near the walk that can be added as stops. */
@@ -103,7 +108,7 @@ function meetingAt(date: string, hhmm: string): Date {
   return zonedDate(y, mo, d, h, mi);
 }
 
-export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction = null, bbox, closures = [], walk, intro, children, outro, routeCount = 1, routesStep, accessMap, placesMap, places, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
+export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction = null, bbox, closures = [], walk, intro, children, outro, routeCount = 1, routesStep, accessMap, placesMap, dayMap, places, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
   const { start } = useUserLocation();
   const { today, update, withKids } = useTripSettings();
   const t = useT();
@@ -267,6 +272,8 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
   }, [following, plan, tripPlan.loading, meet, time, update]);
 
   const hasDrive = driveMin !== null;
+  // The day map above the sun dial reads the same plan (lib/dayClock.ts).
+  usePublishDay({ plan, profile, fullProfile, skip, approachShare: approachMin / Math.max(1, baseHikeMin), mode: walking ? "foot" : transit ? (rail.status === "ok" ? "train" : "bus") : "car" });
   // The walk starts where the ride ends: the parking (or the trail start, with no parking) or the stop.
   const walkStart = walking ? start : (walkFrom ?? destination);
   const latest = plan ? floorTo5(plan.latestStart) : null;
@@ -528,6 +535,16 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
         <div id="vas-den" className="flex scroll-mt-[calc(64px+env(safe-area-inset-top))] flex-col gap-4 lg:scroll-mt-3">
         {plan && (
           <section aria-label={t("Priebeh dňa")} className="flex flex-col gap-4 border-t border-[var(--border)] pt-4">
+            {dayMap && (
+              <div className="flex flex-col gap-2">
+                {dayMap}
+                <DayMapLegend
+                  colours={profile ? trailColours(profile, plan.hikeStart.getTime(), plan.hikeEnd.getTime(), plan.sunset.getTime()) : []}
+                  mode={walking ? "foot" : transit ? (rail.status === "ok" ? "train" : "bus") : "car"}
+                  stopKinds={[...new Set(stops.flatMap((s) => (s.id === LUNCH.id ? ["obcerstvenie" as const] : walkProfile?.places?.find((p) => p.id === s.id)?.kind ?? [])))]}
+                />
+              </div>
+            )}
             {sun && (
               // Framed inside the card: its sky would otherwise blend into the page.
               <div className="overflow-hidden rounded-xl">
@@ -682,11 +699,5 @@ function Step({ label, time, approx = false }: { label: string; time: Date; appr
       </span>
     </li>
   );
-}
-
-/** When the walk reaches its goal (peak, lake, castle...). */
-function goalTime(plan: DayPlan, profile: TripProfile): Date {
-  const at = profile.points[profile.goalIndex].at;
-  return new Date(plan.hikeStart.getTime() + at * (plan.hikeEnd.getTime() - plan.hikeStart.getTime()));
 }
 

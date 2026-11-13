@@ -61,6 +61,10 @@ export interface MapMarker {
   icon?: string;
   /** A button in the popup (a place on the way: add it as a stop). */
   action?: { label: string; onClick: () => void };
+  /** A short text by the pin, always shown (the day map: the time you are there). */
+  label?: string;
+  /** Which side of the pin the label sits on (default right). */
+  labelSide?: "left" | "right";
 }
 
 interface Props {
@@ -94,6 +98,8 @@ interface Props {
    * that mounts next with the same key takes it over (lib/keptMap.ts). The routes of one place share the key.
    */
   persistKey?: string;
+  /** Adds its own layer to the map once it is ready (the day map's walker); returns what removes it. Keep the function stable: a new one re-adds the layer. */
+  onMap?: (ml: MapLibre, map: MlMap) => (() => void) | void;
 }
 
 const MARKER_GLYPH: Record<MarkerKind, string> = {
@@ -297,6 +303,7 @@ export function TrailMap({
   ariaLabel,
   className,
   persistKey,
+  onMap,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [ctx, setCtx] = useState<{ ml: MapLibre; map: MlMap } | null>(null);
@@ -723,6 +730,12 @@ export function TrailMap({
         // Constant markup from lib/kindIcons.ts and lib/uiIcons.ts, no user data.
         const icon = m.icon ?? MARKER_ICON[m.kind];
         if (icon) el.innerHTML = icon;
+        if (m.label) {
+          const label = document.createElement("span");
+          label.className = `mt-pin-label font-data ${m.labelSide === "left" ? "is-left" : ""}`;
+          label.textContent = m.label;
+          el.appendChild(label);
+        }
         const marker = new ml.Marker({ element: el })
           .setLngLat([m.location.lon, m.location.lat])
           .setPopup(new ml.Popup({ offset: 14, closeButton: false }).setDOMContent(popupContent(m.title, m.lines, m.action)))
@@ -779,6 +792,12 @@ export function TrailMap({
     if (recent && !adoptedRef.current) apply(recent, true);
     return onMapFocus((target) => apply(target));
   }, [ctx, scope]);
+
+  // The owner's own layer (the day map's walker).
+  useEffect(() => {
+    if (!ctx || !onMap) return;
+    return onMap(ctx.ml, ctx.map) ?? undefined;
+  }, [ctx, onMap]);
 
   // Start pin (typed place) and "you are here" dot (GPS).
   useEffect(() => {

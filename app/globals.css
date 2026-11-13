@@ -254,6 +254,64 @@ h2,
   color: #fff;
 }
 
+/* The day map's time labels: dark ink on a white halo, beside the pin (font-data is set on the element). */
+.mt-pin-label {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 5px);
+  transform: translateY(-50%);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #17213a;
+  text-shadow: -1.5px 0 #fff, 1.5px 0 #fff, 0 -1.5px #fff, 0 1.5px #fff, -1px -1px #fff, 1px -1px #fff, -1px 1px #fff, 1px 1px #fff;
+}
+.mt-pin-label.is-left {
+  left: auto;
+  right: calc(100% + 5px);
+}
+
+/* The day map's walker: the blue round marker of the sun dial, white edge, with the time in a pill above it (the pins' own labels sit beside them). */
+.mt-walker {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  pointer-events: none;
+  z-index: 4;
+}
+.mt-walker-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: #1769d1;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+  color: #fff;
+}
+.mt-walker-time {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1.5px solid #1769d1;
+  background: #fff;
+  color: #17213a;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
 /* A place added as a stop: bigger, with a ring in the site blue. */
 .mt-pin-poi.is-active {
   width: 30px;
