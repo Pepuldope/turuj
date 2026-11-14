@@ -407,7 +407,7 @@ function StartBlock({
         {/* iPhone Safari draws a time input at its own width, whatever the CSS says, so it ran off the screen (Peter,
             2026-11-14). The box is ours: the time as plain text and our clock icon; the real input lies invisible over it
             and takes the tap, which opens the system's own time picker (same trick as the "Iný deň" tile). */}
-        <span className="relative flex max-w-[9.5rem] min-w-0 flex-1 items-center rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] py-1.5 pr-1 pl-3 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--accent)]">
+        <span className="relative flex max-w-[9.5rem] min-w-0 flex-1 items-center overflow-hidden rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] py-1.5 pr-1 pl-3 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--accent)]">
           <span aria-hidden="true" className="font-data min-w-0 flex-1 truncate text-[1.45rem] leading-tight font-semibold min-[380px]:text-[1.6rem]">
             {shown}
           </span>
