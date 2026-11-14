@@ -182,6 +182,8 @@ function popupContent(title: string, lines: string[] = [], action?: MapMarker["a
 }
 
 /** Space kept between an open popup and the map's border, px (the bottom one clears the attribution button). */
+/** Half the size of a pin, px (the active ones are 30 wide). */
+const PIN_HALF = 16;
 const POPUP_PAD = { top: 12, right: 12, bottom: 30, left: 12 };
 
 /**
@@ -195,13 +197,26 @@ function keepPopupInView(map: MlMap, popup: Popup) {
     if (!el || !popup.isOpen()) return;
     const box = map.getContainer().getBoundingClientRect();
     const r = el.getBoundingClientRect();
-    // Positive dx pans the map right (the popup moves right).
-    let dx = 0;
-    let dy = 0;
-    if (r.left < box.left + POPUP_PAD.left) dx = box.left + POPUP_PAD.left - r.left;
-    else if (r.right > box.right - POPUP_PAD.right) dx = box.right - POPUP_PAD.right - r.right;
-    if (r.bottom > box.bottom - POPUP_PAD.bottom) dy = box.bottom - POPUP_PAD.bottom - r.bottom;
-    if (r.top + dy < box.top + POPUP_PAD.top) dy = box.top + POPUP_PAD.top - r.top;
+    // The place's own pin counts too: the popup and the pin must be in view together.
+    const at = map.project(popup.getLngLat());
+    const pin = { left: box.left + at.x - PIN_HALF, right: box.left + at.x + PIN_HALF, top: box.top + at.y - PIN_HALF, bottom: box.top + at.y + PIN_HALF };
+    const lo = { x: box.left + POPUP_PAD.left, y: box.top + POPUP_PAD.top };
+    const hi = { x: box.right - POPUP_PAD.right, y: box.bottom - POPUP_PAD.bottom };
+    // Per axis: the least shift that brings both in; when they can't both fit, the pin stays in (and the popup's far
+    // edge, where the "+" button is, as far as that allows).
+    const shift = (min: number, max: number, pMin: number, pMax: number, loE: number, hiE: number, keepFar: boolean) => {
+      const uMin = Math.min(min, pMin);
+      const uMax = Math.max(max, pMax);
+      let d = 0;
+      if (uMax - uMin <= hiE - loE) d = uMin < loE ? loE - uMin : uMax > hiE ? hiE - uMax : 0;
+      else d = keepFar ? hiE - uMax : loE - uMin;
+      // The pin never leaves the frame.
+      if (pMin + d < loE) d = loE - pMin;
+      if (pMax + d > hiE) d = hiE - pMax;
+      return d;
+    };
+    const dx = shift(r.left, r.right, pin.left, pin.right, lo.x, hi.x, false);
+    const dy = shift(r.top, r.bottom, pin.top, pin.bottom, lo.y, hi.y, true);
     if (!dx && !dy) return;
     // The popup's own box moves with the map, so check again once it stopped (the side it opens to can flip).
     if (pass < 2) map.once("moveend", () => fitOnce(pass + 1));
@@ -350,6 +365,8 @@ export function TrailMap({
   const boundsRef = useRef<BBox | null>(bounds);
   // The view was centred on a pick: a resize keeps it instead of fitting the step's default view again.
   const centredRef = useRef(false);
+  // The visitor pressed, touched or scrolled the map since the last fit: it is theirs now, no settling refit.
+  const touchedRef = useRef(false);
   const floorRef = useRef(focusFloor);
   const openOnRef = useRef(openOn);
   // The pins and what the map's handlers call live on the map itself, so they go with it when it is kept.
@@ -394,6 +411,7 @@ export function TrailMap({
         if (boundsRef.current && !centredRef.current) fit(map, boundsRef.current);
       });
       observer.observe(e.el);
+      for (const ev of ["pointerdown", "wheel", "touchstart"]) e.el.addEventListener(ev, () => (touchedRef.current = true), { passive: true });
       const ready = () => !cancelled && setCtx({ ml: e.ml, map });
       if (e.loaded) ready();
       else e.onLoad = ready;
@@ -669,6 +687,16 @@ export function TrailMap({
     if (centredRef.current) centreOn(ctx.map, first!.location, first!.context, bounds, 0);
     else fit(ctx.map, bounds, fittedRef.current && !reducedMotion() ? 600 : 0);
     fittedRef.current = true;
+    // The slot can still be settling (a wider layout, a gliding start): once it has, size the map to it and frame the
+    // area again, unless the visitor already took the map in hand.
+    touchedRef.current = false;
+    const map = ctx.map;
+    const settle = setTimeout(() => {
+      if (touchedRef.current || centredRef.current || !boundsRef.current) return;
+      map.resize();
+      fit(map, boundsRef.current);
+    }, 900);
+    return () => clearTimeout(settle);
     // `bounds` is tracked via boundsKey so a new-but-equal object doesn't refit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx, boundsKey, refit]);
