@@ -21,6 +21,7 @@ export default function PrivacyPage() {
       <h2>What we keep and for how long</h2>
       <ul>
         <li>Account (email, name if given, Google account number with Google sign-in, dates): until you delete it. Passwords only as a salted PBKDF2 hash.</li>
+        <li>Tester days: if you press “Chcem testovať” (I want to test) while signed in, we store the dates (day only, no times or places) you used Túruj, to measure our school project’s goal; deleted with your account.</li>
         <li>Sign-in cookie <code>turuj_s</code>: at most 180 days; we store only its hash. Email codes: deleted when used, otherwise within an hour.</li>
         <li>Quick reviews: trip, answers, date and a random number from your browser; no name, email or IP address.</li>
         <li>Messages from “Write to us” / “Report a problem”: deleted automatically 12 months after they arrive. Emails to info@turuj.sk: at most 12 months after the last reply.</li>
