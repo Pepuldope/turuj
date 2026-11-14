@@ -3,8 +3,9 @@ name: TANAP closures check
 # Mondays: compares our TANAP closures (data/closure-rules.json) with TANAP's official list and
 # opens (or updates) one GitHub issue when they differ. Never fails the weekly data runs: it is
 # a separate workflow they don't wait for, and a difference is an issue, not a failed job.
-# STATUS: the official source is not wired up yet (TODO in scripts/check-tanap-closures.ts), so
-# for now it only says "nothing compared" and opens no issue.
+# Source: TANAP's own "Časové vymedzenie uzáver" chart (lib/tanapSource.ts). If it can't be read
+# (blocked, down, page changed) the job says "source unavailable" and opens NO difference issue;
+# after 3 weeks in a row it opens one "source unavailable" issue.
 
 on:
   schedule:
@@ -14,6 +15,7 @@ on:
 permissions:
   contents: read
   issues: write
+  actions: read
 
 jobs:
   compare:
@@ -29,7 +31,30 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Compare
-        run: npx vite-node --config vitest.config.ts scripts/check-tanap-closures.ts "$RUNNER_TEMP/tanap-report.md"
+        run: npx vite-node --config vitest.config.ts scripts/check-tanap-closures.ts "$RUNNER_TEMP/tanap-report.md" "$RUNNER_TEMP/tanap-status"
+      - name: Read status
+        id: status
+        run: echo "unavailable=$([ "$(cat "$RUNNER_TEMP/tanap-status" 2>/dev/null)" = unavailable ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      # This step only runs in a week the source was unreadable; its name is how later runs count
+      # consecutive weeks (do not rename without updating the jq below).
+      - name: Source unavailable
+        if: steps.status.outputs.unavailable == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "::warning::TANAP source unavailable this week; nothing compared."
+          prev="$(gh run list --workflow tanap-check.yml --status completed --limit 2 --json databaseId --jq '.[].databaseId')"
+          streak=1
+          for id in $prev; do
+            c="$(gh run view "$id" --json jobs --jq '[.jobs[].steps[] | select(.name=="Source unavailable") | .conclusion][0] // empty')"
+            [ "$c" = success ] && streak=$((streak+1)) || break
+          done
+          echo "Unavailable $streak week(s) in a row."
+          [ "$streak" -ge 3 ] || exit 0
+          title="TANAP closures check: official source unavailable"
+          n="$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')"
+          [ -n "$n" ] && exit 0
+          gh issue create --title "$title" --body "The weekly TANAP closures check could not read TANAP's chart (https://www.tanap.sk/wp-content/uploads/uzaveryTURISTIKA.html) for $streak weeks in a row (blocked, down, or the page changed shape; see the job log). Nothing was compared, so our closure rules are unverified against TANAP for now. Check lib/tanapSource.ts against the live page."
       - name: Open or update the issue
         env:
           GH_TOKEN: ${{ github.token }}
