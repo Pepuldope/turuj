@@ -36,8 +36,13 @@ import {
   winterTimedMonths,
 } from "@/lib/tripAnswers";
 import type { StartLine } from "@/lib/tripAnswers";
-import { clock } from "@/lib/zoned";
-import type { Closure, LatLng, ParkingLot, TransitStop } from "@/lib/types";
+import { clock, wallClock } from "@/lib/zoned";
+import { foodOnWalk, onRouteTeaser, pickRoutePlaces, placeText, waterOnWalk } from "@/lib/tripOnRoute";
+import { answerRows } from "@/lib/tripRows";
+import { packList, packTeaser } from "@/lib/tripPacking";
+import { difficultyText, heightsText, markedShareText, markingText, steepestText, terrainOf, terrainTeaser } from "@/lib/tripTerrain";
+import type { TerrainInput } from "@/lib/tripTerrain";
+import type { Closure, LatLng, ParkingLot, Poi, TransitStop } from "@/lib/types";
 import type { DestinationKind, Fee } from "@/lib/tripSchema";
 
 // The sections below are plain server HTML on purpose: search engines and AI crawlers that do not run
@@ -257,26 +262,39 @@ interface AnswersProps {
   sunAt: LatLng | null;
   /** Walking time of the main start, minutes. */
   walkMin: number;
-  /** Loop-back pages: only the closures row, the rest is not computed there. */
-  closuresOnly?: boolean;
+  /** The walk's places (huts, food, viewpoints, springs...), with their km along the walk. */
+  pois: Poi[];
+  /** Path, marking and numbers of the walk, for the terrain row; null = no row. */
+  terrain: TerrainInput | null;
+  familyFriendly: boolean;
   /** Paragraphs of "O výlete". */
   about: string[];
   /** The trip's region ("Tatry"); Tatra regions get the mountain-rescue row. */
   region?: string | null;
 }
 
-/** The question rows of the trip page in ONE card: how long, parking, bus and train, closures and fees, when to leave, mountain rescue (Tatras), about. */
-export function TripAnswers({ lang, name, kind, startName, lines, loop, parking, stops, closures, fees, sunAt, walkMin, closuresOnly = false, about, region }: AnswersProps) {
+/** The question rows of the trip page in ONE card: how long, terrain and signs, places on the way, how to get there, closures and fees, when to leave, before you go (pack list, mountain rescue), about (lib/tripRows.ts: five to eight). */
+export function TripAnswers({ lang, name, kind, startName, lines, loop, parking, stops, closures, fees, sunAt, walkMin, pois, terrain, familyFriendly, about, region }: AnswersProps) {
   const asOf = new Date().toISOString().slice(0, 10);
-  const months = !closuresOnly && sunAt ? monthTable(sunAt, walkMin, closures, asOf) : [];
+  const months = sunAt ? monthTable(sunAt, walkMin, closures, asOf) : [];
   const winter = winterTimedMonths(months);
   const groups = monthGroups(lang, months);
   const feeOf = parking ? parkingFeeNote(lang, parking) : null;
   const more = otherStops(lang, stops);
+  const hzs = !!region && (HZS_REGIONS.has(region) || HZS_SHORT_REGIONS.has(region));
+  const t = terrain ? terrainOf(terrain) : null;
+  const places = pickRoutePlaces(pois);
+  const placesTeaser = onRouteTeaser(lang, places);
+  const rows = answerRows({ hasPlaces: !!placesTeaser, hasParking: !!parking, hasStops: stops.length > 0, hasMonths: months.length > 0, hasAbout: about.length > 0 });
+  const share = terrain ? markedShareText(lang, terrain.marked_share) : null;
+  // The month decides the pack list (pages are cached): the latest start of this month says how much of the daylight the walk fills.
+  const month = wallClock(new Date()).mo;
+  const nowRow = months.find((r) => r.month === month);
+  const latest = nowRow && !nowRow.closedBy && !nowRow.partial ? (nowRow.latest ? wallClock(nowRow.latest).h * 60 + wallClock(nowRow.latest).mi : null) : undefined;
+  const pack = packList(lang, { month, walkMin, topM: t?.topM ?? null, waterOnWalk: waterOnWalk(pois), foodOnWalk: foodOnWalk(pois), familyFriendly, latestStartMin: latest });
   return (
     <Card>
-      {!closuresOnly && (
-        <>
+      <>
           <Row title={howLongHeading(lang, name, kind)} teaser={durationTeaser(lang, lines)}>
             <p>{durationSentence(lang, lines, loop)}</p>
             <ul className="flex flex-col gap-1">
@@ -296,28 +314,71 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
             </ul>
           </Row>
 
-          <Row title={tr(lang, "Parkovanie")} teaser={parkingTeaser(lang, parking)}>
-            <p>{parkingSentence(lang, startName, parking, stops.length > 0)}</p>
-            {parking && (
-              <>
-                {feeOf && <p>{feeOf}</p>}
+          {rows.includes("teren") && terrain && t && (
+            <Row title={tr(lang, "Terén a značky")} teaser={terrainTeaser(lang, terrain, t)}>
+              <p>{heightsText(lang, t)}.</p>
+              {share && (
                 <p>
-                  {tr(lang, "Pin parkoviska")}:{" "}
-                  <a href={pinUrl(parking.location)} target="_blank" rel="noopener noreferrer" className="underline">
-                    {pinText(parking.location)}
-                  </a>
-                  . {tr(lang, "Ceny ani kapacitu parkoviska neuvádzame.")}
+                  {share.charAt(0).toLocaleUpperCase(lang === "en" ? "en" : "sk") + share.slice(1)}
+                  {t.marking.length > 0 && <>: {markingText(lang, t.marking)}</>}.
                 </p>
-              </>
-            )}
-          </Row>
+              )}
+              {!share && t.marking.length > 0 && <p>{markingText(lang, t.marking)}.</p>}
+              <p>{difficultyText(lang, terrain.difficulty)}</p>
+              {t.steepest && <p>{steepestText(lang, t.steepest)}</p>}
+              <p className="text-xs">{tr(lang, "Výšky sú z mapových dát a stúpanie môže vychádzať o niečo vyššie, než je naozaj. Čísla sú zaokrúhlené.")}</p>
+            </Row>
+          )}
 
-          <Row title={tr(lang, "Autobusom a vlakom")} teaser={transitTeaser(lang, stops)}>
-            <p>{transitSentence(lang, stops)}</p>
-            {more && <p>{more}</p>}
-          </Row>
-        </>
-      )}
+          {rows.includes("trasa") && placesTeaser && (
+            <Row title={tr(lang, "Na trase")} teaser={placesTeaser}>
+              {places.on.length > 0 && (
+                <>
+                  <p>{tr(lang, "Pri ceste, v poradí, ako ich prejdete (km od štartu):")}</p>
+                  <ul className="flex flex-col gap-1">
+                    {places.on.map((p) => (
+                      <li key={`${p.kind}-${p.location.lat}-${p.location.lon}`}>{placeText(lang, p)}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+              {places.off.length > 0 && (
+                <>
+                  <p>{tr(lang, "Kúsok bokom od trasy (čas tam a späť):")}</p>
+                  <ul className="flex flex-col gap-1">
+                    {places.off.map((p) => (
+                      <li key={`${p.kind}-${p.location.lat}-${p.location.lon}`}>{placeText(lang, p)}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+              {places.hidden > 0 && <p>{tr(lang, "a ďalšie {n}", { n: places.hidden })}</p>}
+              <p className="text-xs">{tr(lang, "Miesta sú z mapy OpenStreetMap, ich prevádzku neoverujeme.")}</p>
+            </Row>
+          )}
+
+          {rows.includes("tam") && (
+            <Row title={tr(lang, "Ako sa tam dostať")} teaser={[parking ? parkingTeaser(lang, parking) : null, stops.length > 0 ? transitTeaser(lang, stops) : null].filter(Boolean).join(" · ")}>
+              <p className="font-semibold text-[var(--foreground)]">{tr(lang, "Parkovanie")}</p>
+              <p>{parkingSentence(lang, startName, parking, stops.length > 0)}</p>
+              {parking && (
+                <>
+                  {feeOf && <p>{feeOf}</p>}
+                  <p>
+                    {tr(lang, "Pin parkoviska")}:{" "}
+                    <a href={pinUrl(parking.location)} target="_blank" rel="noopener noreferrer" className="underline">
+                      {pinText(parking.location)}
+                    </a>
+                    . {tr(lang, "Ceny ani kapacitu parkoviska neuvádzame.")}
+                  </p>
+                </>
+              )}
+              <p className="mt-1 font-semibold text-[var(--foreground)]">{tr(lang, "Autobusom a vlakom")}</p>
+              <p>{transitSentence(lang, stops)}</p>
+              {more && <p>{more}</p>}
+            </Row>
+          )}
+      </>
 
       <Row title={tr(lang, "Uzávery a poplatky")} teaser={closureTeaser(lang, closures)}>
         <ClosuresBody lang={lang} closures={closures} fees={fees} region={region ?? null} />
@@ -383,11 +444,22 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
         </Row>
       )}
 
-      {region && (HZS_REGIONS.has(region) || HZS_SHORT_REGIONS.has(region)) && (
-        <Row title={tr(lang, "Pred túrou: horská služba")} teaser={tr(lang, "Záchranári 18 300 · aplikácia HZS a kniha túr")}>
-          <HzsBody lang={lang} short={HZS_SHORT_REGIONS.has(region)} />
-        </Row>
-      )}
+      <Row title={tr(lang, "Pred odchodom")} teaser={hzs ? `${packTeaser(pack)} · ${tr(lang, "HZS 18 300")}` : packTeaser(pack)}>
+        <p className="font-semibold text-[var(--foreground)]">{tr(lang, "Čo si zbaliť")}</p>
+        <p>{tr(lang, "Na túto túru sa hodí:")}</p>
+        <ul className="flex flex-col gap-1">
+          {pack.map((x) => (
+            <li key={x.short}>{x.text}</li>
+          ))}
+        </ul>
+        <p className="text-xs">{tr(lang, "Je to rada podľa dĺžky a výšky trasy a mesiaca, nie záruka. Počasie a stav trasy si overte pred odchodom.")}</p>
+        {hzs && (
+          <>
+            <p className="mt-1 font-semibold text-[var(--foreground)]">{tr(lang, "Horská služba")}</p>
+            <HzsBody lang={lang} short={HZS_SHORT_REGIONS.has(region!)} />
+          </>
+        )}
+      </Row>
 
       {about.length > 0 && (
         <Row title={tr(lang, "O výlete")} teaser={aboutTeaser(about[0])}>
