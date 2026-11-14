@@ -34,7 +34,7 @@ export function GpxDownload({ gpxUrl, slug, name }: { gpxUrl: string; slug: stri
     if (gpx) setTimeout(() => URL.revokeObjectURL(url), 10_000);
   }
 
-  // A real action of the "Vyraziť" card, a secondary button like the others there.
+  // A real action of the "Uložiť a navigovať" card, a secondary button like the others there.
   return (
     <a
       href={file}

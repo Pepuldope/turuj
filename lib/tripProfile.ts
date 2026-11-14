@@ -14,6 +14,8 @@ export interface ProfilePoint {
   at: number;
   /** Trail marking from the previous point to this one; null = unmarked. */
   colour: MarkColour | null;
+  /** Where on the map this point is, [lat, lon]: the day map's walker follows the sun dial along it. Missing on old saved trips and on the standing points. */
+  pos?: [number, number];
 }
 
 export interface TripProfile {
@@ -103,6 +105,7 @@ export function buildProfile(trip: TripDetail): TripProfile | null {
 
   // A point carries the colour of the stretch just walked to reach it (the first one, of the first stretch).
   const colourOf = (k: number) => segColour[k === 0 ? 0 : Math.min(order[k], order[k - 1])];
+  const round5 = (v: number) => Math.round(v * 1e5) / 1e5;
 
   // Each place by the path vertex nearest to it (side trips leave the walk about there).
   const last2 = order.length - 1;
@@ -127,7 +130,7 @@ export function buildProfile(trip: TripDetail): TripProfile | null {
   });
 
   return {
-    points: kept.map((k) => ({ ele: ele[order[k]], at: cost[k] / total, colour: colourOf(k) })),
+    points: kept.map((k) => ({ ele: ele[order[k]], at: cost[k] / total, colour: colourOf(k), pos: [round5(path[order[k]][1]), round5(path[order[k]][0])] as [number, number] })),
     goalIndex: kept.indexOf(goalAt),
     goalName: trip.destination.name,
     goalKind: trip.destination.kind,
@@ -166,9 +169,16 @@ export function trimProfile(profile: TripProfile, out: number, back: number): Tr
     return a.ele + ((b.ele - a.ele) * (t - a.at)) / (b.at - a.at || 1);
   };
   const colourAt = (t: number) => pts.find((p) => p.at >= t)?.colour ?? null;
+  const posAt = (t: number): [number, number] | undefined => {
+    const i = pts.findIndex((p) => p.at >= t);
+    const [a, b] = i <= 0 ? [pts[Math.max(0, i)], pts[Math.max(0, i)]] : [pts[i - 1], pts[i]];
+    if (!a.pos || !b.pos) return undefined;
+    const f = b.at > a.at ? (t - a.at) / (b.at - a.at) : 0;
+    return [a.pos[0] + (b.pos[0] - a.pos[0]) * f, a.pos[1] + (b.pos[1] - a.pos[1]) * f];
+  };
   const goal = pts[profile.goalIndex];
   const inside = pts.filter((p) => p.at > from && p.at < to);
-  const points = [{ ele: eleAt(from), at: from, colour: colourAt(from) }, ...inside, { ele: eleAt(to), at: to, colour: colourAt(to) }].map(
+  const points = [{ ele: eleAt(from), at: from, colour: colourAt(from), pos: posAt(from) }, ...inside, { ele: eleAt(to), at: to, colour: colourAt(to), pos: posAt(to) }].map(
     (p) => ({ ...p, at: (p.at - from) / (to - from) })
   );
   const goalAt = (goal.at - from) / (to - from);
@@ -186,8 +196,8 @@ export function withApproach(profile: TripProfile, share: number): TripProfile {
   if (share <= 0 || share >= 0.5) return profile;
   const pts = profile.points;
   const scaled = pts.map((p) => ({ ...p, at: share + p.at * (1 - 2 * share) }));
-  const first = { ele: pts[0].ele, at: 0, colour: null };
-  const last = { ele: pts[pts.length - 1].ele, at: 1, colour: null };
+  const first = { ele: pts[0].ele, at: 0, colour: null, pos: pts[0].pos };
+  const last = { ele: pts[pts.length - 1].ele, at: 1, colour: null, pos: pts[pts.length - 1].pos };
   const move = (at: number) => share + at * (1 - 2 * share);
   const places = profile.places?.map((p) => ({ ...p, out: move(p.out), back: p.back === null ? null : move(p.back) }));
   return { ...profile, points: [first, ...scaled, last], goalIndex: profile.goalIndex + 1, places };

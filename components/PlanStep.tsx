@@ -381,7 +381,7 @@ export function StepInfo({ title, children, extra }: { title: string; children: 
  * mounted only while near the screen, so a page with three open steps never holds more than a
  * couple of MapLibre maps; the fixed height keeps the page from jumping meanwhile.
  */
-export function StepMap(props: Omit<ComponentProps<typeof PhoneTripMap>, "compact">) {
+export function StepMap({ always = false, joined = false, ...props }: Omit<ComponentProps<typeof PhoneTripMap>, "compact" | "joined"> & { always?: boolean; /** The map is the top of a joined block: no border or rounding of its own. */ joined?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   // A parked map of the page just left is taken over at once, so no placeholder shows in between.
   const [near, setNear] = useState(() => hasKeptMap(keptMapKey(props.placeKey, props.focus)));
@@ -393,8 +393,9 @@ export function StepMap(props: Omit<ComponentProps<typeof PhoneTripMap>, "compac
     return () => io.disconnect();
   }, []);
   return (
-    <div ref={ref} className="h-[170px] shrink-0 lg:hidden">
-      {near ? <PhoneTripMap {...props} compact /> : <div className="h-full rounded-xl border border-[var(--border)] bg-[var(--segment-bg)]" />}
+    // `always`: the day map under Priebeh dňa is shown on wide screens too, a little taller.
+    <div ref={ref} className={always ? "h-[200px] shrink-0" : "h-[170px] shrink-0 lg:hidden"}>
+      {near ? <PhoneTripMap {...props} compact joined={joined} /> : <div className={`h-full bg-[var(--segment-bg)] ${joined ? "" : "rounded-xl border border-[var(--border)]"}`} />}
     </div>
   );
 }

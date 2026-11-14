@@ -11,6 +11,7 @@ import { LUNCH, stopFor, useTripStops, visits } from "@/lib/tripStops";
 import type { TripStop } from "@/lib/tripStops";
 import { ShowMore, shownRows } from "@/components/ShowMore";
 import { LunchTime, WaySwitch, useLunchPick } from "@/components/StopsRow";
+import { floorTo5 } from "@/lib/days";
 import { formatDurationShort, formatTime as clock } from "@/lib/format";
 import { useLang, useT } from "@/lib/i18n";
 import { tr } from "@/lib/lang";
@@ -82,6 +83,8 @@ export function PoiList({
   const advice = plan
     ? stopsAdvice(plan, stops.stops.map((s) => ({ id: s.id, name: t(s.name), minutes: s.min * visits(s) })))
     : null;
+  // The departure that puts the walk at `walkStart` (the ride kept, to the 5 minutes before); the walk start itself without a leg.
+  const leaveFor = (walkStart: Date) => (day && day.leadMs > 0 ? floorTo5(new Date(walkStart.getTime() - day.leadMs)) : walkStart);
   const removal = advice?.removal ? stops.stops.filter((s) => advice.removal!.ids.includes(s.id)) : [];
 
   return (
@@ -175,12 +178,13 @@ export function PoiList({
             {advice.earlier && day && (
               <button
                 type="button"
-                onClick={() => day.setWalkStart(clock(advice.earlier!.start))}
+                onClick={() => day.setStart(clock(leaveFor(advice.earlier!.start)))}
                 className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-2.5 text-left text-sm font-semibold text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
               >
                 <UiIcon name="clock" size={16} />
                 <span>
-                  {t("Začať túru o {time}", { time: formatTime(advice.earlier.start) })}{" "}
+                  {/* With a leg before the walk the shortcut speaks the departure, like the Kedy step (Peter, 2026-11-13). */}
+                  {day.leadMs > 0 ? t("Vyraziť o {time}", { time: formatTime(leaveFor(advice.earlier.start)) }) : t("Začať túru o {time}", { time: formatTime(advice.earlier.start) })}{" "}
                   <span className="text-[var(--foreground)]">
                     ({t("späť")} <span className="font-data">{formatTime(advice.earlier.backAt)}</span>)
                   </span>

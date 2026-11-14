@@ -25,12 +25,13 @@ export function PlanStartAsk() {
           {t("Odkiaľ vyrážate?")}
         </p>
         <p className="text-sm">{t("Dopočítame cestu autom, kedy vyraziť a kedy budete doma.")}</p>
-        <div className="flex flex-wrap gap-2">
+        {/* Both buttons the card's full width, one under the other (Peter, 2026-11-14: odd sizes side by side). */}
+        <div className="flex flex-col gap-2">
           <button
             type="button"
             onClick={locate}
             disabled={status === "locating"}
-            className="flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-[var(--accent)] px-4 text-[15px] font-bold text-[var(--accent-contrast)] transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-70"
+            className="flex min-h-12 w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-[var(--accent)] px-4 text-[15px] font-bold text-[var(--accent-contrast)] transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-70"
           >
             <UiIcon name="pin" size={16} />
             {status === "locating" ? t("Hľadáme vašu polohu…") : t("Použiť moju polohu")}
@@ -39,7 +40,7 @@ export function PlanStartAsk() {
             type="button"
             onClick={() => setOpen(true)}
             aria-haspopup="dialog"
-            className="flex min-h-11 cursor-pointer items-center justify-center rounded-full border border-[var(--accent)] bg-[var(--card-bg)] px-4 text-[15px] font-bold text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+            className="flex min-h-12 w-full cursor-pointer items-center justify-center rounded-full border border-[var(--accent)] bg-[var(--card-bg)] px-4 text-[15px] font-bold text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
           >
             {t("Vybrať mesto…")}
           </button>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import type { DayPlan } from "@/lib/dayPlan";
 import { formatDuration, formatDurationShort, formatTime } from "@/lib/format";
+import { publishDayMoment, UNMARKED_COLOUR } from "@/lib/dayClock";
 import { LAND, seasonDetails, seasonOf, seeded, snowSvg } from "@/lib/season";
 import { UI_ICON, iconEdge } from "@/lib/uiIcons";
 import { MARKING_COLOR, MARKING_LABEL } from "@/lib/mapLayers";
@@ -54,18 +55,7 @@ const EDGE = {
 // The white night car keeps its headlights: amber instead of the icon's white.
 const CAR_AT_NIGHT = UI_ICON.car.replaceAll('fill="#fff"', 'fill="#f4a51c"');
 
-const UNMARKED = "#55627a";
-const LATE = "#9a4a06";
-/** The marking colours as the legend names them. */
-const MARKING_WORD: Record<string, string> = {
-  [MARKING_COLOR.red]: "červená značka",
-  [MARKING_COLOR.blue]: "modrá značka",
-  [MARKING_COLOR.green]: "zelená značka",
-  [MARKING_COLOR.yellow]: "žltá značka",
-  [MARKING_COLOR.black]: "čierna značka",
-  [UNMARKED]: "bez značky",
-};
-
+const UNMARKED = UNMARKED_COLOUR;
 /** The marking you are on as the readout says it ("po červenej"); unmarked is said plainly. */
 const MARKING_SHORT: Record<string, string> = {
   [MARKING_COLOR.red]: MARKING_LABEL.red,
@@ -118,6 +108,8 @@ interface Props {
   byTrain?: boolean;
   /** Forecast at the trail start, asked for at the start's height; drawn into the sky when given. */
   weather?: WeatherForecast | null;
+  /** Draw its own small legend under the slider. The plan turns it off and shows one combined legend under the map and the dial (DayMapLegend). */
+  legend?: boolean;
 }
 
 interface WalkPoint {
@@ -133,7 +125,7 @@ interface WalkPoint {
  * a timeline of the whole trip, and the walk is drawn as the trail's own
  * height profile. Hover (or drag on touch) to move through the day.
  */
-export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = false, weather = null }: Props) {
+export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = false, weather = null, legend = true }: Props) {
   // `t` is the moment on the dial here, so the translator is `tx`.
   const tx = useT();
   const lang = useLang();
@@ -395,6 +387,9 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   };
 
   const t = Math.max(scene.lo, Math.min(scene.hi, scrub ?? intro ?? restT));
+  // The day map above follows this moment with its walker (lib/dayClock.ts).
+  useEffect(() => publishDayMoment(t), [t]);
+  useEffect(() => () => publishDayMoment(null), []);
   const alt = sunAltitude(new Date(t), sun.lat, sun.lon);
   // The weather at this moment greys the sky and dims the sun.
   const now = weather ? weatherAt(weather, t) : null;
@@ -456,14 +451,6 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   // The trail sign you are on: a small KST mark (white, colour, white) and its word.
   const markText = markColour ? tx(MARKING_SHORT[markColour] ?? "bez značky") : null;
 
-  // The trail colours worth naming: a few metres of another colour at a junction would only puzzle.
-  const legendColours = useMemo(() => {
-    const share = new Map<string, number>();
-    const w = scene.walk;
-    for (let i = 1; i < w.length; i++) if (w[i].t <= sunset) share.set(w[i].colour, (share.get(w[i].colour) ?? 0) + (w[i].x - w[i - 1].x));
-    const total = [...share.values()].reduce((a, b) => a + b, 0) || 1;
-    return [...share].filter(([, len]) => len / total >= 0.05).map(([c]) => c);
-  }, [scene.walk, sunset]);
   // Standing at an added stop: the walker shows as that place's pin.
   const atPause = onTrail ? scene.pauses.find((pa) => pa.kind && t >= pa.t0 && t <= pa.t1) : undefined;
   const marker = onTrail ? "walker" : inCar ? (byBus ? (byTrain ? "train" : "bus") : "car") : "dot";
@@ -656,23 +643,30 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
           strokeWidth={4.6}
           strokeLinejoin="round"
         />
-        {scene.walk.slice(1).map((p, i) => {
-          const prev = scene.walk[i];
-          const late = p.t > sunset;
-          return (
-            <line
-              key={i}
-              x1={prev.x}
-              y1={prev.y}
-              x2={p.x}
-              y2={p.y}
-              stroke={late ? LATE : p.colour}
-              strokeWidth={2.6}
-              strokeLinecap="round"
-              strokeDasharray={late ? "3 2" : undefined}
-            />
-          );
-        })}
+        {/* After sunset each part keeps its trail-sign colour and is only dashed (Peter, 2026-11-14). The dashes run along a
+            whole same-coloured stretch, one path: on the short per-point lines the pattern restarted at every point and read as solid. */}
+        {(() => {
+          const out: ReactNode[] = [];
+          let run: { colour: string; pts: string[]; at: number } | null = null;
+          const flush = () => {
+            if (!run) return;
+            out.push(<path key={`late${run.at}`} d={"M" + run.pts.join("L")} fill="none" stroke={run.colour} strokeWidth={2.6} strokeDasharray="4 3" />);
+            run = null;
+          };
+          scene.walk.slice(1).forEach((p, i) => {
+            const prev = scene.walk[i];
+            if (p.t > sunset) {
+              if (run && run.colour !== p.colour) flush();
+              if (!run) run = { colour: p.colour, pts: [`${prev.x.toFixed(1)},${prev.y.toFixed(1)}`], at: i };
+              run.pts.push(`${p.x.toFixed(1)},${p.y.toFixed(1)}`);
+              return;
+            }
+            flush();
+            out.push(<line key={i} x1={prev.x} y1={prev.y} x2={p.x} y2={p.y} stroke={p.colour} strokeWidth={2.6} strokeLinecap="round" />);
+          });
+          flush();
+          return out;
+        })()}
 
         {/* Added stops: the time spent there cut out of the walk in the place's colour, its map pin above
             (Peter, 2026-10-24 and 2026-10-26). While the walker is there, the walker turns into the pin. */}
@@ -849,22 +843,18 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
       </div>
 
       {/* What the colours mean (Peter, 2026-10-26: "make it obvious what each one means"): only what this day's picture shows. */}
+      {legend && (
       <ul className="flex flex-wrap gap-x-3 gap-y-1 px-4 pb-2 text-[11.5px] text-[var(--muted)]" aria-label={tx("Vysvetlivky")}>
-        {legendColours.map((c) => (
-          <li key={c} className="inline-flex items-center gap-1.5">
-            <svg width="16" height="6" aria-hidden="true"><line x1="1.5" x2="14.5" y1="3" y2="3" stroke={c} strokeWidth="2.6" strokeLinecap="round" /></svg>
-            {tx(MARKING_WORD[c] ?? "bez značky")}
-          </li>
-        ))}
+        {/* The trail colours are named under the day map above (components/DayMapLegend.tsx). */}
         {scene.walk.some((p) => p.t > sunset) && (
           <li className="inline-flex items-center gap-1.5">
-            <svg width="16" height="6" aria-hidden="true"><line x1="1.5" x2="14.5" y1="3" y2="3" stroke={LATE} strokeWidth="2.6" strokeDasharray="3 2" /></svg>
+            <svg width="16" height="6" aria-hidden="true"><line x1="1.5" x2="14.5" y1="3" y2="3" stroke="var(--muted)" strokeWidth="2.6" strokeDasharray="3 2" /></svg>
             {tx("po západe slnka")}
           </li>
         )}
         {hasDrive && (
           <li className="inline-flex items-center gap-1.5">
-            <svg width="16" height="8" aria-hidden="true"><rect x="0.5" y="0.5" width="15" height="7" rx="3.5" fill={INK} /></svg>
+            <svg width="16" height="8" aria-hidden="true"><rect x="0.5" y="0.5" width="15" height="7" rx="3.5" fill={INK} stroke="var(--foreground)" strokeWidth="1" /></svg>
             {tx(byTrain ? "vo vlaku" : byBus ? "v autobuse" : "v aute")}
           </li>
         )}
@@ -873,6 +863,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
           {tx("dráha slnka")}
         </li>
       </ul>
+      )}
 
       <div className="flex justify-between gap-3 border-t border-[var(--border)] px-4 pt-2.5 pb-3.5 text-sm">
         <div className="min-w-0">

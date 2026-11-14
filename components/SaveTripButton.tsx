@@ -263,7 +263,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
 
 /**
  * "Získať appku": the one-time offer to put the saved trip on the home screen. A card of its own under the
- * "Vyraziť" card, so it doesn't mix with saving, sharing and navigating.
+ * "Uložiť a navigovať" card, so it doesn't mix with saving, sharing and navigating.
  */
 export function AppPromo() {
   const t = useT();

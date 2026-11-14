@@ -4,7 +4,9 @@
  * the chosen time), the day tiles, the option cards, the warnings with their way out, and the folded summary. Pure and JSX-free, so it is unit tested; the words
  * come from components/KedyStep.tsx.
  *
- * Every time here is the WALK START (Peter, 2026-11-12), never the departure.
+ * Every time here is the DEPARTURE FROM HOME when the plan has a leg before the hike (a drive, or the way to the
+ * stop; Peter, 2026-11-13, reversing the 12 Nov "always the walk start": it made people subtract the drive
+ * themselves). Without a leg (no start set, or on foot) it is the walk start, as before. See `startTime`.
  */
 import type { DayPlan, Segment, SegmentKind } from "@/lib/dayPlan";
 import { SAFE_MARGIN_MIN } from "@/lib/dayPlan";
@@ -56,6 +58,24 @@ export function minToHhmm(min: number): string {
 /** The ms from leaving to the start of the walk (the ride there, or the wait at the stop). */
 export function leadMs(plan: DayPlan): number {
   return plan.hikeStart.getTime() - plan.segments[0].start.getTime();
+}
+
+/** True when something comes before the walk: the times of the step are then departures. */
+export function hasLeg(plan: DayPlan): boolean {
+  return leadMs(plan) > 0;
+}
+
+/** The time the Kedy step sets: the departure from home with a leg, else the walk start. */
+export function startTime(plan: DayPlan): Date {
+  return plan.segments[0].start;
+}
+
+/**
+ * The latest time to set, on the 5 minutes before: `plan.latestStart` is the latest departure (or the walk
+ * itself with no leg), which is exactly what the step's field speaks in.
+ */
+export function latestSetStart(plan: DayPlan): Date {
+  return floorTo5(plan.latestStart);
 }
 
 /**
@@ -263,10 +283,10 @@ export function sunMarks(plan: DayPlan): SunMark[] {
 // ---------------------------------------------------------------------------------------------------------
 // Option cards
 
-/** A start the cards can offer: a day and the walk start there. */
+/** A start the cards can offer: a day and the time to set there (the departure with a leg, else the walk start). */
 export interface KedyCandidate {
   date: string;
-  /** Walk start, HH:MM. */
+  /** The set time, HH:MM: departure from home with a leg, else the walk start. */
   start: string;
   /** The best dry day (the green "najlepšie" pill). */
   best?: boolean;
@@ -278,9 +298,12 @@ export interface KedyCard {
   /** Day + start, unique among the cards. */
   key: string;
   date: string;
-  /** Walk start, HH:MM, and the end of the walk and the way home, in the running-text form (8:00). */
+  /** The set time, HH:MM (the departure with a leg, else the walk start), and the same in the running-text form (7:05): the card's headline. */
   start: string;
   startText: string;
+  /** With a leg: the walk's own start (8:00), for the "túra 8:00–15:10" line; equals startText without one. */
+  walkText: string;
+  /** The end of the walk and the way home, in the running-text form (15:10). */
   endText: string;
   homeText: string | null;
   selected: boolean;
@@ -325,15 +348,19 @@ function parseShort(s: string): number {
 
 const keyOf = (date: string, start: string) => `${date}|${start}`;
 
-/** The walk window of a candidate: same walk length, same ride either side as the plan (an estimate for another day). */
-export function windowFor(plan: DayPlan, date: string, start: string): { start: Date; end: Date; home: Date | null } {
+/**
+ * The window of a candidate whose set time is `start` (the departure with a leg, else the walk start): same walk length, same ride
+ * either side as the plan (an estimate for another day). `start` of the result is the WALK start, `leave` the set time itself.
+ */
+export function windowFor(plan: DayPlan, date: string, start: string): { leave: Date; start: Date; end: Date; home: Date | null } {
   const [y, mo, d] = date.split("-").map(Number);
   const [h, mi] = start.split(":").map(Number);
-  const a = zonedDate(y, mo, d, h, mi);
+  const leave = zonedDate(y, mo, d, h, mi);
+  const a = new Date(leave.getTime() + leadMs(plan));
   const last = plan.segments[plan.segments.length - 1];
   const back = last.kind === "drive-back" ? last.end.getTime() - plan.hikeEnd.getTime() : null;
   const end = new Date(a.getTime() + (plan.hikeEnd.getTime() - plan.hikeStart.getTime()));
-  return { start: a, end, home: back === null ? null : new Date(end.getTime() + back) };
+  return { leave, start: a, end, home: back === null ? null : new Date(end.getTime() + back) };
 }
 
 /** Everything a card says about one candidate. */
@@ -365,7 +392,8 @@ export function describeCandidate(input: KedyCardInput, c: KedyCandidate, select
     key: keyOf(c.date, c.start),
     date: c.date,
     start: c.start,
-    startText: clockShort(w.start),
+    startText: clockShort(w.leave),
+    walkText: clockShort(w.start),
     endText: clockShort(w.end),
     homeText: w.home ? clockShort(w.home) : null,
     selected,
@@ -397,7 +425,7 @@ function clockDate(at: Date): string {
 export function kedyCards(input: KedyCardInput): KedyCard[] {
   const { plan, forecast, now } = input;
   const date = clockDate(plan.hikeStart);
-  const here: KedyCandidate = { date, start: clock(plan.hikeStart) };
+  const here: KedyCandidate = { date, start: clock(startTime(plan)) };
   const current = describeCandidate(input, here, true);
   const found: { c: KedyCandidate; suggested: boolean }[] = [];
 
@@ -413,12 +441,13 @@ export function kedyCards(input: KedyCardInput): KedyCard[] {
       betterTime(forecast.below, forecast.above, plan.hikeStart, plan.hikeEnd, { earliest, latest: new Date(plan.sunset.getTime() + 2 * HOUR) });
     if (sooner) {
       // To 5 minutes (a start of 10:13 is odd to ask for): later times round up, earlier ones down, so the walk stays on the dry side.
+      // The set time is rounded (the departure with a leg), the walk is the same shift later by the ride.
       const step = 5 * MIN;
-      const raw = plan.hikeStart.getTime() + sooner.shiftMin * MIN;
+      const raw = startTime(plan).getTime() + sooner.shiftMin * MIN;
       const snapped = sooner.shiftMin > 0 ? Math.ceil(raw / step) * step : Math.floor(raw / step) * step;
       const len = plan.hikeEnd.getTime() - plan.hikeStart.getTime();
-      const a = new Date(snapped);
-      const start = wetWalk(forecast.below, forecast.above, a, new Date(snapped + len)) ? raw : snapped;
+      const a = new Date(snapped + lead);
+      const start = wetWalk(forecast.below, forecast.above, a, new Date(a.getTime() + len)) ? raw : snapped;
       found.push({ c: { date, start: clock(new Date(start)) }, suggested: true });
     }
   }
@@ -483,6 +512,9 @@ export function isEarlier(hhmmA: string, hhmmB: string): boolean {
 // Folded header
 
 export interface SummaryParts {
+  /** The departure from home ("7:05"); null when there is no leg (the times are then the walk's own). */
+  leave: string | null;
+  /** The walk's start and end. */
   start: string;
   end: string;
   /** The way home's end ("doma 16:05"); null when unknown. */
@@ -492,7 +524,7 @@ export interface SummaryParts {
 /** "túra 8:00–15:10 · doma 16:05": the walk start and end and the clock time at home. */
 export function summaryParts(plan: DayPlan): SummaryParts {
   const last = plan.segments[plan.segments.length - 1];
-  return { start: clockShort(plan.hikeStart), end: clockShort(plan.hikeEnd), home: last.kind === "drive-back" ? clockShort(last.end) : null };
+  return { leave: hasLeg(plan) ? clockShort(plan.segments[0].start) : null, start: clockShort(plan.hikeStart), end: clockShort(plan.hikeEnd), home: last.kind === "drive-back" ? clockShort(last.end) : null };
 }
 
 /** A short word for the way: the labels over the bar's ends and the home word ("auto", "autobus", "vlak", "pešo"). */

@@ -193,7 +193,7 @@ interface HeaderProps {
   closures: Closure[];
   /** When the trip data was built: "2026-11-02". */
   updated: string | null;
-  /** Show only the closure line: car park and stop are the "Ako sa tam dostanete" step of the plan now (TripAnswers still has both). */
+  /** Show only the closure line: car park and stop are the "Ako pôjdete" step of the plan now (TripAnswers still has both). */
   only?: "closure";
 }
 

@@ -42,8 +42,8 @@ export function StopIcon({ mode, size = 16 }: { mode: TransitStop["mode"]; size?
 }
 
 /**
- * By train or bus: which stop near the trail to get off at, as the options of the "Ako sa tam
- * dostanete" step. The walk to the trail, the plan and the cp.sk searches follow the pick.
+ * By train or bus: which stop near the trail to get off at, as the options of the "Ako pôjdete" step.
+ * The walk to the trail, the plan and the cp.sk searches follow the pick.
  */
 export function StopOptions() {
   const { stops, stopChoice, chooseStop, transit, trailStart } = useTripAccess();
@@ -57,7 +57,6 @@ export function StopOptions() {
   return (
     <div className="flex flex-col gap-2">
       {options.length === 0 && <p className="text-sm">{t("Pri trase sme nenašli zastávku vlaku ani autobusu.")}</p>}
-      {options.length > 1 && <p className="text-[13px] leading-snug text-[var(--muted)]">{t("Vyberte, kde vystúpite. Cesta pešo aj plán sa prepočítajú.")}</p>}
       {options.length > 0 && (
         <ul className="flex flex-col gap-1.5" role="radiogroup" aria-label={t("Zastávka")}>
           {options.map((s, i) => {
@@ -258,7 +257,7 @@ export function TransitLegs({ plan, rail }: { plan: DayPlan; rail: RailTrip }) {
         <div className="flex flex-col gap-1.5">
           <p className="flex items-center gap-2 text-base font-bold">
             <StopIcon mode={stop.mode} /> {t(stop.mode === "vlak" ? "Vlakom" : "Autobusom")}
-            {rideMin !== null && <span className="font-data text-lg leading-none">~{formatDuration(rideMin)}</span>}
+            {rideMin !== null && rail.status !== "loading" && <span className="font-data text-lg leading-none">~{formatDuration(rideMin)}</span>}
           </p>
           <p>
             {homeStop ? (

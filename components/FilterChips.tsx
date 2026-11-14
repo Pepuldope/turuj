@@ -185,9 +185,24 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
  * The one "slower" question (Peter, 2026-10-27, A12): it adds time on the trail and keeps the home list
  * to kid-friendly trips. The list says so (`forList`); a trip page only changes the time.
  */
-export function KidsRow({ forList = false }: { forList?: boolean }) {
+export function KidsRow({ forList = false, boxed = false }: { forList?: boolean; /** Its own box, styled like the plan's "Vyrážate z" row (Peter, 2026-11-13): for the route step. */ boxed?: boolean }) {
   const { withKids, update } = useTripSettings();
   const t = useT();
+  const sw = <Switch on={withKids} label={t("Idete s deťmi")} onChange={(on) => update({ withKids: on, easier: on })} />;
+  if (boxed) {
+    return (
+      <div className="flex min-h-[60px] items-center gap-3 rounded-xl bg-[var(--segment-bg)] py-2 pr-3 pl-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-[var(--accent-soft)] text-[var(--accent)]">
+          <UiIcon name="kid" size={20} />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="text-base leading-snug font-bold">{t("Idete s deťmi?")}</span>
+          <span className="text-[12.5px] leading-snug text-[var(--muted)]">{t("Prispôsobíme čas trasy.")}</span>
+        </span>
+        {sw}
+      </div>
+    );
+  }
   return (
     <div className="flex items-center gap-2.5">
       <span className="inline-flex text-[var(--accent)]">
@@ -197,7 +212,7 @@ export function KidsRow({ forList = false }: { forList?: boolean }) {
         <span className="text-[14.5px] font-bold">{t("Idete s deťmi?")}</span>
         <span className="text-[12.5px] text-[var(--muted)]">{forList ? t("Viac času na trase a len trasy vhodné pre deti.") : t("Prispôsobíme čas trasy.")}</span>
       </span>
-      <Switch on={withKids} label={t("Idete s deťmi")} onChange={(on) => update({ withKids: on, easier: on })} />
+      {sw}
     </div>
   );
 }

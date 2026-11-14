@@ -29,13 +29,23 @@ function walkLabel(p: ParkingLot, lang: Lang): string {
   return min > 0 ? tr(lang, "{m} pešo k začiatku (~{t})", { m: formatWalk(p.walk_m, lang), t: formatDuration(min) }) : tr(lang, "pri začiatku trasy");
 }
 
+/**
+ * A parking's name as a parking: OSM names such as "Srdiečko" read as a comment, so unless the name
+ * already says parking it gets the word in front ("Parkovisko Srdiečko"; lower case inside a summary line).
+ */
+export function parkingTitle(name: string, t: (s: string) => string, lower = false): string {
+  if (/parkovi|parking|p\s*\+\s*r|garáž|garaz/i.test(name)) return t(name);
+  const word = t("Parkovisko");
+  return `${lower ? word.toLowerCase() : word} ${name}`;
+}
+
 export function summaryWalk(p: ParkingLot, lang: Lang): string {
   if (p.join) return p.join.walk_m < 150 ? tr(lang, "pri trase") : tr(lang, "{m} k trase", { m: formatWalk(p.join.walk_m, lang) });
   return p.walk_m < 150 ? tr(lang, "pri štarte") : formatWalk(p.walk_m, lang);
 }
 
 /**
- * Where to leave the car, as the options of the "Ako sa tam dostanete" step. With several parking
+ * Where to leave the car, as the options of the "Ako pôjdete" step. With several parking
  * spots near the start the visitor picks one; the drive, the walk to the trail and the plan follow.
  */
 export function ParkingOptions() {
@@ -55,7 +65,6 @@ export function ParkingOptions() {
           {stops.length > 0 && ` ${t("Skúste aj vlak alebo autobus.")}`}
         </p>
       )}
-      {options.length > 1 && <p className="text-[13px] leading-snug text-[var(--muted)]">{t("Vyberte, kde zaparkujete. Cesta autom aj pešo sa prepočíta.")}</p>}
       {options.length > 0 && (
         <ul className="flex flex-col gap-1.5" role="radiogroup" aria-label={t("Parkovisko")}>
           {options.map((p, i) => {
@@ -82,7 +91,7 @@ export function ParkingOptions() {
                     P
                   </span>
                   <span className="flex flex-col leading-snug">
-                    <span className="font-semibold">{t(p.name)}</span>
+                    <span className="font-semibold">{parkingTitle(p.name, t)}</span>
                     <span className="text-[13px] text-[var(--muted)]">
                       {walkLabel(p, lang)}
                       {fee ? `, ${fee}` : ""}

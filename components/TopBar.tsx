@@ -58,8 +58,35 @@ export function TopBar() {
   // Phone: hide on the way down, show on the way up and near the top.
   useEffect(() => {
     let last = window.scrollY;
+    // Only scrolling the person did hides or shows the bar. A page that reflows under a click (a switch
+    // that changes walk times, a step that opens) moves scrollY too, and that must not read as a scroll
+    // direction (Peter, 2026-11-14). Wheel, finger drag, keys and the scrollbar count as input; the window
+    // after it covers the momentum glide.
+    let lastInput = -Infinity;
+    const input = () => void (lastInput = performance.now());
+    // A tap is not scrolling: touchend and the mouse only count after a drag / on the scrollbar.
+    let dragged = false;
+    const onTouchMove = () => {
+      dragged = true;
+      input();
+    };
+    const onTouchEnd = () => {
+      if (dragged) input();
+      dragged = false;
+    };
+    const onMouse = (e: MouseEvent) => {
+      if (e.target === document.documentElement) input();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if ([" ", "PageUp", "PageDown", "Home", "End", "ArrowUp", "ArrowDown"].includes(e.key)) input();
+    };
     const onScroll = () => {
       const y = window.scrollY;
+      if (y > 8 && performance.now() - lastInput > 1200) {
+        last = y;
+        if (shownRef.current) setSolid(true);
+        return;
+      }
       // Scrolling down from the top, the bar goes straight away: it never turns into the white bar
       // first only to slide off a moment later (Peter, 2026-11-03). It only turns white while shown,
       // and keeps its look while sliding away.
@@ -74,7 +101,21 @@ export function TopBar() {
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("wheel", input, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("mousedown", onMouse);
+    window.addEventListener("mouseup", onMouse);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("wheel", input);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("mousedown", onMouse);
+      window.removeEventListener("mouseup", onMouse);
+    };
   }, []);
   const visible = shown || panel !== null;
   // Coming back into view, the bar's row pops a little as it slides in (not on the first paint).

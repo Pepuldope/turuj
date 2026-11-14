@@ -29,6 +29,7 @@ export function PhoneTripMap({
   focus,
   placeKey,
   compact = false,
+  joined = false,
 }: {
   detail: TrailDetail;
   gpxUrl: string | null;
@@ -43,6 +44,8 @@ export function PhoneTripMap({
   placeKey?: string;
   /** A short map filling its parent (a plan step's), instead of the tall stand-alone one. */
   compact?: boolean;
+  /** The map is the top of a joined block (the day map over the sun dial): no border or rounding of its own. */
+  joined?: boolean;
 }) {
   const [full, setFull] = useState(false);
   const t = useT();
@@ -67,7 +70,7 @@ export function PhoneTripMap({
       className={
         full
           ? "fixed inset-0 z-50 bg-[var(--background)] pt-[env(safe-area-inset-top)]"
-          : `relative ${compact ? "h-full" : "h-[45vh]"} overflow-hidden rounded-xl border border-[var(--border)]`
+          : `relative ${compact ? "h-full" : "h-[45vh]"} overflow-hidden ${joined ? "" : "rounded-xl border border-[var(--border)]"}`
       }
     >
       <TripMap detail={detail} gpxUrl={gpxUrl} path={path} others={others} loop={loop} marks={marks} colour={colour} focus={focus} placeKey={placeKey} />
