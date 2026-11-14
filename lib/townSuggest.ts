@@ -2,6 +2,8 @@
 // site already ships (data/towns.json), matched by prefix, ignoring case and accents. (Nominatim
 // forbids search-as-you-type, so anything beyond these towns still waits for Enter.)
 
+import { fuzzyScore } from "@/lib/fuzzy";
+
 export interface SuggestTown {
   id: string;
   name: string;
@@ -32,5 +34,18 @@ export function suggestTowns<T extends SuggestTown>(query: string, towns: readon
     if (rank >= 0) scored.push({ town, rank, key });
   }
   scored.sort((a, b) => a.rank - b.rank || a.key.length - b.key.length || a.key.localeCompare(b.key, "sk"));
-  return scored.slice(0, max).map((s) => s.town);
+  const out = scored.slice(0, max).map((s) => s.town);
+  if (out.length >= max) return out;
+  // Too few: forgive a typo ("tranva" finds Trnava), after the exact ones, fewest slips first.
+  const exact = new Set(scored.map((s) => s.town));
+  const words = q.split(" ");
+  const fuzzy: { town: T; d: number; key: string }[] = [];
+  for (const town of towns) {
+    if (exact.has(town)) continue;
+    const key = foldName(town.name);
+    const d = fuzzyScore(words, key);
+    if (d !== null) fuzzy.push({ town, d, key });
+  }
+  fuzzy.sort((a, b) => a.d - b.d || a.key.length - b.key.length || a.key.localeCompare(b.key, "sk"));
+  return [...out, ...fuzzy.slice(0, max - out.length).map((f) => f.town)];
 }
