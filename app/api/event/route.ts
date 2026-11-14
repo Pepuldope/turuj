@@ -1,3 +1,4 @@
+import { refuseOnPreview } from "@/lib/previewGuard";
 import { countedDetail, countEvent } from "@/lib/eventCounts";
 import { fromOtherSite, overCallLimit } from "@/lib/routeGuard";
 import { isBot, localDay } from "@/lib/visitDays";
@@ -10,6 +11,8 @@ import { isBot, localDay } from "@/lib/visitDays";
 const MAX_BODY = 200;
 
 export async function POST(request: Request): Promise<Response> {
+  const preview = refuseOnPreview(request);
+  if (preview) return preview;
   const userAgent = request.headers.get("user-agent") ?? "";
   if (isBot(userAgent) || fromOtherSite(request)) return new Response(null, { status: 204 });
   // Each count is a database write: one address gets only so many a minute.

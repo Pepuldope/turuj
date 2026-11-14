@@ -105,9 +105,16 @@ export async function driveMatrix(key: string, from: Pt, to: Pt[]): Promise<(num
   return row.map((s) => (typeof s === "number" && Number.isFinite(s) ? Math.round(s / 60) : null));
 }
 
+/**
+ * The public OSRM servers ask for low volume and a User-Agent that says who is asking. Ours is a
+ * generic one: the site and the repo, never anything about the visitor (the places asked about are
+ * public parkings and trailheads).
+ */
+const OSRM_HEADERS = { "User-Agent": "turuj.sk route fallback (https://github.com/Pepuldope/turuj)" };
+
 export async function viaOsrm(base: string, from: Pt, to: Pt): Promise<DriveRoute> {
   const url = `${base}/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson`;
-  const res = await fetch(url, { next: { revalidate: DAY_S }, signal: AbortSignal.timeout(ROUTER_TIMEOUT_MS) } as RequestInit);
+  const res = await fetch(url, { headers: OSRM_HEADERS, next: { revalidate: DAY_S }, signal: AbortSignal.timeout(ROUTER_TIMEOUT_MS) } as RequestInit);
   if (!res.ok) throw new Error(`OSRM ${res.status}`);
   const data = await res.json();
   const r = data.routes?.[0];
@@ -140,12 +147,16 @@ export async function driveRoute(key: string | undefined, from: Pt, to: Pt, snap
  */
 export async function walkRoute(key: string | undefined, from: Pt, to: Pt, snapM: number): Promise<DriveRoute> {
   if (!key) return viaOsrm(FOSSGIS_FOOT, from, to);
+  // Same idea as driveRoute: when openrouteservice is busy, over budget or down, the public
+  // FOSSGIS foot server still draws the walk (no SLA, so only as a fallback; if it fails too,
+  // the router's own error stands).
+  const fallback = (err: unknown) => viaOsrm(FOSSGIS_FOOT, from, to).catch(() => Promise.reject(err));
   try {
     return await viaOrs(key, "foot-hiking", from, to, [snapM, snapM]);
   } catch (err) {
-    if (err instanceof RateLimited) throw err;
+    if (err instanceof RateLimited) return fallback(err);
     console.warn("walk: foot-hiking failed, trying foot-walking", err);
-    return viaOrs(key, "foot-walking", from, to, [snapM, snapM]);
+    return viaOrs(key, "foot-walking", from, to, [snapM, snapM]).catch(fallback);
   }
 }
 

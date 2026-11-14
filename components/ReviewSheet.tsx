@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { Fit, Timing } from "@/lib/reviewLimits";
 import "@/lib/legacyStorage";
 import { LangLink, useT } from "@/lib/i18n";
+import { PREVIEW_MESSAGE } from "@/lib/previewGuard";
 
 const REVIEWER_KEY = "turuj-reviewer";
 
@@ -47,7 +48,7 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
   const [fit, setFit] = useState<Fit | null>(null);
   const [crowded, setCrowded] = useState<boolean | null>(null);
   const [timing, setTiming] = useState<Timing | null>(null);
-  const [state, setState] = useState<"idle" | "sending" | "error">("idle");
+  const [state, setState] = useState<"idle" | "sending" | "error" | "preview">("idle");
   const tx = useT();
 
   async function send() {
@@ -58,6 +59,7 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug, reviewer: reviewerId(), stars, fit, crowded, timing }),
       });
+      if (r.status === 403 && (await r.json().catch(() => null))?.error === "preview") return setState("preview");
       if (!r.ok) throw new Error(String(r.status));
       onDone(true);
     } catch {
@@ -128,6 +130,7 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
             {tx("Nahlásiť chybu")}
           </LangLink>
         </p>
+        {state === "preview" && <p className="text-sm text-[var(--muted)]">{tx(PREVIEW_MESSAGE)}</p>}
         {state === "error" && <p className="flex items-start gap-1.5 text-sm text-[var(--danger)]"><UiIcon name="warn" size={15} className="mt-0.5" /><span>{tx("Nepodarilo sa odoslať. Skúste to o chvíľu.")}</span></p>}
         <div className="flex justify-between gap-2">
           <button type="button" onClick={() => onDone(false)} className="rounded-full border border-[var(--border)] px-4 py-2.5 text-sm font-semibold">

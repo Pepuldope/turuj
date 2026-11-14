@@ -26,13 +26,17 @@ import fast from "./.open-next/fast-pages.mjs";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: written by opennextjs-cloudflare build
 import { runWithCloudflareRequestContext } from "./.open-next/cloudflare/init.js";
+import { GET as whoAmI } from "./app/api/auth/me/route";
 import { GET as reviewTotals } from "./app/api/review/route";
 import { GET as tripList } from "./app/api/vylety/route";
 import { weatherKey } from "./lib/apiKeys";
+import { sessionToken } from "./lib/auth";
 import { cleanup } from "./lib/cleanup";
 import type { D1Like } from "./lib/d1";
 import { edgeHit, edgeKey } from "./lib/edgeCache";
 import { pick } from "./lib/pageEntry";
+import { pulledResponse } from "./lib/pulledTrips";
+import pulledTrips from "./data/pulled-trips.json";
 import { sendDue } from "./lib/pushPlan";
 import { fromOtherSite } from "./lib/routeGuard";
 
@@ -124,6 +128,9 @@ async function fastPage(req: Request, env: Env): Promise<Response | null> {
 const DATA_ROUTES: Record<string, (req: Request) => Promise<Response>> = {
   "/api/review": reviewTotals,
   "/api/vylety": tripList,
+  // Every page asks who is signed in (T1, 2026-11-08: it answered 503 under load). Without a session
+  // cookie the answer is "nobody" and costs no database call, and no Next.js start (see fetch below).
+  "/api/auth/me": whoAmI,
 };
 
 /** Every trip page asks for the weather; a kept answer goes back without Next.js, a miss goes to the route. */
@@ -140,6 +147,10 @@ async function keptAnswer(req: Request): Promise<Response | null> {
 
 const worker = {
   async fetch(req: Request, env: Env, ctx: Ctx): Promise<Response> {
+    // First of all: a trip listed in data/pulled-trips.json gets the "taken down" notice, even
+    // though its page is built ahead (lib/pulledTrips.ts).
+    const pulled = pulledResponse(req, pulledTrips);
+    if (pulled) return pulled;
     try {
       const page = (await fastPage(req, env)) ?? (await keptAnswer(req));
       if (page) return page;
@@ -148,7 +159,10 @@ const worker = {
       console.warn("[fast] fell back to Next.js:", err);
     }
     const route = req.method === "GET" ? DATA_ROUTES[new URL(req.url).pathname] : undefined;
-    if (route) return runWithCloudflareRequestContext(req, env, ctx, () => route(req));
+    if (route) {
+      if (new URL(req.url).pathname === "/api/auth/me" && !sessionToken(req)) return route(req);
+      return runWithCloudflareRequestContext(req, env, ctx, () => route(req));
+    }
     const res: Response = await openNext.fetch(req, env, ctx);
     if (!isEnglish(new URL(req.url).pathname) || !res.headers.get("Content-Type")?.startsWith("text/html")) return res;
     return new HTMLRewriter().on("html", { element: (el) => el.setAttribute("lang", "en") }).transform(res);

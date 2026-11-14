@@ -1,3 +1,4 @@
+import { refuseOnPreview } from "@/lib/previewGuard";
 import { parseFeedback, saveFeedback } from "@/lib/feedback";
 import { OTHER_SITE, TOO_MANY, fromOtherSite, overCallLimit } from "@/lib/routeGuard";
 import { isBot } from "@/lib/visitDays";
@@ -8,6 +9,8 @@ import { isBot } from "@/lib/visitDays";
 const MAX_BODY = 4000;
 
 export async function POST(request: Request): Promise<Response> {
+  const preview = refuseOnPreview(request);
+  if (preview) return preview;
   if (isBot(request.headers.get("user-agent") ?? "") || fromOtherSite(request)) return OTHER_SITE();
   if (await overCallLimit(request, "feedback")) return TOO_MANY();
   let message = null;

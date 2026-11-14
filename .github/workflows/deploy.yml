@@ -22,7 +22,26 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The deploy guard (C132): type check and tests first, the same commands as ci.yml's "check"
+  # job (lint and the build are left out: the build happens in "deploy" anyway, and lint is not a
+  # safety check). A failure stops the deploy, so a broken main never goes live. Data-workflow
+  # runs get the same check; the timeout keeps a hung install from holding the one deploy slot.
+  test:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
   deploy:
+    needs: test
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     env:

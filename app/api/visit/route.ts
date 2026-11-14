@@ -1,3 +1,4 @@
+import { refuseOnPreview } from "@/lib/previewGuard";
 import { fromOtherSite, overCallLimit } from "@/lib/routeGuard";
 import { clientIp, isBot, localDay, visitorHash } from "@/lib/visitDays";
 import { monthSalt, recordVisitDay } from "@/lib/visitStore";
@@ -18,6 +19,8 @@ import { monthSalt, recordVisitDay } from "@/lib/visitStore";
 const MAX_UA = 512;
 
 export async function POST(request: Request): Promise<Response> {
+  const preview = refuseOnPreview(request);
+  if (preview) return preview;
   const ip = clientIp(request.headers);
   const userAgent = request.headers.get("user-agent") ?? "";
   if (!ip || isBot(userAgent) || userAgent.length > MAX_UA || fromOtherSite(request) || (await overCallLimit(request, "visit"))) {

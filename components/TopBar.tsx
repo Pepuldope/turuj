@@ -6,6 +6,7 @@ import type { FormEvent } from "react";
 import { deleteMyAccount, googleHref, signOut, signedIn, useAccount } from "@/lib/account";
 import type { MyAccount } from "@/lib/account";
 import { LangLink, useLang, useT } from "@/lib/i18n";
+import { PREVIEW_MESSAGE } from "@/lib/previewGuard";
 import { langOfPath, langPath, skPath } from "@/lib/lang";
 import { useSavedTrips } from "@/lib/savedTrips";
 import { UiIcon } from "@/components/UiIcon";
@@ -110,7 +111,7 @@ export function TopBar() {
     history.replaceState(history.state, "", u.pathname + u.search + u.hash);
     if (why === "zrusene") return;
     const id = setTimeout(() => {
-      setNotice(why === "off" ? "Prihlásenie cez Google ešte nie je zapnuté. Skúste email." : "Prihlásenie cez Google sa nepodarilo. Skúste znova alebo cez email.");
+      setNotice(why === "preview" ? PREVIEW_MESSAGE : why === "off" ? "Prihlásenie cez Google ešte nie je zapnuté. Skúste email." : "Prihlásenie cez Google sa nepodarilo. Skúste znova alebo cez email.");
       setNoticeCode(why.startsWith("chyba-") ? why.slice(6).replace(/[^a-z0-9-]/g, "").slice(0, 40) : null);
       setOpened({ kind: "account", path: location.pathname });
     });
@@ -277,6 +278,7 @@ const ERRORS: Record<string, string> = {
   wrong: "Kód nesedí. Skúste ho prepísať ešte raz.",
   expired: "Tento kód už neplatí. Pošlite si nový.",
   off: "Prihlásenie teraz nefunguje. Skúste to neskôr.",
+  preview: PREVIEW_MESSAGE,
   mail: "Email sa nepodarilo poslať. Skúste to neskôr.",
   pw: "Heslo musí mať aspoň 8 znakov.",
   wrongpw: "Email alebo heslo nesedí.",

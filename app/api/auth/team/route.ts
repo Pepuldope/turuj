@@ -1,9 +1,12 @@
+import { refuseOnPreview } from "@/lib/previewGuard";
 import { currentAccount, setTeam } from "@/lib/auth";
 import { OTHER_SITE, fromOtherSite } from "@/lib/routeGuard";
 
 // "Toto je tímový účet" on /statistiky: marks the signed-in account only, never another one.
 
 export async function POST(request: Request): Promise<Response> {
+  const preview = refuseOnPreview(request);
+  if (preview) return preview;
   if (fromOtherSite(request)) return OTHER_SITE();
   const headers = { "Cache-Control": "no-store" };
   try {

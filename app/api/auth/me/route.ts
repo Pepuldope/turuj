@@ -1,9 +1,11 @@
-import { currentAccount } from "@/lib/auth";
+import { currentAccount, sessionToken } from "@/lib/auth";
 
 // Who is signed in on this browser (never cached: the answer is per person).
 
 export async function GET(request: Request): Promise<Response> {
   const headers = { "Cache-Control": "private, no-store" };
+  // Fast path: no session cookie, nobody to look up (no database call).
+  if (!sessionToken(request)) return Response.json({ account: null }, { headers });
   try {
     const a = await currentAccount(request);
     return Response.json({ account: a ? { email: a.email, name: a.name, team: a.team === true } : null }, { headers });

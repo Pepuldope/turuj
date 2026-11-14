@@ -58,3 +58,31 @@ Local runtime secrets go in `.dev.vars` (git-ignored), e.g. `ORS_API_KEY=...`.
 - KV's free plan writes 1,000 entries a day. A deploy starts the cache fresh; past the limit, those
   pages are drawn per visit again until the next day.
 - `@opennextjs/cloudflare` requires Next.js ≥ 16.3.8, so `next` is pinned there.
+
+## Pulling a trip (safety switch)
+
+If a trip must come down at once (a closure or a wrong route found), no data run is needed:
+
+1. Edit `data/pulled-trips.json` and add the trip's address name, e.g. `["vrsatec-od-auta"]`
+   (the part after `/trasa/`; every variant is its own name, so list each one to pull them all;
+   nothing is matched by prefix). Empty list `[]` = nothing pulled.
+2. Push to `main` (a pull request merged is enough). The Deploy workflow publishes it, **live in
+   about 12 minutes**.
+3. From then on `/trasa/<name>`, its `/okruh` and `/cesty` pages and the `/en/...` copies answer
+   "Tento výlet je dočasne stiahnutý" with HTTP 503, `Retry-After`, `noindex`, and links to the
+   home page and `/upozornenie` (`worker.ts` checks the list first, `lib/pulledTrips.ts`).
+   503 and not 410: "gone" would make search engines forget the page for good.
+4. The trip stays in the home and town lists, search and the sitemap until the next data run
+   drops it there; to put it back, remove it from the file the same way.
+
+## Safety nets
+
+- **Deploy guard:** `deploy.yml` runs `npm run typecheck` and `npm test` in a `test` job first;
+  `deploy` needs it, so a failing check stops the deploy (pushes, data-workflow runs and manual runs alike).
+- **Previews refuse writes:** every API route that writes (reviews, feedback, sign-in and sign-up,
+  push, visit and event counts) answers 403 `{"error":"preview"}` on a host that is not in
+  `COUNTED_HOSTS` (`lib/site.ts`; `lib/previewGuard.ts`). Previews share the live database.
+  Router-budget counting (`lib/orsBudget.ts`) still runs there: it counts real router calls.
+- **Automatic checks** (a failed run e-mails the repo owner): `site-up.yml` every 30 minutes;
+  `weekly-red-flags.yml` (train timetable under 3 weeks left, live build is not `main`);
+  `tanap-check.yml` (opens an issue; its fetcher is still a TODO). None of them blocks the data runs.

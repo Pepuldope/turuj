@@ -17,6 +17,7 @@ export const EN: Record<string, string> = {
   "Parkovisko alebo zastávka nesedí": "The car park or stop is wrong",
   "Zlá fotka": "Wrong photo",
   "Niečo na stránke nefunguje": "Something on the site doesn't work",
+  "Na náhľade sa neukladá.": "Nothing is saved on a preview.",
   "Ďakujeme, máme to.": "Thanks, we've got it.",
   "Odpovieme vám na {email}.": "We'll reply to {email}.",
   "Prečítame si to čo najskôr.": "We'll read it as soon as we can.",

@@ -1,0 +1,41 @@
+name: TANAP closures check
+
+# Mondays: compares our TANAP closures (data/closure-rules.json) with TANAP's official list and
+# opens (or updates) one GitHub issue when they differ. Never fails the weekly data runs: it is
+# a separate workflow they don't wait for, and a difference is an issue, not a failed job.
+# STATUS: the official source is not wired up yet (TODO in scripts/check-tanap-closures.ts), so
+# for now it only says "nothing compared" and opens no issue.
+
+on:
+  schedule:
+    - cron: "47 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Compare
+        run: npx vite-node --config vitest.config.ts scripts/check-tanap-closures.ts "$RUNNER_TEMP/tanap-report.md"
+      - name: Open or update the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          report="$RUNNER_TEMP/tanap-report.md"
+          [ -s "$report" ] || { echo "Nothing to report."; exit 0; }
+          title="TANAP closures differ from the official list"
+          n="$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "$n" ]; then gh issue comment "$n" --body-file "$report"; else gh issue create --title "$title" --body-file "$report"; fi
