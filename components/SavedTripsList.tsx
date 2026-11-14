@@ -224,7 +224,7 @@ function SavedWeatherLines({ plan, below, above, copyAt, missing }: { plan: DayP
         <span className="font-medium">
           {worst}, {temp.replaceAll("-", "−")}&nbsp;°C
         </span>
-        {report.topMin !== null && <span className="opacity-70">, {t("na vrchole až {t} °C", { t: String(report.topMin).replace("-", "−") })}</span>}
+        {report.topMin !== null && <span className="opacity-70">, {t("na vrchole až {t} °C", { t: String(report.topMin).replace("-", "−") }).replace(" °C", "\u00a0°C")}</span>}
       </p>
       {report.wet && !stormy && <p className="text-[13px] font-semibold text-[var(--warn)]">{wetText(report.wet, lang)}</p>}
       {notes.map((n) => (
