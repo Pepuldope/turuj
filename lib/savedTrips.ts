@@ -8,6 +8,7 @@ import type { FixedRide } from "@/lib/dayPlan";
 import type { Travel } from "@/lib/tripSettings";
 import type { WalkTrip } from "@/lib/onTrail";
 import type { BBox } from "@/lib/types";
+import type { WeatherForecast } from "@/lib/weather";
 import "@/lib/legacyStorage";
 
 /**
@@ -50,8 +51,22 @@ export interface SavedTrip {
   closures?: Closure[];
   /** The evening-before reminder (push): true on, false switched off by the group, missing until first offered. */
   eve?: boolean;
+  /** The forecast for the trip day, kept so the saved trip shows it offline; refreshed whenever the list loads a newer one. Missing on trips saved before it existed. */
+  weather?: SavedWeather;
   /** Offline copy state: the page, GPX and map tiles. */
   offline: "ok" | "failed" | "pending";
+}
+
+/** A saved trip's weather: where to ask for it and the last copy of the trip day's forecast. */
+export interface SavedWeather {
+  /** /api/weather at the trail start and up at the goal (null without a goal height). */
+  url: string;
+  topUrl: string | null;
+  /** The trip day's steps (forecastForDay); null while the day was past the forecast's range. */
+  below: WeatherForecast | null;
+  above: WeatherForecast | null;
+  /** When this copy was loaded (ISO); null while there is no copy. */
+  at: string | null;
 }
 
 /** What the trail screen needs to place a GPS fix on the walk, kept with the saved trip so it works offline. */

@@ -13,7 +13,8 @@ type Goal = (LatLng & { ele: number | null; name: string }) | null;
 
 const DAY = 86400000;
 
-function url(p: LatLng, alt?: number | null): string {
+/** The /api/weather address for a place (and its height), the same one the trip page and the saved trip use. */
+export function weatherUrl(p: LatLng, alt?: number | null): string {
   return `/api/weather?lat=${p.lat.toFixed(4)}&lon=${p.lon.toFixed(4)}${alt ? `&alt=${Math.round(alt)}` : ""}`;
 }
 
@@ -25,6 +26,8 @@ export interface TripWeather {
   loading: boolean;
   /** The trail start's forecast whatever day is picked: the day strip marks the bad days in it even when a day past the forecast is picked. */
   strip: WeatherForecast | null;
+  /** The forecast addresses (start, goal), kept with a saved trip so its page can load a fresh forecast. */
+  urls: { below: string; above: string | null } | null;
 }
 
 /** The forecast for the day of the walk, at the start and up at the goal; nothing beyond the forecast range. */
@@ -32,9 +35,17 @@ export function useTripWeather(plan: DayPlan | null, start: LatLng | null, goal:
   const [now] = useState(() => Date.now());
   const inRange = !!plan && !!start && plan.hikeStart.getTime() - now < FORECAST_DAYS * DAY && plan.hikeEnd.getTime() > now;
   // One request either way: the same URL is shared and cached.
-  const below = useCachedJson<WeatherForecast>(start ? url(start, startEle) : null);
-  const above = useCachedJson<WeatherForecast>(inRange && goal?.ele ? url(goal, goal.ele) : null);
-  return { below: inRange ? below.data : null, above: above.data, loading: inRange && below.status === "loading", strip: below.data };
+  const belowUrl = start ? weatherUrl(start, startEle) : null;
+  const aboveUrl = goal?.ele ? weatherUrl(goal, goal.ele) : null;
+  const below = useCachedJson<WeatherForecast>(belowUrl);
+  const above = useCachedJson<WeatherForecast>(inRange ? aboveUrl : null);
+  return {
+    below: inRange ? below.data : null,
+    above: above.data,
+    loading: inRange && below.status === "loading",
+    strip: below.data,
+    urls: belowUrl ? { below: belowUrl, above: aboveUrl } : null,
+  };
 }
 
 /** "Môže pršať 8:00–10:00 (mierne, do 0,8 mm/h). Vezmite si nepremokavú bundu." Also the warnings recap's line. The span never breaks at its dash (word joiners). */

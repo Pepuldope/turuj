@@ -21,6 +21,8 @@ import { ClosureGuard } from "@/components/ClosureGuard";
 import { HeardFrom } from "@/components/HeardFrom";
 import { EveReminder } from "@/components/EveReminder";
 import type { ShareInfo } from "@/components/ShareButton";
+import type { TripWeather } from "@/components/WeatherBlock";
+import { forecastForDay } from "@/lib/weather";
 
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { langPath } from "@/lib/lang";
@@ -41,6 +43,8 @@ interface Props extends ShareInfo {
   nav?: ReactNode;
   /** The GPX download, the last action of the card. */
   gpx?: ReactNode;
+  /** The trip page's forecast: the trip day's part is kept with the saved trip, so its card shows the weather offline. */
+  weather?: TripWeather | null;
 }
 
 type Status = "idle" | "saving" | "error";
@@ -93,7 +97,7 @@ const secondary =
  * device and stores it for offline use. Right after saving, one tap offers to
  * send the plan to the group.
  */
-export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], where = null, nav = null, gpx = null, ...trip }: Props) {
+export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], where = null, nav = null, gpx = null, weather = null, ...trip }: Props) {
   const { slug, name } = trip;
   const { trips, save, patch, remove } = useSavedTrips();
   const { start } = useUserLocation();
@@ -142,6 +146,15 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
       trail,
       closures,
       eve: saved?.eve,
+      weather: weather?.urls
+        ? {
+            url: weather.urls.below,
+            topUrl: weather.urls.above,
+            below: weather.below ? forecastForDay(weather.below, date) : null,
+            above: weather.below && weather.above ? forecastForDay(weather.above, date) : null,
+            at: weather.below ? new Date().toISOString() : null,
+          }
+        : saved?.weather,
       savedAt: new Date().toISOString(),
       offline: "pending",
     });
