@@ -107,6 +107,8 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
   const [asked, setAsked] = useState<{ focus: MapFit; n: number } | null>(null);
   useEffect(() => (focusProp ? undefined : onMapFit((focus) => setAsked((a) => ({ focus, n: (a?.n ?? 0) + 1 })))), [focusProp]);
   const focus = focusProp ?? asked?.focus ?? null;
+  // Parking and stops show on the access (step 3), day and big maps, not on the route and stops step maps.
+  const showAccess = focusProp !== "routes" && focusProp !== "places";
   // Places the group added as stops: their pins stand out and the popup offers to remove them.
   const { stops: addedStops, toggle: toggleStop } = useTripStops(trail.slug);
   const homeStop = useHomeStop(transit ? start : null);
@@ -364,8 +366,9 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
         title: th.name,
         lines: [t("Začiatok trasy"), ...(marks ? [t("Na začiatku {mark}", { mark: marks.start ? t(MARKING_LABEL[marks.start]) : t("bez značky") })] : [])],
       })),
-      // By car only parking, by train or bus only the stops: never both.
-      ...(transit
+      // By car only parking, by train or bus only the stops: never both. Not on the step 1 and 2 maps: there they are
+      // noise, they belong to step 3 (Peter, 2026-11-14).
+      ...(transit || !showAccess
         ? []
         : parkingLots.map((p, i) => ({
             id: `pk-${p.id}`,
@@ -382,7 +385,7 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
             // Tapping another parking picks it (the plan and both routes follow).
             onClick: i === choice ? undefined : () => (choose(i), focusOnMap({ location: p.location, scope: "access", context: p.join?.location ?? trailStart ?? undefined })),
           }))),
-      ...(transit
+      ...(transit && showAccess
         ? stops.map((s, i) => ({
             id: `ts-${s.id}`,
             kind: `transit-${s.mode}` as const,
@@ -442,7 +445,7 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
           ]
         : []),
     ],
-    [marks, signs, walked, skip, sideMarks, sideKey, sideLegs, sideStops, trailheads, parkingLots, choice, choose, trailStart, stops, stopChoice, chooseStop, homeStop, pois, transit, goal, goalKind, trail.goal_name, trail.name, addedStops, toggleStop, loop, t, lang]
+    [showAccess, marks, signs, walked, skip, sideMarks, sideKey, sideLegs, sideStops, trailheads, parkingLots, choice, choose, trailStart, stops, stopChoice, chooseStop, homeStop, pois, transit, goal, goalKind, trail.goal_name, trail.name, addedStops, toggleStop, loop, t, lang]
   );
 
   // Where the ride ends: the chosen parking or stop (the start itself when walking from it).
