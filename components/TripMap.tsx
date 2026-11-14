@@ -82,9 +82,6 @@ const SAME_PLACE_M = 60;
 const WAY_WORDS = { tam: "cestou tam", spat: "cestou späť", oboje: "cestou tam aj späť" } as const;
 
 const pair = (p: LatLng): [number, number] => [p.lat, p.lon];
-const pair2 = ([lat, lon]: [number, number]): LatLng => ({ lat, lon });
-/** The day map also frames this much of the road into the parking, m. */
-const DAY_ROAD_M = 5000;
 
 /**
  * The trip sheet's map: one track plus every pin that belongs to the trip.
@@ -518,20 +515,6 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
           if (poi) pts.push(poi.location);
         }
         if (goal) pts.push(goal);
-        // The last stretch of the road into the parking, so a clear piece of road visibly enters the map (the whole drive would shrink the hike to a speck).
-        if (driveLeg && driveLeg.length >= 2 && rideAt) {
-          let left = DAY_ROAD_M;
-          for (let i = driveLeg.length - 1; i > 0 && left > 0; i--) {
-            const a = pair2(driveLeg[i]);
-            const b = pair2(driveLeg[i - 1]);
-            const seg = haversineM(a, b);
-            if (seg >= left) {
-              const g = left / (seg || 1);
-              pts.push({ lat: a.lat + (b.lat - a.lat) * g, lon: a.lon + (b.lon - a.lon) * g });
-            } else pts.push(b);
-            left -= seg;
-          }
-        }
       } else if (f === "access") {
         if (trailStart) pts.push(trailStart);
         if (walking) {
@@ -549,7 +532,12 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
       const lons = pts.map((p) => p.lon);
       const box = { sw: { lat: Math.min(...lats), lon: Math.min(...lons) }, ne: { lat: Math.max(...lats), lon: Math.max(...lons) } };
       // The day map's walker carries its time pill above it: room on top so the pill isn't cut off at the summit.
-      if (f === "day") return { sw: box.sw, ne: { lat: box.ne.lat + (box.ne.lat - box.sw.lat) * 0.18, lon: box.ne.lon } };
+      if (f === "day") {
+        // Room too for the time labels: right of the pins, and the drive's label along the bottom.
+        const h = box.ne.lat - box.sw.lat;
+        const w = box.ne.lon - box.sw.lon;
+        return { sw: { lat: box.sw.lat - h * 0.1, lon: box.sw.lon }, ne: { lat: box.ne.lat + h * 0.18, lon: box.ne.lon + w * 0.22 } };
+      }
       if (f !== "routes") return box;
       // The same set of routes seen from another route's page frames to nearly the same box: rounded outwards
       // (about 100 m) so opening another route doesn't glide the map back out to the whole set.
@@ -559,7 +547,7 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
         ne: { lat: Math.ceil(box.ne.lat * r) / r, lon: Math.ceil(box.ne.lon * r) / r },
       };
     },
-    [trail.bbox, others, goal, trailStart, walking, start, transit, stops, parkingLots, pois, rideAt, addedStops, driveLeg, points]
+    [trail.bbox, others, goal, trailStart, walking, start, transit, stops, parkingLots, pois, rideAt, addedStops, points]
   );
   const focusBounds = useMemo(() => (focus ? boundsFor(focus) : null), [focus, boundsFor]);
   // Right after a route was picked in the plan (this is that route's page): fit that route, not the whole set (lib/planUi.ts).
