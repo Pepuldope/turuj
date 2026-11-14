@@ -4,7 +4,7 @@ import { UiIcon } from "@/components/UiIcon";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { outsideDaylight } from "@/lib/dayPlan";
-import type { DayPlan, Verdict } from "@/lib/dayPlan";
+import type { Verdict } from "@/lib/dayPlan";
 import { EARLIEST_DEPARTURE_HOUR, addDaysIso, dayAfterNa, dayStrip, floorTo5, longDay } from "@/lib/days";
 import { badDays } from "@/lib/weather";
 import { collectPlanWarnings } from "@/lib/planWarnings";
@@ -27,16 +27,19 @@ import type { BBox, Closure, LatLng } from "@/lib/types";
 import { KidsRow } from "@/components/FilterChips";
 import { KedyBody, kedySummary, kedyWarnings } from "@/components/KedyStep";
 import type { KedyProps } from "@/components/KedyStep";
-import { latestWalkStart } from "@/lib/kedyTimeline";
+import { hasLeg, latestSetStart } from "@/lib/kedyTimeline";
 import { NavHandoff } from "@/components/NavHandoff";
 import { AppPromo, SaveTripButton } from "@/components/SaveTripButton";
 import type { ShareInfo } from "@/components/ShareButton";
 import { PlanStep, PlanStepsProvider, PlanWarningsRecap, StepInfo } from "@/components/PlanStep";
 import type { StepDef } from "@/components/PlanStep";
-import { ParkingOptions, feeLabel, summaryWalk } from "@/components/ParkingBlock";
+import { ParkingOptions, feeLabel, parkingTitle, summaryWalk } from "@/components/ParkingBlock";
 import { NoStartNote, PlanStartAsk } from "@/components/PlanStartAsk";
 import { StopsRow } from "@/components/StopsRow";
 import { SunArc } from "@/components/SunArc";
+import { DayMapLegend } from "@/components/DayMapLegend";
+import { goalTime, trailColours } from "@/lib/dayClock";
+import { usePublishDay } from "@/lib/usePublishDay";
 import { useTripAccess } from "@/components/TripAccess";
 import { useTripWeather } from "@/components/WeatherBlock";
 import { StopOptions, TransitHandoff, TransitLegs } from "@/components/TransitBlock";
@@ -71,14 +74,16 @@ interface Props extends ShareInfo {
   routeCount?: number;
   /** The "Kadiaľ pôjdete" step (several routes only; components/RouteChoice.tsx). */
   routesStep?: ReactNode;
-  /** A phone's map for the "Ako sa tam dostanete" step, and for the "Zastávky po ceste" one. */
+  /** A phone's map for the "Ako pôjdete" step, and for the "Zastávky po ceste" one. */
   accessMap?: ReactNode;
   placesMap?: ReactNode;
+  /** The small map above the sun dial: the whole day on a map, with a walker that follows the dial (components/TripSheet.tsx). */
+  dayMap?: ReactNode;
   /** The places on the way, with their "+" buttons (components/PoiList.tsx). */
   places?: ReactNode;
   /** The trip has places on or near the walk that can be added as stops. */
   hasPlaces?: boolean;
-  /** The GPX download, an action of the "Vyraziť" card. */
+  /** The GPX download, an action of the "Uložiť a navigovať" card. */
   gpxAction?: ReactNode;
   /** The walk, kept with the saved trip for the trail screen ("Začať výlet"). */
   trail?: SavedTrail;
@@ -103,7 +108,7 @@ function meetingAt(date: string, hhmm: string): Date {
   return zonedDate(y, mo, d, h, mi);
 }
 
-export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction = null, bbox, closures = [], walk, intro, children, outro, routeCount = 1, routesStep, accessMap, placesMap, places, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
+export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction = null, bbox, closures = [], walk, intro, children, outro, routeCount = 1, routesStep, accessMap, placesMap, dayMap, places, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
   const { start } = useUserLocation();
   const { today, update, withKids } = useTripSettings();
   const t = useT();
@@ -267,6 +272,8 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
   }, [following, plan, tripPlan.loading, meet, time, update]);
 
   const hasDrive = driveMin !== null;
+  // The day map above the sun dial reads the same plan (lib/dayClock.ts).
+  usePublishDay({ plan, profile, fullProfile, skip, approachShare: approachMin / Math.max(1, baseHikeMin), mode: walking ? "foot" : transit ? (rail.status === "ok" ? "train" : "bus") : "car", startName: start ? (start.label.trim() ? t(start.label.split(",")[0]) : t("Vaša poloha")) : null });
   // The walk starts where the ride ends: the parking (or the trail start, with no parking) or the stop.
   const walkStart = walking ? start : (walkFrom ?? destination);
   const latest = plan ? floorTo5(plan.latestStart) : null;
@@ -282,7 +289,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
 
   // A time picked by hand that is far off a usual day out (back only in the dark, or leaving in the
   // middle of the night) is asked about once: change it to the latest good start, or keep it.
-  // `asked` is the stored time (what `time` is compared with); `confirm` is the walk start the person typed, for the question.
+  // `asked` is the stored time (what `time` is compared with); `confirm` is what the person typed, for the question (the same time).
   const [asked, setAsked] = useState<string | null>(null);
   const [askedWalk, setAskedWalk] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
@@ -299,14 +306,11 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
     }, 800);
     return () => clearTimeout(timer);
   }, [asked, askedWalk, time, unusual]);
-  // The latest good start as a WALK start, the time the Kedy step speaks in (Peter, 2026-11-12).
-  const betterWalk = plan && !tooLong && !latestPassed ? clock(latestWalkStart(plan)) : null;
-  const latestWalk = plan ? clockShort(latestWalkStart(plan)) : "";
-  // The stored time (departure, or the time at the stop) that makes the walk start at `hhmm`: the ride is kept, to the 5 minutes before.
-  const storedFor = (hhmm: string) => {
-    const lead = plan ? plan.hikeStart.getTime() - plan.segments[0].start.getTime() : 0;
-    return clock(floorTo5(new Date(meetingAt(date ?? "", hhmm).getTime() - lead)));
-  };
+  // The Kedy step speaks in the time you LEAVE HOME when a leg comes before the walk (a drive, or the way to the stop), else in
+  // the walk start (Peter, 2026-11-13; the 12 Nov walk-start rule made people subtract the drive). That is the stored time itself.
+  const leg = plan !== null && hasLeg(plan);
+  const betterSet = plan && !tooLong && !latestPassed ? clock(latestSetStart(plan)) : null;
+  const latestSet = plan ? clockShort(latestSetStart(plan)) : "";
 
   // The plan's four choices, each folded to its current pick (components/PlanStep.tsx).
   // A trip with one route has no route choice: its numbers are plain info and the steps count on.
@@ -321,11 +325,11 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
     ? t("Pešo")
     : transit
       ? `${t(stop?.mode === "vlak" ? "Vlakom" : "Autobusom")} · ${stop ? stopLabel(stop.name) : t("bez zastávky")}`
-      : `${t("Autom")} · ${parking ? [t(parking.name), summaryWalk(parking, lang), feeLabel(parking, lang)].filter(Boolean).join(", ") : t("bez parkoviska")}`;
+      : `${t("Autom")} · ${parking ? [parkingTitle(parking.name, t, true), summaryWalk(parking, lang), feeLabel(parking, lang)].filter(Boolean).join(", ") : t("bez parkoviska")}`;
   const steps: StepDef[] = [
     ...(routeChoice ? [{ id: "route", n: 1, title: t("Kadiaľ pôjdete"), open: true, fit: "routes" as const }] : []),
     { id: "places", n: placesN, title: t("Zastávky po ceste"), open: !routeChoice, fit: "places" as const },
-    { id: "access", n: accessN, title: t("Ako sa tam dostanete"), fit: "access" as const },
+    { id: "access", n: accessN, title: t("Ako pôjdete"), fit: "access" as const },
     { id: "when", n: whenN, title: t("Kedy") },
   ];
   // The recap "Pred odchodom skontrolujte": every warning the steps show now, in their own words, each with the step that fixes it.
@@ -334,7 +338,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
   const lateRow = ready && (late || !!latestPassed);
   const tanapLate = ready && tanap ? outsideDaylight(plan) : null;
   const lateFor = lateRow
-    ? (latestStart: string) => lateText(plan.verdict, { latestPassed: !!latestPassed, tooLong, noTrain: !!plan.noTrainInLight, startWord: t("Začnite túru"), latest: latestStart }, lang)
+    ? (latestStart: string) => lateText(plan.verdict, { latestPassed: !!latestPassed, tooLong, noTrain: !!plan.noTrainInLight, startWord: t(leg ? "Vyrazte" : "Začnite túru"), latest: latestStart }, lang)
     : null;
   const kedyProps: KedyProps = {
     plan,
@@ -354,17 +358,17 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
     driveNote: driveStatus === "loading" && !walking ? (transit ? t("Počítame cestu na zastávku…") : t("Počítame cestu autom…")) : null,
     onTyped: (hhmm) => {
       setAskedWalk(hhmm);
-      setAsked(storedFor(hhmm));
+      setAsked(hhmm);
     },
   };
   const kedy = kedySummary(kedyProps, t, lang);
   const warnings = collectPlanWarnings([
-    // Kadiaľ pôjdete / Ako sa tam dostanete: no car park at this route's start (another route can fix it), no stop, no train back.
+    // Kadiaľ pôjdete / Ako pôjdete: no car park at this route's start (another route can fix it), no stop, no train back.
     noCar && { key: "no-car", step: routeChoice ? "route" : "access", tone: "warn", text: `${t("Autom sa sem nedá.")} ${t("Pri štarte tejto cesty nie je kde nechať auto, preto plánujeme cestu autobusom alebo vlakom. Ak chcete ísť autom, vyberte inú cestu s parkoviskom.")}` },
     ready && transit && !stop && { key: "no-stop", step: "access", tone: "warn", text: t("Pri začiatku trasy sme nenašli zastávku vlaku ani autobusu. Táto túra je lepšia autom.") },
     ready && transit && !!stop && rail.status === "ok" && !rail.back[rail.backChoice] && { key: "no-train-back", step: "access", tone: "warn", text: t("Po túre už v tento deň nejde vlak späť. Skúste skorší odchod alebo autobus.") },
     ready && transit && !!stop && rail.status === "no-day" && !!rail.changeDay && { key: "rail-change", step: "access", tone: "warn", text: t("Cestovný poriadok sa mení {day} Spoj si overte na cp.sk.", { day: rail.changeDay }) },
-    // Kedy: the step's own warnings, in its words (walk-start times).
+    // Kedy: the step's own warnings, in its words (departure times with a leg, else walk-start times).
     ...kedyWarnings(kedyProps, t, lang, null).map((w) => ({ key: w.key, step: "when", tone: w.tone, text: w.text })),
   ]);
 
@@ -383,8 +387,9 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
     dayWord,
     dayNa: !date ? "" : date === today ? t("dnes") : today && date === addDaysIso(today, 1) ? t("zajtra") : dayAfterNa(date, lang),
     stopMin,
-    setWalkStart: (hhmm) => {
-      if (date) update({ time: storedFor(hhmm) });
+    leadMs: plan ? plan.hikeStart.getTime() - plan.segments[0].start.getTime() : 0,
+    setStart: (hhmm) => {
+      if (date) update({ time: hhmm });
     },
   };
   const stopsWord = t(stops.length === 1 ? "{n} zastávka" : stops.length < 5 ? "{n} zastávky" : "{n} zastávok", { n: stops.length });
@@ -433,12 +438,12 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
           time={confirm}
           text={
             late || latestPassed
-              ? lateText(plan.verdict, { latestPassed: !!latestPassed, tooLong, noTrain: !!plan.noTrainInLight, startWord: t("Začnite túru"), latest: latestWalk }, lang)
+              ? lateText(plan.verdict, { latestPassed: !!latestPassed, tooLong, noTrain: !!plan.noTrainInLight, startWord: t(leg ? "Vyrazte" : "Začnite túru"), latest: latestSet }, lang)
               : t("To je uprostred noci, cesta by začínala po tme. Nemysleli ste ráno?")
           }
-          better={late || latestPassed ? betterWalk : NIGHT_FIX}
+          better={late || latestPassed ? betterSet : NIGHT_FIX}
           onBetter={() => {
-            planDay.setWalkStart((late || latestPassed ? betterWalk : NIGHT_FIX)!);
+            planDay.setStart((late || latestPassed ? betterSet : NIGHT_FIX)!);
             setConfirm(null);
           }}
           onKeep={() => setConfirm(null)}
@@ -462,8 +467,8 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
             title={t("Kadiaľ pôjdete")}
             extra={
               <div className="flex flex-col gap-2.5">
+                <KidsRow boxed />
                 <NoStartNote>{t("Časy trás platia od parkoviska, cestu k nemu bez štartu nepočítame.")}</NoStartNote>
-                <KidsRow />
               </div>
             }
           >
@@ -494,12 +499,32 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
           {places}
         </PlanStep>
 
-        <PlanStep id="access" n={accessN} title={t("Ako sa tam dostanete")} summary={accessSummary}>
+        <PlanStep id="access" n={accessN} title={t("Ako pôjdete")} summary={accessSummary}>
           <NoStartNote>{t("Bez štartu nepočítame cestu autom ani autobusom.")}</NoStartNote>
-          <TravelSwitch roadMin={roadMin} trainMin={rail.status === "ok" ? driveMin : null} noCar={noCar} noBus={noBus} walkMin={walkThere} walking={walking} onWalk={setOnFoot} />
-          {transit && <TransitHandoff />}
+          <TravelSwitch roadMin={roadMin} trainMin={rail.status === "ok" ? driveMin : null} busPending={tripPlan.loading} noCar={noCar} noBus={noBus} walkMin={walkThere} walking={walking} onWalk={setOnFoot} />
+          {/* The sub-heading follows the choice (Peter, 2026-11-13, mockup D1): where to park, or where to get off; on foot there is none. */}
+          {!walking && (
+            <h3 className="flex items-center gap-2 text-base font-bold">
+              {transit ? (
+                <>
+                  <span className="text-[var(--accent)]">
+                    <UiIcon name="bus" size={20} />
+                  </span>
+                  {t("Kde vystúpite")}
+                </>
+              ) : (
+                <>
+                  <span aria-hidden="true" className="grid h-[18px] w-[18px] place-items-center rounded bg-[var(--accent)] text-[12px] leading-none font-extrabold text-[var(--accent-contrast)]">
+                    P
+                  </span>
+                  {t("Kde zaparkujete")}
+                </>
+              )}
+            </h3>
+          )}
           {accessMap}
           {transit ? <StopOptions /> : <ParkingOptions />}
+          {transit && <TransitHandoff />}
         </PlanStep>
 
         <PlanStep id="when" n={whenN} title={t("Kedy")} warn={kedy.warn} summary={kedy.summary}>
@@ -510,10 +535,24 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
         <div id="vas-den" className="flex scroll-mt-[calc(64px+env(safe-area-inset-top))] flex-col gap-4 lg:scroll-mt-3">
         {plan && (
           <section aria-label={t("Priebeh dňa")} className="flex flex-col gap-4 border-t border-[var(--border)] pt-4">
-            {sun && (
-              // Framed inside the card: its sky would otherwise blend into the page.
-              <div className="overflow-hidden rounded-xl">
-                <SunArc key={date ?? ""} plan={plan} profile={profile} sun={sun} hasDrive={hasDrive} byBus={transit} byTrain={transit && rail.status === "ok"} weather={weather.below} />
+            {(dayMap || sun) && (
+              // The map and the sun dial are one block (Peter, 2026-11-13: a legend between them made the map feel
+              // disconnected), with one legend under it for both.
+              <div className="flex flex-col gap-2">
+                {/* Framed inside the card: the dial's sky would otherwise blend into the page. */}
+                <div className="overflow-hidden rounded-xl border border-[var(--border)]">
+                  {dayMap}
+                  {sun && <SunArc key={date ?? ""} plan={plan} profile={profile} sun={sun} hasDrive={hasDrive} byBus={transit} byTrain={transit && rail.status === "ok"} weather={weather.below} legend={false} />}
+                </div>
+                <DayMapLegend
+                  colours={dayMap && profile ? trailColours(profile, plan.hikeStart.getTime(), plan.hikeEnd.getTime(), plan.sunset.getTime()) : []}
+                  mode={walking ? "foot" : transit ? (rail.status === "ok" ? "train" : "bus") : "car"}
+                  stopKinds={dayMap ? [...new Set(stops.flatMap((s) => (s.id === LUNCH.id ? ["obcerstvenie" as const] : walkProfile?.places?.find((p) => p.id === s.id)?.kind ?? [])))] : []}
+                  map={!!dayMap}
+                  sun={!!sun}
+                  hasDrive={hasDrive}
+                  late={plan.hikeEnd > plan.sunset}
+                />
               </div>
             )}
             {plan.startsInDark && (
@@ -523,10 +562,10 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
               </p>
             )}
             {/* Peter: the arrival is the first big time; the departure (also set in the box above) sits
-                small over it, a chip set apart from the labels below it. */}
+                small over it, a chip centred over the row (Peter 2026-11-14: not stuck in the left corner). */}
             {hasDrive && (
-              <p className="font-data -mb-2.5 w-fit rounded-full bg-[var(--segment-bg)] px-2 py-0.5 text-[14px] leading-tight font-semibold">
-                {t("odchod")} {formatTime(plan.segments[0].start)}
+              <p className="font-data -mb-2.5 w-fit self-center rounded-full bg-[var(--segment-bg)] px-2.5 py-0.5 text-[14px] leading-tight font-semibold">
+                {t("odchod z domu")} {formatTime(plan.segments[0].start)}
               </p>
             )}
             <ol className="font-data grid grid-cols-[repeat(4,auto)] justify-between gap-x-2 text-[1.3rem] leading-tight font-bold sm:text-[1.6rem]">
@@ -556,9 +595,9 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
         </PlanDayProvider>
       </section>
 
-      {/* Its own card (Peter, 2026-11-11): save, share, navigate and the GPX are what you do with a finished plan. */}
-      <section data-nosnippet aria-label={t("Vyraziť")} className={`${part} [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer`}>
-        <h2 className="text-[1.35rem] leading-tight font-bold">{t("Vyraziť")}</h2>
+      {/* Its own card (Peter, 2026-11-11): save, share, navigate and the GPX are what you do with a finished plan. Named "Uložiť a navigovať" (Peter, 2026-11-13; was "Vyraziť"). */}
+      <section data-nosnippet aria-label={t("Uložiť a navigovať")} className={`${part} [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer`}>
+        <h2 className="text-[1.35rem] leading-tight font-bold">{t("Uložiť a navigovať")}</h2>
         <SaveTripButton gpxUrl={gpxUrl} bbox={bbox} sun={sun} tripPlan={tripPlan} profile={profile} trail={trail} closures={closures} where={calendarPlace} {...trip} nav={<NavHandoff slug={trip.slug} drive={destination} start={start} walkFrom={walkStart} walk={walk} join={trailJoin} />} gpx={gpxAction} />
       </section>
       <AppPromo />
@@ -664,11 +703,5 @@ function Step({ label, time, approx = false }: { label: string; time: Date; appr
       </span>
     </li>
   );
-}
-
-/** When the walk reaches its goal (peak, lake, castle...). */
-function goalTime(plan: DayPlan, profile: TripProfile): Date {
-  const at = profile.points[profile.goalIndex].at;
-  return new Date(plan.hikeStart.getTime() + at * (plan.hikeEnd.getTime() - plan.hikeStart.getTime()));
 }
 

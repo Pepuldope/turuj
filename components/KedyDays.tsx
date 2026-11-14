@@ -40,7 +40,7 @@ function DaySky({ kind }: { kind: SkyKind }) {
   );
 }
 
-const tileBase = "flex h-full w-[72px] shrink-0 flex-col items-center gap-1 rounded-xl border px-1 py-2 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]";
+const tileBase = "flex w-[72px] self-stretch shrink-0 flex-col items-center gap-1 rounded-xl border px-1 py-2 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]";
 
 /**
  * "Ktorý deň?": a swipeable row of day tiles with the walk's weather for each, the best day marked, so the day is a visible
@@ -104,9 +104,9 @@ export function KedyDays({ tiles, current }: { tiles: DayTile[]; current: string
               </button>
             );
           })}
-          {/* The same calendar the home screen uses: the date input itself takes the tap (an invisible input over the tile). */}
+          {/* The same calendar the home screen uses: the date input itself takes the tap (an invisible input over the tile). A little wider than a day: it can be any day (Peter, 2026-11-14). */}
           <span
-            className={`${tileBase} relative justify-center has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--accent)] ${
+            className={`${tileBase.replace("w-[72px]", "w-[84px]")} relative justify-center has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--accent)] ${
               other ? "border-[var(--accent)] bg-[var(--background)]" : "border-[var(--border)] bg-[var(--card-bg)]"
             }`}
             {...(other ? { "data-selected": "" } : {})}

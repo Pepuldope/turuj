@@ -29,7 +29,9 @@ import {
   hhmmToMin,
   keptAfterPick,
   kedyCards,
-  latestWalkStart,
+  hasLeg,
+  latestSetStart,
+  startTime,
   minToHhmm,
   rowCells,
   rowRange,
@@ -69,10 +71,10 @@ export interface KedyProps {
   /** Train or bus, for the ride's icon and word. */
   stopMode: TransitMode | null;
   /**
-   * The words for a start that is too late ("Späť by ste boli po západe slnka. Začnite túru najneskôr o 8:20."),
-   * built for the WALK start (pass startWord "Začnite túru"); null when nothing is late. The argument is the latest walk start.
+   * The words for a start that is too late ("Späť by ste boli po západe slnka. Vyrazte najneskôr o 7:25."), built for the time
+   * the step sets (pass startWord "Vyrazte" with a leg, "Začnite túru" without); null when nothing is late. The argument is the latest such time.
    */
-  lateText: ((latestWalkStart: string) => string) | null;
+  lateText: ((latestStart: string) => string) | null;
   latestPassed: boolean;
   tooLong: boolean;
   tanapLate: "late" | "early" | null;
@@ -81,8 +83,8 @@ export interface KedyProps {
   closures?: Closure[];
   /** "Počítame cestu autom…" while the ride loads, already translated; null otherwise. */
   driveNote?: string | null;
-  /** A time typed in the field (HH:MM, the walk start): TripPlanner starts its "Naozaj o 3:00?" check from it. */
-  onTyped?: (walkStart: string) => void;
+  /** A time typed in the field (HH:MM, the departure, or the walk start without a leg): TripPlanner starts its "Naozaj o 3:00?" check from it. */
+  onTyped?: (typed: string) => void;
 }
 
 /** Slovak/English word of the way, for "auto 55 min" at the bar's ends. */
@@ -118,17 +120,18 @@ function sunForDay(at: LatLng | null) {
  * Each warning on its own (Peter, 2026-11-12: never rain, frost and after-dark in one box), with its cause and,
  * where there is one, its way out as a tap. Nothing the old step or the recap showed is dropped: the late start,
  * a start before sunrise, the TANAP daylight rule, rain or snow, storms, wind and frost. `cards` null: only the list is needed.
+ * The ways out are times to set: departures with a leg (Peter, 2026-11-13), the walk start without one.
  */
 /** `dayFix`: the best dry day from the day tiles, offered when no drier time the same day exists. */
 export function kedyWarnings(p: KedyProps, t: T, lang: Lang, cards: KedyCard[] | null, dayFix: WarnFix | null = null): KedyWarning[] {
   const plan = p.plan;
   if (!plan || p.loading) return [];
   const out: KedyWarning[] = [];
-  const current = hhmmToMin(clock(plan.hikeStart));
-  const latest = latestWalkStart(plan);
+  const current = hhmmToMin(clock(startTime(plan)));
+  const latest = latestSetStart(plan);
   const untilFix: WarnFix | null = !p.tooLong && !p.latestPassed && hhmmToMin(clock(latest)) < current ? { kind: "time", start: clock(latest), way: "until" } : null;
-  // The first 5 minutes at or after sunrise.
-  const afterRise = new Date(Math.ceil(plan.sunrise.getTime() / (5 * MIN)) * 5 * MIN);
+  // The first 5 minutes that put the walk at or after sunrise (with a leg: the departure that far before it).
+  const afterRise = new Date(Math.ceil((plan.sunrise.getTime() - (plan.hikeStart.getTime() - startTime(plan).getTime())) / (5 * MIN)) * 5 * MIN);
   const afterFix: WarnFix = { kind: "time", start: clock(afterRise), way: "after" };
 
   if (p.lateText) out.push({ key: "late", tone: "warn", text: p.lateText(clockShort(latest)), fix: untilFix });
@@ -161,8 +164,8 @@ export function kedyWarnings(p: KedyProps, t: T, lang: Lang, cards: KedyCard[] |
 }
 
 /**
- * The folded header: "Zajtra · túra 8:00–15:10 · doma 16:05" with the warning sign when the step has a warning.
- * Times are the walk's (Peter, 2026-11-12).
+ * The folded header with the warning sign when the step has a warning: "Zajtra · odchod 8:00 · doma 19:03" with a leg
+ * (Peter, 2026-11-13), "Zajtra · 8:00–15:10" without one (the walk's own times).
  */
 export function kedySummary(p: KedyProps, t: T, lang: Lang): { summary: ReactNode; warn: boolean } {
   if (!p.plan || p.loading) return { summary: <>{p.dayWord} · …</>, warn: false };
@@ -170,7 +173,14 @@ export function kedySummary(p: KedyProps, t: T, lang: Lang): { summary: ReactNod
   return {
     summary: (
       <>
-        {p.dayWord} · <span className="font-data">{span(s.start, s.end)}</span>
+        {p.dayWord} ·{" "}
+        {s.leave ? (
+          <>
+            {t("odchod")} <span className="font-data">{s.leave}</span>
+          </>
+        ) : (
+          <span className="font-data">{span(s.start, s.end)}</span>
+        )}
         {s.home && (
           <>
             {" · "}
@@ -283,7 +293,8 @@ function Card({ card, today, onPick, children }: { card: KedyCard; today: string
           {title && <span className="mr-1.5 text-base font-bold">{title}</span>}
           <span className="font-data text-[28px] leading-none font-semibold">{card.startText}</span>
         </span>
-        {words && <span className="min-w-0 text-[13.5px] leading-tight font-bold">· {words}</span>}
+        {/* Its own line under the time: wrapped beside it, it started with a lone "·" (13 Nov preview). */}
+        {words && <span className="mt-1 min-w-0 basis-full text-[13.5px] leading-tight font-bold">{words}</span>}
       </span>
       <span className="mt-1 flex shrink-0 items-center gap-0.5">{skies}</span>
     </span>
@@ -293,7 +304,7 @@ function Card({ card, today, onPick, children }: { card: KedyCard; today: string
     <span className="mt-1 flex flex-col gap-1 pl-8 text-[13px] leading-snug">
       {!card.sameDay && (
         <span className="text-[var(--muted)]">
-          {shortDate(card.date, lang)} · {t("túra")} <span className="font-data text-[15px] text-[var(--foreground)]">{span(card.startText, card.endText)}</span>
+          {shortDate(card.date, lang)} · {t("túra")} <span className="font-data text-[15px] text-[var(--foreground)]">{span(card.walkText, card.endText)}</span>
           {card.tempMin !== null && card.tempMax !== null && ` · ${temps(card.tempMin, card.tempMax, lang)}`}
         </span>
       )}
@@ -305,7 +316,7 @@ function Card({ card, today, onPick, children }: { card: KedyCard; today: string
       ) : (
         card.sameDay && (
           <span className="text-[var(--muted)]">
-            {t("túra")} <span className="font-data text-[15px] text-[var(--foreground)]">{span(card.startText, card.endText)}</span>
+            {t("túra")} <span className="font-data text-[15px] text-[var(--foreground)]">{span(card.walkText, card.endText)}</span>
             {card.homeText && (
               <>
                 {" · "}
@@ -375,7 +386,11 @@ function StartBlock({
   onTyped?: (hhmm: string) => void;
 }) {
   const t = useT();
-  const current = clock(plan.hikeStart);
+  // With a leg before the walk the field is the departure from home (Peter, 2026-11-13); without one, the walk's start.
+  const leg = hasLeg(plan);
+  const fieldWord = t(leg ? "Odchod z domu" : "Začiatok túry");
+  const parts = summaryParts(plan);
+  const current = clock(startTime(plan));
   const [typed, setTyped] = useState<string | null>(null);
   const [dragged, setDragged] = useState<string | null>(null);
   const shown = dragged ?? typed ?? current;
@@ -387,15 +402,31 @@ function StartBlock({
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between gap-3">
         <label htmlFor="kedy-start" className="shrink-0 text-[15px] font-bold whitespace-nowrap">
-          {t("Začiatok túry")}
+          {fieldWord}
         </label>
-        <span className="relative max-w-[9.5rem] min-w-0 flex-1">
+        {/* iPhone Safari draws a time input at its own width, whatever the CSS says, so it ran off the screen (Peter,
+            2026-11-14). The box is ours: the time as plain text and our clock icon; the real input lies invisible over it
+            and takes the tap, which opens the system's own time picker (same trick as the "Iný deň" tile). */}
+        <span className="relative flex max-w-[9.5rem] min-w-0 flex-1 items-center overflow-hidden rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] py-1.5 pr-1 pl-3 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--accent)]">
+          <span aria-hidden="true" className="font-data min-w-0 flex-1 truncate text-[1.45rem] leading-tight font-semibold min-[380px]:text-[1.6rem]">
+            {shown}
+          </span>
+          <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center text-[var(--accent)]">
+            <UiIcon name="clock" size={22} />
+          </span>
           <input
             ref={field}
             id="kedy-start"
             type="time"
             step={300}
             value={shown}
+            onClick={(e) => {
+              try {
+                e.currentTarget.showPicker();
+              } catch {
+                // Not supported or already open: the tap on the input opens it.
+              }
+            }}
             onChange={(e) => {
               if (!e.target.value) return;
               setTyped(e.target.value);
@@ -403,33 +434,30 @@ function StartBlock({
               onTyped?.(e.target.value);
             }}
             onBlur={() => setTyped(null)}
-            // The browser's own clock button is hidden (it was a second icon next to ours); ours opens the same picker.
-            className="font-data w-full min-w-0 rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] py-1.5 pr-11 pl-3 text-[1.45rem] leading-tight font-semibold focus-visible:outline-2 focus-visible:outline-[var(--accent)] min-[380px]:text-[1.6rem] [&::-webkit-calendar-picker-indicator]:hidden"
+            // 16 px: an iPhone zooms into a smaller-text field when it is tapped (the field itself is invisible).
+            className="absolute inset-0 h-full w-full min-w-0 cursor-pointer appearance-none text-base opacity-0"
           />
-          <button
-            type="button"
-            tabIndex={-1}
-            aria-label={t("Vybrať čas")}
-            onClick={() => {
-              try {
-                field.current?.showPicker();
-              } catch {
-                field.current?.focus();
-              }
-            }}
-            className="absolute top-1/2 right-1 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
-          >
-            <UiIcon name="clock" size={22} />
-          </button>
         </span>
       </div>
+      {/* What the departure makes of the day, quietly: the walk's own times and when you are home. */}
+      {leg && (
+        <p className="text-[13px] leading-snug text-[var(--muted)]">
+          {t("túra")} <span className="font-data text-[15px] text-[var(--foreground)]">{span(parts.start, parts.end)}</span>
+          {parts.home && (
+            <>
+              {" · "}
+              {t("doma")} <span className="font-data text-[15px] text-[var(--foreground)]">{parts.home}</span>
+            </>
+          )}
+        </p>
+      )}
       {/* The strip reaches into the card's padding (so a thumb at the day's ends is whole); the track is 24/14 of the card's inner width. */}
       <ScrollStrip scrollerRef={scroller} className="-mx-4 px-4" startKey={clockDateKey(plan)} startAt={(el) => scalePos(leaveMin - 60) * ((el.firstElementChild as HTMLElement | null)?.offsetWidth ?? 0)}>
         <div className="relative" style={{ width: `${(24 / VISIBLE_HOURS) * 100}%` }}>
           <TrackSlider
             min={min}
-            valueText={`${t("Začiatok túry")} ${clockShort(plan.hikeStart)}`}
-            label={t("Začiatok túry")}
+            valueText={`${fieldWord} ${clockShort(startTime(plan))}`}
+            label={fieldWord}
             scroller={scroller}
             onChange={(v) => {
               setDragged(v);
@@ -794,7 +822,7 @@ export function KedyBody(p: KedyProps) {
         })
       : [];
   const bestDay = tiles.find((x) => x.best && !x.selected);
-  const warnings = kedyWarnings(p, t, lang, cards, plan && bestDay ? { kind: "day", date: bestDay.iso, start: clock(plan.hikeStart) } : null);
+  const warnings = kedyWarnings(p, t, lang, cards, plan && bestDay ? { kind: "day", date: bestDay.iso, start: clock(startTime(plan)) } : null);
   // The hours of the scale with their forecast; the row, the bar's wet parts and the card all read from it.
   const strip =
     plan && p.weather.below
@@ -802,20 +830,21 @@ export function KedyBody(p: KedyProps) {
       : null;
   const cells = plan ? rowCells(plan, strip ?? []) : null;
 
-  const setStart = (hhmm: string) => day?.setWalkStart(hhmm);
+  const setStart = (hhmm: string) => day?.setStart(hhmm);
   const apply = (fix: WarnFix) => {
     if (fix.kind === "day") update({ date: fix.date });
-    if (!plan || fix.start !== clock(plan.hikeStart)) setStart(fix.start);
+    if (!plan || fix.start !== clock(startTime(plan))) setStart(fix.start);
   };
   const pick = (card: KedyCard) => {
     if (!date) return;
     setMemo({ date: card.date, kept: keptAfterPick(cards, card) });
     if (card.date !== date) update({ date: card.date });
-    if (!plan || card.start !== clock(plan.hikeStart)) setStart(card.start);
+    if (!plan || card.start !== clock(startTime(plan))) setStart(card.start);
   };
 
   const way = wayOf(p);
-  const limit = plan && ready && !p.tooLong && !p.latestPassed ? clockShort(latestWalkStart(plan)) : null;
+  const limit = plan && ready && !p.tooLong && !p.latestPassed ? clockShort(latestSetStart(plan)) : null;
+  const leg = !!plan && hasLeg(plan);
   const homeAfterSunset = !!plan && plan.segments[plan.segments.length - 1].end > plan.sunset;
 
   return (
@@ -831,10 +860,10 @@ export function KedyBody(p: KedyProps) {
                 <>
                   <StartBlock plan={plan} strip={strip} cells={cells!} way={way} late={homeAfterSunset} onSet={setStart} onTyped={p.onTyped} />
                   {!strip && <p className="text-sm text-[var(--muted)]">{p.weather.loading ? t("Načítavame predpoveď počasia…") : p.weather.strip ? t("Predpoveď na tento deň ešte nie je.") : ""}</p>}
-                  <Warnings warnings={warnings} onFix={apply} />
+                  <Warnings warnings={warnings} leg={leg} onFix={apply} />
                   {limit && (
                     <p className="text-[13.5px] text-[var(--muted)]">
-                      {t("Najneskôr začnite túru o")} <span className="font-data text-[17px] font-semibold text-[var(--time)]">{limit}</span>
+                      {t(leg ? "Najneskôr vyrazte o" : "Najneskôr začnite túru o")} <span className="font-data text-[17px] font-semibold text-[var(--time)]">{limit}</span>
                       {t(", aby ste boli dole za svetla.")}
                     </p>
                   )}
@@ -851,7 +880,7 @@ export function KedyBody(p: KedyProps) {
   );
 }
 
-function Warnings({ warnings, onFix }: { warnings: KedyWarning[]; onFix: (f: WarnFix) => void }) {
+function Warnings({ warnings, leg, onFix }: { warnings: KedyWarning[]; leg: boolean; onFix: (f: WarnFix) => void }) {
   const t = useT();
   const lang = useLang();
   if (warnings.length === 0) return null;
@@ -866,15 +895,15 @@ function Warnings({ warnings, onFix }: { warnings: KedyWarning[]; onFix: (f: War
     }
     return fix.way === "dry" ? (
       <>
-        {t("Začiatok o")} {time} {t("je bez dažďa")}
+        {t(leg ? "Odchod o" : "Začiatok o")} {time} {t("je bez dažďa")}
       </>
     ) : fix.way === "until" ? (
       <>
-        {t("Začnite do")} {time}
+        {t(leg ? "Vyrazte do" : "Začnite do")} {time}
       </>
     ) : (
       <>
-        {t("Začnite o")} {time}
+        {t(leg ? "Vyrazte o" : "Začnite o")} {time}
       </>
     );
   };
