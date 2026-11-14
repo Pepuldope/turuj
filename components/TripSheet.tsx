@@ -214,12 +214,16 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
 
   // The question sections (lib/tripAnswers.ts): the main page of a place and its start pages, not the loop.
   const ownWalk = pickWalk(routeWalk(detail), false, parkingLots.length > 0);
-  const lines = startLines(lang, routes, walks, {
-    slug: trail.slug,
-    startName: trip.start.name,
-    walk: ownWalk,
-    fallback: { min: trail.duration_min, m: trail.distance_m, ascentM: trail.ascent_m },
-  });
+  const own = { min: ownWalk?.min ?? trail.duration_min, m: ownWalk?.m ?? trail.distance_m, ascentM: ownWalk?.ascentM ?? trail.ascent_m };
+  // A loop is a walk of its own: the one line is the loop's numbers (the there-and-back routes are on the main page).
+  const lines = loopBack
+    ? [{ slug: current, label: trip.start.name, ...own, current: true }]
+    : startLines(lang, routes, walks, {
+        slug: trail.slug,
+        startName: trip.start.name,
+        walk: ownWalk,
+        fallback: { min: trail.duration_min, m: trail.distance_m, ascentM: trail.ascent_m },
+      });
   // C53: the nearest other places as plain links (lib/nearbyTrips.ts). The index holds main routes only.
   const mains = await getAllTrips();
   const exclude = trip.variant_of ?? trail.slug;
@@ -369,7 +373,9 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                 fees={fees}
                 sunAt={sun}
                 walkMin={ownWalk?.min ?? trail.duration_min}
-                closuresOnly={!!loopBack}
+                pois={detail.pois}
+                terrain={{ path: trip.path, marking_runs: trip.marking_runs, route: trip.route, ascent_m: trip.ascent_m, max_ele_m: trip.max_ele_m, difficulty: trail.difficulty, marked_share: trip.marked_share }}
+                familyFriendly={trail.family_friendly}
                 about={about}
                 region={trail.region_name}
               />
