@@ -1,3 +1,4 @@
+import { refuseOnPreview } from "@/lib/previewGuard";
 import { accountFor, checkLoginCode, cleanEmail, okPassword, sessionCookie, setName, setPassword, startSession } from "@/lib/auth";
 import { OTHER_SITE, TOO_MANY, fromOtherSite, overCallLimit } from "@/lib/routeGuard";
 
@@ -6,6 +7,8 @@ import { OTHER_SITE, TOO_MANY, fromOtherSite, overCallLimit } from "@/lib/routeG
 // so it is set only once the email is proven.
 
 export async function POST(request: Request): Promise<Response> {
+  const preview = refuseOnPreview(request);
+  if (preview) return preview;
   if (fromOtherSite(request)) return OTHER_SITE();
   if (await overCallLimit(request, "auth")) return TOO_MANY();
   let body: { email?: unknown; code?: unknown; password?: unknown; name?: unknown } = {};

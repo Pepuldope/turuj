@@ -113,11 +113,22 @@ describe("walkRoute with the router's limits", () => {
     vi.unstubAllGlobals();
   });
 
-  it("spends no fallback call when the router says too many requests", async () => {
-    const fetchMock = vi.fn(async () => new Response("{}", { status: 429 }));
+  it("spends no second router call when the router says too many requests, and falls back to the public foot server", async () => {
+    const osrm = { code: "Ok", routes: [{ duration: 600, distance: 800, geometry: { coordinates: [[19, 48], [19.01, 48.01]] } }] };
+    const fetchMock = vi.fn(async (url: string) => (url.includes("heigit") ? new Response("{}", { status: 429 }) : new Response(JSON.stringify(osrm))));
     vi.stubGlobal("fetch", fetchMock);
-    await expect(walkRoute("key", [48.2, 19.2], [48.21, 19.21], 1000)).rejects.toBeInstanceOf(RateLimited);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const r = await walkRoute("key", [48.2, 19.2], [48.21, 19.21], 1000);
+    expect(r.durationMin).toBe(10);
+    expect(r.points[0]).toEqual([48, 19]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [, init] = fetchMock.mock.calls[1] as unknown as [string, RequestInit];
+    expect((init.headers as Record<string, string>)["User-Agent"]).toContain("turuj.sk");
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps the router's own error when the fallback fails too", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => new Response("{}", { status: url.includes("heigit") ? 429 : 500 })));
+    await expect(walkRoute("key", [48.25, 19.25], [48.26, 19.26], 1000)).rejects.toBeInstanceOf(RateLimited);
     vi.unstubAllGlobals();
   });
 });

@@ -1,3 +1,4 @@
+import { refuseOnPreview } from "@/lib/previewGuard";
 import { getDb } from "@/lib/d1";
 import { REMINDER_KINDS, cancelEve, cancelReminders, cleanName, eveText, messageFor, planEve, planReminders, vapidKeys } from "@/lib/pushPlan";
 import type { PlanItem, ReminderKind } from "@/lib/pushPlan";
@@ -13,7 +14,10 @@ import type { PushSub } from "@/lib/webPush";
 const MAX_BODY = 3000;
 const NO_DB = () => Response.json({ error: "Pripomienky teraz nefungujú." }, { status: 503 });
 
-export async function GET(): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
+  // The first call makes and stores the signing key: a write.
+  const preview = refuseOnPreview(request);
+  if (preview) return preview;
   const db = await getDb();
   if (!db) return NO_DB();
   return Response.json({ key: vapidPublicKey(await vapidKeys(db)) });
@@ -44,6 +48,8 @@ function eveJob(b: Record<string, unknown>, slug: string, lang: "sk" | "en"): Ev
 }
 
 export async function POST(request: Request): Promise<Response> {
+  const preview = refuseOnPreview(request);
+  if (preview) return preview;
   if (fromOtherSite(request)) return OTHER_SITE();
   if (await overCallLimit(request, "push")) return TOO_MANY();
   let body: Record<string, unknown>;

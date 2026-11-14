@@ -23,6 +23,18 @@ const MAX_AHEAD_MS = 16 * 3600_000;
 const SEND_AHEAD_MS = 150_000;
 /** A reminder this late (the cron missed it) is useless: drop it quietly. */
 const STALE_MS = 30 * 60_000;
+/** The evening-before reminder is still welcome a few hours after 19:00, so a queue of them can spread over many runs. */
+const EVE_STALE_MS = 3 * 3600_000;
+/**
+ * At most this many sends per run (a Worker may make only so many outgoing calls per run; the
+ * evening reminders of everyone fall at 19:00). What is left stays in the table for the next run
+ * five minutes later, so nothing is lost while it is still fresh.
+ */
+export const MAX_SENDS_PER_RUN = 50;
+/** Rows looked at per run: room for stale ones to be cleared without using up the sends. */
+const LOOK_AT = 200;
+
+const staleMs = (kind: string) => (kind === EVE ? EVE_STALE_MS : STALE_MS);
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS push_plan (endpoint TEXT NOT NULL, slug TEXT NOT NULL, kind TEXT NOT NULL, at INTEGER NOT NULL, sub TEXT NOT NULL, message TEXT NOT NULL, PRIMARY KEY (endpoint, slug, kind)) WITHOUT ROWID`,
@@ -154,17 +166,22 @@ interface Row {
 /** The cron's job: send what is due, forget what is stale or whose phone unsubscribed. */
 export async function sendDue(db: D1Like, now = Date.now()): Promise<{ sent: number; dropped: number }> {
   await ensure(db);
-  const { results } = await db.prepare(`SELECT * FROM push_plan WHERE at <= ? ORDER BY at LIMIT 50`).bind(now + SEND_AHEAD_MS).all<Row>();
+  const { results } = await db.prepare(`SELECT * FROM push_plan WHERE at <= ? ORDER BY at LIMIT ${LOOK_AT}`).bind(now + SEND_AHEAD_MS).all<Row>();
   if (results.length === 0) return { sent: 0, dropped: 0 };
   const keys = await vapidKeys(db);
   let sent = 0;
   let dropped = 0;
+  let attempts = 0;
   for (const r of results) {
+    const stale = r.at < now - staleMs(r.kind);
+    // Over the cap: leave it in the table for the next run (stale ones above are still cleared).
+    if (!stale && attempts >= MAX_SENDS_PER_RUN) continue;
     await db.prepare(`DELETE FROM push_plan WHERE endpoint = ? AND slug = ? AND kind = ?`).bind(r.endpoint, r.slug, r.kind).run();
-    if (r.at < now - STALE_MS) {
+    if (stale) {
       dropped++;
       continue;
     }
+    attempts++;
     let text = r.message;
     if (r.kind === EVE) {
       try {

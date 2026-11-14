@@ -5,6 +5,7 @@ import { useEffect, useId, useState } from "react";
 import { FEEDBACK_MAX, PROBLEM_TOPICS } from "@/lib/feedbackLimits";
 import type { FeedbackKind, ProblemTopic } from "@/lib/feedbackLimits";
 import { LangLink, useLang, useT } from "@/lib/i18n";
+import { PREVIEW_MESSAGE } from "@/lib/previewGuard";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 const TOPIC_LABEL: Record<ProblemTopic, string> = {
@@ -15,7 +16,7 @@ const TOPIC_LABEL: Record<ProblemTopic, string> = {
   ine: "Iné",
 };
 
-type State = "idle" | "sending" | "sent" | "error";
+type State = "idle" | "sending" | "sent" | "error" | "preview";
 
 /**
  * "Napíšte nám" (an idea or what to improve) and "Nahlásiť chybu" (what is wrong, and on which trip
@@ -54,7 +55,7 @@ export function FeedbackForm({ kind }: { kind: FeedbackKind }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ kind, topic, slug, text, email: email.trim() || null, lang }),
       });
-      setState(r.ok ? "sent" : "error");
+      setState(r.ok ? "sent" : r.status === 403 && (await r.json().catch(() => null))?.error === "preview" ? "preview" : "error");
     } catch {
       setState("error");
     }
@@ -116,6 +117,7 @@ export function FeedbackForm({ kind }: { kind: FeedbackKind }) {
           className="h-11 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 text-base outline-none focus:border-[var(--accent)]"
         />
       </div>
+      {state === "preview" && <p role="status" className="flex items-start gap-1.5 text-[var(--muted)]"><span>{t(PREVIEW_MESSAGE)}</span></p>}
       {state === "error" && <p role="alert" className="flex items-start gap-1.5 text-[var(--warn)]"><UiIcon name="warn" size={16} className="mt-0.5" /><span>{t("Správu sa nepodarilo poslať. Skúste to znova o chvíľu.")}</span></p>}
       <button
         type="submit"

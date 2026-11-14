@@ -1,0 +1,67 @@
+name: Weekly red flags
+
+# Mondays: two things that go wrong quietly. A failed run e-mails the repo owner (nothing else
+# is sent). Separate from the data workflows: it only reads, and the data runs never wait for it.
+#   1. The train timetable (public/data/rail/timetable.json, feed_end) ends in under 3 weeks.
+#      The weekly "Weekly train timetable" run should have renewed it; if it hasn't, the site
+#      starts saying "the timetable changes" for real days.
+#   2. The live site is not the build of the latest main commit (the deployment id the site
+#      sends in the x-nextjs-deployment-id header is the first 12 characters of the commit,
+#      see next.config.ts). A commit younger than 1 hour is allowed: its deploy is still running.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  flags:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Train timetable end date
+        if: always()
+        shell: bash
+        run: |
+          end="$(node -p "String(require('./public/data/rail/timetable.json').feed_end || '')")"
+          echo "feed_end: ${end:-missing}"
+          if ! [[ "$end" =~ ^[0-9]{8}$ ]]; then
+            echo "::error title=Train timetable::feed_end is missing from public/data/rail/timetable.json"
+            exit 1
+          fi
+          left="$(( ( $(date -u -d "$end" +%s) - $(date -u +%s) ) / 86400 ))"
+          echo "days left: $left"
+          if [ "$left" -lt 21 ]; then
+            echo "::error title=Train timetable ends soon::The timetable ends on $end ($left days). Run Weekly train timetable by hand, or check that the national GTFS has a newer one."
+            exit 1
+          fi
+
+      - name: Live build is main
+        if: always()
+        shell: bash
+        run: |
+          want="$(git rev-parse HEAD | cut -c1-12)"
+          age=$(( $(date -u +%s) - $(git log -1 --format=%ct) ))
+          live=""
+          for attempt in 1 2 3; do
+            live="$(curl -sSI -m 25 -H 'Cache-Control: no-cache' https://turuj.sk/ | tr -d '\r' | awk 'tolower($1)=="x-nextjs-deployment-id:"{print $2}')" || true
+            [ -n "$live" ] && break
+            sleep 20
+          done
+          echo "live: ${live:-none}  main: $want  (main's last commit is $((age / 60)) min old)"
+          if [ -z "$live" ]; then
+            echo "::error title=Live build unknown::turuj.sk sent no x-nextjs-deployment-id header"
+            exit 1
+          fi
+          if [ "$live" != "$want" ] && [ "$age" -gt 3600 ]; then
+            echo "::error title=Live site is not main::turuj.sk runs build $live but main is $want. A deploy may have failed: check the Deploy workflow."
+            exit 1
+          fi

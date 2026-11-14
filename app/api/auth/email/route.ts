@@ -1,3 +1,4 @@
+import { refuseOnPreview } from "@/lib/previewGuard";
 import { CODE_MIN, cleanEmail, newLoginCode, randomCode } from "@/lib/auth";
 import { sendCodeMail } from "@/lib/authMail";
 import { OTHER_SITE, TOO_MANY, fromOtherSite, overCallLimit } from "@/lib/routeGuard";
@@ -5,6 +6,8 @@ import { OTHER_SITE, TOO_MANY, fromOtherSite, overCallLimit } from "@/lib/routeG
 // Step 1 of the email sign-in: a 6-digit code to the given address (lib/auth.ts).
 
 export async function POST(request: Request): Promise<Response> {
+  const preview = refuseOnPreview(request);
+  if (preview) return preview;
   if (fromOtherSite(request)) return OTHER_SITE();
   if (await overCallLimit(request, "auth")) return TOO_MANY();
   let body: { email?: unknown; lang?: unknown } = {};

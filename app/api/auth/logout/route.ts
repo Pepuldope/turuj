@@ -1,7 +1,10 @@
+import { refuseOnPreview } from "@/lib/previewGuard";
 import { endSession, sessionCookie } from "@/lib/auth";
 import { OTHER_SITE, fromOtherSite } from "@/lib/routeGuard";
 
 export async function POST(request: Request): Promise<Response> {
+  const preview = refuseOnPreview(request);
+  if (preview) return preview;
   if (fromOtherSite(request)) return OTHER_SITE();
   try {
     await endSession(request);

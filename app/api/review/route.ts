@@ -1,3 +1,4 @@
+import { refuseOnPreview } from "@/lib/previewGuard";
 import { reviewKey } from "@/lib/apiKeys";
 import { withEdgeCache } from "@/lib/edgeCache";
 import { parseReview, reviewSummary, saveReview } from "@/lib/reviews";
@@ -12,6 +13,8 @@ const MAX_BODY = 1000;
 const SUMMARY_S = 300;
 
 export async function POST(request: Request): Promise<Response> {
+  const preview = refuseOnPreview(request);
+  if (preview) return preview;
   if (isBot(request.headers.get("user-agent") ?? "") || fromOtherSite(request)) return OTHER_SITE();
   if (await overCallLimit(request, "review")) return TOO_MANY();
   let review = null;

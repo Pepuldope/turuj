@@ -1,3 +1,4 @@
+import { refuseOnPreview } from "@/lib/previewGuard";
 import { accountFor, cleanEmail, randomToken, safeNext, sessionCookie, startSession } from "@/lib/auth";
 
 // "Pokračovať cez Google" (lib/auth.ts). Without ?code this sends the browser to Google; Google
@@ -26,6 +27,8 @@ function payload(idToken: string): Record<string, unknown> | null {
 
 export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url);
+  // Previews share the live database: no sign-in there (lib/previewGuard.ts). Back to the page with a note.
+  if (refuseOnPreview(request)) return back(safeNext(url.searchParams.get("next")), "preview");
   // Trimmed: a key pasted into Cloudflare with a space or new line still works.
   const id = process.env.GOOGLE_CLIENT_ID?.trim();
   const secret = process.env.GOOGLE_CLIENT_SECRET?.trim();
