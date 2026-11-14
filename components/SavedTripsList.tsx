@@ -2,6 +2,12 @@
 
 import { setTripStops } from "@/lib/tripStops";
 import { useEffect, useState } from "react";
+import type { DayPlan } from "@/lib/dayPlan";
+import { useCachedJson } from "@/lib/useDriveRoute";
+import { FORECAST_DAYS, forecastForDay, tripWeatherReport, weatherNotes } from "@/lib/weather";
+import type { WeatherForecast } from "@/lib/weather";
+import { weatherUrl, wetText } from "@/components/WeatherBlock";
+import type { Lang } from "@/lib/lang";
 import { useRouter } from "next/navigation";
 import { activeClosures } from "@/lib/closures";
 import { planDay } from "@/lib/dayPlan";
@@ -148,30 +154,124 @@ function TripList({
   went: (trip: SavedTrip) => void;
   start: (trip: SavedTrip) => void;
 }) {
-  const t = useT();
-  const lang = useLang();
   return (
     <ul className="flex flex-col gap-3">
-      {trips.map((trip) => {
-        const transit = trip.transit ?? false;
-        const byTrain = transit && !!trip.fixed;
-        const plan = planDay({
-          date: trip.date,
-          start: trip.time,
-          driveMin: trip.driveMin,
-          hikeMin: trip.hikeMin,
-          location: trip.sun,
-          travelMode: transit ? "transit" : "auto",
-          approx: transit && !trip.fixed,
-          fixed: trip.fixed ?? null,
-        });
-        const past = trip.date < today;
-        const good = plan?.verdict === "ok" || plan?.verdict === "close";
-        return (
-          <li
-            key={trip.slug}
-            className={`flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] p-4`}
-          >
+      {trips.map((trip) => (
+        <TripCard key={trip.slug} trip={trip} today={today} open={open} remove={remove} went={went} start={start} />
+      ))}
+    </ul>
+  );
+}
+
+const DAY = 86400000;
+
+/** The saved copy's age, said plainly: "14. 11. o 18:05". */
+function copyTime(iso: string, lang: Lang): string {
+  const d = new Date(iso);
+  return `${formatDateSk(isoDate(d), lang).replace(/\s?\d{4}$/, "")} ${lang === "en" ? "at" : "o"} ${formatTime(d)}`;
+}
+
+/**
+ * The trip day's forecast for a saved trip: a fresh one when there is signal (and the copy is updated with it),
+ * otherwise the copy saved with the trip. Old trips without a copy ask at the sun's place (the trail start or parking).
+ */
+function useSavedWeather(trip: SavedTrip, plan: DayPlan | null, past: boolean) {
+  const { patch } = useSavedTrips();
+  const [now] = useState(() => Date.now());
+  const saved = trip.weather;
+  const inRange = !!plan && !past && plan.hikeStart.getTime() - now < FORECAST_DAYS * DAY;
+  const url = saved?.url ?? weatherUrl(trip.sun);
+  const live = useCachedJson<WeatherForecast>(inRange ? url : null);
+  const liveTop = useCachedJson<WeatherForecast>(inRange ? (saved?.topUrl ?? null) : null);
+  const below = live.data ? forecastForDay(live.data, trip.date) : null;
+  const above = liveTop.data ? forecastForDay(liveTop.data, trip.date) : null;
+  const key = `${live.data?.updated}|${liveTop.data?.updated}`;
+  useEffect(() => {
+    if (!below) return;
+    if (saved && saved.below?.updated === below.updated && (above === null || saved.above?.updated === above.updated)) return;
+    patch(trip.slug, {
+      weather: { url, topUrl: saved?.topUrl ?? null, below, above: above ?? saved?.above ?? null, at: new Date().toISOString() },
+    });
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  const none = { below: null, above: null, copyAt: null };
+  if (!inRange) return { ...none, missing: plan && !past ? ("far" as const) : null };
+  if (below) return { below, above: above ?? saved?.above ?? null, copyAt: null, missing: null };
+  const loading = live.status === "loading" || live.status === "idle";
+  if (saved?.below) return { below: saved.below, above: saved.above, copyAt: loading ? null : saved.at, missing: null };
+  return { ...none, missing: loading ? null : ("signal" as const) };
+}
+
+/** The weather lines under the dial: the day in words and temperatures, rain, storm/wind/frost notes, and how old a saved copy is. */
+function SavedWeatherLines({ plan, below, above, copyAt, missing }: { plan: DayPlan; below: WeatherForecast | null; above: WeatherForecast | null; copyAt: string | null; missing: "far" | "signal" | null }) {
+  const t = useT();
+  const lang = useLang();
+  if (!below) {
+    if (!missing) return null;
+    return <p className="text-[13px] text-[var(--muted)]">{missing === "far" ? t("Predpoveď na tento deň ešte nie je.") : t("Predpoveď počasia sa načíta, keď budete mať signál.")}</p>;
+  }
+  const from = plan.segments[0].start;
+  const to = plan.segments[plan.segments.length - 1].end;
+  const report = tripWeatherReport(below, above, from, to, { from: plan.hikeStart, to: plan.hikeEnd }, lang);
+  if (!report) return <p className="text-[13px] text-[var(--muted)]">{t("Predpoveď na tento deň ešte nie je.")}</p>;
+  const notes = weatherNotes(below, above, plan.hikeStart, plan.hikeEnd, lang);
+  const stormy = notes.some((n) => n.strong);
+  const temp = report.tempMin === report.tempMax ? `${report.tempMax}` : t("{a} až {b}", { a: report.tempMin, b: report.tempMax });
+  const worst = report.worst.charAt(0).toUpperCase() + report.worst.slice(1);
+  return (
+    <div className="flex flex-col gap-1 text-sm">
+      <p>
+        <span className="opacity-70">{t("Počasie")}: </span>
+        <span className="font-medium">
+          {worst}, {temp.replaceAll("-", "−")}&nbsp;°C
+        </span>
+        {report.topMin !== null && <span className="opacity-70">, {t("na vrchole až {t} °C", { t: String(report.topMin).replace("-", "−") })}</span>}
+      </p>
+      {report.wet && !stormy && <p className="text-[13px] font-semibold text-[var(--warn)]">{wetText(report.wet, lang)}</p>}
+      {notes.map((n) => (
+        <p key={n.text} className={`flex items-start gap-1.5 text-[13px] font-semibold ${n.strong ? "text-[var(--danger)]" : "text-[var(--warn)]"}`}>
+          {n.strong && <UiIcon name="warn" size={16} className="mt-0.5 shrink-0" />}
+          <span>{n.text}</span>
+        </p>
+      ))}
+      {copyAt && <p className="text-[13px] text-[var(--muted)]">{t("Uložená predpoveď z {when}.", { when: copyTime(copyAt, lang) })}</p>}
+    </div>
+  );
+}
+
+function TripCard({
+  trip,
+  today,
+  open,
+  remove,
+  went,
+  start,
+}: {
+  trip: SavedTrip;
+  today: string;
+  open: (trip: SavedTrip) => void;
+  remove: (slug: string) => void;
+  went: (trip: SavedTrip) => void;
+  start: (trip: SavedTrip) => void;
+}) {
+  const t = useT();
+  const lang = useLang();
+  const transit = trip.transit ?? false;
+  const byTrain = transit && !!trip.fixed;
+  const plan = planDay({
+    date: trip.date,
+    start: trip.time,
+    driveMin: trip.driveMin,
+    hikeMin: trip.hikeMin,
+    location: trip.sun,
+    travelMode: transit ? "transit" : "auto",
+    approx: transit && !trip.fixed,
+    fixed: trip.fixed ?? null,
+  });
+  const past = trip.date < today;
+  const good = plan?.verdict === "ok" || plan?.verdict === "close";
+  const weather = useSavedWeather(trip, plan, past);
+  return (
+          <li className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-x-3">
               <h2 className="text-lg font-semibold">{trip.name}</h2>
               <span className="text-sm tabular-nums">
@@ -182,6 +282,8 @@ function TripList({
             <p className="text-sm opacity-70">
               {trip.start ? t("Štart: {name}", { name: t(trip.start.label) }) : t("Bez miesta štartu")}
               {trip.driveMin !== null && ` · ${t(byTrain ? "vlakom" : transit ? "autobusom" : "autom")} ${formatDuration(trip.driveMin)}`}
+              {` · ${t("túra")} ${formatDuration(trip.hikeMin)}`}
+              {trip.withKids && ` · ${t("s deťmi")}`}
               {" · "}
               {trip.offline === "ok" ? t("funguje bez signálu") : t("len so signálom")}
             </p>
@@ -194,7 +296,7 @@ function TripList({
             {plan && (
               <>
                 <div className="-mx-4 overflow-hidden border-y border-[var(--border)]">
-                  <SunArc plan={plan} profile={trip.profile ?? null} sun={trip.sun} hasDrive={trip.driveMin !== null} byBus={transit} byTrain={byTrain} />
+                  <SunArc plan={plan} profile={trip.profile ?? null} sun={trip.sun} hasDrive={trip.driveMin !== null} byBus={transit} byTrain={byTrain} weather={weather.below} />
                 </div>
                 <p className="text-sm">
                   <span className="opacity-70">{t("koniec túry")} {formatTime(plan.hikeEnd)} </span>
@@ -202,6 +304,7 @@ function TripList({
                     {t(VERDICT_SHORT[plan.verdict])}
                   </span>
                 </p>
+                {!past && <SavedWeatherLines plan={plan} below={weather.below} above={weather.above} copyAt={weather.copyAt} missing={weather.missing} />}
               </>
             )}
             <div className="flex flex-wrap gap-3 pt-1">
@@ -235,8 +338,5 @@ function TripList({
               </button>
             </div>
           </li>
-        );
-      })}
-    </ul>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { badDays, baseSymbol, betterDay, betterTime, skyKind, summarize, tripWeatherReport, weatherAt, weatherNotes, weatherWords } from "@/lib/weather";
+import { badDays, baseSymbol, forecastForDay, betterDay, betterTime, skyKind, summarize, tripWeatherReport, weatherAt, weatherNotes, weatherWords } from "@/lib/weather";
 import type { WeatherForecast } from "@/lib/weather";
 
 const hourly = (h: number, temp: number, rain: number, symbol: string) => ({
@@ -209,5 +209,20 @@ describe("better time", () => {
     expect(betterTime(day, null, new Date(2026, 9, 24, 13), new Date(2026, 9, 24, 15), window)).toBeNull();
     const tight = { earliest: new Date(2026, 9, 24, 8), latest: new Date(2026, 9, 24, 13) };
     expect(betterTime(day, null, new Date(2026, 9, 24, 9), new Date(2026, 9, 24, 13), tight)).toBeNull();
+  });
+});
+
+describe("forecastForDay", () => {
+  it("keeps only the steps that touch the day (until 6:00 the next morning)", () => {
+    const steps = [
+      { t: "2026-11-15T21:00:00Z", temp: 1, wind: 2, rain: 0, hours: 1, symbol: "cloudy" }, // 22:00 on the 15th
+      { t: "2026-11-15T23:00:00Z", temp: 1, wind: 2, rain: 0, hours: 1, symbol: "cloudy" }, // 0:00 on the 16th
+      { t: "2026-11-16T10:00:00Z", temp: 5, wind: 2, rain: 0, hours: 6, symbol: "fair" },
+      { t: "2026-11-17T04:00:00Z", temp: 0, wind: 2, rain: 0, hours: 1, symbol: "fog" }, // 5:00 on the 17th
+      { t: "2026-11-17T06:00:00Z", temp: 0, wind: 2, rain: 0, hours: 1, symbol: "fog" }, // 7:00 on the 17th
+    ];
+    const day = forecastForDay({ updated: "x", steps }, "2026-11-16");
+    expect(day.updated).toBe("x");
+    expect(day.steps.map((s) => s.t)).toEqual(["2026-11-15T23:00:00Z", "2026-11-16T10:00:00Z", "2026-11-17T04:00:00Z"]);
   });
 });

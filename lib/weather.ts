@@ -81,6 +81,23 @@ export function baseSymbol(code: string): string {
   return code.replace(/_(day|night|polartwilight)$/, "");
 }
 
+/**
+ * Only the steps that touch one Slovak calendar day (until 6:00 the next morning), so a saved
+ * trip keeps its day's forecast offline without storing the whole nine days.
+ */
+export function forecastForDay(forecast: WeatherForecast, date: string): WeatherForecast {
+  const [y, mo, d] = date.split("-").map(Number);
+  const a = zonedDate(y, mo, d).getTime();
+  const b = zonedDate(y, mo, d + 1, 6).getTime();
+  return {
+    updated: forecast.updated,
+    steps: forecast.steps.filter((s) => {
+      const t = new Date(s.t).getTime();
+      return t < b && t + s.hours * HOUR > a;
+    }),
+  };
+}
+
 /** Summary of the steps that overlap [from, to]; null when the forecast doesn't reach that far. */
 export function summarize(forecast: WeatherForecast, from: Date, to: Date): WeatherSummary | null {
   const a = from.getTime();
