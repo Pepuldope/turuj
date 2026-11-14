@@ -32,6 +32,8 @@ const HIGH_M = 1500;
 const LONG_MIN = 240;
 /** From this latest start (before 9:00) the walk fills most of the day's light. */
 const EARLY_START_MIN = 9 * 60;
+/** In Nov–Feb a walk this long or longer gets the headlamp anyway (Peter 2026-11-14: not for a 45-minute town walk). */
+const WINTER_LAMP_MIN = 120;
 
 const winter = (m: number) => m === 11 || m === 12 || m <= 2;
 
@@ -42,7 +44,7 @@ export function packList(lang: Lang, i: PackInput): PackItem[] {
   const l = lang === "en" ? String(litres) : String(litres).replace(".", ",");
   items.push({ short: tr(lang, "voda"), text: tr(lang, "Vodu: rátajte asi {l} l na osobu a vrstvu oblečenia navyše, aj keď je dole teplo.", { l }) });
 
-  const dark = winter(i.month) || i.latestStartMin === null || (i.latestStartMin !== undefined && i.latestStartMin < EARLY_START_MIN);
+  const dark = (winter(i.month) && i.walkMin >= WINTER_LAMP_MIN) || i.latestStartMin === null || (i.latestStartMin !== undefined && i.latestStartMin < EARLY_START_MIN);
   if (dark) items.push({ short: tr(lang, "čelovka"), text: tr(lang, "Čelovku: dni sú krátke a pri dlhšom výlete sa vám môže zotmieť skôr, než čakáte.") });
 
   if (!i.waterOnWalk) items.push({ short: "", text: tr(lang, "V našich dátach nie je na trase prameň, chata ani bufet, vodu si preto vezmite celú z domu.") });
