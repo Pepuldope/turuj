@@ -113,7 +113,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
   const { today, update, withKids } = useTripSettings();
   const t = useT();
   const lang = useLang();
-  const { destination, rideTo, approachMin, trailStart, transit: transitAccess, noCar, noBus, parking, stop, skip, walkFrom, trailJoin, walk: onFoot, choose, chooseStop, setWalking } = useTripAccess();
+  const { destination, rideTo, approachMin, trailStart, transit: transitAccess, noCar, noBus, parking, stop, skip, walkFrom, trailJoin, walk: onFoot, choose, pickStop, stopChoice, stopTotals, stopsPending, setWalking } = useTripAccess();
   // The walk from the parking (by car) or the stop (by train/bus) to the trail and back belongs to the day,
   // with or without a start: the walk back to the car must fit the light too. Parked up the trail, the
   // stretch below is skipped both ways.
@@ -247,7 +247,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
     setShared(fromLink);
     // Until the ride is known, the meeting time itself: the walk starts then.
     update({ date: fromLink.date, time: fromLink.meet ?? fromLink.time, withKids: fromLink.withKids, ...(fromLink.withKids ? { easier: true } : {}) });
-    if (fromLink.transit) chooseStop(fromLink.pick);
+    if (fromLink.transit) pickStop(fromLink.pick);
     else choose(fromLink.pick);
     // Once per link: the trip's own setters and slug don't change while the page is open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -501,7 +501,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
 
         <PlanStep id="access" n={accessN} title={t("Ako pôjdete")} summary={accessSummary}>
           <NoStartNote>{t("Bez štartu nepočítame cestu autom ani autobusom.")}</NoStartNote>
-          <TravelSwitch roadMin={roadMin} trainMin={rail.status === "ok" ? driveMin : null} busPending={tripPlan.loading} noCar={noCar} noBus={noBus} walkMin={walkThere} walking={walking} onWalk={setOnFoot} />
+          <TravelSwitch roadMin={roadMin} busTotal={stopTotals[stopChoice] ?? null} busPending={tripPlan.loading || stopsPending} noCar={noCar} noBus={noBus} walkMin={walkThere} walking={walking} onWalk={setOnFoot} />
           {/* The sub-heading follows the choice (Peter, 2026-11-13, mockup D1): where to park, or where to get off; on foot there is none. */}
           {!walking && (
             <h3 className="flex items-center gap-2 text-base font-bold">

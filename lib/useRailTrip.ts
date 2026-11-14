@@ -6,9 +6,9 @@ import type { RailJourney, RailTimetable, StationNear } from "@/lib/rail";
 import type { LatLng } from "@/lib/types";
 
 /** Stations this far from the start are worth riding to; further, a bus is the way. */
-const HOME_STATION_M = 6000;
+export const HOME_STATION_M = 6000;
 /** The train station a trail stop stands for (OSM and the timetable place it a little differently). */
-const TRAIL_STATION_M = 800;
+export const TRAIL_STATION_M = 800;
 /** For "vyrazte najneskôr": connections from this time (minutes), at most this many. */
 const DAY_FROM = 4 * 60;
 const DAY_COUNT = 30;

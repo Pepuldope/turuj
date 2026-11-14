@@ -7,6 +7,10 @@ import { useTripSettings } from "@/lib/tripSettings";
 import type { TrailJoin } from "@/lib/trailJoin";
 import type { WalkLine } from "@/lib/tripSchema";
 import { stopsByWalk, walkFacts } from "@/lib/walkFacts";
+import { pickPosition, rankStops } from "@/lib/stopPick";
+import type { StopTotal } from "@/lib/stopPick";
+import { useStopRides } from "@/lib/useStopRides";
+import { useUserLocation } from "@/lib/userLocation";
 import type { WalkFacts } from "@/lib/walkFacts";
 import type { LatLng, ParkingLot, TransitStop } from "@/lib/types";
 import "@/lib/legacyStorage";
@@ -31,12 +35,22 @@ export interface TripAccess {
   destination: LatLng | null;
   /** Parking -> trail start on foot, one way, minutes (0 when close or no parking). */
   parkingApproachMin: number;
-  /** Stops near the trail, nearest walk first. */
+  /**
+   * Stops near the trail: fastest door to trail first when the start is known (lib/stopPick.ts), else nearest walk first.
+   * The first is the default; a bus within ~10 % of a faster train comes before it.
+   */
   stops: TransitStop[];
-  /** Index into stops; 0 = the nearest. */
+  /** Index into stops; 0 = the default. */
   stopChoice: number;
   chooseStop: (index: number) => void;
-  /** The picked stop (by default the nearest). */
+  /** The picked stop, as an index into the nearest-walk order (stable: what a shared link and a saved trip carry). */
+  stopPick: number;
+  pickStop: (walkIndex: number) => void;
+  /** Per stop (same order as `stops`): minutes from the start to the trail start, null while unknown or without a start. */
+  stopTotals: (StopTotal | null)[];
+  /** A start is set but the rides to the stops are still loading: show no stand-in time. */
+  stopsPending: boolean;
+  /** The picked stop (by default the fastest). */
   stop: TransitStop | null;
   /** By car: the drive goes on. By train/bus: an estimated ride to the stop, the walk starts there. */
   transit: boolean;
@@ -76,6 +90,10 @@ const Ctx = createContext<TripAccess>({
   stops: [],
   stopChoice: 0,
   chooseStop: () => {},
+  stopPick: 0,
+  pickStop: () => {},
+  stopTotals: [],
+  stopsPending: false,
   stop: null,
   transit: false,
   noCar: false,
@@ -129,6 +147,27 @@ function usePick(key: string, slug: string, count: number): [number, (index: num
   return [stored >= 0 && stored < count ? stored : 0, pick];
 }
 
+/** The stop the visitor picked themselves for this trip, as an index into the nearest-walk order; null = none (take the default). */
+function useStopPick(slug: string): [number | null, (index: number) => void] {
+  const stored = useSyncExternalStore(
+    subscribe,
+    () => readAll(STOP_KEY)[slug] ?? -1,
+    () => -1
+  );
+  const pick = useCallback(
+    (index: number) => {
+      try {
+        sessionStorage.setItem(STOP_KEY, JSON.stringify({ ...readAll(STOP_KEY), [slug]: index }));
+      } catch {
+        // Storage blocked: the pick lasts until the next render only.
+      }
+      window.dispatchEvent(new Event(EVENT));
+    },
+    [slug]
+  );
+  return [stored >= 0 ? stored : null, pick];
+}
+
 export function TripAccessProvider({
   slug,
   parkingLots,
@@ -146,9 +185,19 @@ export function TripAccessProvider({
   children: ReactNode;
 }) {
   const [choice, choose] = usePick(PARKING_KEY, slug, parkingLots.length);
-  // Nearest walk to the trail first (a stop up the trail counts from where it joins).
-  const stops = useMemo(() => stopsByWalk(transitStops), [transitStops]);
-  const [stopChoice, chooseStop] = usePick(STOP_KEY, slug, stops.length);
+  // Nearest walk to the trail first (a stop up the trail counts from where it joins): the stable order saved picks refer to.
+  const byWalk = useMemo(() => stopsByWalk(transitStops), [transitStops]);
+  // From a known start, the stops are listed fastest first (ride + walk); the default is the first (lib/stopPick.ts).
+  const { start } = useUserLocation();
+  const rides = useStopRides(byWalk, trailStart);
+  const ranking = useMemo(() => rankStops(byWalk, rides), [byWalk, rides]);
+  const stops = useMemo(() => ranking.order.map((i) => byWalk[i]), [ranking, byWalk]);
+  const stopTotals = useMemo(() => ranking.order.map((i) => ranking.totals[i]), [ranking]);
+  const stopsPending = start !== null && byWalk.length > 0 && rides === null;
+  const [saved, pickStop] = useStopPick(slug);
+  const stopChoice = pickPosition(ranking.order, saved !== null && saved < byWalk.length ? saved : null);
+  const stopPick = ranking.order[stopChoice] ?? 0;
+  const chooseStop = useCallback((index: number) => pickStop(ranking.order[index] ?? 0), [pickStop, ranking]);
   // Without a car park the bus is the only way; the remembered choice stays as it is for other trips.
   const noCar = parkingLots.length === 0 && transitStops.length > 0;
   // And the other way round: with no stop, a remembered "bus" would leave the day without a ride at all.
@@ -172,6 +221,10 @@ export function TripAccessProvider({
         stops: [],
         stopChoice: 0,
         chooseStop,
+        stopPick: 0,
+        pickStop,
+        stopTotals: [],
+        stopsPending: false,
         stop: null,
         transit: false,
         noCar,
@@ -203,6 +256,10 @@ export function TripAccessProvider({
       stops,
       stopChoice,
       chooseStop,
+      stopPick,
+      pickStop,
+      stopTotals,
+      stopsPending,
       stop,
       transit,
       noCar,
@@ -216,7 +273,7 @@ export function TripAccessProvider({
       walking,
       setWalking,
     };
-  }, [parkingLots, stops, choice, choose, stopChoice, chooseStop, trailStart, trail, transit, noCar, noBus, walking]);
+  }, [parkingLots, stops, stopTotals, stopsPending, stopPick, pickStop, choice, choose, stopChoice, chooseStop, trailStart, trail, transit, noCar, noBus, walking]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
