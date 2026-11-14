@@ -1171,7 +1171,6 @@ export const EN: Record<string, string> = {
   "Najneskôr vyrazte o": "Leave by",
   "Vyraziť o {time}": "Leave at {time}",
   "dlhá · vyrazte do": "long · leave by",
-  "Vybrať čas": "Pick a time",
   "auto": "car",
   "autobus": "bus",
   "pešo": "on foot",

@@ -404,13 +404,29 @@ function StartBlock({
         <label htmlFor="kedy-start" className="shrink-0 text-[15px] font-bold whitespace-nowrap">
           {fieldWord}
         </label>
-        <span className="relative max-w-[9.5rem] min-w-0 flex-1">
+        {/* iPhone Safari draws a time input at its own width, whatever the CSS says, so it ran off the screen (Peter,
+            2026-11-14). The box is ours: the time as plain text and our clock icon; the real input lies invisible over it
+            and takes the tap, which opens the system's own time picker (same trick as the "Iný deň" tile). */}
+        <span className="relative flex max-w-[9.5rem] min-w-0 flex-1 items-center rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] py-1.5 pr-1 pl-3 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--accent)]">
+          <span aria-hidden="true" className="font-data min-w-0 flex-1 truncate text-[1.45rem] leading-tight font-semibold min-[380px]:text-[1.6rem]">
+            {shown}
+          </span>
+          <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center text-[var(--accent)]">
+            <UiIcon name="clock" size={22} />
+          </span>
           <input
             ref={field}
             id="kedy-start"
             type="time"
             step={300}
             value={shown}
+            onClick={(e) => {
+              try {
+                e.currentTarget.showPicker();
+              } catch {
+                // Not supported or already open: the tap on the input opens it.
+              }
+            }}
             onChange={(e) => {
               if (!e.target.value) return;
               setTyped(e.target.value);
@@ -418,24 +434,9 @@ function StartBlock({
               onTyped?.(e.target.value);
             }}
             onBlur={() => setTyped(null)}
-            // The browser's own clock button is hidden (it was a second icon next to ours); ours opens the same picker.
-            className="font-data box-border block w-full min-w-0 appearance-none rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] py-1.5 pr-11 pl-3 text-[1.45rem] leading-tight font-semibold focus-visible:outline-2 focus-visible:outline-[var(--accent)] min-[380px]:text-[1.6rem] [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-date-and-time-value]:m-0 [&::-webkit-date-and-time-value]:min-w-0 [&::-webkit-date-and-time-value]:text-left"
+            // 16 px: an iPhone zooms into a smaller-text field when it is tapped (the field itself is invisible).
+            className="absolute inset-0 h-full w-full min-w-0 cursor-pointer appearance-none text-base opacity-0"
           />
-          <button
-            type="button"
-            tabIndex={-1}
-            aria-label={t("Vybrať čas")}
-            onClick={() => {
-              try {
-                field.current?.showPicker();
-              } catch {
-                field.current?.focus();
-              }
-            }}
-            className="absolute top-1/2 right-1 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
-          >
-            <UiIcon name="clock" size={22} />
-          </button>
         </span>
       </div>
       {/* What the departure makes of the day, quietly: the walk's own times and when you are home. */}
