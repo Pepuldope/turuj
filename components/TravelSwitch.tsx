@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { transitMinutes } from "@/lib/drive";
 import { formatDurationShort } from "@/lib/format";
 import { useTripSettings } from "@/lib/tripSettings";
 import type { Travel } from "@/lib/tripSettings";
@@ -100,14 +99,16 @@ export function TravelSwitch({
               </button>
             );
           const on = !walking && travel === o.value;
+          // The bus tile shows only the picked stop's real total: no rough stand-in first, and no blank while the plan
+          // reloads once the total is known (Peter, 2026-11-14: it blinked estimate → nothing → the same time).
           const time =
-            roadMin === null || (o.value === "transit" && busPending)
-              ? null
-              : o.value === "car"
-                ? formatDurationShort(roadMin)
-                : busTotal
-                  ? `${busTotal.approx ? "~" : ""}${formatDurationShort(busTotal.totalMin)}`
-                  : `~${formatDurationShort(transitMinutes(roadMin))}`;
+            o.value === "car"
+              ? roadMin === null
+                ? null
+                : formatDurationShort(roadMin)
+              : busPending || !busTotal
+                ? null
+                : `${busTotal.approx ? "~" : ""}${formatDurationShort(busTotal.totalMin)}`;
           return tile(o.value, {
             label: t(o.label),
             icon: o.icon,
