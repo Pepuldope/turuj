@@ -324,7 +324,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
   const accessSummary = walking
     ? t("Pešo")
     : transit
-      ? `${t(stop?.mode === "vlak" ? "Vlakom" : "Autobusom")} · ${stop ? stopLabel(stop.name) : t("bez zastávky")}`
+      ? `${t(stop?.mode === "vlak" ? "Vlakom" : "Autobusom")} · ${stop ? `${t("zastávka")} ${stopLabel(stop.name)}` : t("bez zastávky")}`
       : `${t("Autom")} · ${parking ? [parkingTitle(parking.name, t, true), summaryWalk(parking, lang), feeLabel(parking, lang)].filter(Boolean).join(", ") : t("bez parkoviska")}`;
   const steps: StepDef[] = [
     ...(routeChoice ? [{ id: "route", n: 1, title: t("Kadiaľ pôjdete"), open: true, fit: "routes" as const }] : []),
