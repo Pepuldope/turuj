@@ -43,7 +43,7 @@ export function ShareButton({ plan, date, time, hikeMin, hasDrive, closures = []
   const { withKids } = useTripSettings();
   const t = useT();
   const lang = useLang();
-  const { transit, choice, stopChoice, parking, stop } = useTripAccess();
+  const { transit, choice, stopPick, parking, stop } = useTripAccess();
   const [copied, setCopied] = useState(false);
 
   async function share() {
@@ -52,7 +52,7 @@ export function ShareButton({ plan, date, time, hikeMin, hasDrive, closures = []
     const byStop = hasDrive && transit && stop !== null;
     const atParking = hasDrive && !transit;
     const url = new URL(
-      sharePath(trip.slug, { date, meet: clock(plan.hikeStart), transit: byStop, withKids, pick: byStop ? stopChoice : choice }, lang),
+      sharePath(trip.slug, { date, meet: clock(plan.hikeStart), transit: byStop, withKids, pick: byStop ? stopPick : choice }, lang),
       window.location.origin
     ).toString();
     const text = shareText({

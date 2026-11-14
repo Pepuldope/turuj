@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { DayPlan } from "@/lib/dayPlan";
 import { approachMin } from "@/lib/dayPlan";
-import { formatDuration, formatFromUser, formatTime, stopLabel, TRANSIT_LABEL } from "@/lib/format";
+import { formatDuration, formatDurationShort, formatFromUser, formatTime, stopLabel, TRANSIT_LABEL } from "@/lib/format";
 import { appleTransitUrl, cpSkBackUrl, cpSkUrl, googleTransitUrl, startTown } from "@/lib/links";
 import type { RailJourney } from "@/lib/rail";
 import type { RailTrip } from "@/lib/useRailTrip";
@@ -46,22 +46,25 @@ export function StopIcon({ mode, size = 16 }: { mode: TransitStop["mode"]; size?
  * The walk to the trail, the plan and the cp.sk searches follow the pick.
  */
 export function StopOptions() {
-  const { stops, stopChoice, chooseStop, transit, trailStart } = useTripAccess();
+  const { stops, stopChoice, chooseStop, stopTotals, transit, trailStart } = useTripAccess();
   const t = useT();
   const lang = useLang();
   const [all, setAll] = useState(false);
   if (!transit) return null;
   const options = stops.slice(0, MAX_OPTIONS);
   const rows = shownRows(options.length, all, [stopChoice]);
+  const timed = options.some((_, i) => stopTotals[i]);
 
   return (
     <div className="flex flex-col gap-2">
       {options.length === 0 && <p className="text-sm">{t("Pri trase sme nenašli zastávku vlaku ani autobusu.")}</p>}
+      {timed && <p className="text-xs text-[var(--muted)]">{t("Čas od vášho štartu po začiatok túry, najrýchlejšie prvé. ~ je odhad.")}</p>}
       {options.length > 0 && (
         <ul className="flex flex-col gap-1.5" role="radiogroup" aria-label={t("Zastávka")}>
           {options.map((s, i) => {
             if (!rows.includes(i)) return null;
             const selected = i === stopChoice;
+            const total = stopTotals[i];
             return (
               <li key={s.id}>
                 <button
@@ -80,12 +83,18 @@ export function StopOptions() {
                   <span className="mt-pin mt-pin-transit shrink-0" aria-hidden>
                     <StopIcon mode={s.mode} />
                   </span>
-                  <span className="flex flex-col leading-snug">
+                  <span className="flex min-w-0 flex-1 flex-col leading-snug">
                     <span className="font-semibold">{stopLabel(s.name)}</span>
                     <span className="text-[13px] text-[var(--muted)]">
                       {t(TRANSIT_LABEL[s.mode])}, {walkLabel(s, lang)}
                     </span>
                   </span>
+                  {total && (
+                    <span className="font-data shrink-0 self-center text-lg leading-none font-semibold whitespace-nowrap">
+                      {total.approx ? "~" : ""}
+                      {formatDurationShort(total.totalMin)}
+                    </span>
+                  )}
                 </button>
               </li>
             );

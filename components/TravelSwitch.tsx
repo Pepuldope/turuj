@@ -9,6 +9,7 @@ import type { UiIconName } from "@/lib/uiIcons";
 import { UiIcon } from "@/components/UiIcon";
 import { NoParkingChip, NoStopChip } from "@/components/routeBits";
 import { useT } from "@/lib/i18n";
+import type { StopTotal } from "@/lib/stopPick";
 
 const OPTIONS: { value: Travel; label: string; icon: UiIconName }[] = [
   { value: "car", label: "Autom", icon: "car" },
@@ -24,7 +25,7 @@ const OPTIONS: { value: Travel; label: string; icon: UiIconName }[] = [
  */
 export function TravelSwitch({
   roadMin = null,
-  trainMin = null,
+  busTotal = null,
   busPending = false,
   noCar = false,
   noBus = false,
@@ -33,7 +34,8 @@ export function TravelSwitch({
   onWalk,
 }: {
   roadMin?: number | null;
-  trainMin?: number | null;
+  /** Door to trail by bus or train for the picked stop (the default: the fastest), from the stop list; null without a start. */
+  busTotal?: StopTotal | null;
   /** The timetable or the route is still loading: the bus time would be a stand-in that then jumps, so none is shown yet. */
   busPending?: boolean;
   noCar?: boolean;
@@ -103,8 +105,8 @@ export function TravelSwitch({
               ? null
               : o.value === "car"
                 ? formatDurationShort(roadMin)
-                : trainMin !== null
-                  ? formatDurationShort(trainMin)
+                : busTotal
+                  ? `${busTotal.approx ? "~" : ""}${formatDurationShort(busTotal.totalMin)}`
                   : `~${formatDurationShort(transitMinutes(roadMin))}`;
           return tile(o.value, {
             label: t(o.label),

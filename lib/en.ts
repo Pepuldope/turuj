@@ -177,6 +177,7 @@ export const EN: Record<string, string> = {
   "Vyberte, odkiaľ vyrážate, a pridáme aj cestu autom.": "Tell us where you're starting from and we'll add the drive.",
   "Z": "From",
   "Zastávka": "Stop",
+  "Čas od vášho štartu po začiatok túry, najrýchlejšie prvé. ~ je odhad.": "Time from your start to the trailhead, fastest first. ~ is an estimate.",
   "zastávka": "stop",
   "Zastávka {stop}, {m} k trase": "{stop} stop, {m} to the route",
   "Zastávka {stop}, {m} pešo k trase": "{stop} stop, {m} walk to the route",
