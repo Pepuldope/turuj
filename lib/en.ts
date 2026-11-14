@@ -593,7 +593,7 @@ export const EN: Record<string, string> = {
   "Chodník zo Štrbského Plesa je do 31. mája zatvorený. Na Chatu pod Soliskom sa dá ísť lanovkou. Kedy premáva, si overte na vt.sk.": "The path from Štrbské Pleso is closed until 31 May. You can get to Chata pod Soliskom by chairlift. Check when it runs on vt.sk.",
   "Sezónna uzávera v TANAP-e: chodník k Symbolickému cintorínu pod Ostrvou je zatvorený od 15. decembra do 30. apríla.": "Seasonal closure in the Tatra National Park (TANAP): the trail to the Symbolic Cemetery below Ostrva is closed from 15 December to 30 April.",
   "Jarná uzávera v NP Malá Fatra: chodník na Veľký Rozsutec je zatvorený od 1. marca do 15. júna (hniezdenie, ochrana prírody).": "Spring closure in Malá Fatra National Park: the trail to Veľký Rozsutec is closed from 1 March to 15 June (nesting, nature protection).",
-  "Poplatok za rebríky a stúpačky v roklinách Slovenského raja: dospelí 3 €, deti 2 €, v hotovosti.": "Fee for the ladders and steps in the Slovenský raj gorges: adults €3, children €2, cash only.",
+  "Poplatok za rebríky, cena podľa vstupu, overte na mieste.": "Fee for the ladders, price depends on the entrance, check on site.",
   "ročne": "a year",
   "9,99 €": "€9.99",
 

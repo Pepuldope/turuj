@@ -4,7 +4,7 @@
   "rules": [
     {
       "id": "slovensky-raj-rebriky",
-      "text": "Poplatok za rebríky a stúpačky v roklinách Slovenského raja: dospelí 3 €, deti 2 €, v hotovosti.",
+      "text": "Poplatok za rebríky, cena podľa vstupu, overte na mieste.",
       "amount_eur": 3,
       "source_url": "https://www.noviny.sk/slovensko/1095591-slovensky-raj-je-spoplatneny-brigadnicky-vyberaju-poplatky-pri-rebrikoch-a-stupackach",
       "verified_on": "2026-10-10",
