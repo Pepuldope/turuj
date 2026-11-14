@@ -9,7 +9,7 @@ import type { Place } from "@/lib/geocode";
 import { useUserLocation } from "@/lib/userLocation";
 import { UiIcon } from "@/components/UiIcon";
 import { PickStartMap } from "@/components/PickStartMap";
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
 import { useStartFlash } from "@/lib/startFlash";
 
 type SearchState = "idle" | "searching" | "results" | "empty" | "error";
@@ -28,6 +28,7 @@ const warnNote = "flex items-start gap-1.5 text-[var(--warn)] [&>svg]:mt-px";
 export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Zmeniť štart"): always open, closed by this. */ onDone?: () => void } = {}) {
   const { status, message, locate, start, setManualStart, setPicking, auto } = useUserLocation();
   const t = useT();
+  const lang = useLang();
   const [openState, setOpenState] = useState(false);
   const open = onDone ? true : openState;
   const setOpen = (v: boolean) => (onDone ? !v && onDone() : setOpenState(v));
@@ -72,7 +73,7 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
     abortRef.current = ctrl;
     setSearch("searching");
     try {
-      const found = await searchPlaces(query, ctrl.signal);
+      const found = await searchPlaces(query, ctrl.signal, lang);
       setResults(found);
       setSearch(found.length ? "results" : "empty");
     } catch (err) {
