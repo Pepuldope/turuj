@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<title>Časové vymedzenie uzáver</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+
+  :root{
+    --bg: #f4f2ee;
+    --panel: #ffffff;
+    --ink: #23261f;
+    --ink-soft: #6b6f63;
+    --line: #e3e0d8;
+    --today: #d6243a;
+    --chip-w: 300px;
+    --gap: 6px;
+    --label-w: 306px; /* chip + medzera */
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    font-family:'Inter', sans-serif;
+    color:var(--ink);
+    padding:6px 8px;
+  }
+
+  .masthead{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+    margin:0 0 4px;
+    border-bottom:1px solid var(--ink);
+    padding-bottom:2px;
+  }
+  .masthead h1{
+    font-family:'Inter', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    margin:0;
+    line-height:1.2;
+  }
+  .masthead .sub{
+    font-family:'JetBrains Mono', monospace;
+    font-size:9px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+
+  .chart{
+    background:var(--panel);
+    border-radius:6px;
+    border:1px solid var(--line);
+    padding:4px 8px 4px;
+  }
+
+  .plot{ position:relative; }
+
+  .month-axis{
+    position:relative;
+    height:13px;
+    margin-top:13px; /* miesto pre štítok "Dnes" */
+    margin-left:var(--label-w);
+    border-bottom:1px solid var(--line);
+    margin-bottom:1px;
+  }
+  .month-axis span{
+    position:absolute;
+    top:0;
+    font-family:'JetBrains Mono', monospace;
+    font-size:9px;
+    line-height:12px;
+    color:var(--ink-soft);
+    transform:translateX(2px);
+  }
+
+  .row{
+    display:flex;
+    align-items:center;
+    gap:var(--gap);
+    padding:1px 0;
+    border-bottom:1px dashed var(--line);
+  }
+  .row:last-child{border-bottom:none;}
+
+  .chip{
+    flex:0 0 var(--chip-w);
+    display:flex;
+    align-items:center;
+    padding:2px 8px;
+    border-radius:999px;
+    color:#fff;
+    font-weight:600;
+    font-size:10px;
+    line-height:1.1;
+  }
+  .chip .label{ overflow-wrap:anywhere; }
+
+  .track{
+    position:relative;
+    flex:1 1 auto;
+    height:18px;
+    background:
+      repeating-linear-gradient(to right,
+        transparent 0, transparent calc(8.3333% - 1px), var(--line) calc(8.3333% - 1px), var(--line) 8.3333%);
+  }
+  .seg{
+    position:absolute;
+    top:1px;
+    height:16px;
+    border-radius:4px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 4px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:8px;
+    color:rgba(0,0,0,.55);
+    white-space:nowrap;
+    overflow:hidden;
+  }
+  .seg .d{opacity:.85;}
+  .seg.narrow{padding:0 2px;}
+  .seg.dark{color:rgba(255,255,255,.85);}
+
+  /* ===== Čiara "dnes" ===== */
+  .today-line{
+    position:absolute;
+    top:0;
+    bottom:0;
+    width:0;
+    border-left:2px solid var(--today);
+    pointer-events:none;
+    z-index:10;
+    display:none;
+  }
+  .today-line .today-label{
+    position:absolute;
+    top:0;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--today);
+    color:#fff;
+    font-family:'JetBrains Mono', monospace;
+    font-size:9px;
+    font-weight:500;
+    line-height:1;
+    padding:2px 5px;
+    border-radius:3px;
+    white-space:nowrap;
+  }
+
+  footer{
+    margin-top:3px;
+    font-size:9px;
+    line-height:1.2;
+    color:var(--ink-soft);
+    font-family:'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+  <div class="masthead">
+    <h1>Časové vymedzenie uzáver</h1>
+    <div class="sub">január – december</div>
+  </div>
+
+  <div class="chart">
+
+    <div class="plot" id="plot">
+      <div class="month-axis" id="monthAxis"></div>
+
+      <div id="rows"></div>
+
+      <div class="today-line" id="todayLine">
+        <span class="today-label" id="todayLabel"></span>
+      </div>
+    </div>
+
+    <footer>Farebne vyznačené úseky znázorňujú obdobia kedy možno vykonávať danú činnosť, zatiaľ čo bezfarebné plochy označujú časové obdobia uzáver. Červená zvislá čiara označuje dnešný deň.</footer>
+  </div>
+
+<script>
+const cum = [0,31,59,90,120,151,181,212,243,273,304,334];
+const totalDays = 365;
+function doy(m,d){ return cum[m-1] + d; }
+function pct(day){ return (day-1)/totalDays*100; }
+function span(start,end){
+  return { left: pct(start), width: (end-start+1)/totalDays*100 };
+}
+function fmt(m,d){
+  return String(d).padStart(2,'0') + '.' + String(m).padStart(2,'0') + '.';
+}
+
+const months = ['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
+const axis = document.getElementById('monthAxis');
+months.forEach((name,i)=>{
+  const el = document.createElement('span');
+  el.textContent = name;
+  el.style.left = (cum[i]/totalDays*100) + '%';
+  axis.appendChild(el);
+});
+
+const data = [
+  { label:'§4 Pešia turistika celoročná', color:'#e0705f', dark:true,
+    segs:[[doy(1,1),doy(12,31)]] },
+  { label:'§4 Pešia turistika so sezónnou uzáverou', color:'#F4A460', dark:true,
+    segs:[[doy(6,1),doy(10,31)]] },
+  { label:'§4 Pešia turistika na chodníku Juráňová dolina, ústie – Rázcestie pod Umrlou', color:'#df9138', dark:true,
+    segs:[[doy(5,1),doy(10,31)]] },
+  { label:'§4 Pešia turistika na chodníku Symbolický cintorín', color:'#F3C12C', dark:false,
+    segs:[[doy(5,1),doy(12,14)]] },
+  { label:'§5 Cykloturistické trasy v súbehu s uzatvoreným turistickým chodníkom', color:'#87b653', dark:true,
+    segs:[[doy(6,1),doy(10,31)]] },
+  { label:'§6 horolezectvo', color:'#8647ba', dark:true,
+    segs:[[doy(1,1),doy(4,15)],[doy(6,1),doy(10,31)],[doy(12,15),doy(12,31)]] },
+  { label:'§6 horolezectvo vyhradené lokality', color:'#BF80FF', dark:false,
+    segs:[[doy(1,1),doy(4,15)],[doy(6,1),doy(12,31)]] },
+  { label:'§6 zimné lezenie Tisovky', color:'#9c93c2', dark:true,
+    segs:[[doy(1,1),doy(2,28)],[doy(11,1),doy(12,31)]] },
+  { label:'§7 skialpinizmus', color:'#5286bd', dark:true,
+    segs:[[doy(1,1),doy(4,15)],[doy(12,15),doy(12,31)]] },
+  { label:'§8 bivakovanie pre horolezcov', color:'#914f8c', dark:true,
+    segs:[[doy(1,1),doy(4,15)],[doy(6,1),doy(10,31)],[doy(12,15),doy(12,31)]] },
+  { label:'§9 zimná turistika', color:'#0096C7', dark:true,
+    segs:[[doy(1,1),doy(4,15)],[doy(12,15),doy(12,31)]] },
+  { label:'§12 vodná turistika', color:'#CAF0F8', dark:false,
+    segs:[[doy(4,15),doy(9,30)]] },
+  { label:'§13 geocaching', color:'#3f9d92', dark:false,
+    segs:[[doy(6,1),doy(10,31)]] },
+];
+
+function toMD(day){
+  for(let m=11;m>=0;m--){
+    if(day>cum[m]) return [m+1, day-cum[m]];
+  }
+  return [1, day];
+}
+
+const rowsEl = document.getElementById('rows');
+data.forEach(item=>{
+  const row = document.createElement('div');
+  row.className = 'row';
+
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.style.background = `linear-gradient(135deg, ${item.color}, ${shade(item.color,-14)})`;
+  chip.innerHTML = `<span class="label">${item.label}</span>`;
+  row.appendChild(chip);
+
+  const track = document.createElement('div');
+  track.className = 'track';
+
+  item.segs.forEach(([start,end])=>{
+    const {left,width} = span(start,end);
+    const seg = document.createElement('div');
+    seg.className = 'seg' + (item.dark ? ' dark' : '') + (width<10 ? ' narrow' : '');
+    seg.style.left = left+'%';
+    seg.style.width = width+'%';
+    seg.style.background = item.color;
+    const [m1,d1] = toMD(start);
+    const [m2,d2] = toMD(end);
+    if(width > 4){
+      seg.innerHTML = `<span class="d">${fmt(m1,d1)}</span><span class="d">${fmt(m2,d2)}</span>`;
+    } else {
+      seg.title = `${fmt(m1,d1)} – ${fmt(m2,d2)}`;
+    }
+    track.appendChild(seg);
+  });
+
+  row.appendChild(track);
+  rowsEl.appendChild(row);
+});
+
+function shade(hex, percent){
+  const num = parseInt(hex.slice(1),16);
+  let r = (num>>16) + Math.round(255*percent/100);
+  let g = ((num>>8)&0xff) + Math.round(255*percent/100);
+  let b = (num&0xff) + Math.round(255*percent/100);
+  r = Math.max(0,Math.min(255,r));
+  g = Math.max(0,Math.min(255,g));
+  b = Math.max(0,Math.min(255,b));
+  return '#' + (1<<24 | r<<16 | g<<8 | b).toString(16).slice(1);
+}
+
+/* ===== Čiara "dnes" ===== */
+(function placeToday(){
+  const now = new Date();
+  const m = now.getMonth() + 1;
+  const d = now.getDate();
+  const day = Math.min(doy(m, d), totalDays);
+  const p = (day - 0.5) / totalDays;
+
+  const line = document.getElementById('todayLine');
+  line.style.left = `calc(var(--label-w) + (100% - var(--label-w)) * ${p})`;
+  document.getElementById('todayLabel').textContent = 'Dnes ' + fmt(m, d);
+  line.style.display = 'block';
+})();
+</script>
+</body>
+</html>
