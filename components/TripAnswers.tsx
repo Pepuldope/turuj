@@ -38,6 +38,7 @@ import {
 import type { StartLine } from "@/lib/tripAnswers";
 import { clock, wallClock } from "@/lib/zoned";
 import { foodOnWalk, onRouteTeaser, pickRoutePlaces, placeText, waterOnWalk } from "@/lib/tripOnRoute";
+import { answerRows } from "@/lib/tripRows";
 import { packList, packTeaser } from "@/lib/tripPacking";
 import { difficultyText, heightsText, markedShareText, markingText, steepestText, terrainOf, terrainTeaser } from "@/lib/tripTerrain";
 import type { TerrainInput } from "@/lib/tripTerrain";
@@ -272,7 +273,7 @@ interface AnswersProps {
   region?: string | null;
 }
 
-/** The question rows of the trip page in ONE card: how long, terrain and signs, places on the way, parking, bus and train, closures and fees, when to leave, what to pack, mountain rescue (Tatras), about. */
+/** The question rows of the trip page in ONE card: how long, terrain and signs, places on the way, how to get there, closures and fees, when to leave, before you go (pack list, mountain rescue), about (lib/tripRows.ts: five to eight). */
 export function TripAnswers({ lang, name, kind, startName, lines, loop, parking, stops, closures, fees, sunAt, walkMin, pois, terrain, familyFriendly, about, region }: AnswersProps) {
   const asOf = new Date().toISOString().slice(0, 10);
   const months = sunAt ? monthTable(sunAt, walkMin, closures, asOf) : [];
@@ -280,9 +281,11 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
   const groups = monthGroups(lang, months);
   const feeOf = parking ? parkingFeeNote(lang, parking) : null;
   const more = otherStops(lang, stops);
+  const hzs = !!region && (HZS_REGIONS.has(region) || HZS_SHORT_REGIONS.has(region));
   const t = terrain ? terrainOf(terrain) : null;
   const places = pickRoutePlaces(pois);
   const placesTeaser = onRouteTeaser(lang, places);
+  const rows = answerRows({ hasPlaces: !!placesTeaser, hasParking: !!parking, hasStops: stops.length > 0, hasMonths: months.length > 0, hasAbout: about.length > 0 });
   const share = terrain ? markedShareText(lang, terrain.marked_share) : null;
   // The month decides the pack list (pages are cached): the latest start of this month says how much of the daylight the walk fills.
   const month = wallClock(new Date()).mo;
@@ -311,7 +314,7 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
             </ul>
           </Row>
 
-          {terrain && t && (
+          {rows.includes("teren") && terrain && t && (
             <Row title={tr(lang, "Terén a značky")} teaser={terrainTeaser(lang, terrain, t)}>
               <p>{heightsText(lang, t)}.</p>
               {share && (
@@ -327,7 +330,7 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
             </Row>
           )}
 
-          {placesTeaser && (
+          {rows.includes("trasa") && placesTeaser && (
             <Row title={tr(lang, "Na trase")} teaser={placesTeaser}>
               {places.on.length > 0 && (
                 <>
@@ -354,26 +357,27 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
             </Row>
           )}
 
-          <Row title={tr(lang, "Parkovanie")} teaser={parkingTeaser(lang, parking)}>
-            <p>{parkingSentence(lang, startName, parking, stops.length > 0)}</p>
-            {parking && (
-              <>
-                {feeOf && <p>{feeOf}</p>}
-                <p>
-                  {tr(lang, "Pin parkoviska")}:{" "}
-                  <a href={pinUrl(parking.location)} target="_blank" rel="noopener noreferrer" className="underline">
-                    {pinText(parking.location)}
-                  </a>
-                  . {tr(lang, "Ceny ani kapacitu parkoviska neuvádzame.")}
-                </p>
-              </>
-            )}
-          </Row>
-
-          <Row title={tr(lang, "Autobusom a vlakom")} teaser={transitTeaser(lang, stops)}>
-            <p>{transitSentence(lang, stops)}</p>
-            {more && <p>{more}</p>}
-          </Row>
+          {rows.includes("tam") && (
+            <Row title={tr(lang, "Ako sa tam dostať")} teaser={[parking ? parkingTeaser(lang, parking) : null, stops.length > 0 ? transitTeaser(lang, stops) : null].filter(Boolean).join(" · ")}>
+              <p className="font-semibold text-[var(--foreground)]">{tr(lang, "Parkovanie")}</p>
+              <p>{parkingSentence(lang, startName, parking, stops.length > 0)}</p>
+              {parking && (
+                <>
+                  {feeOf && <p>{feeOf}</p>}
+                  <p>
+                    {tr(lang, "Pin parkoviska")}:{" "}
+                    <a href={pinUrl(parking.location)} target="_blank" rel="noopener noreferrer" className="underline">
+                      {pinText(parking.location)}
+                    </a>
+                    . {tr(lang, "Ceny ani kapacitu parkoviska neuvádzame.")}
+                  </p>
+                </>
+              )}
+              <p className="mt-1 font-semibold text-[var(--foreground)]">{tr(lang, "Autobusom a vlakom")}</p>
+              <p>{transitSentence(lang, stops)}</p>
+              {more && <p>{more}</p>}
+            </Row>
+          )}
       </>
 
       <Row title={tr(lang, "Uzávery a poplatky")} teaser={closureTeaser(lang, closures)}>
@@ -440,7 +444,8 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
         </Row>
       )}
 
-      <Row title={tr(lang, "Čo si zbaliť")} teaser={packTeaser(pack)}>
+      <Row title={tr(lang, "Pred odchodom")} teaser={hzs ? `${packTeaser(pack)} · ${tr(lang, "HZS 18 300")}` : packTeaser(pack)}>
+        <p className="font-semibold text-[var(--foreground)]">{tr(lang, "Čo si zbaliť")}</p>
         <p>{tr(lang, "Na túto túru sa hodí:")}</p>
         <ul className="flex flex-col gap-1">
           {pack.map((x) => (
@@ -448,13 +453,13 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
           ))}
         </ul>
         <p className="text-xs">{tr(lang, "Je to rada podľa dĺžky a výšky trasy a mesiaca, nie záruka. Počasie a stav trasy si overte pred odchodom.")}</p>
+        {hzs && (
+          <>
+            <p className="mt-1 font-semibold text-[var(--foreground)]">{tr(lang, "Horská služba")}</p>
+            <HzsBody lang={lang} short={HZS_SHORT_REGIONS.has(region!)} />
+          </>
+        )}
       </Row>
-
-      {region && (HZS_REGIONS.has(region) || HZS_SHORT_REGIONS.has(region)) && (
-        <Row title={tr(lang, "Pred túrou: horská služba")} teaser={tr(lang, "Záchranári 18 300 · aplikácia HZS a kniha túr")}>
-          <HzsBody lang={lang} short={HZS_SHORT_REGIONS.has(region)} />
-        </Row>
-      )}
 
       {about.length > 0 && (
         <Row title={tr(lang, "O výlete")} teaser={aboutTeaser(about[0])}>

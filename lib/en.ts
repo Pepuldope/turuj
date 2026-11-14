@@ -1211,4 +1211,8 @@ export const EN: Record<string, string> = {
   "bufet": "snack bar",
   "prameň": "spring",
   "útulňa": "shelter",
+  "Ako sa tam dostať": "Getting there",
+  "Pred odchodom": "Before you go",
+  "Horská služba": "Mountain rescue",
+  "HZS 18 300": "Mountain rescue 18 300",
 };
