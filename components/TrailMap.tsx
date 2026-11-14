@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { GeoJSONSource, Map as MlMap, Marker, StyleSpecification } from "maplibre-gl";
+import type { GeoJSONSource, Map as MlMap, Marker, Popup, StyleSpecification } from "maplibre-gl";
 import type { BBox, LatLng } from "@/lib/types";
 import { MAP_STYLE_URL, mapPixelRatio } from "@/lib/mapLayers";
 import { onMapFocus, recentFocus } from "@/lib/mapFocus";
@@ -73,7 +73,7 @@ interface Props {
   /** The map re-fits to this box whenever it changes. */
   bounds: BBox | null;
   /** Changes to fit `bounds` again although the box itself stayed the same (a plan step opened again). */
-  refit?: number;
+  refit?: number | string;
   /** Which plan step this map belongs to: it answers only "show it on the map" events of that scope (lib/mapFocus.ts). The big map has none and answers all. */
   scope?: MapFit;
   /** The frame of a step's default view: the least zoomed-out a centred pick may be. */
@@ -179,6 +179,38 @@ function popupContent(title: string, lines: string[] = [], action?: MapMarker["a
     el.appendChild(b);
   }
   return el;
+}
+
+/** Space kept between an open popup and the map's border, px (the bottom one clears the attribution button). */
+const POPUP_PAD = { top: 12, right: 12, bottom: 30, left: 12 };
+
+/**
+ * A place's popup, always whole inside the map frame: no wider than the map, and the map pans by just enough
+ * to bring all of it (the "+" button last) into view. MapLibre picks the side the popup opens to, but it can't
+ * see the zoom buttons or a short map, and its own pan-to-fit is off.
+ */
+function keepPopupInView(map: MlMap, popup: Popup) {
+  const fitOnce = (pass: number) => {
+    const el = popup.getElement();
+    if (!el || !popup.isOpen()) return;
+    const box = map.getContainer().getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    // Positive dx pans the map right (the popup moves right).
+    let dx = 0;
+    let dy = 0;
+    if (r.left < box.left + POPUP_PAD.left) dx = box.left + POPUP_PAD.left - r.left;
+    else if (r.right > box.right - POPUP_PAD.right) dx = box.right - POPUP_PAD.right - r.right;
+    if (r.bottom > box.bottom - POPUP_PAD.bottom) dy = box.bottom - POPUP_PAD.bottom - r.bottom;
+    if (r.top + dy < box.top + POPUP_PAD.top) dy = box.top + POPUP_PAD.top - r.top;
+    if (!dx && !dy) return;
+    // The popup's own box moves with the map, so check again once it stopped (the side it opens to can flip).
+    if (pass < 2) map.once("moveend", () => fitOnce(pass + 1));
+    map.panBy([-dx, -dy], { duration: reducedMotion() ? 0 : 250, essential: true });
+  };
+  popup.on("open", () => {
+    popup.setMaxWidth(`${Math.max(140, Math.min(240, map.getContainer().clientWidth - POPUP_PAD.left - POPUP_PAD.right))}px`);
+    requestAnimationFrame(() => fitOnce(0));
+  });
 }
 
 /** A white chevron pointing along the line (east = forwards), drawn at 2x for sharp screens. */
@@ -736,10 +768,9 @@ export function TrailMap({
           label.textContent = m.label;
           el.appendChild(label);
         }
-        const marker = new ml.Marker({ element: el })
-          .setLngLat([m.location.lon, m.location.lat])
-          .setPopup(new ml.Popup({ offset: 14, closeButton: false }).setDOMContent(popupContent(m.title, m.lines, m.action)))
-          .addTo(map);
+        const popup = new ml.Popup({ offset: 14, closeButton: false }).setDOMContent(popupContent(m.title, m.lines, m.action));
+        keepPopupInView(map, popup);
+        const marker = new ml.Marker({ element: el }).setLngLat([m.location.lon, m.location.lat]).setPopup(popup).addTo(map);
         const slug = m.trailSlug;
         const onPick = m.onClick;
         if (slug) el.addEventListener("click", () => onSelectRef.current?.(slug));

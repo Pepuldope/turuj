@@ -25,6 +25,7 @@ const OPTIONS: { value: Travel; label: string; icon: UiIconName }[] = [
 export function TravelSwitch({
   roadMin = null,
   trainMin = null,
+  busPending = false,
   noCar = false,
   noBus = false,
   walkMin = null,
@@ -33,6 +34,8 @@ export function TravelSwitch({
 }: {
   roadMin?: number | null;
   trainMin?: number | null;
+  /** The timetable or the route is still loading: the bus time would be a stand-in that then jumps, so none is shown yet. */
+  busPending?: boolean;
   noCar?: boolean;
   noBus?: boolean;
   /** Minutes on foot from the start to the trail when it's close enough to offer Pešo (not remembered: depends on the start). */
@@ -96,7 +99,7 @@ export function TravelSwitch({
             );
           const on = !walking && travel === o.value;
           const time =
-            roadMin === null
+            roadMin === null || (o.value === "transit" && busPending)
               ? null
               : o.value === "car"
                 ? formatDurationShort(roadMin)

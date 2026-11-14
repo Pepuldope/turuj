@@ -121,17 +121,17 @@ function leaveBy(latestWalk: string, leadMs: number): string {
   return `${Math.floor(at / 60)}:${String(at % 60).padStart(2, "0")}`;
 }
 
-/** One small note: the route fits the day's light, needs an early start, or is too long for the day. */
+/** One small note: the route needs an early start or is too long for the day (nothing when it fits). */
 function DayNote({ note, dayWord, leadMs }: { note: RouteNote; dayWord: string; leadMs: number }) {
   const t = useT();
+  // A route that fits the day says nothing (Peter, 2026-11-14): no note, no empty gap.
+  if (note.kind === "ok") return null;
   // A note, not a warning (DESIGN-BRIEF §2, Peter 2026-11-12): plain muted text with a clock, no colour, no sign.
   return (
     <span className="mt-1.5 flex items-center gap-1 text-[12.5px] leading-tight text-[var(--muted)]">
       <UiIcon name="clock" size={14} />
       <span>
-        {note.kind === "ok" ? (
-          t("stihnete za svetla")
-        ) : note.kind === "too-long" ? (
+        {note.kind === "too-long" ? (
           t("na {day} pridlhá", { day: dayWord })
         ) : (
           <>

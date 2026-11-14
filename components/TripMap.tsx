@@ -22,10 +22,11 @@ import { useTripAccess } from "@/components/TripAccess";
 import { stopFor, useTripStops } from "@/lib/tripStops";
 import { focusOnMap, onMapFit } from "@/lib/mapFocus";
 import type { MapFit } from "@/lib/mapFocus";
-import { justPickedRoute } from "@/lib/planUi";
+import { justPickedRoute, markRoutePicked } from "@/lib/planUi";
 import { setHoveredRoute, useHoveredRoute } from "@/lib/routeHover";
 import { NETWORK_ON } from "@/lib/trailNetwork";
 import { useLang, useT } from "@/lib/i18n";
+import { langPath } from "@/lib/lang";
 import { keptMapKey } from "@/lib/keptMap";
 import { UNMARKED_COLOUR, useDayModel } from "@/lib/dayClock";
 import { attachDayWalker } from "@/lib/dayWalker";
@@ -95,6 +96,8 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
   // The day map (under Priebeh dňa) is about your day: your route, the ride's end, your stops, the goal and the walker. Not the other routes or the drive.
   const day = focusProp === "day";
   const others = useMemo(() => (day ? [] : othersProp), [day, othersProp]);
+  // The route step's map shows every option at once (quiet grey), a tap on one picks it, as its row in the list does.
+  const routesMap = focusProp === "routes";
   const dayModel = useDayModel();
   const lang = useLang();
   const { trail, trailheads, pois } = detail;
@@ -224,11 +227,11 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
         const pts = fullOthers[o.slug] ?? o.points;
         return o.slug === hovered
           ? [{ slug: o.slug, label: o.label, points: pts, color: o.colour, state: "selected" }]
-          : o.hoverOnly
+          : o.hoverOnly && !routesMap
             ? []
             : [{ slug: o.slug, label: o.label, points: pts, color: OTHER_ROUTE_COLOUR, state: "normal" }];
       }),
-    [others, hovered, fullOthers]
+    [others, hovered, fullOthers, routesMap]
   );
   // Each marking sign sits on the drawn line: the trip's path and the GPX line differ by a few
   // metres, and a sign off the line looked lost (Peter, 2026-10-29). Found in walking order; a sign
@@ -507,6 +510,8 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
         if (goal) pts.push(goal);
       } else if (f === "day") {
         corners(trail.bbox);
+        // The picked route's own line (a loop's way back can leave the place's box).
+        for (const [lat, lon] of points) pts.push({ lat, lon });
         if (rideAt) pts.push(rideAt);
         for (const s of addedStops) {
           const poi = pois.find((p) => p.id === s.id);
@@ -554,7 +559,7 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
         ne: { lat: Math.ceil(box.ne.lat * r) / r, lon: Math.ceil(box.ne.lon * r) / r },
       };
     },
-    [trail.bbox, others, goal, trailStart, walking, start, transit, stops, parkingLots, pois, rideAt, addedStops, driveLeg]
+    [trail.bbox, others, goal, trailStart, walking, start, transit, stops, parkingLots, pois, rideAt, addedStops, driveLeg, points]
   );
   const focusBounds = useMemo(() => (focus ? boundsFor(focus) : null), [focus, boundsFor]);
   // Right after a route was picked in the plan (this is that route's page): fit that route, not the whole set (lib/planUi.ts).
@@ -580,17 +585,28 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
       tracks={drawnTracks}
       markers={dayMarkers}
       bounds={pickedBounds ?? focusBounds ?? bounds}
-      refit={asked?.n}
+      // The day map frames the picked route again when another is picked, even if its box came out the same.
+      refit={day ? trail.slug : asked?.n}
       scope={focusProp}
       focusFloor={(f) => (f ? boundsFor(f) : null)}
       openOn={openOn}
       driveLeg={day ? undefined : driveLeg}
       walkLeg={walkLeg}
       sideLegs={sideLegs}
-      network={NETWORK_ON && !day ? "context" : undefined}
+      network={NETWORK_ON && !day && !routesMap ? "context" : undefined}
       onMap={dayLayer}
       onSelectTrail={(slug) => {
-        if (others.some((o) => o.slug === slug)) router.push(`/trasa/${slug}`, { scroll: false });
+        const other = others.find((o) => o.slug === slug);
+        if (!other) return;
+        if (routesMap) {
+          // The same pick as a row of the route list (RouteRows): the plan card stays as it is, the map fits that route.
+          setHoveredRoute(null);
+          markRoutePicked(slug, document.getElementById("plan-step-route")?.closest("section")?.getBoundingClientRect().top ?? 0);
+          const lats = other.points.map((p) => p[0]);
+          const lons = other.points.map((p) => p[1]);
+          if (other.points.length > 1) focusOnMap({ scope: "routes", location: { lat: lats[0], lon: lons[0] }, fit: [{ lat: Math.min(...lats), lon: Math.min(...lons) }, { lat: Math.max(...lats), lon: Math.max(...lons) }] });
+        }
+        router.push(langPath(lang, `/trasa/${slug}`), { scroll: false });
       }}
       onHoverTrail={others.length ? (slug) => setHoveredRoute(others.some((o) => o.slug === slug) ? slug : null) : undefined}
       ariaLabel={t("Mapa trasy")}

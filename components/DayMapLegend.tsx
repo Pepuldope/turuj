@@ -91,7 +91,7 @@ export function DayMapLegend({
       )}
       {sun && late && (
         <li className={item}>
-          <svg width="16" height="6" aria-hidden="true"><line x1="1.5" x2="14.5" y1="3" y2="3" stroke="#9a4a06" strokeWidth="2.6" strokeDasharray="3 2" /></svg>
+          <svg width="16" height="6" aria-hidden="true"><line x1="1.5" x2="14.5" y1="3" y2="3" stroke="var(--muted)" strokeWidth="2.6" strokeDasharray="3 2" /></svg>
           {t("po západe slnka")}
         </li>
       )}

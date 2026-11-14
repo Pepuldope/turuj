@@ -257,7 +257,7 @@ export function TransitLegs({ plan, rail }: { plan: DayPlan; rail: RailTrip }) {
         <div className="flex flex-col gap-1.5">
           <p className="flex items-center gap-2 text-base font-bold">
             <StopIcon mode={stop.mode} /> {t(stop.mode === "vlak" ? "Vlakom" : "Autobusom")}
-            {rideMin !== null && <span className="font-data text-lg leading-none">~{formatDuration(rideMin)}</span>}
+            {rideMin !== null && rail.status !== "loading" && <span className="font-data text-lg leading-none">~{formatDuration(rideMin)}</span>}
           </p>
           <p>
             {homeStop ? (

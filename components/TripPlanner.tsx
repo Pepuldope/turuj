@@ -33,7 +33,7 @@ import { AppPromo, SaveTripButton } from "@/components/SaveTripButton";
 import type { ShareInfo } from "@/components/ShareButton";
 import { PlanStep, PlanStepsProvider, PlanWarningsRecap, StepInfo } from "@/components/PlanStep";
 import type { StepDef } from "@/components/PlanStep";
-import { ParkingOptions, feeLabel, summaryWalk } from "@/components/ParkingBlock";
+import { ParkingOptions, feeLabel, parkingTitle, summaryWalk } from "@/components/ParkingBlock";
 import { NoStartNote, PlanStartAsk } from "@/components/PlanStartAsk";
 import { StopsRow } from "@/components/StopsRow";
 import { SunArc } from "@/components/SunArc";
@@ -325,7 +325,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
     ? t("Pešo")
     : transit
       ? `${t(stop?.mode === "vlak" ? "Vlakom" : "Autobusom")} · ${stop ? stopLabel(stop.name) : t("bez zastávky")}`
-      : `${t("Autom")} · ${parking ? [t(parking.name), summaryWalk(parking, lang), feeLabel(parking, lang)].filter(Boolean).join(", ") : t("bez parkoviska")}`;
+      : `${t("Autom")} · ${parking ? [parkingTitle(parking.name, t, true), summaryWalk(parking, lang), feeLabel(parking, lang)].filter(Boolean).join(", ") : t("bez parkoviska")}`;
   const steps: StepDef[] = [
     ...(routeChoice ? [{ id: "route", n: 1, title: t("Kadiaľ pôjdete"), open: true, fit: "routes" as const }] : []),
     { id: "places", n: placesN, title: t("Zastávky po ceste"), open: !routeChoice, fit: "places" as const },
@@ -501,7 +501,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
 
         <PlanStep id="access" n={accessN} title={t("Ako pôjdete")} summary={accessSummary}>
           <NoStartNote>{t("Bez štartu nepočítame cestu autom ani autobusom.")}</NoStartNote>
-          <TravelSwitch roadMin={roadMin} trainMin={rail.status === "ok" ? driveMin : null} noCar={noCar} noBus={noBus} walkMin={walkThere} walking={walking} onWalk={setOnFoot} />
+          <TravelSwitch roadMin={roadMin} trainMin={rail.status === "ok" ? driveMin : null} busPending={tripPlan.loading} noCar={noCar} noBus={noBus} walkMin={walkThere} walking={walking} onWalk={setOnFoot} />
           {/* The sub-heading follows the choice (Peter, 2026-11-13, mockup D1): where to park, or where to get off; on foot there is none. */}
           {!walking && (
             <h3 className="flex items-center gap-2 text-base font-bold">
@@ -562,10 +562,10 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
               </p>
             )}
             {/* Peter: the arrival is the first big time; the departure (also set in the box above) sits
-                small over it, a chip set apart from the labels below it. */}
+                small over it, a chip centred over the row (Peter 2026-11-14: not stuck in the left corner). */}
             {hasDrive && (
-              <p className="font-data -mb-2.5 w-fit rounded-full bg-[var(--segment-bg)] px-2 py-0.5 text-[14px] leading-tight font-semibold">
-                {t("odchod")} {formatTime(plan.segments[0].start)}
+              <p className="font-data -mb-2.5 w-fit self-center rounded-full bg-[var(--segment-bg)] px-2.5 py-0.5 text-[14px] leading-tight font-semibold">
+                {t("odchod z domu")} {formatTime(plan.segments[0].start)}
               </p>
             )}
             <ol className="font-data grid grid-cols-[repeat(4,auto)] justify-between gap-x-2 text-[1.3rem] leading-tight font-bold sm:text-[1.6rem]">

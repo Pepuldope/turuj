@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import type { DayPlan } from "@/lib/dayPlan";
 import { formatDuration, formatDurationShort, formatTime } from "@/lib/format";
 import { publishDayMoment, UNMARKED_COLOUR } from "@/lib/dayClock";
@@ -56,7 +56,6 @@ const EDGE = {
 const CAR_AT_NIGHT = UI_ICON.car.replaceAll('fill="#fff"', 'fill="#f4a51c"');
 
 const UNMARKED = UNMARKED_COLOUR;
-const LATE = "#9a4a06";
 /** The marking you are on as the readout says it ("po červenej"); unmarked is said plainly. */
 const MARKING_SHORT: Record<string, string> = {
   [MARKING_COLOR.red]: MARKING_LABEL.red,
@@ -644,23 +643,30 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
           strokeWidth={4.6}
           strokeLinejoin="round"
         />
-        {scene.walk.slice(1).map((p, i) => {
-          const prev = scene.walk[i];
-          const late = p.t > sunset;
-          return (
-            <line
-              key={i}
-              x1={prev.x}
-              y1={prev.y}
-              x2={p.x}
-              y2={p.y}
-              stroke={late ? LATE : p.colour}
-              strokeWidth={2.6}
-              strokeLinecap="round"
-              strokeDasharray={late ? "3 2" : undefined}
-            />
-          );
-        })}
+        {/* After sunset each part keeps its trail-sign colour and is only dashed (Peter, 2026-11-14). The dashes run along a
+            whole same-coloured stretch, one path: on the short per-point lines the pattern restarted at every point and read as solid. */}
+        {(() => {
+          const out: ReactNode[] = [];
+          let run: { colour: string; pts: string[]; at: number } | null = null;
+          const flush = () => {
+            if (!run) return;
+            out.push(<path key={`late${run.at}`} d={"M" + run.pts.join("L")} fill="none" stroke={run.colour} strokeWidth={2.6} strokeDasharray="4 3" />);
+            run = null;
+          };
+          scene.walk.slice(1).forEach((p, i) => {
+            const prev = scene.walk[i];
+            if (p.t > sunset) {
+              if (run && run.colour !== p.colour) flush();
+              if (!run) run = { colour: p.colour, pts: [`${prev.x.toFixed(1)},${prev.y.toFixed(1)}`], at: i };
+              run.pts.push(`${p.x.toFixed(1)},${p.y.toFixed(1)}`);
+              return;
+            }
+            flush();
+            out.push(<line key={i} x1={prev.x} y1={prev.y} x2={p.x} y2={p.y} stroke={p.colour} strokeWidth={2.6} strokeLinecap="round" />);
+          });
+          flush();
+          return out;
+        })()}
 
         {/* Added stops: the time spent there cut out of the walk in the place's colour, its map pin above
             (Peter, 2026-10-24 and 2026-10-26). While the walker is there, the walker turns into the pin. */}
@@ -842,7 +848,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
         {/* The trail colours are named under the day map above (components/DayMapLegend.tsx). */}
         {scene.walk.some((p) => p.t > sunset) && (
           <li className="inline-flex items-center gap-1.5">
-            <svg width="16" height="6" aria-hidden="true"><line x1="1.5" x2="14.5" y1="3" y2="3" stroke={LATE} strokeWidth="2.6" strokeDasharray="3 2" /></svg>
+            <svg width="16" height="6" aria-hidden="true"><line x1="1.5" x2="14.5" y1="3" y2="3" stroke="var(--muted)" strokeWidth="2.6" strokeDasharray="3 2" /></svg>
             {tx("po západe slnka")}
           </li>
         )}

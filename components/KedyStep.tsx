@@ -419,7 +419,7 @@ function StartBlock({
             }}
             onBlur={() => setTyped(null)}
             // The browser's own clock button is hidden (it was a second icon next to ours); ours opens the same picker.
-            className="font-data w-full min-w-0 rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] py-1.5 pr-11 pl-3 text-[1.45rem] leading-tight font-semibold focus-visible:outline-2 focus-visible:outline-[var(--accent)] min-[380px]:text-[1.6rem] [&::-webkit-calendar-picker-indicator]:hidden"
+            className="font-data box-border block w-full min-w-0 appearance-none rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] py-1.5 pr-11 pl-3 text-[1.45rem] leading-tight font-semibold focus-visible:outline-2 focus-visible:outline-[var(--accent)] min-[380px]:text-[1.6rem] [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-date-and-time-value]:m-0 [&::-webkit-date-and-time-value]:min-w-0 [&::-webkit-date-and-time-value]:text-left"
           />
           <button
             type="button"

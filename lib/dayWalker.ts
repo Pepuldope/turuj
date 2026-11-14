@@ -242,6 +242,8 @@ export function attachDayWalker(
     return null;
   };
   const NEAR_P_PX = 40;
+  /** The car is shown only this far inside the map's edge, so it is never half cut off by it. */
+  const EDGE_PX = 14;
 
   let lastKind = "";
   const place = () => {
@@ -251,7 +253,6 @@ export function attachDayWalker(
     let where: LatLng | null = null;
     let riding = false;
     let pillBelow = false;
-    let pillSide = false;
     if (at.kind === "ride") {
       riding = true;
       const d = carAlong(t);
@@ -259,20 +260,11 @@ export function attachDayWalker(
         where = route.ride;
       } else {
         where = alongLine(d);
-        // Off the map: the car waits at the edge where the road comes into view.
-        // On a top or bottom edge the label takes the strip along it, so the car waits a label higher up the road.
-        const e6 = exitPoint(6);
-        const e = exitPoint(!e6.none && !e6.whole && (e6.edge === "top" || e6.edge === "bottom") ? 48 : 20);
+        // Off the map the car is not drawn at all (it used to wait at the edge, on the drive's label): it shows once its point is in view.
         const p = map.project([where.lon, where.lat]);
         const c = map.getContainer();
-        const off = p.x < 14 || p.x > c.clientWidth - 14 || p.y < 14 || p.y > c.clientHeight - 14;
-        if (e.none) where = route.ride;
-        else if (!e.whole && (d < e.along || off)) {
-          const ll = map.unproject([e.x, e.y]);
-          where = { lat: ll.lat, lon: ll.lng };
-          // Its time goes beside it: above would reach the P pin, below the label.
-          pillSide = true;
-        } else {
+        if (p.x < EDGE_PX || p.x > c.clientWidth - EDGE_PX || p.y < EDGE_PX || p.y > c.clientHeight - EDGE_PX) where = null;
+        else {
           // At the parking (or nearly): beside the P pin on the road, its time under it, never on the pin and its labels.
           const pp = map.project([line[line.length - 1][1], line[line.length - 1][0]]);
           if (Math.hypot(p.x - pp.x, p.y - pp.y) < NEAR_P_PX) {
@@ -288,8 +280,13 @@ export function attachDayWalker(
       const hit = trailLL.length >= 2 ? nearestOnPath(trailLL, raw) : null;
       where = hit && hit.distanceM <= SNAP_M ? hit.point : raw;
     }
+    // The ride's end can also lie outside a map the visitor moved: the car is hidden then, too.
+    if (riding && where) {
+      const q = map.project([where.lon, where.lat]);
+      const c = map.getContainer();
+      if (q.x < 0 || q.x > c.clientWidth || q.y < 0 || q.y > c.clientHeight) where = null;
+    }
     el.classList.toggle("is-below", pillBelow);
-    el.classList.toggle("is-side", pillSide);
     if (where) {
       const pc = map.project([where.lon, where.lat]);
       placeTag({ x: pc.x, y: pc.y, pillBelow });
@@ -334,15 +331,13 @@ export function attachDayWalker(
       });
     }
   };
-  if (ride) {
-    map.on("move", again);
-    map.on("resize", again);
-  }
+  map.on("move", again);
+  map.on("resize", again);
   return () => {
     off();
+    map.off("move", again);
+    map.off("resize", again);
     if (ride) {
-      map.off("move", again);
-      map.off("resize", again);
       tagMarker.remove();
       if (drawn) {
         for (const id of [`${DRIVE_SRC}-dash`, `${DRIVE_SRC}-ink`]) if (map.getLayer(id)) map.removeLayer(id);

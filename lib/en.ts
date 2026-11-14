@@ -1164,6 +1164,7 @@ export const EN: Record<string, string> = {
   "Začnite do": "Start by",
   "Začnite o": "Start at",
   "Odchod z domu": "Leaving home",
+  "odchod z domu": "leaving home",
   "Odchod o": "Leaving at",
   "Vyrazte do": "Leave by",
   "Vyrazte o": "Leave at",
