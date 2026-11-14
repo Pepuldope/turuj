@@ -501,7 +501,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
 
         <PlanStep id="access" n={accessN} title={t("Ako pôjdete")} summary={accessSummary}>
           <NoStartNote>{t("Bez štartu nepočítame cestu autom ani autobusom.")}</NoStartNote>
-          <TravelSwitch roadMin={roadMin} busTotal={stopTotals[stopChoice] ?? null} busPending={tripPlan.loading || stopsPending} noCar={noCar} noBus={noBus} walkMin={walkThere} walking={walking} onWalk={setOnFoot} />
+          <TravelSwitch roadMin={roadMin} busTotal={stopTotals[stopChoice] ?? null} busPending={stopsPending} noCar={noCar} noBus={noBus} walkMin={walkThere} walking={walking} onWalk={setOnFoot} />
           {/* The sub-heading follows the choice (Peter, 2026-11-13, mockup D1): where to park, or where to get off; on foot there is none. */}
           {!walking && (
             <h3 className="flex items-center gap-2 text-base font-bold">
