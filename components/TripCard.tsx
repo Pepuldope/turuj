@@ -11,6 +11,8 @@ import { formatKm } from "@/lib/walkFacts";
 import type { Difficulty, ParkingLot, TrailDetail, TransitStop } from "@/lib/types";
 import { useTripSettings } from "@/lib/tripSettings";
 import { UiIcon } from "@/components/UiIcon";
+import { SeasonScene } from "@/components/SeasonScene";
+import { seasonOf } from "@/lib/season";
 import { LangLink, useLang } from "@/lib/i18n";
 import { regionIn, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
@@ -92,8 +94,16 @@ const PILL_CLASS = {
   closed: "bg-[var(--danger-bg)] text-[var(--danger)]",
 };
 
-/** The list card's picture strip fades out over its last 22 px (a mask, so it works on any card colour, dark mode too). */
-const STRIP_FADE = "linear-gradient(to right, #000 calc(100% - 22px), transparent)";
+/** The list card's picture strip fades out over its last 16 px on an eased curve (a mask, so it works on any card colour, dark mode too). */
+const STRIP_FADE =
+  "linear-gradient(to right, #000 calc(100% - 16px), rgba(0,0,0,.82) calc(100% - 12px), rgba(0,0,0,.5) calc(100% - 7px), rgba(0,0,0,.18) calc(100% - 3px), transparent)";
+
+/** A small stable number from a trip's slug, so each scene's hills differ. */
+function seedOf(slug: string): number {
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) % 997;
+  return h;
+}
 
 let thumbsP: Promise<Record<string, string>> | null = null;
 
@@ -148,7 +158,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
       href={`/trasa/${trail.slug}`}
       onMouseEnter={() => onActive(trail.slug)}
       onFocus={() => onActive(trail.slug)}
-      className={`relative grid grid-cols-[64px_minmax(0,1fr)] gap-3 overflow-hidden rounded-[var(--radius-card)] border bg-[var(--card-bg)] p-3 transition-colors hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
+      className={`relative grid ${big ? "grid-cols-[64px_minmax(0,1fr)]" : "grid-cols-[84px_minmax(0,1fr)]"} gap-3 overflow-hidden rounded-[var(--radius-card)] border bg-[var(--card-bg)] p-3 transition-colors hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
         big ? "border-2 border-[var(--accent)] shadow-[0_10px_28px_rgba(20,35,59,0.22)]" : active ? "trip-card-active border-[var(--accent)]" : "border-[var(--border)]"
       }`}
     >
@@ -165,25 +175,24 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
         <>
           <span
             aria-hidden
-            className={`absolute inset-y-0 left-0 w-[76px] ${dim ? "opacity-50 grayscale-[75%]" : ""}`}
+            className={`absolute inset-y-0 left-0 w-[96px] ${dim ? "opacity-50 grayscale-[75%]" : ""}`}
             style={{ background: colour, maskImage: STRIP_FADE, WebkitMaskImage: STRIP_FADE }}
           >
             {thumb ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={thumb} alt="" loading="lazy" decoding="async" crossOrigin="anonymous" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
             ) : (
-              // Constant markup from lib/kindIcons.ts, no user data.
-              <span className="grid h-full w-[64px] place-items-center text-white" dangerouslySetInnerHTML={{ __html: kindSvg(goal, 30) }} />
+              // No photo: the season's hill scene, as on the trip page header (design brief: never a flat box);
+              // each trip gets its own hills from its name.
+              <SeasonScene season={seasonOf(new Date())} width={180} height={270} seed={seedOf(trail.slug)} sunX={0.66} sunY={0.2} className="h-full w-full" />
             )}
           </span>
-          {thumb && (
-            <span
-              aria-hidden
-              className={`absolute bottom-2 left-2 grid h-[22px] w-[22px] place-items-center rounded-[7px] text-white shadow-[0_0_0_1.5px_#fff] ${dim ? "opacity-50 grayscale-[75%]" : ""}`}
-              style={{ background: colour }}
-              dangerouslySetInnerHTML={{ __html: kindSvg(goal, 15) }}
-            />
-          )}
+          <span
+            aria-hidden
+            className={`absolute bottom-2 left-2 grid h-[22px] w-[22px] place-items-center rounded-[7px] text-white shadow-[0_0_0_1.5px_#fff] ${dim ? "opacity-50 grayscale-[75%]" : ""}`}
+            style={{ background: colour }}
+            dangerouslySetInnerHTML={{ __html: kindSvg(goal, 15) }}
+          />
           <span aria-hidden />
         </>
       ) : thumb ? (
@@ -236,12 +245,12 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
           </span>
           {/* Under 360 px there is no room left for it: rather none than a lone "…". */}
           {trail.region_name && <span className="min-w-0 truncate max-[359px]:hidden">· {regionIn(lang, trail.region_name)}</span>}
-          <span className="shrink-0">· {km}</span>
+          {big && <span className="shrink-0">· {km}</span>}
           {/* With kids on, every card listed is kid-friendly: the tag would say nothing. */}
           {trail.family_friendly && !withKids && <span className="on-card-ok shrink-0 font-semibold text-[var(--ok)]">· {t("pre deti")}</span>}
         </span>
         {/* Two lines (Peter, 15 Nov): getting there by car / bus, then the walk itself. */}
-        <span className="font-data flex flex-wrap items-center gap-x-2 text-[15px]">
+        <span className="font-data flex flex-wrap items-center gap-x-2 text-[15px] leading-[1.2]">
           <span className={leg(!byBus)}>
             <UiIcon name="car" size={15} />
             {carMin !== null ? `${driveApprox ? "~" : ""}${formatDurationShort(carMin)}` : driveLoading ? "…" : distanceM !== null ? formatFromUser(distanceM, lang) : "–"}
@@ -262,11 +271,12 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             {nearStop && (byBus ? driveMin !== null : carMin !== null) && <small className={word}>{t("busom")}</small>}
           </span>
         </span>
-        <span className="font-data flex flex-wrap items-center gap-x-3 text-[15px]">
+        <span className="font-data -mt-0.5 flex flex-wrap items-center gap-x-3 text-[15px] leading-[1.2]">
           <span className="inline-flex items-center gap-1 text-[var(--foreground)]">
             <span className="font-sans text-[12px] font-semibold text-[var(--muted)]">{t("túra")}:</span>
             <UiIcon name="boot" size={15} />
             {formatDurationShort(hikeMin)}
+            {!big && <span className="text-[var(--muted)]">· {km}</span>}
             <small className={word}>{t("pešo")}</small>
             {withKids && (
               <span className="text-[var(--warn)]" title={t("S deťmi: čas na trase o 30 % dlhší")}>
