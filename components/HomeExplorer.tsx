@@ -477,7 +477,9 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
     const out = new Map<TrailDetail, number>();
     if (words.length === 0) return out;
     let exact = 0;
-    for (const d of trails) if (nameMatches(d) || placeResults?.slugs.has(d.trail.slug)) exact++;
+    // count name matches only: places found by a typo ("stebsk" ~ the place Štrbské pleso) bring in many
+    // trips and would otherwise switch this off, leaving the trip named Štrbské pleso below them
+    for (const d of trails) if (nameMatches(d)) exact++;
     if (exact >= FUZZY_BELOW) return out;
     for (const d of trails) {
       if (nameMatches(d)) continue;
@@ -485,7 +487,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
       if (slips !== null) out.set(d, slips);
     }
     return out;
-  }, [words, trails, nameKeys, nameMatches, placeResults]);
+  }, [words, trails, nameKeys, nameMatches]);
   // A trip matches by its name, or by a place it starts, passes or ends at (and the places right by it).
   const matches = useCallback(
     (d: TrailDetail) => nameMatches(d) || Boolean(placeResults?.slugs.has(d.trail.slug)) || fuzzyTrips.has(d),
