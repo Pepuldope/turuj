@@ -157,6 +157,9 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
   const stopWalkM = nearStop ? (nearStop.join?.walk_m ?? nearStop.distance_m) : 0;
   const total = driveMin !== null && !item.fit ? hikeMin + 2 * driveMin : null;
   const big = onClose !== undefined;
+  // A leave-by time (fits / tight) goes to the right of the time lines on list cards; "doesn't fit" and closures
+  // are sentences and keep their full-width line below.
+  const sidePill = !big && pill?.time !== undefined;
   const th = detail.trailheads.find((t) => t.is_primary) ?? detail.trailheads[0];
   const parking = detail.parkingLots[0];
   // "autom / busom / pešo" for screen readers only: shown on screen they made the card a line taller (Peter, 15 Nov).
@@ -261,7 +264,10 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
           {/* With kids on, every card listed is kid-friendly: the tag would say nothing. */}
           {trail.family_friendly && !withKids && <span className="on-card-ok shrink-0 font-semibold text-[var(--ok)]">· {t("pre deti")}</span>}
         </span>
-        {/* Two lines (Peter, 15 Nov): getting there by car / bus, then the walk itself. */}
+        {/* Two lines (Peter, 15 Nov): getting there by car / bus, then the walk itself; on list cards the leave-by
+            time sits beside them on the right, so the card's right half is not empty (Peter, 15 Nov, option A). */}
+        <span className="flex items-center gap-2">
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="font-data flex flex-wrap items-center gap-x-2 text-[15px] leading-[1.2]">
           <span className={leg(!byBus)}>
             <UiIcon name="car" size={15} />
@@ -283,12 +289,12 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             {nearStop && (byBus ? driveMin !== null : carMin !== null) && <small className={word}>{t("busom")}</small>}
           </span>
         </span>
-        <span className="font-data -mt-0.5 flex flex-wrap items-center gap-x-3 text-[15px] leading-[1.2]">
+        <span className="font-data flex flex-wrap items-center gap-x-3 text-[15px] leading-[1.2]">
           <span className="inline-flex items-center gap-1 text-[var(--foreground)]">
             <span className="font-sans text-[12px] font-semibold text-[var(--muted)]">{t("túra")}:</span>
             <UiIcon name="boot" size={15} />
             {formatDurationShort(hikeMin)}
-            {!big && <span className="text-[var(--muted)]">· {km}</span>}
+            {!big && <span className="whitespace-nowrap text-[var(--muted)]">· {km}</span>}
             <small className={word}>{t("pešo")}</small>
             {withKids && (
               <span className="text-[var(--warn)]" title={t("S deťmi: čas na trase o 30 % dlhší")}>
@@ -314,6 +320,17 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             </span>
           )}
         </span>
+        </span>
+        {sidePill && pill?.time && (
+          <span
+            title={t("Najneskôr, kedy treba vyraziť, aby ste boli späť za svetla")}
+            className={`flex w-[78px] shrink-0 flex-col max-[379px]:w-[66px] items-center justify-center self-stretch rounded-xl px-1.5 py-1 text-center ${PILL_CLASS[pill.tone]}`}
+          >
+            <span className="text-[11px] leading-tight font-semibold">{pill.text}</span>
+            <span className="font-data text-[22px] leading-none font-bold max-[379px]:text-[20px]">{pill.time}</span>
+          </span>
+        )}
+        </span>
         {big && (
           <>
             <span className="mt-1.5 grid grid-cols-4 gap-1.5 border-y border-[var(--border)] py-2.5">
@@ -336,7 +353,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             </span>
           </>
         )}
-        {pill && !(big && pill.tone === "closed") && (
+        {pill && !sidePill && !(big && pill.tone === "closed") && (
           <span
             title={pill.time ? t("Najneskôr, kedy treba vyraziť, aby ste boli späť za svetla") : undefined}
             className={`mt-0.5 inline-flex items-baseline gap-1.5 self-start rounded-full px-2.5 py-1 text-[12.5px] font-semibold whitespace-nowrap ${PILL_CLASS[pill.tone]}`}
