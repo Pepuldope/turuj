@@ -597,11 +597,24 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
     if (words.length === 0) return null;
     const has = (s: string) => words.every((w) => plain(s).includes(w));
     const first = (s: string) => plain(s).startsWith(words[0]) || plain(s).includes(` ${words[0]}`);
-    const ranges = areas.filter((a) => has(a.name)).slice(0, 3);
+    // No range named like the search: forgive a typo ("tarty" finds the Tatry), fewest slips first.
+    let ranges = areas.filter((a) => has(a.name));
+    if (ranges.length === 0)
+      ranges = areas
+        .map((a) => ({ a, d: fuzzyScore(words, plain(a.name)) }))
+        .filter((x): x is { a: (typeof areas)[number]; d: number } => x.d !== null)
+        .sort((x, y) => x.d - y.d)
+        .map((x) => x.a);
+    ranges = ranges.slice(0, 3);
     // trip names first, then trips at the typed place, then trips at the places next to it
     const atPlace = new Set(placeResults?.hits.flatMap((h) => h.place.trips));
+    // A name off by a typo counts as named too (just below an exact one), so "stebsk" puts the trip
+    // Štrbské pleso above trips that only pass the place Štrbské pleso.
+    const firstFuzzy = (s: string) => fuzzyScore(words.slice(0, 1), plain(s).split(/[\s\-–,.()/]+/)[0] ?? "") !== null;
     const named = (d: TrailDetail) =>
-      Number(nameMatches(d)) * 4 + Number(first(d.trail.name)) * 2 + Number(atPlace.has(d.trail.slug));
+      (nameMatches(d) ? 4 : fuzzyTrips.has(d) ? 3 : 0) +
+      Number(first(d.trail.name) || (fuzzyTrips.has(d) && firstFuzzy(d.trail.name))) * 2 +
+      Number(atPlace.has(d.trail.slug));
     const trips = listedAll
       .filter((i) => matches(i.detail))
       .sort(
