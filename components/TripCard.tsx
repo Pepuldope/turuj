@@ -11,8 +11,8 @@ import { formatKm } from "@/lib/walkFacts";
 import type { Difficulty, ParkingLot, TrailDetail, TransitStop } from "@/lib/types";
 import { useTripSettings } from "@/lib/tripSettings";
 import { UiIcon } from "@/components/UiIcon";
-import { SeasonScene } from "@/components/SeasonScene";
-import { seasonOf } from "@/lib/season";
+import { CARD_SCENES, FRONT_HILL } from "@/lib/cardScenes";
+import type { DestinationKind } from "@/lib/tripSchema";
 import { LangLink, useLang } from "@/lib/i18n";
 import { regionIn, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
@@ -98,11 +98,22 @@ const PILL_CLASS = {
 const STRIP_FADE =
   "linear-gradient(to right, #000 calc(100% - 16px), rgba(0,0,0,.82) calc(100% - 12px), rgba(0,0,0,.5) calc(100% - 7px), rgba(0,0,0,.18) calc(100% - 3px), transparent)";
 
-/** A small stable number from a trip's slug, so each scene's hills differ. */
-function seedOf(slug: string): number {
-  let h = 0;
-  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) % 997;
-  return h;
+/** The card strip for a trip without a photo: two hill tones mixed from the kind colour, and the kind's icon centred in front. */
+function NoPhotoScene({ goal, colour }: { goal: DestinationKind; colour: string }) {
+  const scene = CARD_SCENES[goal] ?? CARD_SCENES.ine;
+  const back = { fill: `color-mix(in srgb, #fff 15%, ${colour})` };
+  const front = { fill: `color-mix(in srgb, #fff 30%, ${colour})` };
+  return (
+    <>
+      <svg viewBox="0 0 96 150" preserveAspectRatio="xMidYMax slice" aria-hidden className="absolute inset-0 h-full w-full">
+        <path d={scene.back} fillRule={scene.backEvenOdd ? "evenodd" : undefined} style={back} />
+        {scene.water && <path d={scene.water} style={front} />}
+        <path d={scene.front ?? FRONT_HILL} fillRule={scene.frontEvenOdd ? "evenodd" : undefined} style={front} />
+      </svg>
+      {/* Constant markup from lib/kindIcons.ts, no user data. */}
+      <span className="absolute top-1/2 left-0 grid w-[90px] -translate-y-1/2 place-items-center text-white" dangerouslySetInnerHTML={{ __html: kindSvg(goal, 30) }} />
+    </>
+  );
 }
 
 let thumbsP: Promise<Record<string, string>> | null = null;
@@ -182,17 +193,18 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
               // eslint-disable-next-line @next/next/no-img-element
               <img src={thumb} alt="" loading="lazy" decoding="async" crossOrigin="anonymous" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
             ) : (
-              // No photo: the season's hill scene, as on the trip page header (design brief: never a flat box);
-              // each trip gets its own hills from its name.
-              <SeasonScene season={seasonOf(new Date())} width={180} height={270} seed={seedOf(trail.slug)} sunX={0.66} sunY={0.2} className="h-full w-full" />
+              // No photo: the kind's colour and icon in front of quiet hills whose outline hints at the kind (Peter, 15 Nov).
+              <NoPhotoScene goal={goal} colour={colour} />
             )}
           </span>
-          <span
-            aria-hidden
-            className={`absolute bottom-2 left-2 grid h-[22px] w-[22px] place-items-center rounded-[7px] text-white shadow-[0_0_0_1.5px_#fff] ${dim ? "opacity-50 grayscale-[75%]" : ""}`}
-            style={{ background: colour }}
-            dangerouslySetInnerHTML={{ __html: kindSvg(goal, 15) }}
-          />
+          {thumb && (
+            <span
+              aria-hidden
+              className={`absolute bottom-2 left-2 grid h-[22px] w-[22px] place-items-center rounded-[7px] text-white shadow-[0_0_0_1.5px_#fff] ${dim ? "opacity-50 grayscale-[75%]" : ""}`}
+              style={{ background: colour }}
+              dangerouslySetInnerHTML={{ __html: kindSvg(goal, 15) }}
+            />
+          )}
           <span aria-hidden />
         </>
       ) : thumb ? (
