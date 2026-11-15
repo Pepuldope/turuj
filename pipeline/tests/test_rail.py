@@ -49,3 +49,54 @@ def test_days_stop_at_the_end_of_the_feed():
     # The calendar ends on 12 Dec (the timetable change): later days aren't "no trains", they're unknown.
     data = rail.build(gtfs(), dt.date(2026, 12, 10), 5)
     assert data["days"] == ["20261210", "20261211", "20261212"]
+
+
+def feed_zip(end, version):
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("feed_info.txt", f"feed_start_date,feed_end_date,feed_version\n20251214,{end},{version}\n")
+    return buf.getvalue()
+
+
+def sparql(*urls):
+    return json.dumps({"results": {"bindings": [{"url": {"value": u}} for u in urls]}}).encode()
+
+
+DL = "https://data.slovensko.sk/download?id="
+
+
+def test_discovery_picks_the_file_whose_timetable_runs_latest():
+    files = {DL + "old": feed_zip("20261212", "1"), DL + "new": feed_zip("20271211", "2"), DL + "mid": feed_zip("20261212", "9")}
+
+    def get(url, **_):
+        return sparql(DL + "old", DL + "mid", DL + "new", "https://elsewhere/x.zip") if "sparql" in url else files[url]
+
+    assert rail.find_feed(get) == files[DL + "new"]
+
+
+def test_same_end_date_prefers_the_higher_feed_version():
+    files = {DL + "a": feed_zip("20261212", "20260923"), DL + "b": feed_zip("20261212", "20261106")}
+    picked = rail.newest_feed(list(files.items()))
+    assert picked[0] == DL + "b"
+
+
+def test_falls_back_to_the_fixed_file_when_discovery_fails():
+    fixed = feed_zip("20261212", "fixed")
+
+    def get(url, **_):
+        if url == rail.FEED_URL:
+            return fixed
+        raise OSError("catalogue down")
+
+    assert rail.find_feed(get) == fixed
+
+
+def test_falls_back_when_the_catalogue_lists_nothing_usable():
+    fixed = feed_zip("20261212", "fixed")
+
+    def get(url, **_):
+        if url == rail.FEED_URL:
+            return fixed
+        return sparql(DL + "junk") if "sparql" in url else b"not a zip"
+
+    assert rail.find_feed(get) == fixed

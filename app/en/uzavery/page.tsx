@@ -1,5 +1,5 @@
 import { InfoPage } from "@/components/InfoPage";
-import { CLOSURES_INDEX_SK } from "@/content/uzavery-index";
+import { CLOSURES_INDEX_EN } from "@/content/uzavery-index-en";
 import { LegalText } from "@/lib/legalText";
 import { pageMetadata } from "@/lib/seo";
 
@@ -10,11 +10,11 @@ export const metadata = pageMetadata({
   lang: "en",
 });
 
-// Place and trail names matter more than the language here: the Slovak text, with an English note.
+// Official trail and place names stay Slovak; everything around them is English.
 export default function Page() {
   return (
-    <InfoPage title="Trail closures 2026/2027" intro="This page is in Slovak: the closure list uses the official Slovak trail and place names.">
-      <LegalText text={CLOSURES_INDEX_SK} />
+    <InfoPage title="Trail closures 2026/2027">
+      <LegalText text={CLOSURES_INDEX_EN} />
     </InfoPage>
   );
 }

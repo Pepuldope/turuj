@@ -1,4 +1,5 @@
 import { getAllTrails } from "@/lib/tripFiles";
+import { closedLast } from "@/lib/homeOrder";
 import { getKnownTownIds } from "@/lib/townTrips";
 import { HomeExplorer } from "@/components/HomeExplorer";
 import { JsonLd } from "@/components/JsonLd";
@@ -21,7 +22,8 @@ const HOME_FIRST = 30;
 export default async function Home() {
   // The best known trips are in the page itself; the browser then loads every trip.
   const [all, knownTowns] = await Promise.all([getAllTrails(), getKnownTownIds()]);
-  const trails = all.slice(0, HOME_FIRST);
+  // Trips closed today sink below the open ones (Rysy and Kriváň in winter), as in the browser list.
+  const trails = closedLast(all).slice(0, HOME_FIRST);
 
   return (
     <>
