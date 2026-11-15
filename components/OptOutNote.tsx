@@ -4,12 +4,14 @@ import { UiIcon } from "@/components/UiIcon";
 import { useEffect, useState } from "react";
 import { applyOptOut, optedOut } from "@/lib/analytics";
 import { setTeamAccount, useAccount } from "@/lib/account";
+import { useT } from "@/lib/i18n";
 
 /**
  * On /statistiky: whether this browser is left out of the counts, and how to change it. Two ways:
  * a team account (set here, holds on every device it signs in on) or "?nepocitat=1" for one browser.
  */
 export function OptOutNote() {
+  const t = useT();
   const [off, setOff] = useState<boolean | null>(null);
   const { loaded, account } = useAccount();
   const [busy, setBusy] = useState(false);
@@ -34,8 +36,8 @@ export function OptOutNote() {
       <p className="opacity-70">
         {/* The team-account switch below shows only when signed in; signed out, point to signing in instead. */}
         {off
-          ? `Tento prehliadač sa nepočíta (zrušíte cez ?nepocitat=0 alebo cez tímový účet ${account ? "nižšie" : "po prihlásení"}).`
-          : `Tento prehliadač sa počíta. Jeden prehliadač vypnete cez ?nepocitat=1, všetky zariadenia tímu cez tímový účet ${account ? "nižšie" : "po prihlásení"}.`}
+          ? t("Tento prehliadač sa nepočíta (zrušíte cez ?nepocitat=0 alebo cez tímový účet {where}).", { where: account ? t("nižšie") : t("po prihlásení") })
+          : t("Tento prehliadač sa počíta. Jeden prehliadač vypnete cez ?nepocitat=1, všetky zariadenia tímu cez tímový účet {where}.", { where: account ? t("nižšie") : t("po prihlásení") })}
       </p>
       {loaded && account && (
         <div className="flex flex-wrap items-center gap-2">
@@ -45,9 +47,9 @@ export function OptOutNote() {
             disabled={busy}
             className="min-h-10 rounded-full border border-[var(--border)] bg-[var(--card-bg)] px-4 text-sm font-semibold hover:border-[var(--accent)] disabled:opacity-60 motion-reduce:transition-none"
           >
-            {team ? "Toto nie je tímový účet: počítať ma znova" : "Toto je tímový účet: nepočítať ma na žiadnom zariadení"}
+            {team ? t("Toto nie je tímový účet: počítať ma znova") : t("Toto je tímový účet: nepočítať ma na žiadnom zariadení")}
           </button>
-          {failed && <span role="status" className="inline-flex items-center gap-1.5 text-[var(--warn)]"><UiIcon name="warn" size={14} />Nepodarilo sa uložiť. Skúste to znova.</span>}
+          {failed && <span role="status" className="inline-flex items-center gap-1.5 text-[var(--warn)]"><UiIcon name="warn" size={14} />{t("Nepodarilo sa uložiť. Skúste to znova.")}</span>}
         </div>
       )}
     </div>

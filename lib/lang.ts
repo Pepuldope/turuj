@@ -36,6 +36,8 @@ export function decimal(lang: Lang, n: number, digits = 1): string {
   return lang === "en" ? s : s.replace(".", ",");
 }
 
+export const MONTH_SHORT_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 /** In the browser: the language of the page open now (map code outside React reads it). */
 export const pageLang = (): Lang => (typeof window === "undefined" ? "sk" : langOfPath(window.location.pathname));
 
@@ -49,4 +51,10 @@ export function routeNameIn(lang: Lang, label: string): string {
   const other = /^Iná cesta (\d+)$/.exec(label);
   if (other) return tr(lang, "Iná cesta {n}", { n: other[1] });
   return tr(lang, label);
+}
+
+/** A region's name in the page's language: names of ranges stay, the catch-all "Ďalšie miesta na Slovensku" and the "a" between names are English. */
+export function regionIn(lang: Lang, name: string): string {
+  if (lang === "sk") return name;
+  return name.startsWith("Ďalšie miesta") ? tr(lang, name) : name.replace(/ a /g, " and ");
 }

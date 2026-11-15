@@ -37,7 +37,7 @@ import { townFrom } from "@/lib/townNames";
 import { startTown } from "@/lib/links";
 import { genitiveFrom } from "@/lib/slovakCase";
 import { suggestTowns } from "@/lib/townSuggest";
-import { decimal } from "@/lib/lang";
+import { decimal, regionIn } from "@/lib/lang";
 import { StartChip } from "@/components/StartChip";
 import { TownButton } from "@/components/TownButton";
 import { TripCard } from "@/components/TripCard";
@@ -552,7 +552,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
   );
   const outlines = useAreaOutlines();
   // Until the outlines arrive (or if they can't), the dots come from the trips themselves.
-  const areas = useMemo(() => (outlines ? areasFrom(outlines) : areasOf(trails)), [outlines, trails]);
+  const areas = useMemo(() => (outlines ? areasFrom(outlines) : areasOf(trails)).map((a) => ({ ...a, name: regionIn(lang, a.name) })), [outlines, trails, lang]);
 
   const registerItem = useCallback((slug: string, el: HTMLElement | null) => {
     if (el) itemRefs.current.set(slug, el);
@@ -946,7 +946,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
               }}
               icon={<GoalTile goal={detail.trail.goal ?? "ine"} size={28} />}
               title={detail.trail.name}
-              note={`${t(GOAL_LABEL[detail.trail.goal ?? "ine"])} · ${detail.trail.region_name ?? ""} · ${formatDurationShort(hikeMin)}`}
+              note={`${t(GOAL_LABEL[detail.trail.goal ?? "ine"])} · ${detail.trail.region_name ? regionIn(lang, detail.trail.region_name) : ""} · ${formatDurationShort(hikeMin)}`}
             />
           ))}
           {results.places.length > 0 && <MenuTitle>{t("Obce a mestá")}</MenuTitle>}
@@ -1242,6 +1242,7 @@ function MenuRow({ icon, title, note, onClick }: { icon: React.ReactNode; title:
 /** The trip in a preview: name, what and where, how long. */
 function MiniCard({ item }: { item: TripCardItem }) {
   const t = useT();
+  const lang = useLang();
   const { trail } = item.detail;
   const goal = trail.goal ?? "ine";
   return (
@@ -1251,7 +1252,7 @@ function MiniCard({ item }: { item: TripCardItem }) {
         <h3 className="text-lg leading-tight font-bold">{trail.name}</h3>
         <p className="text-[13px] text-[var(--muted)]">
           {t(GOAL_LABEL[goal])}
-          {trail.region_name ? ` · ${trail.region_name}` : ""}
+          {trail.region_name ? ` · ${regionIn(lang, trail.region_name)}` : ""}
         </p>
         <p className="font-data mt-1 flex flex-wrap gap-x-3 text-sm font-semibold">
           {item.carMin !== null && (

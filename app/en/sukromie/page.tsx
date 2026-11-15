@@ -17,11 +17,11 @@ export default function PrivacyPage() {
     <InfoPage title="Privacy" intro={`Updated ${formatDateSk(LEGAL_UPDATED, "en")}. A summary: the Slovak text is the binding one.`}>
       <p><strong>In short:</strong> an account only if you want one, a cookie only for signing in, visits counted without cookies or ad tools, and we neither sell data nor use it for ads. Some services we use are in the USA; they are listed below.</p>
       <h2>Who we are</h2>
-      <p>{LEGAL_FACTS.OPERATORS_SHORT}, joint controllers under GDPR art. 26. Email <a href="mailto:info@turuj.sk">info@turuj.sk</a> · address {LEGAL_FACTS.ADDRESS}. No data protection officer.</p>
+      <p>{LEGAL_FACTS.OPERATORS_SHORT_EN}, joint controllers under GDPR art. 26. Email <a href="mailto:info@turuj.sk">info@turuj.sk</a> · address {LEGAL_FACTS.ADDRESS}. No data protection officer.</p>
       <h2>What we keep and for how long</h2>
       <ul>
         <li>Account (email, name if given, Google account number with Google sign-in, dates): until you delete it. Passwords only as a salted PBKDF2 hash.</li>
-        <li>Tester days: if you press “Chcem testovať” (I want to test) while signed in, we store the dates (day only, no times or places) you used Túruj, to measure our school project’s goal; deleted with your account.</li>
+        <li>Tester days: if you press “Become a tester” while signed in, we store the dates (day only, no times or places) you used Túruj, to measure our school project’s goal; deleted with your account.</li>
         <li>Sign-in cookie <code>turuj_s</code>: at most 180 days; we store only its hash. Email codes: deleted when used, otherwise within an hour.</li>
         <li>Quick reviews: trip, answers, date and a random number from your browser; no name, email or IP address.</li>
         <li>Messages from “Write to us” / “Report a problem”: deleted automatically 12 months after they arrive. Emails to info@turuj.sk: at most 12 months after the last reply.</li>

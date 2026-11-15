@@ -39,7 +39,7 @@ import { LOOP_SUFFIX } from "@/lib/loopRoute";
 import { nearestTown } from "@/lib/trips";
 import { nearestOnPath } from "@/lib/geo";
 import { townOf } from "@/lib/townNames";
-import { langPath, tr } from "@/lib/lang";
+import { langPath, regionIn, routeNameIn, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 import { describeEn } from "@/lib/describeEn";
 import { describeTripEn } from "@/lib/tripJsonLdEn";
@@ -112,7 +112,7 @@ function trailJsonLd(detail: TrailDetail, photo: PlacePhoto | null, town: Town |
 
 /** A route as the route list names it, quoted inside a sentence: „Iným chodníkom“. */
 function routeName(r: RouteBrief | undefined, lang: Lang): string {
-  return lang === "en" ? `“${r?.route_label ?? tr(lang, "Hlavná cesta")}”` : `„${r?.route_label ?? "Hlavná cesta"}“`;
+  return lang === "en" ? `“${r?.route_label ? routeNameIn(lang, r.route_label) : tr(lang, "Hlavná cesta")}”` : `„${r?.route_label ?? "Hlavná cesta"}“`;
 }
 
 /** A second reason to go, from what the walk passes: a hut, a castle or a viewpoint. */
@@ -187,7 +187,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
   const others: OtherRoute[] = routes
     .map((r, i) => ({
       slug: r.slug,
-      label: r.route_label ?? r.start_name,
+      label: r.route_label ? routeNameIn(lang, r.route_label) : r.start_name,
       points: r.up.map(([lon, lat]) => [lat, lon] as [number, number]),
       colour: ROUTE_COLOURS[i % ROUTE_COLOURS.length],
       // Loops, and the routes this loop is made of, would draw their lines twice: only on hover.
@@ -210,7 +210,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
 
   // Named for the route, as the route list calls it, when the place has several.
   const ownLabel = routes.length > 1 ? routes.find((r) => r.slug === trail.slug)?.route_label : null;
-  const gpxName = ownLabel ? `${trail.name} (${ownLabel})` : trail.name;
+  const gpxName = ownLabel ? `${trail.name} (${routeNameIn(lang, ownLabel)})` : trail.name;
 
   // The question sections (lib/tripAnswers.ts): the main page of a place and its start pages, not the loop.
   const ownWalk = pickWalk(routeWalk(detail), false, parkingLots.length > 0);
@@ -300,7 +300,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
               <h1 className={`${h1.length > 30 ? "text-[1.85rem]" : "text-[2.4rem]"} break-words leading-none font-extrabold tracking-tight [text-shadow:0_1px_3px_rgba(0,0,0,.45),0_1px_14px_rgba(0,0,0,.3)]`}>{h1}</h1>
               {!loopBack && <p className="text-[15px] leading-tight font-bold [text-shadow:0_1px_2px_rgba(0,0,0,.6),0_0_10px_rgba(0,0,0,.45)]">{subtitle(lang, trail.name, trip.destination.kind)}</p>}
               <p className="text-[13.5px] font-semibold [text-shadow:0_1px_2px_rgba(0,0,0,.6),0_0_10px_rgba(0,0,0,.45)]">
-                {[trail.region_name, trip ? tr(lang, "štart {name}", { name: trip.start.name }) : null].filter(Boolean).join(" · ")}
+                {[trail.region_name ? regionIn(lang, trail.region_name) : null, trip ? tr(lang, "štart {name}", { name: trip.start.name }) : null].filter(Boolean).join(" · ")}
               </p>
             </div>
           </header>

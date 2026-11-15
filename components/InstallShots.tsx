@@ -52,12 +52,13 @@ function Txt({ x, y, children, size = 11, weight = 400, fill = INK, anchor = "st
 
 /** Our page as it looks behind the browser UI. */
 function PageBehind({ y = 20, h = 150 }: { y?: number; h?: number }) {
+  const t = useT();
   return (
     <g>
       <rect x="9" y={y} width="222" height={h} fill="#dcebf8" />
       <path d={`M9 ${y + h * 0.82} 70 ${y + h * 0.6} 110 ${y + h * 0.72} 160 ${y + h * 0.5} 231 ${y + h * 0.78}V${y + h}H9z`} fill="#b9d3a8" />
       <Txt x={22} y={y + 30} size={15} weight={800}>Túruj</Txt>
-      <Txt x={22} y={y + 54} size={13} weight={700}>Kam na výlet?</Txt>
+      <Txt x={22} y={y + 54} size={13} weight={700}>{t("Kam na výlet?")}</Txt>
     </g>
   );
 }

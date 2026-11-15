@@ -12,7 +12,7 @@ import type { Difficulty, ParkingLot, TrailDetail, TransitStop } from "@/lib/typ
 import { useTripSettings } from "@/lib/tripSettings";
 import { UiIcon } from "@/components/UiIcon";
 import { LangLink, useLang } from "@/lib/i18n";
-import { tr } from "@/lib/lang";
+import { regionIn, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 
 export interface TripCardItem {
@@ -203,7 +203,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             {t(GOAL_LABEL[goal])}
           </span>
           {/* Under 360 px there is no room left for it: rather none than a lone "…". */}
-          {trail.region_name && <span className="min-w-0 truncate max-[359px]:hidden">· {trail.region_name}</span>}
+          {trail.region_name && <span className="min-w-0 truncate max-[359px]:hidden">· {regionIn(lang, trail.region_name)}</span>}
           <span className="shrink-0">· {km}</span>
           {/* With kids on, every card listed is kid-friendly: the tag would say nothing. */}
           {trail.family_friendly && !withKids && <span className="on-card-ok shrink-0 font-semibold text-[var(--ok)]">· {t("pre deti")}</span>}
