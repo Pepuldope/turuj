@@ -77,7 +77,7 @@ function pillFor(item: TripCardItem, dayWord: string | null, lang: Lang): Pill |
   if (fit.status === "too-late") return { tone: "no", text: isToday ? t("Dnes už nestihnete · skúste zajtra") : t("Vtedy už nestihnete · skúste zajtra") };
   if (fit.status === "too-early") return { tone: "no", text: t("{Day} by ste museli vyraziť pred {h}:00", { Day: day, h: EARLIEST_DEPARTURE_HOUR }) };
   if (fit.status === "too-long") return { tone: "no", text: t("{Day} je na to málo svetla", { Day: day }) };
-  const verb = t(driveMin !== null ? "vyrazte do" : stop ? "na zastávke do" : "začnite do");
+  const verb = t(driveMin !== null ? "vyraziť najneskôr" : stop ? "na zastávke najneskôr" : "začať najneskôr");
   const tight = isToday && fit.latest.getTime() - Date.now() < TIGHT_MIN * 60000;
   return tight
     ? { tone: "tight", text: `${t("Tesne")} · ${verb}`, time: formatTime(fit.latest) }
@@ -135,6 +135,8 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
   const big = onClose !== undefined;
   const th = detail.trailheads.find((t) => t.is_primary) ?? detail.trailheads[0];
   const parking = detail.parkingLots[0];
+  // "autom / busom / pešo" for screen readers only: shown on screen they made the card a line taller (Peter, 15 Nov).
+  const word = "sr-only";
   const leg = (on: boolean) => `inline-flex items-center gap-1 ${on ? "text-[var(--foreground)]" : "text-[var(--muted)]"}`;
 
   return (
@@ -212,6 +214,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
           <span className={leg(!byBus)}>
             <UiIcon name="car" size={15} />
             {carMin !== null ? `${driveApprox ? "~" : ""}${formatDurationShort(carMin)}` : driveLoading ? "…" : distanceM !== null ? formatFromUser(distanceM, lang) : "–"}
+            {carMin !== null && <small className={word}>{t("autom")}</small>}
           </span>
           <span className={leg(byBus)} title={nearStop ? t("Zastávka {stop}, {m} k trase", { stop: stopLabel(nearStop.name), m: formatFromUser(stopWalkM, lang) }) : t("Bez zastávky pri štarte")}>
             <UiIcon name="bus" size={15} />
@@ -224,10 +227,12 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
                   ? // No start yet: no time to show, and the stop's metres read as the trip's (Peter, 2026-10-26).
                     driveLoading ? "…" : ""
                   : "–"}
+            {nearStop && (byBus ? driveMin !== null : carMin !== null) && <small className={word}>{t("busom")}</small>}
           </span>
           <span className="inline-flex items-center gap-1 text-[var(--foreground)]">
             <UiIcon name="boot" size={15} />
             {formatDurationShort(hikeMin)}
+            <small className={word}>{t("pešo")}</small>
             {withKids && (
               <span className="text-[var(--warn)]" title={t("S deťmi: čas na trase o 30 % dlhší")}>
                 <UiIcon name="kid" size={14} />
@@ -275,7 +280,10 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
           </>
         )}
         {pill && !(big && pill.tone === "closed") && (
-          <span className={`mt-0.5 inline-flex items-baseline gap-1.5 self-start rounded-full px-2.5 py-1 text-[12.5px] font-semibold ${PILL_CLASS[pill.tone]}`}>
+          <span
+            title={pill.time ? t("Najneskôr, kedy treba vyraziť, aby ste boli späť za svetla") : undefined}
+            className={`mt-0.5 inline-flex items-baseline gap-1.5 self-start rounded-full px-2.5 py-1 text-[12.5px] font-semibold whitespace-nowrap ${PILL_CLASS[pill.tone]}`}
+          >
             {pill.tone === "closed" && <UiIcon name="warn" size={13} className="self-center" />}
             {pill.text}
             {pill.time && <span className="font-data text-[17px] leading-none font-bold">{pill.time}</span>}

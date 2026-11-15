@@ -2,6 +2,7 @@
 
 import re
 
+from pipeline import photos
 from pipeline.photos import GENERIC, credit, names_place, plain
 
 
@@ -42,3 +43,21 @@ def test_mapillary_drops_sequences_shot_from_a_vehicle():
     car = [shot("car", 1_600_000_000_000, 17.0), shot("car", 1_600_000_002_000, 17.0005)]
     walk = [shot("walk", 1_600_000_000_000, 17.0), shot("walk", 1_600_000_005_000, 17.00005)]
     assert from_a_vehicle(car + walk) == {"car"}
+
+
+def test_slovak_and_latin_animal_names_are_off_topic():
+    # Peter 15 Nov 2026: a nuthatch was Šarišský hrad's photo.
+    assert photos.OFF_TOPIC.search("Brhlík lesný Sitta europaea na smrekovci v NPR Šarišský hradný vrch, 689.jpg")
+    assert photos.OFF_TOPIC.search("Vtáky na Sitne.jpg")
+    # Places named after animals stay.
+    for title in ["Sokolie-masiv.jpg", "Vlkolínec 06.jpg", "Medvedia hora.jpg", "Sovia skala.jpg", "Šarišský hrad 21 Slovakia.jpg"]:
+        assert not photos.OFF_TOPIC.search(title), title
+
+
+def test_place_matched_photos_skip_wells_sketches_maps_and_crowds():
+    # 15 Nov 2026 sweep: these were photos of peaks, caves and huts.
+    for title in ["Prameň v k.ú. Omšenie, wgs84 48.91332N 18.2131E.jpg", "Mojtínska jaskyňa náčrt.png", "Relief Map of Slovakia 2.png",
+                  "Sledging today in Jahodná resort, Kosice, Slovakia (25248285968).jpg", "20260815 02 Dechtice-Svätodušnica pouť.jpg",
+                  "Uhrovec, Jankov vŕšok, hotel Partizán.jpg"]:
+        assert photos.NOT_OUTDOORS.search(title), title
+    assert not photos.NOT_OUTDOORS.search("Šariš Castle Keep 2024.jpg")

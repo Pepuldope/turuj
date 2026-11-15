@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { BAD_SKY_LABEL, badSkySvg } from "@/lib/weatherIcons";
 import type { BadSky } from "@/lib/weather";
-import { addDaysIso, dayStrip, isoDate, shortDay } from "@/lib/days";
+import { addDaysIso, dayStrip, isoDate, shortDate, shortDay } from "@/lib/days";
 import { useTripSettings } from "@/lib/tripSettings";
 import { UiIcon } from "@/components/UiIcon";
 import { track } from "@/lib/analytics";
@@ -35,6 +35,11 @@ const segBtn = (on: boolean) =>
   `inline-flex items-center justify-center gap-1.5 rounded-[10px] px-2 py-2 text-sm font-semibold whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
     on ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
   }`;
+
+/** The day's date next to "Dnes" / "Zajtra" ("16. 11.", never split over two lines). Only drawn once the browser knows today (days), like the rest of the chips, and only in Slovak: "Tomorrow 16 Nov" does not fit a 390 px segment. */
+function ChipDate({ iso, lang }: { iso: string; lang: Lang }) {
+  return <span className="text-[12px] font-medium whitespace-nowrap opacity-80">{shortDate(iso, lang).replaceAll(" ", "\u00a0")}</span>;
+}
 
 /** The day: Dnes, Zajtra, or Iný deň (two weeks to tap, and the full calendar). */
 export function FilterChips({ variant = "home", activeDate, dayWeather }: Props) {
@@ -92,9 +97,11 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
       <div role="group" aria-label={t("Deň výletu")} className={segment}>
         <button type="button" aria-pressed={!!days && current === days.today} onClick={() => days && pick(days.today, "dnes")} className={segBtn(!!days && current === days.today)}>
           {t("Dnes")}
+          {days && lang === "sk" && <ChipDate iso={days.today} lang={lang} />}
         </button>
         <button type="button" aria-pressed={!!days && current === days.tomorrow} onClick={() => days && pick(days.tomorrow, "zajtra")} className={segBtn(!!days && current === days.tomorrow)}>
           {t("Zajtra")}
+          {days && lang === "sk" && <ChipDate iso={days.tomorrow} lang={lang} />}
         </button>
         <button
           type="button"

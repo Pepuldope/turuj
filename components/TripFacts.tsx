@@ -4,7 +4,7 @@ import { KIDS_PACE } from "@/lib/dayPlan";
 import { DIFFICULTY_LABEL, formatDuration } from "@/lib/format";
 import type { Difficulty } from "@/lib/types";
 import { useTripSettings } from "@/lib/tripSettings";
-import { formatKm, walkMinutes } from "@/lib/walkFacts";
+import { formatKm, skippedNote, walkMinutes } from "@/lib/walkFacts";
 import { useTripAccess } from "@/components/TripAccess";
 import { UiIcon } from "@/components/UiIcon";
 import { useLang, useT } from "@/lib/i18n";
@@ -43,15 +43,10 @@ export function TripFacts({ loop, difficulty, familyFriendly }: Props) {
       <span className="font-sans text-[13px] font-medium text-[var(--muted)]">{t("{level} obtiažnosť", { level: t(DIFFICULTY_LABEL[difficulty]).toLowerCase() })}</span>
       {familyFriendly && <span className="font-sans text-[13px] font-semibold text-[var(--ok)]">{t("vhodné pre deti")}</span>}
       {/* Only when the walk is shorter than the route's own start; "Aj s chôdzou…" said nothing (Peter, 2026-10-22). */}
-      {walk.skipped && <span className="w-full font-sans text-[13px] text-[var(--muted)]">{t(skippedNote(transit))}</span>}
+      {walk.skipped && <span className="w-full font-sans text-[13px] text-[var(--muted)]">{t(skippedNote(transit, walk.approachMin))}</span>}
     </p>
   );
 }
 
 /** Words next to a number: what it counts. */
 const small = "font-sans text-[12px] font-semibold text-[var(--muted)]";
-
-/** The stop or parking sits on the trail, so the walk skips the bit below it. */
-function skippedNote(transit: boolean): string {
-  return transit ? "Zastávka je priamo pri trase, kúsok pod ňou nejdete." : "Parkovisko je priamo pri trase, kúsok pod ním nejdete.";
-}

@@ -52,6 +52,16 @@ export function walkFacts(trail: TrailNumbers, from: WalkStart | null): WalkFact
   };
 }
 
+/**
+ * The note under the walk's facts when the parking or stop sits up the trail (the stretch below is skipped).
+ * One rule with the parking and stop lines (approachMin: under 150 m is "right there"): it only says "right on the trail"
+ * when the walk to it is 0, otherwise just that it lies higher up (never "right on the trail" beside "150 m od trasy").
+ */
+export function skippedNote(transit: boolean, approach: number): string {
+  if (approach > 0) return transit ? "Zastávka je vyššie na trase, spodný úsek vynecháte." : "Parkovisko je vyššie na trase, spodný úsek vynecháte.";
+  return transit ? "Zastávka je priamo pri trase, kúsok pod ňou nejdete." : "Parkovisko je priamo pri trase, kúsok pod ním nejdete.";
+}
+
 /** Walking time for this group: kids walk slower. */
 export function walkMinutes(facts: WalkFacts, withKids: boolean): number {
   return hikeMinutes(facts.min, withKids);
