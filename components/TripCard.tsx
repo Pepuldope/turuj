@@ -92,6 +92,9 @@ const PILL_CLASS = {
   closed: "bg-[var(--danger-bg)] text-[var(--danger)]",
 };
 
+/** The list card's picture strip fades out over its last 22 px (a mask, so it works on any card colour, dark mode too). */
+const STRIP_FADE = "linear-gradient(to right, #000 calc(100% - 22px), transparent)";
+
 let thumbsP: Promise<Record<string, string>> | null = null;
 
 /** Card photos by trip slug (scripts/photo-thumbs.mjs), loaded once for every card. */
@@ -145,7 +148,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
       href={`/trasa/${trail.slug}`}
       onMouseEnter={() => onActive(trail.slug)}
       onFocus={() => onActive(trail.slug)}
-      className={`grid grid-cols-[64px_minmax(0,1fr)] gap-3 rounded-[var(--radius-card)] border bg-[var(--card-bg)] p-3 transition-colors hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
+      className={`relative grid grid-cols-[64px_minmax(0,1fr)] gap-3 overflow-hidden rounded-[var(--radius-card)] border bg-[var(--card-bg)] p-3 transition-colors hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
         big ? "border-2 border-[var(--accent)] shadow-[0_10px_28px_rgba(20,35,59,0.22)]" : active ? "trip-card-active border-[var(--accent)]" : "border-[var(--border)]"
       }`}
     >
@@ -156,7 +159,34 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
           {pill.text}
         </span>
       )}
-      {thumb ? (
+      {!big ? (
+        // List cards: the picture runs the card's full height down the left edge, as wide as the old square
+        // plus its padding, and fades out on the right into the card (Peter, 15 Nov). The grid keeps a spacer column.
+        <>
+          <span
+            aria-hidden
+            className={`absolute inset-y-0 left-0 w-[76px] ${dim ? "opacity-50 grayscale-[75%]" : ""}`}
+            style={{ background: colour, maskImage: STRIP_FADE, WebkitMaskImage: STRIP_FADE }}
+          >
+            {thumb ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={thumb} alt="" loading="lazy" decoding="async" crossOrigin="anonymous" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+            ) : (
+              // Constant markup from lib/kindIcons.ts, no user data.
+              <span className="grid h-full w-[64px] place-items-center text-white" dangerouslySetInnerHTML={{ __html: kindSvg(goal, 30) }} />
+            )}
+          </span>
+          {thumb && (
+            <span
+              aria-hidden
+              className={`absolute bottom-2 left-2 grid h-[22px] w-[22px] place-items-center rounded-[7px] text-white shadow-[0_0_0_1.5px_#fff] ${dim ? "opacity-50 grayscale-[75%]" : ""}`}
+              style={{ background: colour }}
+              dangerouslySetInnerHTML={{ __html: kindSvg(goal, 15) }}
+            />
+          )}
+          <span aria-hidden />
+        </>
+      ) : thumb ? (
         // A photo of the place in place of the kind icon (Peter, 2026-10-22); the kind sits on it as a small badge.
         <span aria-hidden className={`relative h-[64px] w-[64px] overflow-hidden rounded-[14px] ${dim ? "opacity-50 grayscale-[75%]" : ""}`} style={{ background: colour }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -210,12 +240,14 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
           {/* With kids on, every card listed is kid-friendly: the tag would say nothing. */}
           {trail.family_friendly && !withKids && <span className="on-card-ok shrink-0 font-semibold text-[var(--ok)]">· {t("pre deti")}</span>}
         </span>
-        <span className="font-data flex flex-wrap items-center gap-x-3 text-[15px]">
+        {/* Two lines (Peter, 15 Nov): getting there by car / bus, then the walk itself. */}
+        <span className="font-data flex flex-wrap items-center gap-x-2 text-[15px]">
           <span className={leg(!byBus)}>
             <UiIcon name="car" size={15} />
             {carMin !== null ? `${driveApprox ? "~" : ""}${formatDurationShort(carMin)}` : driveLoading ? "…" : distanceM !== null ? formatFromUser(distanceM, lang) : "–"}
             {carMin !== null && <small className={word}>{t("autom")}</small>}
           </span>
+          <span aria-hidden className="font-sans text-[var(--muted)]">/</span>
           <span className={leg(byBus)} title={nearStop ? t("Zastávka {stop}, {m} k trase", { stop: stopLabel(nearStop.name), m: formatFromUser(stopWalkM, lang) }) : t("Bez zastávky pri štarte")}>
             <UiIcon name="bus" size={15} />
             {/* By car too, the bus as a time (muted), never the walk from the stop: "350 m" read as minutes next to the car's time (Peter, 2026-10-23). */}
@@ -229,7 +261,10 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
                   : "–"}
             {nearStop && (byBus ? driveMin !== null : carMin !== null) && <small className={word}>{t("busom")}</small>}
           </span>
+        </span>
+        <span className="font-data flex flex-wrap items-center gap-x-3 text-[15px]">
           <span className="inline-flex items-center gap-1 text-[var(--foreground)]">
+            <span className="font-sans text-[12px] font-semibold text-[var(--muted)]">{t("túra")}:</span>
             <UiIcon name="boot" size={15} />
             {formatDurationShort(hikeMin)}
             <small className={word}>{t("pešo")}</small>
