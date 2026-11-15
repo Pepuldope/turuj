@@ -2,7 +2,7 @@
 // worked out when it is sent (fresh forecast), from the small job the page left with the plan.
 // Closure data is safety data: the message never says a trail is open. A known closure is stated with
 // its end date; with no data the closure line is left out (the trip page says "Stav chodníka neoverený").
-import { tr } from "@/lib/lang";
+import { MONTH_SHORT_EN, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 import { skyKind, summarize, tripWeatherReport, weatherNotes } from "@/lib/weather";
 import type { WeatherForecast } from "@/lib/weather";
@@ -44,9 +44,9 @@ export function eveWanted(date: string, now = Date.now()): number | null {
   return at !== null && at > now && at < now + EVE_MAX_AHEAD_MS ? at : null;
 }
 
-function dateWords(iso: string): string {
+function dateWords(iso: string, lang: Lang): string {
   const [y, m, d] = iso.split("-").map(Number);
-  return `${d}. ${m}. ${y}`;
+  return lang === "en" ? `${d} ${MONTH_SHORT_EN[m - 1]} ${y}` : `${d}. ${m}. ${y}`;
 }
 
 /** The title and the one-to-four short lines. `forecast` null: MET did not answer, the weather line is left out. */
@@ -73,7 +73,7 @@ export function eveMessage(job: EveJob, forecast: WeatherForecast | null): Messa
 
   if (job.closedUntil.length > 0) {
     const until = [...job.closedUntil].sort().at(-1)!;
-    lines.push(tr(lang, "Pozor: trasa je zatvorená do {date}.", { date: dateWords(until) }));
+    lines.push(tr(lang, "Pozor: trasa je zatvorená do {date}.", { date: dateWords(until, lang) }));
   }
 
   if (forecast && report) {

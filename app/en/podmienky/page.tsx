@@ -16,7 +16,7 @@ export default function TermsPage() {
   return (
     <InfoPage title="Terms of use" intro={`Version 1.0 · in force from ${formatDateSk(LEGAL_UPDATED, "en")}. A summary: the Slovak text is the binding one.`}>
       <h2>Who runs Túruj</h2>
-      <p>{LEGAL_FACTS.OPERATORS_SHORT}, as private persons (no company yet). Contact: <a href="mailto:info@turuj.sk">info@turuj.sk</a>, also for authorities under the EU Digital Services Act. Address: {LEGAL_FACTS.ADDRESS}.</p>
+      <p>{LEGAL_FACTS.OPERATORS_SHORT_EN}, as private persons (no company yet). Contact: <a href="mailto:info@turuj.sk">info@turuj.sk</a>, also for authorities under the EU Digital Services Act. Address: {LEGAL_FACTS.ADDRESS}.</p>
       <h2>What Túruj is</h2>
       <p>A free planner for one-day trips in Slovakia. Nothing is sold; /plus is only a survey.</p>
       <h2>In the mountains, you decide</h2>

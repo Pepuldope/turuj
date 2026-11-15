@@ -4,7 +4,7 @@
  * Pure functions, so the wording and the month table are unit tested. All of it is server HTML.
  */
 import { approachMin, planDay } from "@/lib/dayPlan";
-import { closureManager, closurePeriod, isClosureActive } from "@/lib/closures";
+import { closureManager, closurePeriod, closureSpan, isClosureActive } from "@/lib/closures";
 import { formatDuration, formatWalk, stopLabel } from "@/lib/format";
 import { decimal, routeNameIn, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
@@ -158,7 +158,7 @@ export function otherStops(lang: Lang, stops: TransitStop[]): string | null {
 /** The closure rule in one sentence; no rule at all is "Stav chodníka neoverený", never "open". */
 export function closureSentence(lang: Lang, closures: Closure[]): string {
   if (closures.length === 0) return tr(lang, "Stav chodníka neoverený, pre túto trasu nemáme žiadne údaje o uzáverách.");
-  const one = (c: Closure) => tr(lang, "od {period} ({who})", { period: closurePeriod(c), who: closureManager(c) });
+  const one = (c: Closure) => tr(lang, "od {period} ({who})", { period: closurePeriod(c, lang), who: closureManager(c, lang) });
   if (closures.length === 1) return tr(lang, "Na tejto trase platí uzávera {rule}.", { rule: one(closures[0]) });
   return tr(lang, "Na tejto trase platia uzávery: {rules}.", { rules: closures.map(one).join("; ") });
 }
@@ -219,7 +219,7 @@ export function monthTable(at: LatLng, walkMin: number, closures: Closure[] = []
     const who = new Set<string>();
     for (let day = 1; day <= DAYS_IN_MONTH[month - 1]; day++) {
       const iso = `${TABLE_YEAR}-${mm}-${String(day).padStart(2, "0")}`;
-      const by = [...seasonal.filter((c) => isClosureActive(c, iso)), ...dated.filter((d) => d.days.has(month * 100 + day)).map((d) => d.c)].map(closureManager);
+      const by = [...seasonal.filter((c) => isClosureActive(c, iso)), ...dated.filter((d) => d.days.has(month * 100 + day)).map((d) => d.c)].map((c) => closureManager(c));
       if (by.length) {
         closedDays.push(day);
         by.forEach((w) => who.add(w));
@@ -272,7 +272,7 @@ function latestText(lang: Lang, row: MonthRow): string {
 export function departureSentence(lang: Lang, rows: MonthRow[], closures: Closure[] = [], asOf?: string): string {
   const dated = relevantDated(closures, asOf);
   const warn = dated.length
-    ? tr(lang, "Pozor, na trase je hlásená uzávera od {period}, pozrite časť Uzávery a poplatky.", { period: dated.map(closurePeriod).filter((p, i, all) => all.indexOf(p) === i).join("; ") }) + " "
+    ? tr(lang, "Pozor, na trase je hlásená uzávera od {period}, pozrite časť Uzávery a poplatky.", { period: dated.map((c) => closurePeriod(c, lang)).filter((p, i, all) => all.indexOf(p) === i).join("; ") }) + " "
     : "";
   const clear = rows.filter((r) => r.closedBy === null && r.partial === null);
   const closed = rows.filter((r) => r.closedBy !== null);
@@ -283,9 +283,9 @@ export function departureSentence(lang: Lang, rows: MonthRow[], closures: Closur
     return warn + tr(lang, warn ? "Mimo nej treba vyraziť: v {m1} {a}, v {m2} {b}." : "V {m1} treba vyraziť {a}, v {m2} {b}.", { m1: monthIn(lang, 6), a: latestText(lang, june), m2: monthIn(lang, 12), b: latestText(lang, dec) });
   }
   const seasonal = closures.filter((c) => c.kind === "rocna");
-  const period = seasonal.map((c) => `${closurePeriod(c)}`).filter((p, i, all) => all.indexOf(p) === i).join("; ");
+  const period = seasonal.map((c) => closurePeriod(c, lang)).filter((p, i, all) => all.indexOf(p) === i).join("; ");
   const who = [...new Set(rows.flatMap((r) => (r.closedBy ?? r.partial?.by ?? "").split(", ")).filter(Boolean))].join(", ");
-  const closedPart = seasonal.length ? " " + tr(lang, "od {period} je trasa uzavretá ({who}).", { period, who: [...new Set(seasonal.map(closureManager))].join(", ") }) : "";
+  const closedPart = seasonal.length ? " " + tr(lang, "od {period} je trasa uzavretá ({who}).", { period, who: [...new Set(seasonal.map((c) => closureManager(c, lang)))].join(", ") }) : "";
   if (clear.length === 0) {
     if (closed.length === rows.length) {
       return seasonal.length && !dated.length ? tr(lang, "Trasa je uzavretá celý rok ({who}).", { who }) : warn + tr(lang, "Každý mesiac tabuľky je uzavretý ({who}); čas vyrazenia neuvádzame.", { who });
@@ -336,7 +336,7 @@ export function winterNote(lang: Lang): string {
 const upFirst = (s: string) => s.charAt(0).toLocaleUpperCase("sk") + s.slice(1);
 
 /** "1. 11. do 31. 5." as "1. 11.–31. 5." */
-const spanShort = (c: Closure) => closurePeriod(c).replace(" do ", "–");
+const spanShort = (c: Closure, lang: Lang) => closureSpan(c, lang);
 
 /** "8 h 30 min zo štartu Liečebný dom Solisko"; several starts: "od 3 h do 4 h podľa štartu". */
 export function durationTeaser(lang: Lang, lines: StartLine[]): string {
@@ -372,7 +372,7 @@ export function transitTeaser(lang: Lang, stops: TransitStop[]): string {
 export function closureTeaser(lang: Lang, closures: Closure[]): string {
   if (closures.length === 0) return tr(lang, "Stav chodníka neoverený");
   return closures
-    .map((c) => tr(lang, c.kind === "jednorazova" ? "Uzávera {period} ({who})" : "Zatvorené každý rok {period} ({who})", { period: spanShort(c), who: closureManager(c) }))
+    .map((c) => tr(lang, c.kind === "jednorazova" ? "Uzávera {period} ({who})" : "Zatvorené každý rok {period} ({who})", { period: spanShort(c, lang), who: closureManager(c, lang) }))
     .join("; ");
 }
 

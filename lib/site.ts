@@ -60,6 +60,9 @@ export const OG_IMAGE = {
   alt: "Túruj – kam na výlet, aby ste boli späť za svetla",
 };
 
+/** The same picture with the English headline (public/og-image-en.png) for the /en pages. */
+export const OG_IMAGE_EN = { ...OG_IMAGE, url: "/og-image-en.png", alt: "Túruj – where to go for a day trip, and be back before dark" };
+
 export const REPO_URL = "https://github.com/Pepuldope/turuj";
 
 /** Google Form for tester sign-up, linked from the footer ("Chcem testovať"). */
