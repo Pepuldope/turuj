@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { AccountMonth } from "@/lib/auth";
 import type { MonthEvents } from "@/lib/eventCounts";
 import type { MonthStats } from "@/lib/visitStore";
+import { useT } from "@/lib/i18n";
 
 interface Stats {
   months: MonthStats[] | null;
@@ -13,6 +14,7 @@ interface Stats {
 
 /** The tables on /statistiky, read from /api/statistiky when the page opens. */
 export function StatsTables() {
+  const t = useT();
   const [data, setData] = useState<Stats | "loading" | "error">("loading");
   useEffect(() => {
     fetch("/api/statistiky", { cache: "no-store" })
@@ -21,26 +23,26 @@ export function StatsTables() {
       .catch(() => setData("error"));
   }, []);
 
-  if (data === "loading") return <p>Načítavame…</p>;
-  if (data === "error") return <p>Čísla sa nepodarilo načítať. Skúste stránku obnoviť.</p>;
+  if (data === "loading") return <p>{t("Načítavame…")}</p>;
+  if (data === "error") return <p>{t("Čísla sa nepodarilo načítať. Skúste stránku obnoviť.")}</p>;
   const { months: rows, events, accounts } = data;
 
   return (
     <>
       {rows === null ? (
-        <p>Počítadlo beží len na zverejnenej stránke (Cloudflare).</p>
+        <p>{t("Počítadlo beží len na zverejnenej stránke (Cloudflare).")}</p>
       ) : rows.length === 0 ? (
-        <p>Zatiaľ žiadne návštevy.</p>
+        <p>{t("Zatiaľ žiadne návštevy.")}</p>
       ) : (
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--border)]">
-              <th className="py-2">Mesiac</th>
-              <th>Ľudia</th>
-              <th>2+ dni</th>
-              <th>4+ dni</th>
-              <th>4+ dni používania (otvorený alebo uložený výlet)</th>
-              <th>Priemer dní</th>
+              <th className="py-2">{t("Mesiac")}</th>
+              <th>{t("Ľudia")}</th>
+              <th>{t("2+ dni")}</th>
+              <th>{t("4+ dni")}</th>
+              <th>{t("4+ dni používania (otvorený alebo uložený výlet)")}</th>
+              <th>{t("Priemer dní")}</th>
             </tr>
           </thead>
           <tbody>
@@ -59,25 +61,23 @@ export function StatsTables() {
       )}
       {events && events.length > 0 && (
         <>
-          <h2>Plány</h2>
+          <h2>{t("Plány")}</h2>
           <p className="text-sm">
-            <b>Naplánované</b> (hlavné číslo): výlety, ktoré niekto uložil, poslal, spustil k nim navigáciu alebo stiahol
-            GPX, každý výlet raz za otvorenie stránky (zbiera sa od novembra 2026). Ďalej koľkokrát v mesiaci bol zadaný štart, výlet uložený, plán poslaný (z toho do 2 minút od príchodu), plán
-            otvorený kamarátom a spustená navigácia. Túruj+: kliknutia „Chcel by som to“ / „Za túto cenu nie“ na
-            stránke /plus.
+            <b>{t("Naplánované")}</b>{" "}
+            {t("(hlavné číslo): výlety, ktoré niekto uložil, poslal, spustil k nim navigáciu alebo stiahol GPX, každý výlet raz za otvorenie stránky (zbiera sa od novembra 2026). Ďalej koľkokrát v mesiaci bol zadaný štart, výlet uložený, plán poslaný (z toho do 2 minút od príchodu), plán otvorený kamarátom a spustená navigácia. Túruj+: kliknutia „Chcel by som to“ / „Za túto cenu nie“ na stránke /plus.")}
           </p>
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--border)]">
-                <th className="py-2">Mesiac</th>
-                <th>Naplánované</th>
-                <th>Štart</th>
-                <th>Uložené</th>
-                <th>Poslané</th>
-                <th>Do 2 min</th>
-                <th>Otvorené</th>
-                <th>Navigácia</th>
-                <th>Túruj+</th>
+                <th className="py-2">{t("Mesiac")}</th>
+                <th>{t("Naplánované")}</th>
+                <th>{t("Štart")}</th>
+                <th>{t("Uložené")}</th>
+                <th>{t("Poslané")}</th>
+                <th>{t("Do 2 min")}</th>
+                <th>{t("Otvorené")}</th>
+                <th>{t("Navigácia")}</th>
+                <th>{t("Túruj+")}</th>
               </tr>
             </thead>
             <tbody>
@@ -100,8 +100,8 @@ export function StatsTables() {
           </table>
           {events.some((e) => Object.keys(e.heardFrom ?? {}).length > 0) && (
             <>
-              <h3 className="font-semibold">Odkiaľ o nás vedia</h3>
-              <p className="text-sm">Odpovede na „Ako ste sa o nás dozvedeli?“ po prvom uložení výletu.</p>
+              <h3 className="font-semibold">{t("Odkiaľ o nás vedia")}</h3>
+              <p className="text-sm">{t("Odpovede na „Ako ste sa o nás dozvedeli?“ po prvom uložení výletu.")}</p>
               <ul className="text-sm">
                 {events
                   .filter((e) => Object.keys(e.heardFrom ?? {}).length > 0)
@@ -121,19 +121,18 @@ export function StatsTables() {
       )}
       {accounts && (
         <>
-          <h2>Účty</h2>
+          <h2>{t("Účty")}</h2>
           <p className="text-sm">
-            Spolu <b>{accounts.total}</b> účtov. Nové účty v mesiaci a koľkokrát sa ľudia prihlásili cez Google a
-            kódom na email (prvé prihlásenie nového účtu sa počíta tiež).
+            {t("Spolu")} <b>{accounts.total}</b> {t("účtov. Nové účty v mesiaci a koľkokrát sa ľudia prihlásili cez Google a kódom na email (prvé prihlásenie nového účtu sa počíta tiež).")}
           </p>
           {accounts.months.length > 0 && (
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-[var(--border)]">
-                  <th className="py-2">Mesiac</th>
-                  <th>Nové účty</th>
-                  <th>Prihlásenia Google</th>
-                  <th>Prihlásenia email</th>
+                  <th className="py-2">{t("Mesiac")}</th>
+                  <th>{t("Nové účty")}</th>
+                  <th>{t("Prihlásenia Google")}</th>
+                  <th>{t("Prihlásenia email")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -151,8 +150,7 @@ export function StatsTables() {
         </>
       )}
       <p className="text-xs opacity-70">
-        Človek, ktorému sa medzi dňami zmení IP adresa (napr. mobil na inej sieti), sa počíta ako dvaja ľudia, takže
-        ľudí môže byť o niečo menej a ľudí s 2+ a 4+ dňami o niečo viac, ako ukazujú čísla.
+        {t("Človek, ktorému sa medzi dňami zmení IP adresa (napr. mobil na inej sieti), sa počíta ako dvaja ľudia, takže ľudí môže byť o niečo menej a ľudí s 2+ a 4+ dňami o niečo viac, ako ukazujú čísla.")}
       </p>
     </>
   );

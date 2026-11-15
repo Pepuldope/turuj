@@ -30,8 +30,8 @@ jobs:
 
       - name: Build the train timetable
         run: |
-          curl -fsSL --retry 3 -o rail-gtfs.zip "https://data.slovensko.sk/download?id=c4918871-2860-4e6f-bf67-55e5c902785d"
-          python -m pipeline.rail --gtfs rail-gtfs.zip
+          # pipeline/rail.py finds the newest ŽSR file in the catalogue itself (fixed id as fallback).
+          python -m pipeline.rail
           ls -la public/data/rail && gzip -c public/data/rail/timetable.json | wc -c
 
       # A bot commit doesn't start the CI workflow but Cloudflare deploys it: run the site's

@@ -17,7 +17,7 @@ export function ClosureRules({ closures, lang }: { closures: Closure[]; lang: La
           {/* The reason already carries the dates: say the rule once, the rest is one small line. */}
           <p>{tr(lang, c.reason)}</p>
           <p className="text-xs">
-            {tr(lang, "Správca: {who}", { who: closureManager(c) })}
+            {tr(lang, "Správca: {who}", { who: closureManager(c, lang) })}
             {" · "}
             <a href={c.source_url} target="_blank" rel="noopener noreferrer" className="underline">
               {tr(lang, "Zdroj informácie")}

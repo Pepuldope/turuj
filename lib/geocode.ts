@@ -5,11 +5,12 @@
  * only search when the user submits. https://operations.osmfoundation.org/policies/nominatim/
  */
 import { haversineM } from "@/lib/geo";
+import type { Lang } from "@/lib/lang";
 
 export interface Place {
   lat: number;
   lon: number;
-  /** Short Slovak label, e.g. "Pezinok, okres Pezinok". */
+  /** Short label (Slovak, or English on the English page), e.g. "Pezinok, okres Pezinok". */
   label: string;
   /** Country as Nominatim names it (the last part of its address), when known. */
   country?: string;
@@ -22,13 +23,23 @@ interface NominatimResult {
   display_name: string;
 }
 
-export async function searchPlaces(query: string, signal?: AbortSignal): Promise<Place[]> {
+/**
+ * The search address. Nominatim matches a query against a place's names in every language ("Vienna",
+ * "Krakow" and "Viedeň" all find the same city); accept-language only picks the language of the answer,
+ * so the English page gets English names (with Slovak as the fallback for villages that have no English one).
+ */
+export function searchUrl(q: string, lang: Lang = "sk"): string {
+  return (
+    "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5" +
+    `&countrycodes=sk,cz,at,hu,pl&accept-language=${lang === "en" ? "en,sk" : "sk"}` +
+    `&q=${encodeURIComponent(q)}`
+  );
+}
+
+export async function searchPlaces(query: string, signal?: AbortSignal, lang: Lang = "sk"): Promise<Place[]> {
   const q = query.trim();
   if (q.length < 2) return [];
-  const url =
-    "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5" +
-    "&countrycodes=sk,cz,at,hu,pl&accept-language=sk" +
-    `&q=${encodeURIComponent(q)}`;
+  const url = searchUrl(q, lang);
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`nominatim ${res.status}`);
   const rows = (await res.json()) as NominatimResult[];

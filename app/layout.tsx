@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Barlow_Condensed, Bricolage_Grotesque, Figtree } from "next/font/google";
+import { preload } from "react-dom";
+import "./fonts.css";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { StaleCodeReload } from "@/components/StaleCodeReload";
@@ -11,24 +12,6 @@ import { TopBar } from "@/components/TopBar";
 import { SkipToTrips } from "@/components/SkipToTrips";
 import { LangProvider } from "@/lib/i18n";
 import { OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
-
-// Brand fonts (strategy/06-identity): latin-ext covers every Slovak letter.
-const figtree = Figtree({
-  variable: "--font-figtree",
-  subsets: ["latin", "latin-ext"],
-});
-
-const bricolage = Bricolage_Grotesque({
-  variable: "--font-bricolage",
-  subsets: ["latin", "latin-ext"],
-  weight: ["700", "800"],
-});
-
-const barlowCondensed = Barlow_Condensed({
-  variable: "--font-barlow-condensed",
-  subsets: ["latin", "latin-ext"],
-  weight: ["600"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -58,13 +41,17 @@ export const viewport: Viewport = {
   themeColor: "#17213a",
 };
 
+// Latin subsets are needed on every page; latin-ext is fetched only when a Slovak letter shows up.
+const PRELOAD_FONTS = ["figtree-latin", "bricolage-grotesque-latin-800", "barlow-condensed-latin-600"];
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  for (const f of PRELOAD_FONTS) preload(`/fonts/${f}.woff2`, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
   return (
     // English pages (app/en): worker.ts sends lang="en" in the HTML, the script in app/en/layout.tsx covers local runs.
     <html
       lang="sk"
       suppressHydrationWarning
-      className={`${figtree.variable} ${bricolage.variable} ${barlowCondensed.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />

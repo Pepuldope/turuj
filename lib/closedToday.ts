@@ -4,6 +4,8 @@
  * Slovak date (components/NearbyList.tsx). Same month/day comparison as isClosureActive, including a
  * range that wraps the new year.
  */
+import { MONTH_SHORT_EN } from "@/lib/lang";
+import type { Lang } from "@/lib/lang";
 import { wallClock } from "@/lib/zoned";
 
 /** "MM-DD" of an ISO date ("2026-11-01" -> "11-01"). */
@@ -21,8 +23,9 @@ export function inYearlyRange(from: string, to: string, today: string): boolean 
 }
 
 /** "31. 5." from "05-31", with a no-break space like the closure chips. */
-export function dayMonthOf(md: string): string {
-  return `${Number(md.slice(3, 5))}. ${Number(md.slice(0, 2))}.`;
+export function dayMonthOf(md: string, lang: Lang = "sk"): string {
+  const [day, month] = [Number(md.slice(3, 5)), Number(md.slice(0, 2))];
+  return lang === "en" ? `${day} ${MONTH_SHORT_EN[month - 1]}` : `${day}.\u00a0${month}.`;
 }
 
 /** Slovak plural class of a count: 1, 2-4 and 5 or more. */

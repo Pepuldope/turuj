@@ -26,7 +26,7 @@ export function townMetadata(id: string, lang: Lang) {
 
 /** A browse page: rows of photo tiles, the place first and the facts second. */
 export async function TownView({ id, lang }: { id: string; lang: Lang }) {
-  const data = await getTownTrips(id);
+  const data = await getTownTrips(id, lang);
   if (!data) notFound();
   const { town, total, rows } = data;
   const url = absoluteUrl(langPath(lang, `/vylety-z/${town.id}`));

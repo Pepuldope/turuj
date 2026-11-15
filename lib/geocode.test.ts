@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { tidyPlaces } from "@/lib/geocode";
+import { searchUrl, tidyPlaces } from "@/lib/geocode";
 
 const place = (label: string, lat: number, lon: number, country = "Slovensko") => ({ label, lat, lon, country });
 
@@ -15,5 +15,16 @@ describe("tidyPlaces", () => {
   it("lists Slovakia first and otherwise keeps the order", () => {
     const out = tidyPlaces([place("Brno", 49.2, 16.6, "Česko"), place("Zvolen", 48.58, 19.12), place("Banská Bystrica", 48.73, 19.14)]);
     expect(out.map((p) => p.label)).toEqual(["Zvolen", "Banská Bystrica", "Brno"]);
+  });
+});
+
+describe("searchUrl", () => {
+  it("asks for Slovak names on the Slovak page", () => {
+    expect(searchUrl("Viedeň")).toContain("accept-language=sk&");
+  });
+  it("asks for English names on the English page and passes the typed name through", () => {
+    const u = searchUrl("Kraków", "en");
+    expect(u).toContain("accept-language=en,sk");
+    expect(u).toContain("q=Krak%C3%B3w");
   });
 });

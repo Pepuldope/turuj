@@ -20,13 +20,21 @@ import datetime as dt
 import io
 import json
 import sys
+import time
+import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
 
 
 VERSION = 1
+# The last known file, used when the catalogue cannot be asked (see find_feed).
 FEED_URL = "https://data.slovensko.sk/download?id=c4918871-2860-4e6f-bf67-55e5c902785d"
+# The catalogue's SPARQL endpoint (the same one its website uses) and ŽSR's publisher id (its company number).
+SPARQL_URL = "https://data.slovensko.sk/api/sparql"
+ZSR_PUBLISHER = "https://data.gov.sk/id/legal-subject/31364501"
+UA = "Turuj rail timetable (https://github.com/Pepuldope/turuj)"
+MAX_CANDIDATES = 5
 AGENCY_SHORT = {
     "Železničná spoločnosť Slovensko, a.s.": "ZSSK",
     "RegioJet,a.s.": "RegioJet",
@@ -174,6 +182,82 @@ def write(root, data):
     return out / "timetable.json"
 
 
+def http_get(url, timeout=120, tries=3, headers=None):
+    last = None
+    for i in range(tries):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": UA} | (headers or {})), timeout=timeout) as r:
+                return r.read()
+        except Exception as e:  # network trouble: retry, then let the caller decide
+            last = e
+            time.sleep(2 * (i + 1))
+    raise last
+
+
+def discover_urls(get=http_get):
+    """Download addresses of the GTFS files ŽSR lists in the national catalogue, most recently updated dataset first.
+
+    Each new yearly timetable is a new file with a new download id, so the id cannot be pinned."""
+    query = f"""
+    PREFIX dcat: <http://www.w3.org/ns/dcat#>
+    PREFIX dct: <http://purl.org/dc/terms/>
+    SELECT ?url ?mod WHERE {{
+      ?ds a dcat:Dataset ; dct:publisher <{ZSR_PUBLISHER}> ; dcat:distribution ?dist .
+      OPTIONAL {{ ?ds dct:modified ?mod }}
+      ?dist dcat:downloadURL ?url ; dct:title ?title .
+      FILTER(CONTAINS(LCASE(STR(?title)), "gtfs"))
+    }} ORDER BY DESC(?mod) LIMIT 20"""
+    raw = get(SPARQL_URL + "?" + urllib.parse.urlencode({"query": query}), timeout=60, headers={"Accept": "application/sparql-results+json"})
+    rows = json.loads(raw)["results"]["bindings"]
+    urls = []
+    for row in rows:
+        u = row["url"]["value"]
+        if u.startswith("https://data.slovensko.sk/download?id=") and u not in urls:
+            urls.append(u)
+    return urls
+
+
+def newest_feed(blobs):
+    """The (url, blob) whose timetable runs latest (feed end, then feed version); ties keep the earlier one."""
+    best, best_key = None, None
+    for url, blob in blobs:
+        try:
+            with zipfile.ZipFile(io.BytesIO(blob)) as z:
+                end = feed_end(z)
+                version = next(_rows(z, "feed_info.txt"), {}).get("feed_version", "") if "feed_info.txt" in z.namelist() else ""
+        except Exception as e:
+            log(f"skipping {url}: not a usable GTFS zip ({e})")
+            continue
+        log(f"candidate {url}: timetable until {end}, version {version or '?'}")
+        key = (end or dt.date.min, version)
+        if best_key is None or key > best_key:
+            best, best_key = (url, blob), key
+    return best
+
+
+def find_feed(get=http_get):
+    """Download the newest ŽSR GTFS file listed in the catalogue; the fixed FEED_URL when that fails. Never raises
+    because of discovery, so the weekly job keeps working."""
+    try:
+        urls = discover_urls(get)[:MAX_CANDIDATES]
+        log(f"catalogue lists {len(urls)} GTFS file(s)")
+        blobs = []
+        for u in urls:
+            try:
+                blobs.append((u, get(u)))
+            except Exception as e:
+                log(f"could not download {u}: {e}")
+        picked = newest_feed(blobs)
+        if picked:
+            log(f"using {picked[0]}")
+            return picked[1]
+        log("no usable file in the catalogue")
+    except Exception as e:
+        log(f"discovery failed ({type(e).__name__}: {e})")
+    log(f"falling back to the fixed file {FEED_URL}")
+    return get(FEED_URL)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--gtfs", help="local GTFS zip; downloaded from data.slovensko.sk when omitted")
@@ -184,9 +268,7 @@ def main(argv=None):
     if a.gtfs:
         blob = Path(a.gtfs).read_bytes()
     else:
-        log(f"downloading {FEED_URL}")
-        with urllib.request.urlopen(FEED_URL, timeout=120) as r:
-            blob = r.read()
+        blob = find_feed()
     today = dt.date.fromisoformat(a.today) if a.today else dt.date.today()
     with zipfile.ZipFile(io.BytesIO(blob)) as z:
         data = build(z, today, a.days)

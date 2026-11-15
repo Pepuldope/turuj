@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { OG_IMAGE, SITE_NAME } from "@/lib/site";
+import { OG_IMAGE, OG_IMAGE_EN, SITE_NAME } from "@/lib/site";
 import { langPath } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 
@@ -13,7 +13,7 @@ export function pageMetadata({
   description,
   path,
   absoluteTitle = false,
-  image = OG_IMAGE,
+  image,
   lang = "sk",
   english = true,
 }: {
@@ -29,6 +29,7 @@ export function pageMetadata({
   /** false = no English version offered to search engines (an English trip page not built ahead). */
   english?: boolean;
 }): Metadata {
+  const picture = image ?? (lang === "en" ? OG_IMAGE_EN : OG_IMAGE);
   const fullTitle = absoluteTitle ? title : `${title} | ${SITE_NAME}`;
   return {
     title: absoluteTitle ? { absolute: title } : title,
@@ -48,8 +49,8 @@ export function pageMetadata({
       title: fullTitle,
       description,
       url: langPath(lang, path),
-      images: [image],
+      images: [picture],
     },
-    twitter: { card: "summary_large_image", title: fullTitle, description, images: [image.url] },
+    twitter: { card: "summary_large_image", title: fullTitle, description, images: [picture.url] },
   };
 }

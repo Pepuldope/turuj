@@ -3,6 +3,8 @@ import type { PlacePhoto } from "@/lib/tripFiles";
 import { haversineM } from "@/lib/geo";
 import { monthDayOf } from "@/lib/closedToday";
 import { closureRulesFor, getTowns } from "@/lib/trips";
+import { seasonDateIn } from "@/lib/closures";
+import type { Lang } from "@/lib/lang";
 import type { DestinationKind, Town, TripSummary } from "@/lib/tripSchema";
 
 /** How far a town page reaches by car. */
@@ -44,11 +46,9 @@ export interface TownTile {
   closedRange: { from: string; to: string } | null;
 }
 
-const dayMonth = (iso: string) => `${Number(iso.slice(8, 10))}.\u00a0${Number(iso.slice(5, 7))}.`;
-
-export function closedSeason(trip: TripSummary): string | null {
+export function closedSeason(trip: TripSummary, lang: Lang = "sk"): string | null {
   const rule = closureRulesFor(trip).find((r) => r.kind === "rocna");
-  return rule ? `${dayMonth(rule.starts_on)}–${dayMonth(rule.ends_on)}` : null;
+  return rule ? `${seasonDateIn(lang, rule.starts_on)}–${seasonDateIn(lang, rule.ends_on)}` : null;
 }
 
 export function closedRange(trip: TripSummary): { from: string; to: string } | null {
@@ -85,7 +85,7 @@ async function reachable(id: string): Promise<{ trip: TripSummary; carMin: numbe
 }
 
 /** A town page: trips in town, then rows by kind and one for kids, as photo tiles. */
-export async function getTownTrips(id: string): Promise<TownTrips | null> {
+export async function getTownTrips(id: string, lang: Lang = "sk"): Promise<TownTrips | null> {
   const town = getTown(id);
   if (!town) return null;
   const [reach, photos, walks] = await Promise.all([reachable(id), getPhotos(), getCarWalks()]);
@@ -98,7 +98,7 @@ export async function getTownTrips(id: string): Promise<TownTrips | null> {
     walkMin: walks.get(trip.slug) ?? trip.duration_min,
     kids: trip.family_friendly,
     photo: photos[trip.destination.osm ?? `trip/${trip.slug}`] ?? null,
-    closedSeason: closedSeason(trip),
+    closedSeason: closedSeason(trip, lang),
     closedRange: closedRange(trip),
   });
   const inTown = reach.filter((r) => haversineM(r.trip.start.location, town.location) <= IN_TOWN_M);

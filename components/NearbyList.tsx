@@ -84,7 +84,7 @@ export function NearbyList({ lang, items }: { lang: Lang; items: NearbyItem[] })
         <details className={`group ${CARD}`}>
           <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 rounded-[var(--radius-card)] px-4 py-3 [&::-webkit-details-marker]:hidden">
             <span className="min-w-0 flex-1 text-base leading-snug font-semibold text-[var(--foreground)]">
-              <Nums text={closedHeading(lang, closed.length) + (end ? ` ${tr(lang, "(do {when})", { when: dayMonthOf(end) })}` : "")} />
+              <Nums text={closedHeading(lang, closed.length) + (end ? ` ${tr(lang, "(do {when})", { when: dayMonthOf(end, lang) })}` : "")} />
             </span>
             <span className="text-[var(--muted)] group-open:rotate-90 motion-safe:transition-transform motion-reduce:transition-none">
               <UiIcon name="chev" size={16} />

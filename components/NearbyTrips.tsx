@@ -19,7 +19,7 @@ export function NearbyTrips({ lang, items, walks }: { lang: Lang; items: Nearby[
   // The yearly rule only (the page is built once): the browser decides which ones are closed today (NearbyList).
   const list: NearbyItem[] = items.map(({ trip, m }) => {
     const rule = closureRulesFor(trip).find((r) => r.kind === "rocna");
-    const closed = closedSeason(trip);
+    const closed = closedSeason(trip, lang);
     return {
       slug: trip.slug,
       href: langPath(lang, `/trasa/${trip.slug}`),

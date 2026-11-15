@@ -4,6 +4,7 @@
 // spring and sight of every trip, with the trips that touch it.
 import type { LatLng } from "@/lib/types";
 import { haversineM } from "@/lib/geo";
+import { fuzzyScore } from "@/lib/fuzzy";
 
 export interface SearchIndexFile {
   v: number;
@@ -65,13 +66,26 @@ export function preparePlaces(file: SearchIndexFile): PlaceSearch {
   };
 }
 
+function fuzzyPlaces(index: PlaceSearch, words: string[], exact: SearchPlace[]): SearchPlace[] {
+  const done = new Set(exact);
+  const scored: { p: SearchPlace; d: number }[] = [];
+  for (const p of index.places) {
+    if (done.has(p)) continue;
+    const d = fuzzyScore(words, p.key);
+    if (d !== null) scored.push({ p, d });
+  }
+  return scored.sort((a, b) => a.d - b.d || b.p.trips.length - a.p.trips.length).map((s) => s.p);
+}
+
 export function searchPlaces(index: PlaceSearch, words: string[]): PlaceResults {
   const slugs = new Set<string>();
   if (words.length === 0) return { hits: [], near: [], slugs };
   const startsWith = (key: string) => key.startsWith(words[0]) || key.includes(` ${words[0]}`);
-  const found = index.places
+  const exact = index.places
     .filter((p) => words.every((w) => p.key.includes(w)))
     .sort((a, b) => Number(startsWith(b.key)) - Number(startsWith(a.key)) || b.trips.length - a.trips.length);
+  // Too few names found: forgive a typo or two, ranked below the exact ones, fewest slips first.
+  const found = new Set(exact.map((p) => p.key)).size < MAX_HITS ? [...exact, ...fuzzyPlaces(index, words, exact)] : exact;
   for (const p of found.slice(0, 40)) p.trips.forEach((s) => slugs.add(s));
 
   const hits: PlaceHit[] = [];

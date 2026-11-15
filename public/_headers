@@ -16,6 +16,9 @@
 /og-image.png
   Cache-Control: public, max-age=604800
 
+/og-image-en.png
+  Cache-Control: public, max-age=604800
+
 # GPX files change with the weekly trip refresh: a day.
 /gpx/*
   Cache-Control: public, max-age=86400
