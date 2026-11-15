@@ -31,6 +31,10 @@ const SCHEMA = [
   // Sign-ins per month and way, for /statistiky (Peter, 2026-10-30: "how many people sign in and register").
   `CREATE TABLE IF NOT EXISTS signin_month (month TEXT NOT NULL, method TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (month, method)) WITHOUT ROWID`,
   `CREATE TABLE IF NOT EXISTS login_code (email TEXT PRIMARY KEY, code TEXT NOT NULL, expires INTEGER NOT NULL, sent INTEGER NOT NULL, tries INTEGER NOT NULL) WITHOUT ROWID`,
+  // Testers (school project: "active users" = 4 days in a month): signed-in accounts that pressed
+  // "Chcem testovať", with the day of the first press, and the days they used the app (Bratislava dates only).
+  `CREATE TABLE IF NOT EXISTS tester (account TEXT PRIMARY KEY, since TEXT NOT NULL) WITHOUT ROWID`,
+  `CREATE TABLE IF NOT EXISTS tester_day (account TEXT NOT NULL, day TEXT NOT NULL, PRIMARY KEY (account, day)) WITHOUT ROWID`,
 ];
 // Columns added after the first tables; "duplicate column" on later runs is fine.
 const ADD = [`ALTER TABLE account ADD COLUMN pw TEXT`, `ALTER TABLE account ADD COLUMN pw_fails INTEGER NOT NULL DEFAULT 0`, `ALTER TABLE account ADD COLUMN pw_locked INTEGER NOT NULL DEFAULT 0`, `ALTER TABLE account ADD COLUMN team INTEGER NOT NULL DEFAULT 0`];
@@ -139,8 +143,36 @@ export async function deleteAccount(account: Account): Promise<void> {
   await d.batch([
     d.prepare(`DELETE FROM account_session WHERE account = ?`).bind(account.id),
     d.prepare(`DELETE FROM login_code WHERE email = ?`).bind(account.email),
+    d.prepare(`DELETE FROM tester_day WHERE account = ?`).bind(account.id),
+    d.prepare(`DELETE FROM tester WHERE account = ?`).bind(account.id),
     d.prepare(`DELETE FROM account WHERE id = ?`).bind(account.id),
   ]);
+}
+
+/** The calendar day (YYYY-MM-DD) in Slovakia at this moment: what counts as "a day" for testers. */
+export function bratislavaDay(at: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bratislava", year: "numeric", month: "2-digit", day: "2-digit" }).format(at);
+}
+
+/** Marks the account as a tester (the first day is kept) and counts today as one of its days. Safe to repeat. */
+export async function markTester(accountId: string, at: Date = new Date()): Promise<void> {
+  const d = await db();
+  if (!d) throw new Error("no database");
+  const day = bratislavaDay(at);
+  await d.batch([
+    d.prepare(`INSERT OR IGNORE INTO tester (account, since) VALUES (?, ?)`).bind(accountId, day),
+    d.prepare(`INSERT OR IGNORE INTO tester_day (account, day) VALUES (?, ?)`).bind(accountId, day),
+  ]);
+}
+
+/** Counts today for a signed-in account if (and only if) it is a tester: one cheap statement, nothing is written for anyone else or a second time in a day. */
+export async function recordTesterDay(accountId: string, at: Date = new Date()): Promise<void> {
+  const d = await db();
+  if (!d) return;
+  await d
+    .prepare(`INSERT OR IGNORE INTO tester_day (account, day) SELECT ?, ? WHERE EXISTS (SELECT 1 FROM tester WHERE account = ?)`)
+    .bind(accountId, bratislavaDay(at), accountId)
+    .run();
 }
 
 export async function endSession(req: Request): Promise<void> {

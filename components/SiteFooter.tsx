@@ -1,6 +1,7 @@
 "use client";
 
 import { CONTACT_EMAIL, TESTER_FORM_URL } from "@/lib/site";
+import { useAccount } from "@/lib/account";
 import { LangLink, useT } from "@/lib/i18n";
 import { UiIcon } from "@/components/UiIcon";
 import type { UiIconName } from "@/lib/uiIcons";
@@ -44,6 +45,11 @@ const LINK =
 /** Name, slogan and the tester button, link groups with icons, then the safety note and data credits, at the bottom of every page. */
 export function SiteFooter() {
   const t = useT();
+  const { account } = useAccount();
+  // Signed in: also tell the site, so this account's days of use are counted (the form opens as always).
+  const joinTesters = () => {
+    if (account) void fetch("/api/tester/join", { method: "POST", keepalive: true, credentials: "same-origin" }).catch(() => undefined);
+  };
   return (
     // Sized by its own width, not the screen's: on a computer it also sits in the narrow trip panel.
     <footer className="@container mt-auto border-t border-[var(--border)] pt-5 text-sm text-[var(--muted)]">
@@ -71,6 +77,7 @@ export function SiteFooter() {
             target="_blank"
             rel="noopener noreferrer"
             data-umami-event="tester_signup_open"
+            onClick={joinTesters}
             className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-full bg-[var(--accent)] px-3.5 py-2 font-bold whitespace-nowrap text-[var(--accent-contrast)] hover:opacity-90"
           >
             <UiIcon name="star" size={15} />

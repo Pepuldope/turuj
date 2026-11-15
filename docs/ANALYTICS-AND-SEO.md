@@ -79,6 +79,26 @@ trip also calls `/api/visit?used=1`, which sets `used` on that visitor-day. `/st
 "4+ dni používania (otvorený alebo uložený výlet)" next to the plain 4+ days. Months closed before
 this existed show 0 there.
 
+**Testers' days (school goal: "active user" = 4 different days in a month).** The visit counters
+above can't follow a person, so signed-in testers are counted by account. Pressing the footer's
+"Chcem testovať" (it still opens the Google Form) while signed in calls `POST /api/tester/join`,
+which writes the account into `tester` (first day kept). From then on `/api/auth/me`, which every
+page load asks, adds today's Bratislava date to `tester_day (account, day)` with one
+`INSERT OR IGNORE` that only does anything for testers; accounts that aren't testers and
+signed-out visitors write nothing. Previews never write. Deleting the account deletes both
+tables' rows (`deleteAccount`). Tables are created by the `SCHEMA` list in `lib/auth.ts` on the
+first request after a deploy (no migrations folder; nothing to apply by hand).
+
+Report (read-only, from your machine with `npx wrangler login` done):
+
+```bash
+npm run kpi:testers
+```
+
+It prints the number of testers, and per calendar month how many used the app and how many on 4+
+different days, with each tester's day count and a masked e-mail (`pe***@gmail.com`). Testers who
+only filled in the Google Form and never signed in are not in this count; take their days from the form.
+
 **Home-screen launches.** `public/manifest.json` has `start_url: "/?utm_source=pwa"`, so Umami
 shows installed-app launches as source `pwa`. The page's canonical stays `/` (static metadata).
 
