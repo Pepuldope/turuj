@@ -18,6 +18,7 @@ import type { PackedList } from "@/lib/packedList";
 import { getTowns, summaryFromList } from "@/lib/trips";
 import { haversineM } from "@/lib/geo";
 import { plain, preparePlaces, searchPlaces } from "@/lib/placeSearch";
+import { fuzzyScore } from "@/lib/fuzzy";
 import type { PlaceSearch, SearchIndexFile } from "@/lib/placeSearch";
 import { useTripSettings } from "@/lib/tripSettings";
 import { knownDriveMin, useStartDrives, useTownDrives } from "@/lib/useDriveRoute";
@@ -77,6 +78,8 @@ interface Props {
 
 /** Cards shown at first, and added by each "Ukázať ďalšie". */
 const PAGE = 30;
+/** Fewer matching trips than this: the search also forgives typos. */
+const FUZZY_BELOW = 6;
 
 const DESKTOP_QUERY = "(min-width: 1024px)";
 
@@ -468,10 +471,27 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
     },
     [words, nameKeys]
   );
+  // Only when that finds few trips: trips whose name is a typo or two away ("chopk" finds Chopok),
+  // with how many slips, so they can sit below the exact ones.
+  const fuzzyTrips = useMemo(() => {
+    const out = new Map<TrailDetail, number>();
+    if (words.length === 0) return out;
+    let exact = 0;
+    // count name matches only: places found by a typo ("stebsk" ~ the place Štrbské pleso) bring in many
+    // trips and would otherwise switch this off, leaving the trip named Štrbské pleso below them
+    for (const d of trails) if (nameMatches(d)) exact++;
+    if (exact >= FUZZY_BELOW) return out;
+    for (const d of trails) {
+      if (nameMatches(d)) continue;
+      const slips = fuzzyScore(words, nameKeys.get(d) ?? plain(`${d.trail.name} ${d.trail.region_name ?? ""}`));
+      if (slips !== null) out.set(d, slips);
+    }
+    return out;
+  }, [words, trails, nameKeys, nameMatches]);
   // A trip matches by its name, or by a place it starts, passes or ends at (and the places right by it).
   const matches = useCallback(
-    (d: TrailDetail) => nameMatches(d) || Boolean(placeResults?.slugs.has(d.trail.slug)),
-    [nameMatches, placeResults]
+    (d: TrailDetail) => nameMatches(d) || Boolean(placeResults?.slugs.has(d.trail.slug)) || fuzzyTrips.has(d),
+    [nameMatches, placeResults, fuzzyTrips]
   );
   const scoped = useMemo(() => {
     // A trip named like the search comes first, even when it is closed or too long that day.
@@ -579,18 +599,36 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
     if (words.length === 0) return null;
     const has = (s: string) => words.every((w) => plain(s).includes(w));
     const first = (s: string) => plain(s).startsWith(words[0]) || plain(s).includes(` ${words[0]}`);
-    const ranges = areas.filter((a) => has(a.name)).slice(0, 3);
+    // No range named like the search: forgive a typo ("tarty" finds the Tatry), fewest slips first.
+    let ranges = areas.filter((a) => has(a.name));
+    if (ranges.length === 0)
+      ranges = areas
+        .map((a) => ({ a, d: fuzzyScore(words, plain(a.name)) }))
+        .filter((x): x is { a: (typeof areas)[number]; d: number } => x.d !== null)
+        .sort((x, y) => x.d - y.d)
+        .map((x) => x.a);
+    ranges = ranges.slice(0, 3);
     // trip names first, then trips at the typed place, then trips at the places next to it
     const atPlace = new Set(placeResults?.hits.flatMap((h) => h.place.trips));
+    // A name off by a typo counts as named too (just below an exact one), so "stebsk" puts the trip
+    // Štrbské pleso above trips that only pass the place Štrbské pleso.
+    const firstFuzzy = (s: string) => fuzzyScore(words.slice(0, 1), plain(s).split(/[\s\-–,.()/]+/)[0] ?? "") !== null;
     const named = (d: TrailDetail) =>
-      Number(nameMatches(d)) * 4 + Number(first(d.trail.name)) * 2 + Number(atPlace.has(d.trail.slug));
+      (nameMatches(d) ? 4 : fuzzyTrips.has(d) ? 3 : 0) +
+      Number(first(d.trail.name) || (fuzzyTrips.has(d) && firstFuzzy(d.trail.name))) * 2 +
+      Number(atPlace.has(d.trail.slug));
     const trips = listedAll
       .filter((i) => matches(i.detail))
-      .sort((a, b) => named(b.detail) - named(a.detail) || (b.detail.trail.rank ?? 0) - (a.detail.trail.rank ?? 0))
+      .sort(
+        (a, b) =>
+          named(b.detail) - named(a.detail) ||
+          (fuzzyTrips.get(a.detail) ?? 0) - (fuzzyTrips.get(b.detail) ?? 0) ||
+          (b.detail.trail.rank ?? 0) - (a.detail.trail.rank ?? 0)
+      )
       .slice(0, 6);
     const places = towns.filter((t) => has(t.name)).slice(0, 3);
     return { ranges, trips, places };
-  }, [words, areas, listedAll, matches, nameMatches, towns, placeResults]);
+  }, [words, areas, listedAll, matches, nameMatches, fuzzyTrips, towns, placeResults]);
 
   // A known town typed into the search offers "Vyrážam z …": a start, not only a move of the map.
   const townMatch = useMemo(() => (plain(query).trim().length >= 3 ? (suggestTowns(query, towns, 1)[0] ?? null) : null), [query, towns]);
