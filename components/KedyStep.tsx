@@ -442,13 +442,8 @@ function StartBlock({
       {/* What the departure makes of the day, quietly: the walk's own times and when you are home. */}
       {leg && (
         <p className="text-[13px] leading-snug text-[var(--muted)]">
+          {/* "doma" is under the slider, where it turns red when late: here it said the same a second time (Peter, 16 Nov). */}
           {t("túra")} <span className="font-data text-[15px] text-[var(--foreground)]">{span(parts.start, parts.end)}</span>
-          {parts.home && (
-            <>
-              {" · "}
-              {t("doma")} <span className="font-data text-[15px] text-[var(--foreground)]">{parts.home}</span>
-            </>
-          )}
         </p>
       )}
       {/* The strip reaches into the card's padding (so a thumb at the day's ends is whole); the track is 24/14 of the card's inner width. */}
