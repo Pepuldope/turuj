@@ -61,10 +61,10 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
   const showStrip = days !== null && stripOpen;
 
   function pick(iso: string, day: "dnes" | "zajtra" | "iny" = "iny") {
-    // On home a second tap un-picks the day: back to every trip.
+    // A day is always picked, one at a time: a second tap on it keeps it (Peter, 16 Nov; it used to un-pick it).
     setStripOpen(false);
     if (iso !== date) track("day_pick", { day });
-    update({ date: variant === "home" && iso === date ? null : iso });
+    update({ date: iso });
   }
 
   // "Iný deň" is picked at once (the day after tomorrow), then the strip lets you move it.

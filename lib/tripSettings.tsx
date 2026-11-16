@@ -124,8 +124,9 @@ export function TripSettingsProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setToday(now);
     const travel = readTravel();
-    // A new visit plans for tomorrow; a day the visitor un-picked stays un-picked.
-    const fresh = stored?.date === undefined || stale;
+    // A new visit plans for tomorrow. A day is never left un-picked (Peter, 16 Nov): one stored as un-picked by the
+    // old second-tap toggle starts on tomorrow too.
+    const fresh = !stored?.date || stale;
     const merged = { ...DEFAULTS, ...stored, ...(fresh ? { date: defaultDay(), time: null } : {}), ...(travel ? { travel } : {}) };
     // The old separate "easier trips" switch is gone: without kids, nothing narrows the list.
     setSettings(merged.withKids ? merged : { ...merged, easier: false });
