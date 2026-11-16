@@ -27,17 +27,9 @@ export function PlanStartAsk() {
           {t("Odkiaľ vyrážate?")}
         </p>
         <p className="text-sm">{t("Dopočítame cestu autom, kedy vyraziť a kedy budete doma.")}</p>
-        {/* Both buttons the card's full width, one under the other (Peter, 2026-11-14: odd sizes side by side). */}
+        {/* Full width, one under the other (Peter, 2026-11-14), in the home start panel's order: search, my location, a point
+            on the map (Peter, 16 Nov). */}
         <div className="flex flex-col gap-2.5">
-          <button
-            type="button"
-            onClick={locate}
-            disabled={status === "locating"}
-            className="flex min-h-12 w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-[var(--accent)] px-4 text-[15px] font-bold text-[var(--accent-contrast)] transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-70"
-          >
-            <UiIcon name="pin" size={16} />
-            {status === "locating" ? t("Hľadáme vašu polohu…") : t("Použiť moju polohu")}
-          </button>
           {/* Looks like the search it opens (Peter, 16 Nov: "there is no start location search"). The sheet opens with
               the keyboard up: iPhone only raises it for a focus inside the tap, so a stand-in field takes the focus now and
               hands it to the sheet's field when that appears (StartSheet). */}
@@ -55,6 +47,16 @@ export function PlanStartAsk() {
             </span>
             {t("Napíšte mesto alebo obec")}
           </button>
+          <button
+            type="button"
+            onClick={locate}
+            disabled={status === "locating"}
+            className="flex min-h-12 w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-[var(--accent)] px-4 text-[15px] font-bold text-[var(--accent-contrast)] transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-70"
+          >
+            <UiIcon name="pin" size={16} />
+            {status === "locating" ? t("Hľadáme vašu polohu…") : t("Použiť moju polohu")}
+          </button>
+          <p className="-mt-1 text-center text-xs text-[var(--muted)]">{t("Polohu si neukladáme, použijeme ju len na výpočet cesty.")}</p>
           {/* A point on the map, right here too (Peter, 16 Nov): in the sheet it sat under the keyboard. */}
           <button
             type="button"
