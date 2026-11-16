@@ -266,18 +266,20 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
           {/* With kids on, every card listed is kid-friendly: the tag would say nothing. */}
           {trail.family_friendly && !withKids && <span className="on-card-ok shrink-0 font-semibold text-[var(--ok)]">· {t("aj pre deti")}</span>}
         </span>
-        {/* Two lines (Peter, 15 Nov): getting there by car / bus, then the walk itself; the leave-by time small beside them. */}
+        {/* Two lines (Peter, 15 Nov): getting there by car / bus, then the walk itself; the leave-by time small beside them.
+            16 px (was 15) so the small "kratšia cesta" line under them reads as secondary (Peter, 16 Nov, C179); the
+            car/bus gap 6 px (was 8) keeps "10 min · ~35 min" on one line beside the leave-by block on a 375 px phone. */}
         <span className="flex items-center gap-2">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="font-data flex flex-wrap items-center gap-x-2 text-[15px] leading-[1.2]">
+        <span className="font-data flex flex-wrap items-center gap-x-1.5 text-[16px] leading-[1.2]">
           <span className={leg(!byBus)}>
-            <UiIcon name="car" size={15} />
+            <UiIcon name="car" size={16} />
             {carMin !== null ? `${driveApprox ? "~" : ""}${formatDurationShort(carMin)}` : driveLoading ? "…" : distanceM !== null ? formatFromUser(distanceM, lang) : "–"}
             {carMin !== null && <small className={word}>{t("autom")}</small>}
           </span>
           <span aria-hidden className="font-sans text-[var(--muted)]">·</span>
           <span className={leg(byBus)} title={nearStop ? t("Zastávka {stop}, {m} k trase", { stop: stopLabel(nearStop.name), m: formatFromUser(stopWalkM, lang) }) : t("Bez zastávky pri štarte")}>
-            <UiIcon name="bus" size={15} />
+            <UiIcon name="bus" size={16} />
             {/* By car too, the bus as a time (muted), never the walk from the stop: "350 m" read as minutes next to the car's time (Peter, 2026-10-23). */}
             {byBus && driveMin !== null
               ? `~${formatDurationShort(driveMin)}`
@@ -290,12 +292,12 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             {nearStop && (byBus ? driveMin !== null : carMin !== null) && <small className={word}>{t("busom")}</small>}
           </span>
         </span>
-        <span className="font-data flex flex-wrap items-center gap-x-3 text-[15px] leading-[1.2]">
+        <span className="font-data flex flex-wrap items-center gap-x-3 text-[16px] leading-[1.2]">
           {/* Each piece stays whole; on a narrow phone the line breaks between them. */}
           <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1 text-[var(--foreground)]">
             <span className="inline-flex items-center gap-1 whitespace-nowrap">
               <span className="font-sans text-[12px] font-semibold text-[var(--muted)]">{t("túra")}:</span>
-              <UiIcon name="boot" size={15} />
+              <UiIcon name="boot" size={16} />
               {formatDurationShort(hikeMin)}
             </span>
             <small className={word}>{t("pešo")}</small>

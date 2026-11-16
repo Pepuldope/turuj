@@ -68,13 +68,14 @@ export function SiteFooter() {
               className="h-6 w-auto"
             />
           </picture>
-          <p className="text-[13px]">
+          {/* 16 px bold, body font (Peter, 16 Nov, C178): at 13 px the slogan got lost under the logo. "Túruj." with the long ú, like the name (Peter, 16 Nov). */}
+          <p className="text-base font-bold text-[var(--foreground)]">
             {t("Neplánuj.")}{" "}
-            <strong className="accent-on-sunk">{t("Turuj.")}</strong>
+            <span className="accent-on-sunk">{t("Túruj.")}</span>
           </p>
-          {/* Who runs it and that it is free (UX audit 2026-11-09). Peter 15 Nov: not on the home hero, here. */}
+          {/* Who runs it and that it is free (UX audit 2026-11-09). Peter 15 Nov: not on the home hero, here. Reworded 16 Nov (C178). */}
           <p className="text-[13px] text-[var(--muted)]">
-            {t("Zadarmo, bez registrácie. Robia ho")}{" "}
+            {t("Zadarmo a bez registrácie. Tvoria ho")}{" "}
             <LangLink href="/o-nas" className="font-semibold underline">
               {t("dvaja študenti")}
             </LangLink>
