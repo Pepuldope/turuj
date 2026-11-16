@@ -685,7 +685,7 @@ function TripBar({ plan, strip, way }: { plan: DayPlan; strip: HourCell[]; way: 
 /**
  * The end labels over the bar: "odchod 7:05 / auto 55 min" at the left end and "doma 16:05 / auto 55 min" at the right.
  * One wrapping row spanning the bar: the labels cannot overlap, and when they do not fit side by side "doma" drops
- * to its own line at the right. Near the scale's right edge the row reaches left instead of overflowing.
+ * to its own line at the right. "odchod" always starts at the left edge.
  */
 function BarLabels({ plan, way, late }: { plan: DayPlan; way: ReturnType<typeof wayOf>; late: boolean }) {
   const t = useT();
@@ -702,7 +702,9 @@ function BarLabels({ plan, way, late }: { plan: DayPlan; way: ReturnType<typeof 
     <div aria-hidden="true" className="w-full">
       <div
         className="flex flex-wrap justify-between gap-x-3 gap-y-1"
-        style={{ marginLeft: `min(${ends.leave.left * 100}%, calc(100% - 13rem))`, marginRight: `max(0px, min(${(1 - right) * 100}%, calc(100% - ${ends.leave.left * 100}% - 16rem)))` }}
+        // "odchod" sits at the card's left edge, not at its point on the scale (it drifted to the middle with a late
+        // start, Peter, 16 Nov, C172); the tick below still marks the time. "doma" keeps to its end of the bar.
+        style={{ marginRight: `max(0px, min(${(1 - right) * 100}%, calc(100% - 16rem)))` }}
       >
         <div className="whitespace-nowrap">
           <span className="block text-[13px] leading-tight">
