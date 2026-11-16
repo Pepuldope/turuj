@@ -308,7 +308,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             )}
             {/* A long main route hid a short way up (Peter, 2026-10-23: "4 hours scares people"). */}
             {item.shortMin !== null && (
-              <span className="font-sans text-[13px] whitespace-nowrap text-[var(--muted)]" title={t("Kratšia cesta k tomu istému cieľu, na stránke výletu")}>
+              <span className="font-sans text-[12.5px] whitespace-nowrap text-[var(--muted)]" title={t("Kratšia cesta k tomu istému cieľu, na stránke výletu")}>
                 · {t("kratšia {t}", { t: formatDurationShort(item.shortMin) })}
               </span>
             )}

@@ -65,8 +65,34 @@ export function StartPill({ quiet = false }: { /** A full-width start row ("Vyr�
 }
 
 /** The start picker as a panel from the bottom (Escape or a tap outside closes it); the pill and the plan's "where from" card open the same one. */
-export function StartSheet({ onClose }: { onClose: () => void }) {
+const STAND_IN = "start-focus-stand-in";
+
+/**
+ * Call inside a tap that opens StartSheet with `focusSearch`: an invisible field takes the focus now, so iPhone
+ * raises the keyboard (it only does for a focus inside the tap); the sheet then moves the focus to its search field.
+ */
+export function focusStandIn() {
+  let el = document.getElementById(STAND_IN) as HTMLInputElement | null;
+  if (!el) {
+    el = document.createElement("input");
+    el.id = STAND_IN;
+    el.setAttribute("aria-hidden", "true");
+    el.tabIndex = -1;
+    // 16 px so iPhone doesn't zoom; on screen (not display:none), or it can't take the focus.
+    el.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0";
+    document.body.append(el);
+  }
+  el.focus({ preventScroll: true });
+}
+
+export function StartSheet({ onClose, focusSearch = false }: { onClose: () => void; /** Open with the town search focused (keyboard up). */ focusSearch?: boolean }) {
   const t = useT();
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!focusSearch) return;
+    box.current?.querySelector<HTMLInputElement>("[data-start-search]")?.focus({ preventScroll: true });
+    document.getElementById(STAND_IN)?.remove();
+  }, [focusSearch]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -75,7 +101,7 @@ export function StartSheet({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label={t("Odkiaľ vyrážate")}>
       <div className="absolute inset-0 bg-black/45" onClick={onClose} />
-      <div className="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-[20px] bg-[var(--card-bg)] px-4 pt-[18px] pb-[max(28px,env(safe-area-inset-bottom))] shadow-[var(--shadow-float)] lg:w-[460px]">
+      <div ref={box} className="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-[20px] bg-[var(--card-bg)] px-4 pt-[18px] pb-[max(28px,env(safe-area-inset-bottom))] shadow-[var(--shadow-float)] lg:w-[460px]">
         <StartChip onDone={onClose} />
       </div>
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { StartPill, StartSheet } from "@/components/StartPill";
+import { StartPill, StartSheet, focusStandIn } from "@/components/StartPill";
 import { UiIcon } from "@/components/UiIcon";
 import { useUserLocation } from "@/lib/userLocation";
 import { useT } from "@/lib/i18n";
@@ -17,7 +17,7 @@ export function PlanStartAsk() {
   if (!ready || start) return <StartPill quiet />;
   return (
     <>
-      <section id="plan-start" aria-label={t("Odkiaľ vyrážate?")} className="flex scroll-mt-[calc(64px+env(safe-area-inset-top))] flex-col gap-3 rounded-[var(--radius-card)] border-[1.5px] border-[var(--accent)] bg-[var(--accent-soft)] p-4 lg:scroll-mt-3">
+      <section id="plan-start" aria-label={t("Odkiaľ vyrážate?")} className="flex scroll-mt-[calc(64px+env(safe-area-inset-top))] flex-col gap-3.5 rounded-[var(--radius-card)] border-[1.5px] border-[var(--accent)] bg-[var(--accent-soft)] p-[18px] lg:scroll-mt-3">
         <p className="flex items-center gap-2 text-base font-bold">
           <span className="text-[var(--accent)]">
             <UiIcon name="pin" size={20} />
@@ -26,7 +26,7 @@ export function PlanStartAsk() {
         </p>
         <p className="text-sm">{t("Dopočítame cestu autom, kedy vyraziť a kedy budete doma.")}</p>
         {/* Both buttons the card's full width, one under the other (Peter, 2026-11-14: odd sizes side by side). */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
           <button
             type="button"
             onClick={locate}
@@ -36,13 +36,22 @@ export function PlanStartAsk() {
             <UiIcon name="pin" size={16} />
             {status === "locating" ? t("Hľadáme vašu polohu…") : t("Použiť moju polohu")}
           </button>
+          {/* Looks like the search it opens (Peter, 16 Nov: "there is no start location search"). The sheet opens with
+              the keyboard up: iPhone only raises it for a focus inside the tap, so a stand-in field takes the focus now and
+              hands it to the sheet's field when that appears (StartSheet). */}
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={() => {
+              focusStandIn();
+              setOpen(true);
+            }}
             aria-haspopup="dialog"
-            className="flex min-h-12 w-full cursor-pointer items-center justify-center rounded-full border border-[var(--accent)] bg-[var(--card-bg)] px-4 text-[15px] font-bold text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+            className="flex min-h-12 w-full cursor-text items-center gap-2 rounded-xl border-2 border-[var(--accent)] bg-[var(--card-bg)] px-3 text-left text-base text-[var(--muted)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
           >
-            {t("Vybrať mesto…")}
+            <span className="text-[var(--accent)]">
+              <UiIcon name="search" size={18} />
+            </span>
+            {t("Napíšte mesto alebo obec")}
           </button>
         </div>
         {message && status !== "locating" && (
@@ -52,7 +61,7 @@ export function PlanStartAsk() {
           </p>
         )}
       </section>
-      {open && <StartSheet onClose={() => setOpen(false)} />}
+      {open && <StartSheet onClose={() => setOpen(false)} focusSearch />}
     </>
   );
 }
