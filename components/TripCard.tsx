@@ -294,7 +294,9 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
           {/* Each piece stays whole; on a narrow phone the line breaks between them. */}
           <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1 text-[var(--foreground)]">
             <span className="inline-flex items-center gap-1 whitespace-nowrap">
-              <span className="font-sans text-[12px] font-semibold text-[var(--muted)]">{t("túra")}:</span>
+              {/* List cards: the boot says it; without the word the walk and "kratšia …" fit one line beside the leave-by box
+                  (they took two, Peter, 16 Nov). Screen readers still hear it. */}
+              <span className={big ? "font-sans text-[12px] font-semibold text-[var(--muted)]" : "sr-only"}>{t("túra")}:</span>
               <UiIcon name="boot" size={15} />
               {formatDurationShort(hikeMin)}
             </span>
@@ -306,7 +308,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             )}
             {/* A long main route hid a short way up (Peter, 2026-10-23: "4 hours scares people"). */}
             {item.shortMin !== null && (
-              <span className="whitespace-nowrap text-[var(--muted)]" title={t("Kratšia cesta k tomu istému cieľu, na stránke výletu")}>
+              <span className="font-sans text-[13px] whitespace-nowrap text-[var(--muted)]" title={t("Kratšia cesta k tomu istému cieľu, na stránke výletu")}>
                 · {t("kratšia {t}", { t: formatDurationShort(item.shortMin) })}
               </span>
             )}
