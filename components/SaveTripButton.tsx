@@ -17,6 +17,7 @@ import type { TripPlan } from "@/lib/useTripPlan";
 import { useUserLocation } from "@/lib/userLocation";
 import { sinceArrival, track } from "@/lib/analytics";
 import { ShareButton } from "@/components/ShareButton";
+import { activeClosures } from "@/lib/closures";
 import { ClosureGuard } from "@/components/ClosureGuard";
 import { HeardFrom } from "@/components/HeardFrom";
 import { EveReminder } from "@/components/EveReminder";
@@ -113,6 +114,8 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
   const [askHeard, setAskHeard] = useState(false);
 
   const saved = trips.find((t) => t.slug === slug) ?? null;
+  // A closed day: Save steps back to the secondary look; the one primary button is "Nájsť iný výlet" in the red closure box.
+  const closedDay = date !== null && activeClosures(closures, date).length > 0;
   const changed =
     saved !== null &&
     (saved.date !== date ||
@@ -197,22 +200,22 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
     />
   );
 
-  return (
-    <div className="flex flex-col gap-3">
-      {showButton && <ClosureGuard closures={closures} date={date} />}
-      {showButton && (
-        <button type="button" onClick={onSave} disabled={status === "saving" || !date || !time || loading} className={primary}>
+  const saveButton = (
+        <button type="button" onClick={onSave} disabled={status === "saving" || !date || !time || loading} className={closedDay ? `${secondary} min-h-11 w-full` : primary}>
           {status === "saving"
             ? t("Ukladám aj na cestu bez signálu... ({done}/{total})", { done: progress.done, total: progress.total || "?" })
             : saved
               ? t("Uložiť zmeny")
               : t("Uložiť výlet")}
         </button>
-      )}
+  );
 
-      {/* Order (Peter, 8 Nov): the one-time question first, then saved + share as one box, the calendar, navigation, GPX. The app offer is AppPromo, outside this card. */}
-      {saved && askHeard && <HeardFrom onDone={() => setAskHeard(false)} />}
+  return (
+    <div className="flex flex-col gap-3">
+      {showButton && <ClosureGuard closures={closures} date={date} />}
+      {showButton && !(saved && status === "saving") && saveButton}
 
+      {/* Order: the confirmation first ("Uložené" + share), then the one-time question, the calendar, navigation, GPX. The app offer is AppPromo, outside this card. */}
       {saved && askShare && (
         <div className="flex flex-col gap-2 rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
           <p role="status">
@@ -232,7 +235,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
               hikeMin={hikeMin}
               hasDrive={route !== null || driveMin !== null}
               closures={closures}
-              className="rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-bold text-[var(--accent-contrast)]"
+              className={closedDay ? secondary : "rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-bold text-[var(--accent-contrast)]"}
               onShared={() => setAskShare(false)}
             />
             <button type="button" onClick={() => setAskShare(false)} className="px-2 text-sm underline">
@@ -255,6 +258,10 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
           </button>
         </p>
       )}
+
+      {showButton && saved && status === "saving" && saveButton}
+
+      {saved && askHeard && <HeardFrom onDone={() => setAskHeard(false)} />}
 
       {!askShare && share}
 

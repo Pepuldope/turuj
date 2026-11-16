@@ -10,17 +10,22 @@ interface Props {
   closures: Closure[];
   /** The trip's region: where we know the park administration's closure page, the "no data" box links to it. */
   region?: string | null;
+  /** Where "Nájsť iný výlet v okolí" goes: the nearby list on this page (#ine-vylety), else the home page. */
+  nearbyHref?: string;
 }
+
+const findOther =
+  "mt-1 w-full rounded-xl bg-[var(--accent)] px-4 py-3 text-center text-base font-bold text-[var(--accent-contrast)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]";
 
 /** Who publishes trail closures for the region (the park administration's own page). Regions not listed get no link. */
 const PARK_CLOSURES: Record<string, { name: string; url: string }> = {
-  Tatry: { name: "Správa TANAP", url: "https://www.tanap.sk" },
+  Tatry: { name: "Správa Tatranského národného parku (TANAP)", url: "https://www.tanap.sk" },
   "Nízke Tatry": { name: "Správa NAPANT", url: "https://www.napant.sk" },
   "Malá Fatra": { name: "Správa NP Malá Fatra", url: "https://www.npmalafatra.sk/navstevnici/uzavery-turistickych-chodnikov/" },
   Pieniny: { name: "Správa PIENAP", url: "https://pienap.sk" },
 };
 
-export function ClosureBanner({ closures, region = null }: Props) {
+export function ClosureBanner({ closures, region = null, nearbyHref = "/" }: Props) {
   // The day the trip page plans for (picked day, else today or tomorrow).
   const { date } = useTripDay();
   const t = useT();
@@ -96,6 +101,16 @@ export function ClosureBanner({ closures, region = null }: Props) {
             <p className="opacity-70">{t("Overené: {date}", { date: formatDateSk(c.verified_on, lang) })}</p>
           </div>
         ))}
+        {/* The one primary button on a closed day (Save and Navigate step back): the way out is another trip nearby. */}
+        {nearbyHref.startsWith("#") ? (
+          <a href={nearbyHref} className={findOther}>
+            {t("Nájsť iný výlet v okolí")}
+          </a>
+        ) : (
+          <LangLink href={nearbyHref} className={findOther}>
+            {t("Nájsť iný výlet v okolí")}
+          </LangLink>
+        )}
       </div>
     );
   }

@@ -356,8 +356,8 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                     only="closure"
                   />
                 )}
-                {/* A real closure stays up top; "no data" is a quiet note under the map. The closure rule itself is in the "Uzávery a poplatky" section below. */}
-                {closures.length > 0 && <ClosureBanner closures={closures} region={trail.region_name} />}
+                {/* Closed (red) or "Stav chodníka neoverený" (grey): both sit up here under the facts, above Save and Navigate. The closure rule itself is in the "Uzávery a poplatky" section below. */}
+                <ClosureBanner closures={closures} region={trail.region_name} nearbyHref={nearby.length > 0 ? "#ine-vylety" : "/"} />
               </>
             }
             outro={
@@ -391,9 +391,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
               bbox: trail.bbox,
             }}
             walk={{ points: trip.path.map(([lon, lat]) => [+lat.toFixed(5), +lon.toFixed(5)]), loop: trip.route === "okruh" }}
-          >
-            {closures.length === 0 && <ClosureBanner closures={closures} region={trail.region_name} />}
-          </TripPlanner>
+          />
 
           {town && (
             <Link href={langPath(lang, `/vylety-z/${town.id}`)} className="accent-on-sunk w-fit text-sm font-semibold">

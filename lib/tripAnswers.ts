@@ -4,6 +4,7 @@
  * Pure functions, so the wording and the month table are unit tested. All of it is server HTML.
  */
 import { approachMin, planDay } from "@/lib/dayPlan";
+import { pinLink } from "@/lib/links";
 import { closureManager, closurePeriod, closureSpan, isClosureActive } from "@/lib/closures";
 import { formatDuration, formatWalk, stopLabel } from "@/lib/format";
 import { decimal, routeNameIn, tr } from "@/lib/lang";
@@ -104,9 +105,7 @@ export function startLineText(lang: Lang, l: StartLine): string {
 }
 
 /** A pin on the map for coordinates, for people who navigate by it. */
-export function pinUrl(p: LatLng): string {
-  return `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}`;
-}
+export const pinUrl = pinLink;
 
 export const pinText = (p: LatLng) => `${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}`;
 
@@ -368,11 +367,11 @@ export function transitTeaser(lang: Lang, stops: TransitStop[]): string {
   return tr(lang, "{mode}: {name}, {m} od štartu", { mode: mode ? tr(lang, mode) : tr(lang, "Zastávka"), name: stopLabel(s.name), m: formatWalk(m, lang) });
 }
 
-/** The yearly rule ("Zatvorené každý rok 1. 11.–31. 5. (TANAP)"); no rule at all is "Stav chodníka neoverený". */
+/** The yearly rule ("Zatvorené každý rok 1. 11.–31. 5. (Tatranský národný park, TANAP)"; spelled out: it is the first TANAP on a trip page); no rule at all is "Stav chodníka neoverený". */
 export function closureTeaser(lang: Lang, closures: Closure[]): string {
   if (closures.length === 0) return tr(lang, "Stav chodníka neoverený");
   return closures
-    .map((c) => tr(lang, c.kind === "jednorazova" ? "Uzávera {period} ({who})" : "Zatvorené každý rok {period} ({who})", { period: spanShort(c, lang), who: closureManager(c, lang) }))
+    .map((c) => tr(lang, c.kind === "jednorazova" ? "Uzávera {period} ({who})" : "Zatvorené každý rok {period} ({who})", { period: spanShort(c, lang), who: closureManager(c, lang) === "TANAP" ? tr(lang, "Tatranský národný park, TANAP") : closureManager(c, lang) }))
     .join("; ");
 }
 

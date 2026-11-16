@@ -386,11 +386,18 @@ OFF_TOPIC = re.compile(r"animal|mammal|\bbirds?\b|insect|beetle|butterfl|moth|sp
                        r"cougar|\bzoos?\b|fauna|fungi|mushroom|flower|plantae|\bplants?\b|taxon|inaturalist|observation \d|"
                        r"\biss\d|iss expedition|from space|view of earth|astronaut|\bpeople\b|\bmen\b|\bwomen\b|portrait|"
                        r"selfie|musician|concert|festival|locomotive|railway vehicle|\btrains?\b|\bbus(es)?\b|\bcars?\b|aircraft|"
-                       r"kultúrny dom|friends", re.I)
+                       r"kultúrny dom|friends|"
+                       # Slovak and Latin names miss the English words above (Peter 15 Nov: a nuthatch, "Brhlík lesný
+                       # Sitta europaea", was Šarišský hrad's photo). Whole words only: many places are named after animals.
+                       r"\bvt[áa]k(y|ov)?\b|\baves\b|passeriformes|brhl[íi]k|s[ýy]kork|\bďate[ľl]|\bdrozd\b|\bpinka\b|"
+                       r"\bmot[ýy]ľ|\bchrob[áa]k|\bpav[úu]k\b|\bhub(a|y)\b|\bhr[íi]b\b|\brastlin|\bvstava[čc]|\bponiklec|"
+                       r"lišajn[íi]k|\bjašter|\bužovk|vretenic", re.I)
 # For photos matched by place rather than chosen for it (near, category, area): buildings and town
 # scenes are usually not the trip's goal either.
 NOT_OUTDOORS = re.compile(r"church|chapel|chrám|\bkostol(a|e)?\b|\bkl[aá][sš]tor(a|e)?\b|monaster|interior|cemeter|calvar|kalvári|"
-                          r"\bhouses?\b|street|windmill|veterný mlyn", re.I)
+                          r"\bhouses?\b|street|windmill|veterný mlyn|"
+                          # 15 Nov photo sweep: spring wells filed by coordinates, cave sketches, maps, sledging, pilgrimages, hotels.
+                          r"prameň v k\.\s?ú\.|náčrt|relief map|sledg|sánkov|\bpouť|\bpúť|\bhotel\b", re.I)
 
 
 def off_topic(info, src):
