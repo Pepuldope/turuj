@@ -269,7 +269,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
         {/* Two lines (Peter, 15 Nov): getting there by car / bus, then the walk itself; the leave-by time small beside them. */}
         <span className="flex items-center gap-2">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className={`font-data flex flex-wrap items-center gap-x-2 ${big ? "text-[15px]" : "text-[16.5px] max-[359px]:text-[15px]"} leading-[1.25]`}>
+        <span className={`font-data flex flex-wrap items-center gap-x-2 ${big ? "text-[15px]" : "text-[16.5px]"} leading-[1.25]`}>
           <span className={leg(!byBus)}>
             <UiIcon name="car" size={big ? 15 : 17} />
             {carMin !== null ? `${driveApprox ? "~" : ""}${formatDurationShort(carMin)}` : driveLoading ? "…" : distanceM !== null ? formatFromUser(distanceM, lang) : "–"}
@@ -290,12 +290,11 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             {nearStop && (byBus ? driveMin !== null : carMin !== null) && <small className={word}>{t("busom")}</small>}
           </span>
         </span>
-        <span className={`font-data flex flex-wrap items-center gap-x-3 ${big ? "text-[15px]" : "text-[16.5px] max-[359px]:text-[15px]"} leading-[1.25]`}>
+        <span className={`font-data flex flex-wrap items-center gap-x-3 ${big ? "text-[15px]" : "text-[16.5px]"} leading-[1.25]`}>
           {/* Each piece stays whole; on a narrow phone the line breaks between them. */}
           <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1 text-[var(--foreground)]">
-            {/* The label and the time may part on a narrow phone with a long walk ("11 h 42" ran into the leave-by box at 320 px). */}
-            <span className="font-sans text-[13px] font-semibold whitespace-nowrap text-[var(--muted)]">{t("túra")}:</span>
             <span className="inline-flex items-center gap-1 whitespace-nowrap">
+              <span className="font-sans text-[13px] font-semibold text-[var(--muted)]">{t("túra")}:</span>
               <UiIcon name="boot" size={big ? 15 : 17} />
               {formatDurationShort(hikeMin)}
             </span>
@@ -313,12 +312,12 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             )}
           </span>
           {item.easierRoute && (
-            <span className="font-sans text-[12.5px] whitespace-nowrap text-[var(--muted)]" title={t("Ľahšia cesta k tomu istému cieľu, na stránke výletu")}>
+            <span className="font-sans text-[12.5px] text-[var(--muted)]" title={t("Ľahšia cesta k tomu istému cieľu, na stránke výletu")}>
               {t("aj {d} cesta", { d: t(DIFFICULTY_LABEL[item.easierRoute]).toLowerCase() })}
             </span>
           )}
           {total !== null && (
-            <span className="whitespace-nowrap text-[var(--muted)]">
+            <span className="text-[var(--muted)]">
               {t("spolu")} {approx}
               {formatDurationShort(total)}
             </span>
