@@ -290,10 +290,14 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
           </span>
         </span>
         <span className="font-data flex flex-wrap items-center gap-x-3 text-[15px] leading-[1.2]">
-          <span className="inline-flex items-center gap-1 text-[var(--foreground)]">
-            <span className="font-sans text-[12px] font-semibold text-[var(--muted)]">{t("túra")}:</span>
-            <UiIcon name="boot" size={15} />
-            {formatDurationShort(hikeMin)}
+          {/* Wraps (16 Nov): beside the leave-by block the line is ~150 px wide, and "· km" / "alebo 15 min"
+              ran under the block. Each piece stays whole; the line breaks between them. */}
+          <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1 text-[var(--foreground)]">
+            <span className="inline-flex items-center gap-1 whitespace-nowrap">
+              <span className="font-sans text-[12px] font-semibold text-[var(--muted)]">{t("túra")}:</span>
+              <UiIcon name="boot" size={15} />
+              {formatDurationShort(hikeMin)}
+            </span>
             {!big && <span className="whitespace-nowrap text-[var(--muted)]">· {km}</span>}
             <small className={word}>{t("pešo")}</small>
             {withKids && (
@@ -303,7 +307,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             )}
             {/* A long main route hid a short way up (Peter, 2026-10-23: "4 hours scares people"). */}
             {item.shortMin !== null && (
-              <span className="on-card-ok font-semibold text-[var(--ok)]" title={t("Kratšia cesta k tomu istému cieľu, na stránke výletu")}>
+              <span className="on-card-ok font-semibold whitespace-nowrap text-[var(--ok)]" title={t("Kratšia cesta k tomu istému cieľu, na stránke výletu")}>
                 {t("alebo {t}", { t: formatDurationShort(item.shortMin) })}
               </span>
             )}
