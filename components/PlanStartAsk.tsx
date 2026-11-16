@@ -56,7 +56,6 @@ export function PlanStartAsk() {
             <UiIcon name="pin" size={16} />
             {status === "locating" ? t("Hľadáme vašu polohu…") : t("Použiť moju polohu")}
           </button>
-          <p className="-mt-1 text-center text-xs text-[var(--muted)]">{t("Polohu si neukladáme, použijeme ju len na výpočet cesty.")}</p>
           {/* A point on the map, right here too (Peter, 16 Nov): in the sheet it sat under the keyboard. */}
           <button
             type="button"
@@ -66,6 +65,8 @@ export function PlanStartAsk() {
             <UiIcon name="pin" size={16} />
             {t("Vybrať bod na mape")}
           </button>
+          {/* Under the last button, not between them (Peter, 16 Nov). */}
+          <p className="-mt-1 text-center text-xs text-[var(--muted)]">{t("Polohu si neukladáme, použijeme ju len na výpočet cesty.")}</p>
         </div>
         {message && status !== "locating" && (
           <p role="alert" className="flex items-start gap-1.5 text-sm font-semibold text-[var(--warn)]">

@@ -253,7 +253,6 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
             <UiIcon name="pin" size={18} />
             {status === "locating" ? t("Hľadáme vašu polohu…") : t("Použiť moju polohu")}
           </button>
-          <p className="-mt-1 text-center text-xs text-[var(--muted)]">{t("Polohu si neukladáme, použijeme ju len na výpočet cesty.")}</p>
           {/* Peter, 2026-11-11: three ways only (search, my location, a point on the map); the six town shortcuts are gone. */}
           {
             // Anywhere, not only places with an address: a cottage, a crossroads, a car park.
@@ -272,6 +271,9 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
               {t("Vybrať bod na mape")}
             </button>
           }
+          {/* Under the last button, not between them (Peter, 16 Nov). */}
+          <p className="-mt-1 text-center text-xs text-[var(--muted)]">{t("Polohu si neukladáme, použijeme ju len na výpočet cesty.")}</p>
+
         </div>
       )}
 
