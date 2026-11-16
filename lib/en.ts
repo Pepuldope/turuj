@@ -300,7 +300,7 @@ export const EN: Record<string, string> = {
   "Na tento deň je túra pridlhá, za svetla ju nestihnete. Skúste deň s dlhším svetlom alebo kratšiu trasu.": "This hike is too long for the daylight on this day. Try a day with more light or a shorter route.",
   "Vyrazte": "Leave",
   "vyrazte do": "leave by",
-  "Zadarmo, bez registrácie. Robia ho": "Free, no sign-up. Made by",
+  "Zadarmo a bez registrácie. Tvoria ho": "Free, no sign-up. Made by",
   "dvaja študenti": "two students",
   "vyraziť najneskôr": "leave by",
   "na zastávke najneskôr": "at the stop by",
