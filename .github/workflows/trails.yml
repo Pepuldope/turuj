@@ -34,7 +34,7 @@ jobs:
       - name: Download OpenStreetMap extract (Geofabrik, Slovakia)
         run: |
           mkdir -p osm
-          curl -fsSL --retry 3 -o osm/slovakia.osm.pbf https://download.geofabrik.de/europe/slovakia-latest.osm.pbf
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 20 -o osm/slovakia.osm.pbf https://download.geofabrik.de/europe/slovakia-latest.osm.pbf
           TS=$(python -c "import osmium; r = osmium.io.Reader('osm/slovakia.osm.pbf', osmium.osm.NOTHING); print(r.header().get('osmosis_replication_timestamp', '')); r.close()")
           echo "OSM_TS=$TS" >> "$GITHUB_ENV"
 

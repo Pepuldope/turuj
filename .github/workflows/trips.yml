@@ -38,7 +38,7 @@ jobs:
       # (the weekly run stops otherwise, keeping last week's trips).
       - name: Find the rule places on the map
         run: |
-          curl -fsSL --retry 3 -o slovakia.osm.pbf https://download.geofabrik.de/europe/slovakia-latest.osm.pbf
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 20 -o slovakia.osm.pbf https://download.geofabrik.de/europe/slovakia-latest.osm.pbf
           python -m pipeline.run --pbf slovakia.osm.pbf --rules-only
 
   build:
@@ -63,7 +63,7 @@ jobs:
       - name: Download OpenStreetMap extract (Geofabrik, Slovakia)
         run: |
           mkdir -p osrm
-          curl -fsSL --retry 3 -o osrm/slovakia.osm.pbf https://download.geofabrik.de/europe/slovakia-latest.osm.pbf
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 20 -o osrm/slovakia.osm.pbf https://download.geofabrik.de/europe/slovakia-latest.osm.pbf
           ls -la osrm
           TS=$(python -c "import osmium; r = osmium.io.Reader('osrm/slovakia.osm.pbf', osmium.osm.NOTHING); print(r.header().get('osmosis_replication_timestamp', '')); r.close()")
           echo "OSM_TS=$TS" >> "$GITHUB_ENV"
