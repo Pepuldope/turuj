@@ -157,9 +157,6 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
   const stopWalkM = nearStop ? (nearStop.join?.walk_m ?? nearStop.distance_m) : 0;
   const total = driveMin !== null && !item.fit ? hikeMin + 2 * driveMin : null;
   const big = onClose !== undefined;
-  // A leave-by time (fits / tight) goes to the right of the time lines on list cards; "doesn't fit" and closures
-  // are sentences and keep their full-width line below.
-  const sidePill = !big && pill?.time !== undefined;
   const th = detail.trailheads.find((t) => t.is_primary) ?? detail.trailheads[0];
   const parking = detail.parkingLots[0];
   // "autom / busom / pešo" for screen readers only: shown on screen they made the card a line taller (Peter, 15 Nov).
@@ -259,22 +256,22 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             {t(GOAL_LABEL[goal])}
           </span>
           {/* Under 360 px there is no room left for it: rather none than a lone "…". */}
-          {trail.region_name && <span className="min-w-0 truncate max-[359px]:hidden">· {regionIn(lang, trail.region_name)}</span>}
+          {/* List cards leave the region to the map and the trip page: one column, less to read (Peter, 16 Nov). */}
+          {big && trail.region_name && <span className="min-w-0 truncate max-[359px]:hidden">· {regionIn(lang, trail.region_name)}</span>}
           {big && <span className="shrink-0">· {km}</span>}
           {/* With kids on, every card listed is kid-friendly: the tag would say nothing. */}
           {trail.family_friendly && !withKids && <span className="on-card-ok shrink-0 font-semibold text-[var(--ok)]">· {t("aj pre deti")}</span>}
         </span>
-        {/* Two lines (Peter, 15 Nov): getting there by car / bus, then the walk itself; on list cards the leave-by
-            time sits beside them on the right, so the card's right half is not empty (Peter, 15 Nov, option A). */}
-        <span className="flex items-center gap-2">
-        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        {/* Two lines (Peter, 15 Nov): getting there by car / bus, then the walk itself. Then the leave-by time as the
+            last line: one column, one left edge (Peter, 16 Nov: the box on the right made the card messy). */}
+        <span className="flex min-w-0 flex-col gap-0.5">
         <span className="font-data flex flex-wrap items-center gap-x-2 text-[15px] leading-[1.2]">
           <span className={leg(!byBus)}>
             <UiIcon name="car" size={15} />
             {carMin !== null ? `${driveApprox ? "~" : ""}${formatDurationShort(carMin)}` : driveLoading ? "…" : distanceM !== null ? formatFromUser(distanceM, lang) : "–"}
             {carMin !== null && <small className={word}>{t("autom")}</small>}
           </span>
-          <span aria-hidden className="font-sans text-[var(--muted)]">/</span>
+          <span aria-hidden className="font-sans text-[var(--muted)]">·</span>
           <span className={leg(byBus)} title={nearStop ? t("Zastávka {stop}, {m} k trase", { stop: stopLabel(nearStop.name), m: formatFromUser(stopWalkM, lang) }) : t("Bez zastávky pri štarte")}>
             <UiIcon name="bus" size={15} />
             {/* By car too, the bus as a time (muted), never the walk from the stop: "350 m" read as minutes next to the car's time (Peter, 2026-10-23). */}
@@ -290,15 +287,13 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
           </span>
         </span>
         <span className="font-data flex flex-wrap items-center gap-x-3 text-[15px] leading-[1.2]">
-          {/* Wraps (16 Nov): beside the leave-by block the line is ~150 px wide, and "· km" / "alebo 15 min"
-              ran under the block. Each piece stays whole; the line breaks between them. */}
+          {/* Each piece stays whole; on a narrow phone the line breaks between them. */}
           <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1 text-[var(--foreground)]">
             <span className="inline-flex items-center gap-1 whitespace-nowrap">
               <span className="font-sans text-[12px] font-semibold text-[var(--muted)]">{t("túra")}:</span>
               <UiIcon name="boot" size={15} />
               {formatDurationShort(hikeMin)}
             </span>
-            {!big && <span className="whitespace-nowrap text-[var(--muted)]">· {km}</span>}
             <small className={word}>{t("pešo")}</small>
             {withKids && (
               <span className="text-[var(--warn)]" title={t("S deťmi: čas na trase o 30 % dlhší")}>
@@ -307,13 +302,13 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             )}
             {/* A long main route hid a short way up (Peter, 2026-10-23: "4 hours scares people"). */}
             {item.shortMin !== null && (
-              <span className="on-card-ok font-semibold whitespace-nowrap text-[var(--ok)]" title={t("Kratšia cesta k tomu istému cieľu, na stránke výletu")}>
-                {t("alebo {t}", { t: formatDurationShort(item.shortMin) })}
+              <span className="whitespace-nowrap text-[var(--muted)]" title={t("Kratšia cesta k tomu istému cieľu, na stránke výletu")}>
+                · {t("kratšia {t}", { t: formatDurationShort(item.shortMin) })}
               </span>
             )}
           </span>
           {item.easierRoute && (
-            <span className="on-card-ok font-sans text-[12.5px] font-semibold text-[var(--ok)]" title={t("Ľahšia cesta k tomu istému cieľu, na stránke výletu")}>
+            <span className="font-sans text-[12.5px] text-[var(--muted)]" title={t("Ľahšia cesta k tomu istému cieľu, na stránke výletu")}>
               {t("aj {d} cesta", { d: t(DIFFICULTY_LABEL[item.easierRoute]).toLowerCase() })}
             </span>
           )}
@@ -324,16 +319,6 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             </span>
           )}
         </span>
-        </span>
-        {sidePill && pill?.time && (
-          <span
-            title={t("Najneskôr, kedy treba vyraziť, aby ste boli späť za svetla")}
-            className={`flex w-[78px] shrink-0 flex-col max-[379px]:w-[66px] items-center justify-center self-stretch rounded-xl px-1.5 py-1 text-center ${PILL_CLASS[pill.tone]}`}
-          >
-            <span className="text-[11px] leading-tight font-semibold">{pill.text}</span>
-            <span className="font-data text-[22px] leading-none font-bold max-[379px]:text-[20px]">{pill.time}</span>
-          </span>
-        )}
         </span>
         {big && (
           <>
@@ -357,7 +342,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             </span>
           </>
         )}
-        {pill && !sidePill && !(big && pill.tone === "closed") && (
+        {pill && !(big && pill.tone === "closed") && (
           <span
             title={pill.time ? t("Najneskôr, kedy treba vyraziť, aby ste boli späť za svetla") : undefined}
             className={`mt-0.5 inline-flex items-baseline gap-1.5 self-start rounded-full px-2.5 py-1 text-[12.5px] font-semibold whitespace-nowrap ${PILL_CLASS[pill.tone]}`}

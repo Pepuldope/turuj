@@ -425,7 +425,7 @@ export const EN: Record<string, string> = {
   "{name} – okruh": "{name} – loop",
   "Kratšia cesta k tomu istému cieľu, na stránke výletu": "A shorter route to the same place, on the trip page",
   "Dá sa aj kratšie: {t}": "Shorter option: {t}",
-  "alebo {t}": "or {t}",
+  "kratšia {t}": "shorter {t}",
   "Späť na túto cestu": "Back to this route",
   "Vybrať túto cestu": "Pick this route",
   "Cieľ": "Destination",
