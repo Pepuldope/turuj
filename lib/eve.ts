@@ -84,10 +84,12 @@ export function eveMessage(job: EveJob, forecast: WeatherForecast | null): Messa
   }
 
   if (lines.length === 0) lines.push(tr(lang, "Pozrite si plán a počasie na stránke výletu."));
+  // "Zajtra: Sitno" alone read like it came from nowhere (Peter, 15 Nov, C167): the title says what it is about,
+  // the body starts with the trip, and a tap opens the saved trip with its own day, start and stops.
   return {
-    title: tr(lang, "Zajtra: {name}", { name: job.name }),
-    body: lines.join(" "),
-    url: `${lang === "en" ? "/en" : ""}/trasa/${encodeURIComponent(job.slug)}`,
+    title: tr(lang, "Pripravte sa na zajtrajší výlet"),
+    body: [`${job.name}.`, ...lines].join(" "),
+    url: `${lang === "en" ? "/en" : ""}/ulozene?otvorit=${encodeURIComponent(job.slug)}`,
     tag: `turuj-${job.slug}-eve`,
   };
 }

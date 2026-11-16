@@ -17,6 +17,7 @@ import { setHoveredRoute, useHoveredRoute } from "@/lib/routeHover";
 import { BusOk, Dot, NoParkingChip, routeAccess, routeLabel } from "@/components/routeBits";
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { routeNameIn } from "@/lib/lang";
+import { useTownParam } from "@/components/TripBackLink";
 
 export interface RouteNumbers {
   min: number;
@@ -51,6 +52,7 @@ const PREFETCH_MAX = 6;
 /** The routes as rows; the one under the pointer (here or on the map) gets an outline and lights up on the map. */
 export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; at: number; walks: Record<string, RouteWalk>; shown?: number[] }) {
   const hovered = useHoveredRoute();
+  const town = useTownParam();
   const numbers = useRouteNumbers(routes, walks, routes[at]?.slug ?? null);
   const t = useT();
   const lang = useLang();
@@ -64,15 +66,18 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
   return routes.map((r, i) => shown && !shown.includes(i) ? null : (
     <li key={r.slug}>
       <LangLink
-        href={`/trasa/${r.slug}`}
+        // Opened from a town page, the town stays with the trip, so its back link still leads there (C170).
+        href={`/trasa/${r.slug}${town ? `?z=${town.id}` : ""}`}
         prefetch={i !== at && ++ahead <= PREFETCH_MAX ? true : undefined}
         aria-current={(picked ? r.slug === picked : i === at) ? "page" : undefined}
         scroll={false}
         // A mouse that drifts a few pixels between press and release starts dragging the link instead of
         // clicking it ("I hover instead of clicking", Peter, 2026-11-11): the rows are not draggable.
         draggable={false}
-        onMouseEnter={() => setHoveredRoute(i === at ? null : r.slug)}
-        onMouseLeave={() => setHoveredRoute(null)}
+        // A real mouse only: iPhone Safari fires mouseenter on the first tap, and a tap that changes the page (outline,
+        // map highlight) counts as a hover there, so it needed a second tap to open the route (Peter, 15 Nov, C173).
+        onPointerEnter={(e) => e.pointerType === "mouse" && setHoveredRoute(i === at ? null : r.slug)}
+        onPointerLeave={(e) => e.pointerType === "mouse" && setHoveredRoute(null)}
         onClick={(e) => {
           setHoveredRoute(null);
           if (i !== at) setTapped({ slug: r.slug, at });

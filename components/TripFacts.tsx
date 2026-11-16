@@ -41,7 +41,7 @@ export function TripFacts({ loop, difficulty, familyFriendly }: Props) {
         )}
       </span>
       <span className="font-sans text-[13px] font-medium text-[var(--muted)]">{t("{level} obtiažnosť", { level: t(DIFFICULTY_LABEL[difficulty]).toLowerCase() })}</span>
-      {familyFriendly && <span className="font-sans text-[13px] font-semibold text-[var(--ok)]">{t("vhodné pre deti")}</span>}
+      {familyFriendly && <span className="font-sans text-[13px] font-semibold text-[var(--ok)]">{t("aj pre deti")}</span>}
       {/* Only when the walk is shorter than the route's own start; "Aj s chôdzou…" said nothing (Peter, 2026-10-22). */}
       {walk.skipped && <span className="w-full font-sans text-[13px] text-[var(--muted)]">{t(skippedNote(transit, walk.approachMin))}</span>}
     </p>

@@ -442,13 +442,8 @@ function StartBlock({
       {/* What the departure makes of the day, quietly: the walk's own times and when you are home. */}
       {leg && (
         <p className="text-[13px] leading-snug text-[var(--muted)]">
+          {/* "doma" is under the slider, where it turns red when late: here it said the same a second time (Peter, 16 Nov). */}
           {t("túra")} <span className="font-data text-[15px] text-[var(--foreground)]">{span(parts.start, parts.end)}</span>
-          {parts.home && (
-            <>
-              {" · "}
-              {t("doma")} <span className="font-data text-[15px] text-[var(--foreground)]">{parts.home}</span>
-            </>
-          )}
         </p>
       )}
       {/* The strip reaches into the card's padding (so a thumb at the day's ends is whole); the track is 24/14 of the card's inner width. */}
@@ -466,6 +461,7 @@ function StartBlock({
             onRelease={() => setDragged(null)}
           />
           <BarLabels plan={plan} way={way} late={late} />
+          <BarTicks plan={plan} />
           <TripBar plan={plan} strip={strip ?? []} way={way} />
           <div className="mt-2">
             <HourRow plan={plan} cells={cells} />
@@ -683,9 +679,9 @@ function TripBar({ plan, strip, way }: { plan: DayPlan; strip: HourCell[]; way: 
 }
 
 /**
- * The end labels over the bar: "odchod 7:05 / auto 55 min" at the left end and "doma 16:05 / auto 55 min" at the right.
- * One wrapping row spanning the bar: the labels cannot overlap, and when they do not fit side by side "doma" drops
- * to its own line at the right. Near the scale's right edge the row reaches left instead of overflowing.
+ * The end labels over the bar: "odchod 7:05 / auto 55 min" held at the left edge of the visible card and "doma 16:05 /
+ * auto 55 min" at its right edge, however the scale is scrolled (sticky inside the scroller). At its point on the scale
+ * "odchod" drifted to the middle of the card, or off it (Peter, 16 Nov, C172); the ticks (BarTicks) still mark the times.
  */
 function BarLabels({ plan, way, late }: { plan: DayPlan; way: ReturnType<typeof wayOf>; late: boolean }) {
   const t = useT();
@@ -697,36 +693,37 @@ function BarLabels({ plan, way, late }: { plan: DayPlan; way: ReturnType<typeof 
         {word} <span className="font-data text-[15px] font-semibold">{formatDuration(min)}</span>
       </span>
     );
-  const right = ends.home ? ends.home.left : ends.leave.left;
   return (
-    <div aria-hidden="true" className="w-full">
-      <div
-        className="flex flex-wrap justify-between gap-x-3 gap-y-1"
-        style={{ marginLeft: `min(${ends.leave.left * 100}%, calc(100% - 13rem))`, marginRight: `max(0px, min(${(1 - right) * 100}%, calc(100% - ${ends.leave.left * 100}% - 16rem)))` }}
-      >
-        <div className="whitespace-nowrap">
+    <div aria-hidden="true" className="flex justify-between gap-x-3">
+      <div className="sticky left-0 whitespace-nowrap">
+        <span className="block text-[13px] leading-tight">
+          {/* No ride (no start set, or on foot from the door): the left end is the walk's start, not a departure. */}
+          {ends.leave.rideMin > 0 ? t("odchod") : t("začiatok túry")} <span className="font-data text-[19px] font-semibold">{clockShort(plan.segments[0].start)}</span>
+        </span>
+        {ride(ends.leave.rideMin)}
+      </div>
+      {ends.home && (
+        <div className="sticky right-0 ml-auto text-right whitespace-nowrap">
           <span className="block text-[13px] leading-tight">
-            {/* No ride (no start set, or on foot from the door): the left end is the walk's start, not a departure. */}
-            {ends.leave.rideMin > 0 ? t("odchod") : t("začiatok túry")} <span className="font-data text-[19px] font-semibold">{clockShort(plan.segments[0].start)}</span>
-          </span>
-          {ride(ends.leave.rideMin)}
-        </div>
-        {ends.home && (
-          <div className="ml-auto text-right whitespace-nowrap">
-            <span className="block text-[13px] leading-tight">
-              {t("doma")}{" "}
-              <span className="font-data text-[19px] font-semibold" style={late ? { color: "var(--time)" } : undefined}>
-                {clockShort(plan.segments[plan.segments.length - 1].end)}
-              </span>
+            {t("doma")}{" "}
+            <span className="font-data text-[19px] font-semibold" style={late ? { color: "var(--time)" } : undefined}>
+              {clockShort(plan.segments[plan.segments.length - 1].end)}
             </span>
-            {ride(ends.home.rideMin)}
-          </div>
-        )}
-      </div>
-      <div className="relative h-2">
-        <span className="absolute bottom-0 h-2 w-px bg-[var(--muted)]" style={{ left: `${ends.leave.left * 100}%` }} />
-        {ends.home && <span className="absolute bottom-0 h-2 w-px bg-[var(--muted)]" style={{ left: `${ends.home.left * 100}%` }} />}
-      </div>
+          </span>
+          {ride(ends.home.rideMin)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** The two ticks on the scale where the day leaves home and gets back. */
+function BarTicks({ plan }: { plan: DayPlan }) {
+  const ends = barEnds(plan);
+  return (
+    <div aria-hidden="true" className="relative h-2">
+      <span className="absolute bottom-0 h-2 w-px bg-[var(--muted)]" style={{ left: `${ends.leave.left * 100}%` }} />
+      {ends.home && <span className="absolute bottom-0 h-2 w-px bg-[var(--muted)]" style={{ left: `${ends.home.left * 100}%` }} />}
     </div>
   );
 }

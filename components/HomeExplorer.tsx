@@ -1196,7 +1196,8 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
             }
           >
             {map}
-            <MapExpandButton full={fullMap} onClick={() => setFullMap((v) => !v)} />
+            {/* Icon only, like the step maps: the labelled button was too big over the home map (Peter, 15 Nov, C169). */}
+            <MapExpandButton full={fullMap} onClick={() => setFullMap((v) => !v)} small />
           </div>
         )}
 

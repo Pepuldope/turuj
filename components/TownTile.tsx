@@ -44,7 +44,7 @@ export function TownTile({ tile, lang = "sk", townId }: { tile: Tile; lang?: Lan
           dangerouslySetInnerHTML={{ __html: kindSvg(tile.kind in GOAL_COLOUR ? tile.kind : "ine", 20) }}
         />
         {tile.kids && (
-          <span className="absolute top-2.5 right-2 rounded-full bg-white/90 px-2 text-xs font-bold text-[#17663a]">{tr(lang, "pre deti")}</span>
+          <span className="absolute top-2.5 right-2 rounded-full bg-white/90 px-2 text-xs font-bold text-[#17663a]">{tr(lang, "aj pre deti")}</span>
         )}
         {tile.closedSeason && (
           // Seasonal park closure (TANAP ridges): visible before anyone picks a closed summit from Google.

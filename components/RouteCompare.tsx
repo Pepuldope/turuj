@@ -92,8 +92,9 @@ export function RouteCompare({ slug, destination, goal, routes, walks, children 
                   (a link inside a role=button card had its Enter swallowed by the card). */}
               <div
                 onClick={() => setSel(i)}
-                onMouseEnter={() => setHover(i)}
-                onMouseLeave={() => setHover(null)}
+                // Mouse only: on iPhone a hover change on the first tap swallowed the tap (C173).
+                onPointerEnter={(e) => e.pointerType === "mouse" && setHover(i)}
+                onPointerLeave={(e) => e.pointerType === "mouse" && setHover(null)}
                 className={`flex cursor-pointer flex-col gap-2 rounded-[var(--radius-card)] border bg-[var(--card-bg)] px-3.5 py-3 ${
                   i === sel
                     ? "border-[var(--accent)] shadow-[0_0_0_1px_var(--accent)]"

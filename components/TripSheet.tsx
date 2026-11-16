@@ -12,7 +12,6 @@ import { kindSvg } from "@/lib/kindIcons";
 import { GOAL_COLOUR, POI_COLOUR, ROUTE_COLOURS } from "@/lib/palette";
 import { seasonOf } from "@/lib/season";
 import { SeasonScene } from "@/components/SeasonScene";
-import { UiIcon } from "@/components/UiIcon";
 import { PoiList } from "@/components/PoiList";
 import { StepMap } from "@/components/PlanStep";
 import { ShorterRouteHint } from "@/components/RouteRows";
@@ -32,6 +31,7 @@ import { TripAccessProvider } from "@/components/TripAccess";
 import { JsonLd } from "@/components/JsonLd";
 import { TrackEvent } from "@/components/TrackEvent";
 import { TripSeenFlag } from "@/components/TripSeenFlag";
+import { TripBackLink } from "@/components/TripBackLink";
 import { absoluteUrl } from "@/lib/site";
 import type { RouteBrief, Town, TripDetail } from "@/lib/tripSchema";
 import type { TrailDetail } from "@/lib/types";
@@ -275,16 +275,12 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
             ) : (
               <SeasonScene season={seasonOf(new Date())} width={460} height={220} seed={3} sunX={0.34} sunY={0.32} shade className="absolute inset-0 h-full w-full" />
             )}
-            <nav aria-label={tr(lang, "Navigácia")} className="relative flex items-center justify-between gap-2 px-4 pt-4">
-              <Link
-                href={langPath(lang, "/")}
-                className="inline-flex items-center gap-0.5 rounded-full border border-[var(--border)] bg-[var(--card-bg)]/90 px-3 py-1.5 text-sm font-semibold"
-              >
-                <UiIcon name="back" size={15} />
-                {tr(lang, "Všetky výlety")}
-              </Link>
+            {/* Below the clock in the home-screen app, level with the round buttons of the top bar (TopBar pads them the same). */}
+            <nav aria-label={tr(lang, "Navigácia")} className="relative flex items-center justify-between gap-2 px-4 pt-[calc(1rem+env(safe-area-inset-top))]">
+              <TripBackLink />
             </nav>
-            <div className="relative flex flex-col gap-1.5 px-4 pb-3.5 text-white">
+            {/* pt-4: a two-line name grows the header and the pill used to touch the back button (Peter, 15 Nov, C166). */}
+            <div className="relative flex flex-col gap-1.5 px-4 pt-4 pb-3.5 text-white">
               <div className="flex flex-wrap gap-1.5">
                 <Badge colour={GOAL_COLOUR[goal]} icon={kindSvg(goal, 16)}>
                   {tr(lang, GOAL_LABEL[goal])}

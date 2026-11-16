@@ -362,10 +362,12 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
 
   useEffect(() => {
     if (!playing) return;
-    // The whole day in about ten seconds; from where the dial stands, or from the start once it reached the end.
+    // The whole day in about ten seconds. The first play runs from the very start (it began mid-day at the goal,
+    // Peter, 15 Nov, C171); later ones from where the dial stands, or from the start once it reached the end.
     const span = scene.hi - scene.lo;
     const at = scrubRef.current ?? restT;
-    let from = at >= scene.hi - span / 50 ? scene.lo : at;
+    let from = !playedRef.current || at >= scene.hi - span / 50 ? scene.lo : at;
+    playedRef.current = true;
     let last = performance.now();
     let raf = requestAnimationFrame(function step(now) {
       from = Math.min(scene.hi, from + ((now - last) / PLAY_MS) * span);
@@ -380,6 +382,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   }, [playing]);
   const scrubRef = useRef(scrub);
   scrubRef.current = scrub;
+  const playedRef = useRef(false);
   // Any touch on the dial takes over from the playing day.
   const take = (at: number | null) => {
     setPlaying(false);

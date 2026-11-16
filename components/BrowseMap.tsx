@@ -15,6 +15,7 @@ import { FALLBACK_STYLE, SLOVAKIA, hideBasePois } from "@/components/TrailMap";
 import { PickPin } from "@/components/PickStartMap";
 import { pageLang, tr } from "@/lib/lang";
 import { mapLocale } from "@/lib/mapLocale";
+import { foldAttribution } from "@/lib/mapAttribution";
 
 type MapLibre = typeof import("maplibre-gl");
 type Box = [number, number, number, number];
@@ -411,6 +412,8 @@ export function BrowseMap({
       });
       map.touchZoomRotate.disableRotation();
       map.addControl(new ml.NavigationControl({ showCompass: false }), "bottom-right");
+      // The credits start folded as the "i", as on the trip maps (Peter, 15 Nov, C169).
+      foldAttribution(containerRef.current, map);
 
       let styleFailed = false;
       map.on("error", (e) => {

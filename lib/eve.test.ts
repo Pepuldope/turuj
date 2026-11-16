@@ -35,10 +35,11 @@ describe("evening reminder timing", () => {
 describe("evening reminder text", () => {
   it("names the trip, the weather and the leave-by time", () => {
     const m = eveMessage(job, forecast("partlycloudy_day"));
-    expect(m.title).toBe("Zajtra: Sitno");
+    expect(m.title).toBe("Pripravte sa na zajtrajší výlet");
+    expect(m.body.startsWith("Sitno. ")).toBe(true);
     expect(m.body).toContain("Polojasno, 12 °C.");
     expect(m.body).toContain("Vyrazte najneskôr o 9:30.");
-    expect(m.url).toBe("/trasa/sitno");
+    expect(m.url).toBe("/ulozene?otvorit=sitno");
     expect(m.body).not.toMatch(/!|otvoren/i);
   });
 
@@ -57,13 +58,13 @@ describe("evening reminder text", () => {
 
   it("leaves out what it does not know", () => {
     const m = eveMessage({ ...job, leave: null }, null);
-    expect(m.body).toBe("Pozrite si plán a počasie na stránke výletu.");
+    expect(m.body).toBe("Sitno. Pozrite si plán a počasie na stránke výletu.");
   });
 
   it("speaks English under /en", () => {
     const m = eveMessage({ ...job, lang: "en" }, forecast("fair_day"));
-    expect(m.title).toBe("Tomorrow: Sitno");
-    expect(m.url).toBe("/en/trasa/sitno");
+    expect(m.title).toBe("Get ready for tomorrow's trip");
+    expect(m.url).toBe("/en/ulozene?otvorit=sitno");
     expect(m.body).toContain("Leave by 9:30 at the latest.");
   });
 });
