@@ -234,7 +234,6 @@
     <trkpt lat="49.221376" lon="18.622832"><ele>325</ele></trkpt>
   </trkseg></trk>
   <trk><name>Hrad Hričov</name><desc>hrad-hricov-luka-pod-sulovskym</desc><trkseg>
-    <trkpt lat="49.176630" lon="18.586591"><ele>567</ele></trkpt>
     <trkpt lat="49.176745" lon="18.586629"><ele>563</ele></trkpt>
     <trkpt lat="49.177519" lon="18.586667"><ele>568</ele></trkpt>
     <trkpt lat="49.177958" lon="18.586959"><ele>584</ele></trkpt>
@@ -500,6 +499,5 @@
     <trkpt lat="49.177958" lon="18.586959"><ele>584</ele></trkpt>
     <trkpt lat="49.177519" lon="18.586667"><ele>568</ele></trkpt>
     <trkpt lat="49.176745" lon="18.586629"><ele>563</ele></trkpt>
-    <trkpt lat="49.176630" lon="18.586591"><ele>567</ele></trkpt>
   </trkseg></trk>
 </gpx>

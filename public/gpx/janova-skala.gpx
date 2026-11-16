@@ -262,20 +262,15 @@
     <trkpt lat="48.605757" lon="19.031675"><ele>469</ele></trkpt>
     <trkpt lat="48.605850" lon="19.031678"><ele>470</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Janova skala</name><desc>janova-skala-kovacova-kupele</desc><trkseg>
-    <trkpt lat="48.601794" lon="19.104328"><ele>307</ele></trkpt>
-    <trkpt lat="48.602238" lon="19.104397"><ele>306</ele></trkpt>
-    <trkpt lat="48.602433" lon="19.104372"><ele>305</ele></trkpt>
-    <trkpt lat="48.602609" lon="19.104264"><ele>305</ele></trkpt>
-    <trkpt lat="48.603107" lon="19.103706"><ele>304</ele></trkpt>
-    <trkpt lat="48.603622" lon="19.103351"><ele>302</ele></trkpt>
-    <trkpt lat="48.604182" lon="19.103202"><ele>304</ele></trkpt>
-    <trkpt lat="48.605479" lon="19.102540"><ele>307</ele></trkpt>
-    <trkpt lat="48.607301" lon="19.101725"><ele>309</ele></trkpt>
+  <trk><name>Janova skala</name><desc>janova-skala-kupelna</desc><trkseg>
+    <trkpt lat="48.606223" lon="19.102139"><ele>307</ele></trkpt>
+    <trkpt lat="48.606234" lon="19.102194"><ele>306</ele></trkpt>
     <trkpt lat="48.607395" lon="19.101662"><ele>309</ele></trkpt>
     <trkpt lat="48.609042" lon="19.099818"><ele>311</ele></trkpt>
-    <trkpt lat="48.609329" lon="19.099564"><ele>311</ele></trkpt>
-    <trkpt lat="48.609621" lon="19.098614"><ele>311</ele></trkpt>
+    <trkpt lat="48.609276" lon="19.099636"><ele>311</ele></trkpt>
+    <trkpt lat="48.609364" lon="19.099487"><ele>311</ele></trkpt>
+    <trkpt lat="48.609574" lon="19.098720"><ele>312</ele></trkpt>
+    <trkpt lat="48.609671" lon="19.098533"><ele>311</ele></trkpt>
     <trkpt lat="48.610543" lon="19.097662"><ele>315</ele></trkpt>
     <trkpt lat="48.611012" lon="19.096930"><ele>317</ele></trkpt>
     <trkpt lat="48.611612" lon="19.095814"><ele>325</ele></trkpt>
@@ -292,6 +287,7 @@
     <trkpt lat="48.618424" lon="19.079343"><ele>348</ele></trkpt>
     <trkpt lat="48.618852" lon="19.078658"><ele>354</ele></trkpt>
     <trkpt lat="48.619234" lon="19.078171"><ele>354</ele></trkpt>
+    <trkpt lat="48.619398" lon="19.078063"><ele>356</ele></trkpt>
     <trkpt lat="48.619970" lon="19.077752"><ele>363</ele></trkpt>
     <trkpt lat="48.621126" lon="19.077234"><ele>357</ele></trkpt>
     <trkpt lat="48.622951" lon="19.076968"><ele>368</ele></trkpt>
@@ -525,6 +521,7 @@
     <trkpt lat="48.622951" lon="19.076968"><ele>368</ele></trkpt>
     <trkpt lat="48.621126" lon="19.077234"><ele>357</ele></trkpt>
     <trkpt lat="48.619970" lon="19.077752"><ele>363</ele></trkpt>
+    <trkpt lat="48.619398" lon="19.078063"><ele>356</ele></trkpt>
     <trkpt lat="48.619234" lon="19.078171"><ele>354</ele></trkpt>
     <trkpt lat="48.618852" lon="19.078658"><ele>354</ele></trkpt>
     <trkpt lat="48.618424" lon="19.079343"><ele>348</ele></trkpt>
@@ -541,19 +538,14 @@
     <trkpt lat="48.611612" lon="19.095814"><ele>325</ele></trkpt>
     <trkpt lat="48.611012" lon="19.096930"><ele>317</ele></trkpt>
     <trkpt lat="48.610543" lon="19.097662"><ele>315</ele></trkpt>
-    <trkpt lat="48.609621" lon="19.098614"><ele>311</ele></trkpt>
-    <trkpt lat="48.609329" lon="19.099564"><ele>311</ele></trkpt>
+    <trkpt lat="48.609671" lon="19.098533"><ele>311</ele></trkpt>
+    <trkpt lat="48.609574" lon="19.098720"><ele>312</ele></trkpt>
+    <trkpt lat="48.609364" lon="19.099487"><ele>311</ele></trkpt>
+    <trkpt lat="48.609276" lon="19.099636"><ele>311</ele></trkpt>
     <trkpt lat="48.609042" lon="19.099818"><ele>311</ele></trkpt>
     <trkpt lat="48.607395" lon="19.101662"><ele>309</ele></trkpt>
-    <trkpt lat="48.607301" lon="19.101725"><ele>309</ele></trkpt>
-    <trkpt lat="48.605479" lon="19.102540"><ele>307</ele></trkpt>
-    <trkpt lat="48.604182" lon="19.103202"><ele>304</ele></trkpt>
-    <trkpt lat="48.603622" lon="19.103351"><ele>302</ele></trkpt>
-    <trkpt lat="48.603107" lon="19.103706"><ele>304</ele></trkpt>
-    <trkpt lat="48.602609" lon="19.104264"><ele>305</ele></trkpt>
-    <trkpt lat="48.602433" lon="19.104372"><ele>305</ele></trkpt>
-    <trkpt lat="48.602238" lon="19.104397"><ele>306</ele></trkpt>
-    <trkpt lat="48.601794" lon="19.104328"><ele>307</ele></trkpt>
+    <trkpt lat="48.606234" lon="19.102194"><ele>306</ele></trkpt>
+    <trkpt lat="48.606223" lon="19.102139"><ele>307</ele></trkpt>
   </trkseg></trk>
   <trk><name>Janova skala</name><desc>janova-skala-sielnica</desc><trkseg>
     <trkpt lat="48.634563" lon="19.109080"><ele>348</ele></trkpt>

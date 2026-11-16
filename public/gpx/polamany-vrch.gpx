@@ -190,10 +190,11 @@
     <trkpt lat="48.719088" lon="18.056621"><ele>474</ele></trkpt>
     <trkpt lat="48.719015" lon="18.056501"><ele>479</ele></trkpt>
     <trkpt lat="48.718998" lon="18.056403"><ele>481</ele></trkpt>
-    <trkpt lat="48.719171" lon="18.055655"><ele>486</ele></trkpt>
-    <trkpt lat="48.719214" lon="18.055110"><ele>491</ele></trkpt>
-    <trkpt lat="48.719212" lon="18.054648"><ele>494</ele></trkpt>
-    <trkpt lat="48.719025" lon="18.053535"><ele>499</ele></trkpt>
+    <trkpt lat="48.719132" lon="18.055675"><ele>488</ele></trkpt>
+    <trkpt lat="48.719182" lon="18.054680"><ele>494</ele></trkpt>
+    <trkpt lat="48.719140" lon="18.054291"><ele>496</ele></trkpt>
+    <trkpt lat="48.718955" lon="18.053303"><ele>502</ele></trkpt>
+    <trkpt lat="48.718953" lon="18.053005"><ele>503</ele></trkpt>
     <trkpt lat="48.718801" lon="18.051684"><ele>511</ele></trkpt>
     <trkpt lat="48.718708" lon="18.049267"><ele>527</ele></trkpt>
     <trkpt lat="48.718573" lon="18.048718"><ele>536</ele></trkpt>
@@ -547,10 +548,11 @@
     <trkpt lat="48.718573" lon="18.048718"><ele>536</ele></trkpt>
     <trkpt lat="48.718708" lon="18.049267"><ele>527</ele></trkpt>
     <trkpt lat="48.718801" lon="18.051684"><ele>511</ele></trkpt>
-    <trkpt lat="48.719025" lon="18.053535"><ele>499</ele></trkpt>
-    <trkpt lat="48.719212" lon="18.054648"><ele>494</ele></trkpt>
-    <trkpt lat="48.719214" lon="18.055110"><ele>491</ele></trkpt>
-    <trkpt lat="48.719171" lon="18.055655"><ele>486</ele></trkpt>
+    <trkpt lat="48.718953" lon="18.053005"><ele>503</ele></trkpt>
+    <trkpt lat="48.718955" lon="18.053303"><ele>502</ele></trkpt>
+    <trkpt lat="48.719140" lon="18.054291"><ele>496</ele></trkpt>
+    <trkpt lat="48.719182" lon="18.054680"><ele>494</ele></trkpt>
+    <trkpt lat="48.719132" lon="18.055675"><ele>488</ele></trkpt>
     <trkpt lat="48.718998" lon="18.056403"><ele>481</ele></trkpt>
     <trkpt lat="48.719015" lon="18.056501"><ele>479</ele></trkpt>
     <trkpt lat="48.719088" lon="18.056621"><ele>474</ele></trkpt>

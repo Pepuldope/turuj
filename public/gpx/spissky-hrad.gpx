@@ -59,40 +59,28 @@
     <trkpt lat="48.998618" lon="20.770217"><ele>563</ele></trkpt>
     <trkpt lat="48.998467" lon="20.770374"><ele>564</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Spišský hrad</name><desc>spissky-hrad-siva-brada-rekreacne</desc><trkseg>
-    <trkpt lat="49.004580" lon="20.721037"><ele>470</ele></trkpt>
-    <trkpt lat="49.004607" lon="20.720910"><ele>470</ele></trkpt>
-    <trkpt lat="49.004743" lon="20.720727"><ele>470</ele></trkpt>
-    <trkpt lat="49.004866" lon="20.721014"><ele>472</ele></trkpt>
-    <trkpt lat="49.005318" lon="20.721522"><ele>482</ele></trkpt>
-    <trkpt lat="49.006143" lon="20.722895"><ele>502</ele></trkpt>
-    <trkpt lat="49.006021" lon="20.722977"><ele>500</ele></trkpt>
-    <trkpt lat="49.005893" lon="20.723168"><ele>497</ele></trkpt>
-    <trkpt lat="49.005825" lon="20.723199"><ele>495</ele></trkpt>
-    <trkpt lat="49.005727" lon="20.723196"><ele>493</ele></trkpt>
-    <trkpt lat="49.005555" lon="20.723278"><ele>490</ele></trkpt>
-    <trkpt lat="49.005145" lon="20.723281"><ele>480</ele></trkpt>
-    <trkpt lat="49.004971" lon="20.723371"><ele>477</ele></trkpt>
-    <trkpt lat="49.004746" lon="20.723598"><ele>474</ele></trkpt>
-    <trkpt lat="49.004543" lon="20.723897"><ele>472</ele></trkpt>
-    <trkpt lat="49.004444" lon="20.724103"><ele>472</ele></trkpt>
-    <trkpt lat="49.004288" lon="20.724580"><ele>472</ele></trkpt>
-    <trkpt lat="49.004197" lon="20.724932"><ele>473</ele></trkpt>
-    <trkpt lat="49.004164" lon="20.725633"><ele>476</ele></trkpt>
-    <trkpt lat="49.004178" lon="20.726038"><ele>479</ele></trkpt>
-    <trkpt lat="49.004233" lon="20.726302"><ele>482</ele></trkpt>
-    <trkpt lat="49.004416" lon="20.726915"><ele>488</ele></trkpt>
-    <trkpt lat="49.004928" lon="20.727682"><ele>497</ele></trkpt>
-    <trkpt lat="49.005230" lon="20.727998"><ele>503</ele></trkpt>
-    <trkpt lat="49.005241" lon="20.728243"><ele>509</ele></trkpt>
-    <trkpt lat="49.005118" lon="20.728498"><ele>512</ele></trkpt>
-    <trkpt lat="49.004572" lon="20.729204"><ele>510</ele></trkpt>
-    <trkpt lat="49.004446" lon="20.729628"><ele>510</ele></trkpt>
-    <trkpt lat="49.004126" lon="20.730190"><ele>511</ele></trkpt>
-    <trkpt lat="49.003941" lon="20.730670"><ele>515</ele></trkpt>
-    <trkpt lat="49.003578" lon="20.731177"><ele>519</ele></trkpt>
-    <trkpt lat="49.003083" lon="20.731655"><ele>522</ele></trkpt>
-    <trkpt lat="49.003321" lon="20.733214"><ele>520</ele></trkpt>
+  <trk><name>Spišský hrad</name><desc>spissky-hrad-siva-brada-mineralne</desc><trkseg>
+    <trkpt lat="49.007612" lon="20.723514"><ele>488</ele></trkpt>
+    <trkpt lat="49.007710" lon="20.724737"><ele>492</ele></trkpt>
+    <trkpt lat="49.007657" lon="20.724898"><ele>493</ele></trkpt>
+    <trkpt lat="49.007618" lon="20.725206"><ele>494</ele></trkpt>
+    <trkpt lat="49.007408" lon="20.729093"><ele>511</ele></trkpt>
+    <trkpt lat="49.007309" lon="20.729471"><ele>513</ele></trkpt>
+    <trkpt lat="49.006901" lon="20.729656"><ele>519</ele></trkpt>
+    <trkpt lat="49.006739" lon="20.729836"><ele>521</ele></trkpt>
+    <trkpt lat="49.006438" lon="20.730305"><ele>525</ele></trkpt>
+    <trkpt lat="49.006018" lon="20.731088"><ele>521</ele></trkpt>
+    <trkpt lat="49.005598" lon="20.731527"><ele>522</ele></trkpt>
+    <trkpt lat="49.005519" lon="20.731803"><ele>522</ele></trkpt>
+    <trkpt lat="49.005399" lon="20.732026"><ele>521</ele></trkpt>
+    <trkpt lat="49.005260" lon="20.732141"><ele>520</ele></trkpt>
+    <trkpt lat="49.005149" lon="20.732141"><ele>519</ele></trkpt>
+    <trkpt lat="49.005001" lon="20.732222"><ele>519</ele></trkpt>
+    <trkpt lat="49.004742" lon="20.732536"><ele>521</ele></trkpt>
+    <trkpt lat="49.004742" lon="20.732615"><ele>521</ele></trkpt>
+    <trkpt lat="49.004588" lon="20.732809"><ele>521</ele></trkpt>
+    <trkpt lat="49.004468" lon="20.732881"><ele>521</ele></trkpt>
+    <trkpt lat="49.004334" lon="20.733076"><ele>521</ele></trkpt>
     <trkpt lat="49.003570" lon="20.733943"><ele>520</ele></trkpt>
     <trkpt lat="49.003211" lon="20.734583"><ele>518</ele></trkpt>
     <trkpt lat="49.002847" lon="20.735094"><ele>516</ele></trkpt>
@@ -131,15 +119,13 @@
     <trkpt lat="49.001432" lon="20.751616"><ele>436</ele></trkpt>
     <trkpt lat="49.000571" lon="20.751756"><ele>435</ele></trkpt>
     <trkpt lat="49.000473" lon="20.751734"><ele>435</ele></trkpt>
-    <trkpt lat="49.000416" lon="20.751983"><ele>436</ele></trkpt>
-    <trkpt lat="49.000119" lon="20.752797"><ele>438</ele></trkpt>
-    <trkpt lat="48.999713" lon="20.752678"><ele>434</ele></trkpt>
-    <trkpt lat="48.999553" lon="20.753290"><ele>435</ele></trkpt>
-    <trkpt lat="48.998974" lon="20.753049"><ele>432</ele></trkpt>
-    <trkpt lat="48.998675" lon="20.753757"><ele>431</ele></trkpt>
-    <trkpt lat="48.998519" lon="20.754034"><ele>431</ele></trkpt>
-    <trkpt lat="48.998709" lon="20.754132"><ele>431</ele></trkpt>
-    <trkpt lat="48.999237" lon="20.754623"><ele>432</ele></trkpt>
+    <trkpt lat="49.000455" lon="20.751966"><ele>436</ele></trkpt>
+    <trkpt lat="49.000346" lon="20.752172"><ele>438</ele></trkpt>
+    <trkpt lat="48.999736" lon="20.753923"><ele>436</ele></trkpt>
+    <trkpt lat="48.999654" lon="20.753875"><ele>436</ele></trkpt>
+    <trkpt lat="48.999544" lon="20.754335"><ele>434</ele></trkpt>
+    <trkpt lat="48.999384" lon="20.754699"><ele>431</ele></trkpt>
+    <trkpt lat="48.999299" lon="20.754807"><ele>433</ele></trkpt>
     <trkpt lat="48.999310" lon="20.754920"><ele>433</ele></trkpt>
     <trkpt lat="48.999635" lon="20.755249"><ele>434</ele></trkpt>
     <trkpt lat="48.999716" lon="20.755396"><ele>433</ele></trkpt>
@@ -155,8 +141,8 @@
     <trkpt lat="48.998086" lon="20.764261"><ele>516</ele></trkpt>
     <trkpt lat="48.997621" lon="20.764809"><ele>523</ele></trkpt>
     <trkpt lat="48.997620" lon="20.764885"><ele>524</ele></trkpt>
-    <trkpt lat="48.997306" lon="20.765406"><ele>528</ele></trkpt>
-    <trkpt lat="48.997260" lon="20.765586"><ele>529</ele></trkpt>
+    <trkpt lat="48.997467" lon="20.765110"><ele>527</ele></trkpt>
+    <trkpt lat="48.997270" lon="20.765505"><ele>528</ele></trkpt>
     <trkpt lat="48.997286" lon="20.765723"><ele>531</ele></trkpt>
     <trkpt lat="48.997441" lon="20.766077"><ele>538</ele></trkpt>
     <trkpt lat="48.997454" lon="20.766373"><ele>539</ele></trkpt>
@@ -170,8 +156,8 @@
     <trkpt lat="48.997454" lon="20.766373"><ele>539</ele></trkpt>
     <trkpt lat="48.997441" lon="20.766077"><ele>538</ele></trkpt>
     <trkpt lat="48.997286" lon="20.765723"><ele>531</ele></trkpt>
-    <trkpt lat="48.997260" lon="20.765586"><ele>529</ele></trkpt>
-    <trkpt lat="48.997306" lon="20.765406"><ele>528</ele></trkpt>
+    <trkpt lat="48.997270" lon="20.765505"><ele>528</ele></trkpt>
+    <trkpt lat="48.997467" lon="20.765110"><ele>527</ele></trkpt>
     <trkpt lat="48.997620" lon="20.764885"><ele>524</ele></trkpt>
     <trkpt lat="48.997621" lon="20.764809"><ele>523</ele></trkpt>
     <trkpt lat="48.998086" lon="20.764261"><ele>516</ele></trkpt>
@@ -187,15 +173,13 @@
     <trkpt lat="48.999716" lon="20.755396"><ele>433</ele></trkpt>
     <trkpt lat="48.999635" lon="20.755249"><ele>434</ele></trkpt>
     <trkpt lat="48.999310" lon="20.754920"><ele>433</ele></trkpt>
-    <trkpt lat="48.999237" lon="20.754623"><ele>432</ele></trkpt>
-    <trkpt lat="48.998709" lon="20.754132"><ele>431</ele></trkpt>
-    <trkpt lat="48.998519" lon="20.754034"><ele>431</ele></trkpt>
-    <trkpt lat="48.998675" lon="20.753757"><ele>431</ele></trkpt>
-    <trkpt lat="48.998974" lon="20.753049"><ele>432</ele></trkpt>
-    <trkpt lat="48.999553" lon="20.753290"><ele>435</ele></trkpt>
-    <trkpt lat="48.999713" lon="20.752678"><ele>434</ele></trkpt>
-    <trkpt lat="49.000119" lon="20.752797"><ele>438</ele></trkpt>
-    <trkpt lat="49.000416" lon="20.751983"><ele>436</ele></trkpt>
+    <trkpt lat="48.999299" lon="20.754807"><ele>433</ele></trkpt>
+    <trkpt lat="48.999384" lon="20.754699"><ele>431</ele></trkpt>
+    <trkpt lat="48.999544" lon="20.754335"><ele>434</ele></trkpt>
+    <trkpt lat="48.999654" lon="20.753875"><ele>436</ele></trkpt>
+    <trkpt lat="48.999736" lon="20.753923"><ele>436</ele></trkpt>
+    <trkpt lat="49.000346" lon="20.752172"><ele>438</ele></trkpt>
+    <trkpt lat="49.000455" lon="20.751966"><ele>436</ele></trkpt>
     <trkpt lat="49.000473" lon="20.751734"><ele>435</ele></trkpt>
     <trkpt lat="49.000571" lon="20.751756"><ele>435</ele></trkpt>
     <trkpt lat="49.001432" lon="20.751616"><ele>436</ele></trkpt>
@@ -234,39 +218,27 @@
     <trkpt lat="49.002847" lon="20.735094"><ele>516</ele></trkpt>
     <trkpt lat="49.003211" lon="20.734583"><ele>518</ele></trkpt>
     <trkpt lat="49.003570" lon="20.733943"><ele>520</ele></trkpt>
-    <trkpt lat="49.003321" lon="20.733214"><ele>520</ele></trkpt>
-    <trkpt lat="49.003083" lon="20.731655"><ele>522</ele></trkpt>
-    <trkpt lat="49.003578" lon="20.731177"><ele>519</ele></trkpt>
-    <trkpt lat="49.003941" lon="20.730670"><ele>515</ele></trkpt>
-    <trkpt lat="49.004126" lon="20.730190"><ele>511</ele></trkpt>
-    <trkpt lat="49.004446" lon="20.729628"><ele>510</ele></trkpt>
-    <trkpt lat="49.004572" lon="20.729204"><ele>510</ele></trkpt>
-    <trkpt lat="49.005118" lon="20.728498"><ele>512</ele></trkpt>
-    <trkpt lat="49.005241" lon="20.728243"><ele>509</ele></trkpt>
-    <trkpt lat="49.005230" lon="20.727998"><ele>503</ele></trkpt>
-    <trkpt lat="49.004928" lon="20.727682"><ele>497</ele></trkpt>
-    <trkpt lat="49.004416" lon="20.726915"><ele>488</ele></trkpt>
-    <trkpt lat="49.004233" lon="20.726302"><ele>482</ele></trkpt>
-    <trkpt lat="49.004178" lon="20.726038"><ele>479</ele></trkpt>
-    <trkpt lat="49.004164" lon="20.725633"><ele>476</ele></trkpt>
-    <trkpt lat="49.004197" lon="20.724932"><ele>473</ele></trkpt>
-    <trkpt lat="49.004288" lon="20.724580"><ele>472</ele></trkpt>
-    <trkpt lat="49.004444" lon="20.724103"><ele>472</ele></trkpt>
-    <trkpt lat="49.004543" lon="20.723897"><ele>472</ele></trkpt>
-    <trkpt lat="49.004746" lon="20.723598"><ele>474</ele></trkpt>
-    <trkpt lat="49.004971" lon="20.723371"><ele>477</ele></trkpt>
-    <trkpt lat="49.005145" lon="20.723281"><ele>480</ele></trkpt>
-    <trkpt lat="49.005555" lon="20.723278"><ele>490</ele></trkpt>
-    <trkpt lat="49.005727" lon="20.723196"><ele>493</ele></trkpt>
-    <trkpt lat="49.005825" lon="20.723199"><ele>495</ele></trkpt>
-    <trkpt lat="49.005893" lon="20.723168"><ele>497</ele></trkpt>
-    <trkpt lat="49.006021" lon="20.722977"><ele>500</ele></trkpt>
-    <trkpt lat="49.006143" lon="20.722895"><ele>502</ele></trkpt>
-    <trkpt lat="49.005318" lon="20.721522"><ele>482</ele></trkpt>
-    <trkpt lat="49.004866" lon="20.721014"><ele>472</ele></trkpt>
-    <trkpt lat="49.004743" lon="20.720727"><ele>470</ele></trkpt>
-    <trkpt lat="49.004607" lon="20.720910"><ele>470</ele></trkpt>
-    <trkpt lat="49.004580" lon="20.721037"><ele>470</ele></trkpt>
+    <trkpt lat="49.004334" lon="20.733076"><ele>521</ele></trkpt>
+    <trkpt lat="49.004468" lon="20.732881"><ele>521</ele></trkpt>
+    <trkpt lat="49.004588" lon="20.732809"><ele>521</ele></trkpt>
+    <trkpt lat="49.004742" lon="20.732615"><ele>521</ele></trkpt>
+    <trkpt lat="49.004742" lon="20.732536"><ele>521</ele></trkpt>
+    <trkpt lat="49.005001" lon="20.732222"><ele>519</ele></trkpt>
+    <trkpt lat="49.005149" lon="20.732141"><ele>519</ele></trkpt>
+    <trkpt lat="49.005260" lon="20.732141"><ele>520</ele></trkpt>
+    <trkpt lat="49.005399" lon="20.732026"><ele>521</ele></trkpt>
+    <trkpt lat="49.005519" lon="20.731803"><ele>522</ele></trkpt>
+    <trkpt lat="49.005598" lon="20.731527"><ele>522</ele></trkpt>
+    <trkpt lat="49.006018" lon="20.731088"><ele>521</ele></trkpt>
+    <trkpt lat="49.006438" lon="20.730305"><ele>525</ele></trkpt>
+    <trkpt lat="49.006739" lon="20.729836"><ele>521</ele></trkpt>
+    <trkpt lat="49.006901" lon="20.729656"><ele>519</ele></trkpt>
+    <trkpt lat="49.007309" lon="20.729471"><ele>513</ele></trkpt>
+    <trkpt lat="49.007408" lon="20.729093"><ele>511</ele></trkpt>
+    <trkpt lat="49.007618" lon="20.725206"><ele>494</ele></trkpt>
+    <trkpt lat="49.007657" lon="20.724898"><ele>493</ele></trkpt>
+    <trkpt lat="49.007710" lon="20.724737"><ele>492</ele></trkpt>
+    <trkpt lat="49.007612" lon="20.723514"><ele>488</ele></trkpt>
   </trkseg></trk>
   <trk><name>Spišský hrad</name><desc>spissky-hrad-zehra</desc><trkseg>
     <trkpt lat="48.979128" lon="20.791224"><ele>419</ele></trkpt>

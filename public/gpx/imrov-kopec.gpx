@@ -2,7 +2,7 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Imrov kopec</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Imrov kopec</name><desc>imrov-kopec</desc><trkseg>
-    <trkpt lat="48.330855" lon="19.410481"><ele>257</ele></trkpt>
+    <trkpt lat="48.330879" lon="19.410006"><ele>270</ele></trkpt>
     <trkpt lat="48.330765" lon="19.411925"><ele>254</ele></trkpt>
     <trkpt lat="48.330837" lon="19.412959"><ele>258</ele></trkpt>
     <trkpt lat="48.330846" lon="19.413665"><ele>259</ele></trkpt>
@@ -124,7 +124,7 @@
     <trkpt lat="48.330846" lon="19.413665"><ele>259</ele></trkpt>
     <trkpt lat="48.330837" lon="19.412959"><ele>258</ele></trkpt>
     <trkpt lat="48.330765" lon="19.411925"><ele>254</ele></trkpt>
-    <trkpt lat="48.330855" lon="19.410481"><ele>257</ele></trkpt>
+    <trkpt lat="48.330879" lon="19.410006"><ele>270</ele></trkpt>
   </trkseg></trk>
   <trk><name>Imrov kopec</name><desc>imrov-kopec-lentvora-bus</desc><trkseg>
     <trkpt lat="48.373204" lon="19.450718"><ele>555</ele></trkpt>

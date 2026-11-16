@@ -100,15 +100,17 @@
   </trkseg></trk>
   <trk><name>Orlie hniezdo</name><desc>orlie-hniezdo-luka-pri-kamennom-hribe</desc><trkseg>
     <trkpt lat="49.170539" lon="18.585829"><ele>448</ele></trkpt>
-    <trkpt lat="49.171134" lon="18.586131"><ele>450</ele></trkpt>
-    <trkpt lat="49.171565" lon="18.586228"><ele>453</ele></trkpt>
-    <trkpt lat="49.171921" lon="18.586234"><ele>457</ele></trkpt>
-    <trkpt lat="49.172536" lon="18.586708"><ele>465</ele></trkpt>
-    <trkpt lat="49.173158" lon="18.587357"><ele>462</ele></trkpt>
+    <trkpt lat="49.171137" lon="18.586123"><ele>450</ele></trkpt>
+    <trkpt lat="49.171526" lon="18.586202"><ele>454</ele></trkpt>
+    <trkpt lat="49.171855" lon="18.586208"><ele>457</ele></trkpt>
+    <trkpt lat="49.172177" lon="18.586373"><ele>464</ele></trkpt>
+    <trkpt lat="49.172555" lon="18.586681"><ele>467</ele></trkpt>
+    <trkpt lat="49.172980" lon="18.587187"><ele>462</ele></trkpt>
+    <trkpt lat="49.173169" lon="18.587356"><ele>462</ele></trkpt>
     <trkpt lat="49.173766" lon="18.587684"><ele>464</ele></trkpt>
-    <trkpt lat="49.174585" lon="18.587857"><ele>470</ele></trkpt>
-    <trkpt lat="49.174722" lon="18.588033"><ele>469</ele></trkpt>
-    <trkpt lat="49.174812" lon="18.588236"><ele>469</ele></trkpt>
+    <trkpt lat="49.174553" lon="18.587851"><ele>469</ele></trkpt>
+    <trkpt lat="49.174635" lon="18.587916"><ele>470</ele></trkpt>
+    <trkpt lat="49.174822" lon="18.588227"><ele>470</ele></trkpt>
     <trkpt lat="49.175129" lon="18.588614"><ele>472</ele></trkpt>
     <trkpt lat="49.175373" lon="18.588844"><ele>471</ele></trkpt>
     <trkpt lat="49.176085" lon="18.589158"><ele>479</ele></trkpt>
@@ -123,9 +125,10 @@
     <trkpt lat="49.178986" lon="18.594037"><ele>468</ele></trkpt>
     <trkpt lat="49.179162" lon="18.594607"><ele>462</ele></trkpt>
     <trkpt lat="49.179294" lon="18.594818"><ele>462</ele></trkpt>
-    <trkpt lat="49.179487" lon="18.595349"><ele>464</ele></trkpt>
-    <trkpt lat="49.179521" lon="18.595590"><ele>466</ele></trkpt>
-    <trkpt lat="49.179437" lon="18.595985"><ele>465</ele></trkpt>
+    <trkpt lat="49.179391" lon="18.595079"><ele>463</ele></trkpt>
+    <trkpt lat="49.179502" lon="18.595474"><ele>465</ele></trkpt>
+    <trkpt lat="49.179500" lon="18.595669"><ele>465</ele></trkpt>
+    <trkpt lat="49.179424" lon="18.596004"><ele>465</ele></trkpt>
     <trkpt lat="49.179418" lon="18.596321"><ele>470</ele></trkpt>
     <trkpt lat="49.179241" lon="18.597009"><ele>483</ele></trkpt>
     <trkpt lat="49.179251" lon="18.597378"><ele>489</ele></trkpt>
@@ -312,9 +315,10 @@
     <trkpt lat="49.179251" lon="18.597378"><ele>489</ele></trkpt>
     <trkpt lat="49.179241" lon="18.597009"><ele>483</ele></trkpt>
     <trkpt lat="49.179418" lon="18.596321"><ele>470</ele></trkpt>
-    <trkpt lat="49.179437" lon="18.595985"><ele>465</ele></trkpt>
-    <trkpt lat="49.179521" lon="18.595590"><ele>466</ele></trkpt>
-    <trkpt lat="49.179487" lon="18.595349"><ele>464</ele></trkpt>
+    <trkpt lat="49.179424" lon="18.596004"><ele>465</ele></trkpt>
+    <trkpt lat="49.179500" lon="18.595669"><ele>465</ele></trkpt>
+    <trkpt lat="49.179502" lon="18.595474"><ele>465</ele></trkpt>
+    <trkpt lat="49.179391" lon="18.595079"><ele>463</ele></trkpt>
     <trkpt lat="49.179294" lon="18.594818"><ele>462</ele></trkpt>
     <trkpt lat="49.179162" lon="18.594607"><ele>462</ele></trkpt>
     <trkpt lat="49.178986" lon="18.594037"><ele>468</ele></trkpt>
@@ -329,15 +333,17 @@
     <trkpt lat="49.176085" lon="18.589158"><ele>479</ele></trkpt>
     <trkpt lat="49.175373" lon="18.588844"><ele>471</ele></trkpt>
     <trkpt lat="49.175129" lon="18.588614"><ele>472</ele></trkpt>
-    <trkpt lat="49.174812" lon="18.588236"><ele>469</ele></trkpt>
-    <trkpt lat="49.174722" lon="18.588033"><ele>469</ele></trkpt>
-    <trkpt lat="49.174585" lon="18.587857"><ele>470</ele></trkpt>
+    <trkpt lat="49.174822" lon="18.588227"><ele>470</ele></trkpt>
+    <trkpt lat="49.174635" lon="18.587916"><ele>470</ele></trkpt>
+    <trkpt lat="49.174553" lon="18.587851"><ele>469</ele></trkpt>
     <trkpt lat="49.173766" lon="18.587684"><ele>464</ele></trkpt>
-    <trkpt lat="49.173158" lon="18.587357"><ele>462</ele></trkpt>
-    <trkpt lat="49.172536" lon="18.586708"><ele>465</ele></trkpt>
-    <trkpt lat="49.171921" lon="18.586234"><ele>457</ele></trkpt>
-    <trkpt lat="49.171565" lon="18.586228"><ele>453</ele></trkpt>
-    <trkpt lat="49.171134" lon="18.586131"><ele>450</ele></trkpt>
+    <trkpt lat="49.173169" lon="18.587356"><ele>462</ele></trkpt>
+    <trkpt lat="49.172980" lon="18.587187"><ele>462</ele></trkpt>
+    <trkpt lat="49.172555" lon="18.586681"><ele>467</ele></trkpt>
+    <trkpt lat="49.172177" lon="18.586373"><ele>464</ele></trkpt>
+    <trkpt lat="49.171855" lon="18.586208"><ele>457</ele></trkpt>
+    <trkpt lat="49.171526" lon="18.586202"><ele>454</ele></trkpt>
+    <trkpt lat="49.171137" lon="18.586123"><ele>450</ele></trkpt>
     <trkpt lat="49.170539" lon="18.585829"><ele>448</ele></trkpt>
   </trkseg></trk>
   <trk><name>Orlie hniezdo</name><desc>orlie-hniezdo-sulov-obec</desc><trkseg>

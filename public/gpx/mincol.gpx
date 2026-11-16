@@ -380,17 +380,16 @@
     <trkpt lat="49.295772" lon="19.258748"><ele>927</ele></trkpt>
     <trkpt lat="49.295823" lon="19.258892"><ele>925</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Minčol</name><desc>mincol-zazriva</desc><trkseg>
-    <trkpt lat="49.277258" lon="19.155541"><ele>600</ele></trkpt>
-    <trkpt lat="49.277196" lon="19.155473"><ele>601</ele></trkpt>
+  <trk><name>Minčol</name><desc>mincol-zazriva-ustredie</desc><trkseg>
+    <trkpt lat="49.277281" lon="19.155495"><ele>601</ele></trkpt>
+    <trkpt lat="49.277221" lon="19.155419"><ele>601</ele></trkpt>
     <trkpt lat="49.277150" lon="19.155567"><ele>601</ele></trkpt>
     <trkpt lat="49.276962" lon="19.155352"><ele>600</ele></trkpt>
     <trkpt lat="49.276768" lon="19.155686"><ele>599</ele></trkpt>
     <trkpt lat="49.276732" lon="19.155639"><ele>599</ele></trkpt>
     <trkpt lat="49.276301" lon="19.156337"><ele>597</ele></trkpt>
-    <trkpt lat="49.276155" lon="19.156470"><ele>599</ele></trkpt>
-    <trkpt lat="49.275930" lon="19.156552"><ele>604</ele></trkpt>
-    <trkpt lat="49.275782" lon="19.156511"><ele>607</ele></trkpt>
+    <trkpt lat="49.276056" lon="19.156525"><ele>601</ele></trkpt>
+    <trkpt lat="49.275816" lon="19.156533"><ele>606</ele></trkpt>
     <trkpt lat="49.275420" lon="19.156144"><ele>611</ele></trkpt>
     <trkpt lat="49.275244" lon="19.156028"><ele>612</ele></trkpt>
     <trkpt lat="49.274987" lon="19.155996"><ele>615</ele></trkpt>
@@ -850,15 +849,14 @@
     <trkpt lat="49.274987" lon="19.155996"><ele>615</ele></trkpt>
     <trkpt lat="49.275244" lon="19.156028"><ele>612</ele></trkpt>
     <trkpt lat="49.275420" lon="19.156144"><ele>611</ele></trkpt>
-    <trkpt lat="49.275782" lon="19.156511"><ele>607</ele></trkpt>
-    <trkpt lat="49.275930" lon="19.156552"><ele>604</ele></trkpt>
-    <trkpt lat="49.276155" lon="19.156470"><ele>599</ele></trkpt>
+    <trkpt lat="49.275816" lon="19.156533"><ele>606</ele></trkpt>
+    <trkpt lat="49.276056" lon="19.156525"><ele>601</ele></trkpt>
     <trkpt lat="49.276301" lon="19.156337"><ele>597</ele></trkpt>
     <trkpt lat="49.276732" lon="19.155639"><ele>599</ele></trkpt>
     <trkpt lat="49.276768" lon="19.155686"><ele>599</ele></trkpt>
     <trkpt lat="49.276962" lon="19.155352"><ele>600</ele></trkpt>
     <trkpt lat="49.277150" lon="19.155567"><ele>601</ele></trkpt>
-    <trkpt lat="49.277196" lon="19.155473"><ele>601</ele></trkpt>
-    <trkpt lat="49.277258" lon="19.155541"><ele>600</ele></trkpt>
+    <trkpt lat="49.277221" lon="19.155419"><ele>601</ele></trkpt>
+    <trkpt lat="49.277281" lon="19.155495"><ele>601</ele></trkpt>
   </trkseg></trk>
 </gpx>

@@ -2,7 +2,8 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Vyhliadka Kalvaria (Kremnica)</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Vyhliadka Kalvaria (Kremnica)</name><desc>kalvaria-kremnica</desc><trkseg>
-    <trkpt lat="48.703109" lon="18.917920"><ele>547</ele></trkpt>
+    <trkpt lat="48.703112" lon="18.917797"><ele>547</ele></trkpt>
+    <trkpt lat="48.703068" lon="18.917854"><ele>547</ele></trkpt>
     <trkpt lat="48.702803" lon="18.917423"><ele>542</ele></trkpt>
     <trkpt lat="48.702835" lon="18.917378"><ele>542</ele></trkpt>
     <trkpt lat="48.702768" lon="18.917269"><ele>541</ele></trkpt>
@@ -102,11 +103,11 @@
     <trkpt lat="48.702768" lon="18.917269"><ele>541</ele></trkpt>
     <trkpt lat="48.702835" lon="18.917378"><ele>542</ele></trkpt>
     <trkpt lat="48.702803" lon="18.917423"><ele>542</ele></trkpt>
-    <trkpt lat="48.703109" lon="18.917920"><ele>547</ele></trkpt>
+    <trkpt lat="48.703068" lon="18.917854"><ele>547</ele></trkpt>
+    <trkpt lat="48.703112" lon="18.917797"><ele>547</ele></trkpt>
   </trkseg></trk>
   <trk><name>Vyhliadka Kalvaria (Kremnica)</name><desc>kalvaria-kremnica-kremnica-ina-cesta</desc><trkseg>
-    <trkpt lat="48.703109" lon="18.917920"><ele>547</ele></trkpt>
-    <trkpt lat="48.703068" lon="18.917854"><ele>547</ele></trkpt>
+    <trkpt lat="48.703112" lon="18.917797"><ele>547</ele></trkpt>
     <trkpt lat="48.703022" lon="18.917914"><ele>547</ele></trkpt>
     <trkpt lat="48.702764" lon="18.917478"><ele>541</ele></trkpt>
     <trkpt lat="48.702803" lon="18.917423"><ele>542</ele></trkpt>
@@ -196,8 +197,7 @@
     <trkpt lat="48.702803" lon="18.917423"><ele>542</ele></trkpt>
     <trkpt lat="48.702764" lon="18.917478"><ele>541</ele></trkpt>
     <trkpt lat="48.703022" lon="18.917914"><ele>547</ele></trkpt>
-    <trkpt lat="48.703068" lon="18.917854"><ele>547</ele></trkpt>
-    <trkpt lat="48.703109" lon="18.917920"><ele>547</ele></trkpt>
+    <trkpt lat="48.703112" lon="18.917797"><ele>547</ele></trkpt>
   </trkseg></trk>
   <trk><name>Vyhliadka Kalvaria (Kremnica)</name><desc>kalvaria-kremnica-kremnicke-bane</desc><trkseg>
     <trkpt lat="48.738495" lon="18.904376"><ele>781</ele></trkpt>

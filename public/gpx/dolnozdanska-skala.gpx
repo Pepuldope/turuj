@@ -477,7 +477,9 @@
     <trkpt lat="48.543844" lon="18.765108"><ele>238</ele></trkpt>
   </trkseg></trk>
   <trk><name>Dolnoždanská skala</name><desc>dolnozdanska-skala-horna-zdana</desc><trkseg>
-    <trkpt lat="48.569382" lon="18.749180"><ele>299</ele></trkpt>
+    <trkpt lat="48.569423" lon="18.749228"><ele>299</ele></trkpt>
+    <trkpt lat="48.569587" lon="18.748917"><ele>299</ele></trkpt>
+    <trkpt lat="48.569556" lon="18.748879"><ele>299</ele></trkpt>
     <trkpt lat="48.569925" lon="18.748208"><ele>300</ele></trkpt>
     <trkpt lat="48.570043" lon="18.748068"><ele>301</ele></trkpt>
     <trkpt lat="48.570370" lon="18.747896"><ele>301</ele></trkpt>
@@ -619,11 +621,13 @@
     <trkpt lat="48.570370" lon="18.747896"><ele>301</ele></trkpt>
     <trkpt lat="48.570043" lon="18.748068"><ele>301</ele></trkpt>
     <trkpt lat="48.569925" lon="18.748208"><ele>300</ele></trkpt>
-    <trkpt lat="48.569382" lon="18.749180"><ele>299</ele></trkpt>
+    <trkpt lat="48.569556" lon="18.748879"><ele>299</ele></trkpt>
+    <trkpt lat="48.569587" lon="18.748917"><ele>299</ele></trkpt>
+    <trkpt lat="48.569423" lon="18.749228"><ele>299</ele></trkpt>
   </trkseg></trk>
   <trk><name>Dolnoždanská skala</name><desc>dolnozdanska-skala-horna-zdana-ina-cesta</desc><trkseg>
-    <trkpt lat="48.569382" lon="18.749180"><ele>299</ele></trkpt>
-    <trkpt lat="48.569556" lon="18.748879"><ele>299</ele></trkpt>
+    <trkpt lat="48.569423" lon="18.749228"><ele>299</ele></trkpt>
+    <trkpt lat="48.569587" lon="18.748917"><ele>299</ele></trkpt>
     <trkpt lat="48.569744" lon="18.749074"><ele>299</ele></trkpt>
     <trkpt lat="48.570153" lon="18.749082"><ele>300</ele></trkpt>
     <trkpt lat="48.570453" lon="18.748709"><ele>302</ele></trkpt>
@@ -771,7 +775,7 @@
     <trkpt lat="48.570453" lon="18.748709"><ele>302</ele></trkpt>
     <trkpt lat="48.570153" lon="18.749082"><ele>300</ele></trkpt>
     <trkpt lat="48.569744" lon="18.749074"><ele>299</ele></trkpt>
-    <trkpt lat="48.569556" lon="18.748879"><ele>299</ele></trkpt>
-    <trkpt lat="48.569382" lon="18.749180"><ele>299</ele></trkpt>
+    <trkpt lat="48.569587" lon="18.748917"><ele>299</ele></trkpt>
+    <trkpt lat="48.569423" lon="18.749228"><ele>299</ele></trkpt>
   </trkseg></trk>
 </gpx>

@@ -219,9 +219,10 @@
     <trkpt lat="48.738189" lon="18.998042"><ele>1210</ele></trkpt>
   </trkseg></trk>
   <trk><name>Horná skala</name><desc>horna-skala-kremnica</desc><trkseg>
-    <trkpt lat="48.703109" lon="18.917920"><ele>547</ele></trkpt>
+    <trkpt lat="48.703112" lon="18.917797"><ele>547</ele></trkpt>
+    <trkpt lat="48.703068" lon="18.917854"><ele>547</ele></trkpt>
     <trkpt lat="48.702949" lon="18.917662"><ele>545</ele></trkpt>
-    <trkpt lat="48.702692" lon="18.917926"><ele>544</ele></trkpt>
+    <trkpt lat="48.702897" lon="18.917707"><ele>545</ele></trkpt>
     <trkpt lat="48.701911" lon="18.918909"><ele>550</ele></trkpt>
     <trkpt lat="48.701807" lon="18.918961"><ele>551</ele></trkpt>
     <trkpt lat="48.701830" lon="18.919122"><ele>552</ele></trkpt>
@@ -609,9 +610,10 @@
     <trkpt lat="48.701830" lon="18.919122"><ele>552</ele></trkpt>
     <trkpt lat="48.701807" lon="18.918961"><ele>551</ele></trkpt>
     <trkpt lat="48.701911" lon="18.918909"><ele>550</ele></trkpt>
-    <trkpt lat="48.702692" lon="18.917926"><ele>544</ele></trkpt>
+    <trkpt lat="48.702897" lon="18.917707"><ele>545</ele></trkpt>
     <trkpt lat="48.702949" lon="18.917662"><ele>545</ele></trkpt>
-    <trkpt lat="48.703109" lon="18.917920"><ele>547</ele></trkpt>
+    <trkpt lat="48.703068" lon="18.917854"><ele>547</ele></trkpt>
+    <trkpt lat="48.703112" lon="18.917797"><ele>547</ele></trkpt>
   </trkseg></trk>
   <trk><name>Horná skala</name><desc>horna-skala-suchy-vrch-odb-na</desc><trkseg>
     <trkpt lat="48.723066" lon="19.066006"><ele>739</ele></trkpt>

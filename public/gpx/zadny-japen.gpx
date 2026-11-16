@@ -261,9 +261,7 @@
     <trkpt lat="48.838531" lon="19.114959"><ele>483</ele></trkpt>
   </trkseg></trk>
   <trk><name>Zadný Japeň</name><desc>zadny-japen-dolny-harmanec-kohut</desc><trkseg>
-    <trkpt lat="48.811174" lon="19.050986"><ele>494</ele></trkpt>
-    <trkpt lat="48.811309" lon="19.051170"><ele>492</ele></trkpt>
-    <trkpt lat="48.811444" lon="19.051285"><ele>493</ele></trkpt>
+    <trkpt lat="48.811349" lon="19.051209"><ele>492</ele></trkpt>
     <trkpt lat="48.811696" lon="19.051419"><ele>494</ele></trkpt>
     <trkpt lat="48.811872" lon="19.051463"><ele>494</ele></trkpt>
     <trkpt lat="48.812224" lon="19.051465"><ele>494</ele></trkpt>
@@ -435,9 +433,7 @@
     <trkpt lat="48.812224" lon="19.051465"><ele>494</ele></trkpt>
     <trkpt lat="48.811872" lon="19.051463"><ele>494</ele></trkpt>
     <trkpt lat="48.811696" lon="19.051419"><ele>494</ele></trkpt>
-    <trkpt lat="48.811444" lon="19.051285"><ele>493</ele></trkpt>
-    <trkpt lat="48.811309" lon="19.051170"><ele>492</ele></trkpt>
-    <trkpt lat="48.811174" lon="19.050986"><ele>494</ele></trkpt>
+    <trkpt lat="48.811349" lon="19.051209"><ele>492</ele></trkpt>
   </trkseg></trk>
   <trk><name>Zadný Japeň</name><desc>zadny-japen-stare-hory-pri-kaplnke-ina-cesta</desc><trkseg>
     <trkpt lat="48.838531" lon="19.114959"><ele>483</ele></trkpt>

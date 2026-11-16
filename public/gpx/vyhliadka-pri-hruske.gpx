@@ -96,7 +96,7 @@
   </trkseg></trk>
   <trk><name>Vyhliadka pri hruške</name><desc>vyhliadka-pri-hruske-kunov-ihrisko</desc><trkseg>
     <trkpt lat="48.693090" lon="17.399821"><ele>215</ele></trkpt>
-    <trkpt lat="48.693162" lon="17.399882"><ele>215</ele></trkpt>
+    <trkpt lat="48.693159" lon="17.399887"><ele>215</ele></trkpt>
     <trkpt lat="48.692887" lon="17.400444"><ele>215</ele></trkpt>
     <trkpt lat="48.692284" lon="17.402383"><ele>215</ele></trkpt>
     <trkpt lat="48.692135" lon="17.402700"><ele>217</ele></trkpt>
@@ -282,7 +282,7 @@
     <trkpt lat="48.692135" lon="17.402700"><ele>217</ele></trkpt>
     <trkpt lat="48.692284" lon="17.402383"><ele>215</ele></trkpt>
     <trkpt lat="48.692887" lon="17.400444"><ele>215</ele></trkpt>
-    <trkpt lat="48.693162" lon="17.399882"><ele>215</ele></trkpt>
+    <trkpt lat="48.693159" lon="17.399887"><ele>215</ele></trkpt>
     <trkpt lat="48.693090" lon="17.399821"><ele>215</ele></trkpt>
   </trkseg></trk>
   <trk><name>Vyhliadka pri hruške</name><desc>vyhliadka-pri-hruske-podbranc-zadrienova-ina-cesta</desc><trkseg>

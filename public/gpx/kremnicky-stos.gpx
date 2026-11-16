@@ -2,9 +2,10 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Kremnický štós</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Kremnický štós</name><desc>kremnicky-stos</desc><trkseg>
-    <trkpt lat="48.703109" lon="18.917920"><ele>547</ele></trkpt>
+    <trkpt lat="48.703112" lon="18.917797"><ele>547</ele></trkpt>
+    <trkpt lat="48.703068" lon="18.917854"><ele>547</ele></trkpt>
     <trkpt lat="48.702949" lon="18.917662"><ele>545</ele></trkpt>
-    <trkpt lat="48.702692" lon="18.917926"><ele>544</ele></trkpt>
+    <trkpt lat="48.702897" lon="18.917707"><ele>545</ele></trkpt>
     <trkpt lat="48.701911" lon="18.918909"><ele>550</ele></trkpt>
     <trkpt lat="48.701807" lon="18.918961"><ele>551</ele></trkpt>
     <trkpt lat="48.701830" lon="18.919122"><ele>552</ele></trkpt>
@@ -150,9 +151,10 @@
     <trkpt lat="48.701830" lon="18.919122"><ele>552</ele></trkpt>
     <trkpt lat="48.701807" lon="18.918961"><ele>551</ele></trkpt>
     <trkpt lat="48.701911" lon="18.918909"><ele>550</ele></trkpt>
-    <trkpt lat="48.702692" lon="18.917926"><ele>544</ele></trkpt>
+    <trkpt lat="48.702897" lon="18.917707"><ele>545</ele></trkpt>
     <trkpt lat="48.702949" lon="18.917662"><ele>545</ele></trkpt>
-    <trkpt lat="48.703109" lon="18.917920"><ele>547</ele></trkpt>
+    <trkpt lat="48.703068" lon="18.917854"><ele>547</ele></trkpt>
+    <trkpt lat="48.703112" lon="18.917797"><ele>547</ele></trkpt>
   </trkseg></trk>
   <trk><name>Kremnický štós</name><desc>kremnicky-stos-ihrac</desc><trkseg>
     <trkpt lat="48.655868" lon="18.951784"><ele>491</ele></trkpt>
@@ -382,8 +384,7 @@
     <trkpt lat="48.655868" lon="18.951784"><ele>491</ele></trkpt>
   </trkseg></trk>
   <trk><name>Kremnický štós</name><desc>kremnicky-stos-kremnica-ina-cesta</desc><trkseg>
-    <trkpt lat="48.703109" lon="18.917920"><ele>547</ele></trkpt>
-    <trkpt lat="48.703068" lon="18.917854"><ele>547</ele></trkpt>
+    <trkpt lat="48.703112" lon="18.917797"><ele>547</ele></trkpt>
     <trkpt lat="48.703022" lon="18.917914"><ele>547</ele></trkpt>
     <trkpt lat="48.702858" lon="18.917640"><ele>544</ele></trkpt>
     <trkpt lat="48.701902" lon="18.918817"><ele>549</ele></trkpt>
@@ -529,8 +530,7 @@
     <trkpt lat="48.701902" lon="18.918817"><ele>549</ele></trkpt>
     <trkpt lat="48.702858" lon="18.917640"><ele>544</ele></trkpt>
     <trkpt lat="48.703022" lon="18.917914"><ele>547</ele></trkpt>
-    <trkpt lat="48.703068" lon="18.917854"><ele>547</ele></trkpt>
-    <trkpt lat="48.703109" lon="18.917920"><ele>547</ele></trkpt>
+    <trkpt lat="48.703112" lon="18.917797"><ele>547</ele></trkpt>
   </trkseg></trk>
   <trk><name>Kremnický štós</name><desc>kremnicky-stos-kremnicka-pila</desc><trkseg>
     <trkpt lat="48.710264" lon="18.950326"><ele>672</ele></trkpt>

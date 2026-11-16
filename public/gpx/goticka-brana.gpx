@@ -97,15 +97,14 @@
     <trkpt lat="49.166238" lon="18.584226"><ele>406</ele></trkpt>
   </trkseg></trk>
   <trk><name>Gotická brána</name><desc>goticka-brana-luka-pod-sulovskym</desc><trkseg>
+    <trkpt lat="49.176745" lon="18.586629"><ele>563</ele></trkpt>
     <trkpt lat="49.176630" lon="18.586591"><ele>567</ele></trkpt>
     <trkpt lat="49.176587" lon="18.586483"><ele>569</ele></trkpt>
     <trkpt lat="49.176572" lon="18.586235"><ele>574</ele></trkpt>
-    <trkpt lat="49.176500" lon="18.586018"><ele>575</ele></trkpt>
-    <trkpt lat="49.176484" lon="18.585870"><ele>576</ele></trkpt>
     <trkpt lat="49.176436" lon="18.585766"><ele>577</ele></trkpt>
     <trkpt lat="49.176305" lon="18.585737"><ele>576</ele></trkpt>
     <trkpt lat="49.176189" lon="18.585615"><ele>577</ele></trkpt>
-    <trkpt lat="49.176130" lon="18.585414"><ele>581</ele></trkpt>
+    <trkpt lat="49.176120" lon="18.585335"><ele>583</ele></trkpt>
     <trkpt lat="49.176029" lon="18.584219"><ele>586</ele></trkpt>
     <trkpt lat="49.175904" lon="18.583929"><ele>586</ele></trkpt>
     <trkpt lat="49.175826" lon="18.583920"><ele>589</ele></trkpt>
@@ -201,14 +200,13 @@
     <trkpt lat="49.175826" lon="18.583920"><ele>589</ele></trkpt>
     <trkpt lat="49.175904" lon="18.583929"><ele>586</ele></trkpt>
     <trkpt lat="49.176029" lon="18.584219"><ele>586</ele></trkpt>
-    <trkpt lat="49.176130" lon="18.585414"><ele>581</ele></trkpt>
+    <trkpt lat="49.176120" lon="18.585335"><ele>583</ele></trkpt>
     <trkpt lat="49.176189" lon="18.585615"><ele>577</ele></trkpt>
     <trkpt lat="49.176305" lon="18.585737"><ele>576</ele></trkpt>
     <trkpt lat="49.176436" lon="18.585766"><ele>577</ele></trkpt>
-    <trkpt lat="49.176484" lon="18.585870"><ele>576</ele></trkpt>
-    <trkpt lat="49.176500" lon="18.586018"><ele>575</ele></trkpt>
     <trkpt lat="49.176572" lon="18.586235"><ele>574</ele></trkpt>
     <trkpt lat="49.176587" lon="18.586483"><ele>569</ele></trkpt>
     <trkpt lat="49.176630" lon="18.586591"><ele>567</ele></trkpt>
+    <trkpt lat="49.176745" lon="18.586629"><ele>563</ele></trkpt>
   </trkseg></trk>
 </gpx>

@@ -125,7 +125,8 @@
     <trkpt lat="49.166338" lon="18.578606"><ele>370</ele></trkpt>
   </trkseg></trk>
   <trk><name>Hrad Súľov</name><desc>sulov-hrabove</desc><trkseg>
-    <trkpt lat="49.209685" lon="18.560704"><ele>311</ele></trkpt>
+    <trkpt lat="49.209620" lon="18.560719"><ele>311</ele></trkpt>
+    <trkpt lat="49.209482" lon="18.560828"><ele>312</ele></trkpt>
     <trkpt lat="49.208370" lon="18.561356"><ele>318</ele></trkpt>
     <trkpt lat="49.208109" lon="18.561262"><ele>320</ele></trkpt>
     <trkpt lat="49.207862" lon="18.561269"><ele>323</ele></trkpt>
@@ -135,9 +136,9 @@
     <trkpt lat="49.205624" lon="18.563291"><ele>342</ele></trkpt>
     <trkpt lat="49.205403" lon="18.563591"><ele>345</ele></trkpt>
     <trkpt lat="49.205078" lon="18.564269"><ele>348</ele></trkpt>
-    <trkpt lat="49.204398" lon="18.564981"><ele>352</ele></trkpt>
-    <trkpt lat="49.204278" lon="18.564998"><ele>354</ele></trkpt>
-    <trkpt lat="49.204154" lon="18.564935"><ele>356</ele></trkpt>
+    <trkpt lat="49.204627" lon="18.564741"><ele>351</ele></trkpt>
+    <trkpt lat="49.204337" lon="18.564978"><ele>353</ele></trkpt>
+    <trkpt lat="49.204211" lon="18.564981"><ele>355</ele></trkpt>
     <trkpt lat="49.203908" lon="18.564726"><ele>360</ele></trkpt>
     <trkpt lat="49.203644" lon="18.564456"><ele>365</ele></trkpt>
     <trkpt lat="49.203572" lon="18.564321"><ele>367</ele></trkpt>
@@ -184,7 +185,9 @@
     <trkpt lat="49.194900" lon="18.578753"><ele>480</ele></trkpt>
     <trkpt lat="49.194781" lon="18.578916"><ele>481</ele></trkpt>
     <trkpt lat="49.194067" lon="18.579566"><ele>486</ele></trkpt>
-    <trkpt lat="49.193506" lon="18.579998"><ele>494</ele></trkpt>
+    <trkpt lat="49.193669" lon="18.579873"><ele>492</ele></trkpt>
+    <trkpt lat="49.193092" lon="18.580144"><ele>500</ele></trkpt>
+    <trkpt lat="49.192580" lon="18.580257"><ele>508</ele></trkpt>
     <trkpt lat="49.192035" lon="18.580821"><ele>530</ele></trkpt>
     <trkpt lat="49.191636" lon="18.581474"><ele>557</ele></trkpt>
     <trkpt lat="49.191462" lon="18.581971"><ele>559</ele></trkpt>
@@ -195,7 +198,8 @@
     <trkpt lat="49.189503" lon="18.582966"><ele>575</ele></trkpt>
     <trkpt lat="49.189439" lon="18.583267"><ele>576</ele></trkpt>
     <trkpt lat="49.189748" lon="18.585128"><ele>592</ele></trkpt>
-    <trkpt lat="49.189718" lon="18.586099"><ele>589</ele></trkpt>
+    <trkpt lat="49.189740" lon="18.585903"><ele>589</ele></trkpt>
+    <trkpt lat="49.189659" lon="18.586142"><ele>591</ele></trkpt>
     <trkpt lat="49.189353" lon="18.586442"><ele>593</ele></trkpt>
     <trkpt lat="49.188967" lon="18.586700"><ele>596</ele></trkpt>
     <trkpt lat="49.188529" lon="18.587304"><ele>602</ele></trkpt>
@@ -313,7 +317,8 @@
     <trkpt lat="49.188529" lon="18.587304"><ele>602</ele></trkpt>
     <trkpt lat="49.188967" lon="18.586700"><ele>596</ele></trkpt>
     <trkpt lat="49.189353" lon="18.586442"><ele>593</ele></trkpt>
-    <trkpt lat="49.189718" lon="18.586099"><ele>589</ele></trkpt>
+    <trkpt lat="49.189659" lon="18.586142"><ele>591</ele></trkpt>
+    <trkpt lat="49.189740" lon="18.585903"><ele>589</ele></trkpt>
     <trkpt lat="49.189748" lon="18.585128"><ele>592</ele></trkpt>
     <trkpt lat="49.189439" lon="18.583267"><ele>576</ele></trkpt>
     <trkpt lat="49.189503" lon="18.582966"><ele>575</ele></trkpt>
@@ -324,7 +329,9 @@
     <trkpt lat="49.191462" lon="18.581971"><ele>559</ele></trkpt>
     <trkpt lat="49.191636" lon="18.581474"><ele>557</ele></trkpt>
     <trkpt lat="49.192035" lon="18.580821"><ele>530</ele></trkpt>
-    <trkpt lat="49.193506" lon="18.579998"><ele>494</ele></trkpt>
+    <trkpt lat="49.192580" lon="18.580257"><ele>508</ele></trkpt>
+    <trkpt lat="49.193092" lon="18.580144"><ele>500</ele></trkpt>
+    <trkpt lat="49.193669" lon="18.579873"><ele>492</ele></trkpt>
     <trkpt lat="49.194067" lon="18.579566"><ele>486</ele></trkpt>
     <trkpt lat="49.194781" lon="18.578916"><ele>481</ele></trkpt>
     <trkpt lat="49.194900" lon="18.578753"><ele>480</ele></trkpt>
@@ -371,9 +378,9 @@
     <trkpt lat="49.203572" lon="18.564321"><ele>367</ele></trkpt>
     <trkpt lat="49.203644" lon="18.564456"><ele>365</ele></trkpt>
     <trkpt lat="49.203908" lon="18.564726"><ele>360</ele></trkpt>
-    <trkpt lat="49.204154" lon="18.564935"><ele>356</ele></trkpt>
-    <trkpt lat="49.204278" lon="18.564998"><ele>354</ele></trkpt>
-    <trkpt lat="49.204398" lon="18.564981"><ele>352</ele></trkpt>
+    <trkpt lat="49.204211" lon="18.564981"><ele>355</ele></trkpt>
+    <trkpt lat="49.204337" lon="18.564978"><ele>353</ele></trkpt>
+    <trkpt lat="49.204627" lon="18.564741"><ele>351</ele></trkpt>
     <trkpt lat="49.205078" lon="18.564269"><ele>348</ele></trkpt>
     <trkpt lat="49.205403" lon="18.563591"><ele>345</ele></trkpt>
     <trkpt lat="49.205624" lon="18.563291"><ele>342</ele></trkpt>
@@ -383,7 +390,8 @@
     <trkpt lat="49.207862" lon="18.561269"><ele>323</ele></trkpt>
     <trkpt lat="49.208109" lon="18.561262"><ele>320</ele></trkpt>
     <trkpt lat="49.208370" lon="18.561356"><ele>318</ele></trkpt>
-    <trkpt lat="49.209685" lon="18.560704"><ele>311</ele></trkpt>
+    <trkpt lat="49.209482" lon="18.560828"><ele>312</ele></trkpt>
+    <trkpt lat="49.209620" lon="18.560719"><ele>311</ele></trkpt>
   </trkseg></trk>
   <trk><name>Hrad Súľov</name><desc>sulov-skotna</desc><trkseg>
     <trkpt lat="49.166238" lon="18.584226"><ele>406</ele></trkpt>
