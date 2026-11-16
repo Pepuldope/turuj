@@ -267,10 +267,11 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
           {trail.family_friendly && !withKids && <span className="on-card-ok shrink-0 font-semibold text-[var(--ok)]">· {t("aj pre deti")}</span>}
         </span>
         {/* Two lines (Peter, 15 Nov): getting there by car / bus, then the walk itself; the leave-by time small beside them.
-            16 px (was 15) so the small "kratšia cesta" line under them reads as secondary (Peter, 16 Nov, C179). */}
+            16 px (was 15) so the small "kratšia cesta" line under them reads as secondary (Peter, 16 Nov, C179); the
+            car/bus gap 6 px (was 8) keeps "10 min · ~35 min" on one line beside the leave-by block on a 375 px phone. */}
         <span className="flex items-center gap-2">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="font-data flex flex-wrap items-center gap-x-2 text-[16px] leading-[1.2]">
+        <span className="font-data flex flex-wrap items-center gap-x-1.5 text-[16px] leading-[1.2]">
           <span className={leg(!byBus)}>
             <UiIcon name="car" size={16} />
             {carMin !== null ? `${driveApprox ? "~" : ""}${formatDurationShort(carMin)}` : driveLoading ? "…" : distanceM !== null ? formatFromUser(distanceM, lang) : "–"}
