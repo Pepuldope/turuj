@@ -269,15 +269,15 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
         {/* Two lines (Peter, 15 Nov): getting there by car / bus, then the walk itself; the leave-by time small beside them. */}
         <span className="flex items-center gap-2">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className={`font-data flex flex-wrap items-center gap-x-2 ${big ? "text-[15px]" : "text-[16.5px]"} leading-[1.25]`}>
+        <span className="font-data flex flex-wrap items-center gap-x-2 text-[15px] leading-[1.2]">
           <span className={leg(!byBus)}>
-            <UiIcon name="car" size={big ? 15 : 17} />
+            <UiIcon name="car" size={15} />
             {carMin !== null ? `${driveApprox ? "~" : ""}${formatDurationShort(carMin)}` : driveLoading ? "…" : distanceM !== null ? formatFromUser(distanceM, lang) : "–"}
             {carMin !== null && <small className={word}>{t("autom")}</small>}
           </span>
           <span aria-hidden className="font-sans text-[var(--muted)]">·</span>
           <span className={leg(byBus)} title={nearStop ? t("Zastávka {stop}, {m} k trase", { stop: stopLabel(nearStop.name), m: formatFromUser(stopWalkM, lang) }) : t("Bez zastávky pri štarte")}>
-            <UiIcon name="bus" size={big ? 15 : 17} />
+            <UiIcon name="bus" size={15} />
             {/* By car too, the bus as a time (muted), never the walk from the stop: "350 m" read as minutes next to the car's time (Peter, 2026-10-23). */}
             {byBus && driveMin !== null
               ? `~${formatDurationShort(driveMin)}`
@@ -290,12 +290,12 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             {nearStop && (byBus ? driveMin !== null : carMin !== null) && <small className={word}>{t("busom")}</small>}
           </span>
         </span>
-        <span className={`font-data flex flex-wrap items-center gap-x-3 ${big ? "text-[15px]" : "text-[16.5px]"} leading-[1.25]`}>
+        <span className="font-data flex flex-wrap items-center gap-x-3 text-[15px] leading-[1.2]">
           {/* Each piece stays whole; on a narrow phone the line breaks between them. */}
           <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1 text-[var(--foreground)]">
             <span className="inline-flex items-center gap-1 whitespace-nowrap">
-              <span className="font-sans text-[13px] font-semibold text-[var(--muted)]">{t("túra")}:</span>
-              <UiIcon name="boot" size={big ? 15 : 17} />
+              <span className="font-sans text-[12px] font-semibold text-[var(--muted)]">{t("túra")}:</span>
+              <UiIcon name="boot" size={15} />
               {formatDurationShort(hikeMin)}
             </span>
             <small className={word}>{t("pešo")}</small>
@@ -327,10 +327,10 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
         {sidePill && pill?.time && (
           <span
             title={t("Najneskôr, kedy treba vyraziť, aby ste boli späť za svetla")}
-            className={`flex w-[76px] shrink-0 flex-col items-center rounded-xl px-1.5 py-1.5 text-center max-[359px]:w-[68px] ${PILL_CLASS[pill.tone]}`}
+            className={`flex w-[64px] shrink-0 flex-col items-center rounded-lg px-1 py-1 text-center ${PILL_CLASS[pill.tone]}`}
           >
-            <span className="text-[11.5px] leading-tight font-semibold">{pill.text}</span>
-            <span className="font-data text-[20px] leading-tight font-bold max-[359px]:text-[18px]">{pill.time}</span>
+            <span className="text-[10.5px] leading-tight font-semibold">{pill.text}</span>
+            <span className="font-data text-[17px] leading-tight font-bold">{pill.time}</span>
           </span>
         )}
         </span>
