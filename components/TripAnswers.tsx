@@ -91,7 +91,7 @@ function TanapDaylight({ lang }: { lang: Lang }) {
     <div className="flex flex-col gap-1">
       <p className="flex items-start gap-1.5 rounded-xl bg-[var(--warn-bg)] p-3 font-semibold text-[var(--warn)]">
         <UiIcon name="warn" size={16} className="mt-0.5 shrink-0" />
-        <span>{tr(lang, "Len cez deň: mimo obcí sa v TANAP-e smie chodiť od východu do západu slnka. Výnimkou je cesta na chatu alebo hotel, kde prespíte.")}</span>
+        <span>{tr(lang, "Len cez deň: mimo obcí sa v Tatranskom národnom parku (TANAP) smie chodiť od východu do západu slnka. Výnimkou je cesta na chatu alebo hotel, kde prespíte.")}</span>
       </p>
       <p className="text-xs">
         <a

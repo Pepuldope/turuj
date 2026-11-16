@@ -72,6 +72,14 @@ export function SiteFooter() {
             {t("Neplánuj.")}{" "}
             <strong className="accent-on-sunk">{t("Turuj.")}</strong>
           </p>
+          {/* Who runs it and that it is free (UX audit 2026-11-09). Peter 15 Nov: not on the home hero, here. */}
+          <p className="text-[13px] text-[var(--muted)]">
+            {t("Zadarmo, bez registrácie. Robia ho")}{" "}
+            <LangLink href="/o-nas" className="font-semibold underline">
+              {t("dvaja študenti")}
+            </LangLink>
+            .
+          </p>
           <a
             href={TESTER_FORM_URL}
             target="_blank"

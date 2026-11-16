@@ -3,13 +3,11 @@
  * navigation hand-offs (Google Maps, Mapy.com) and the cp.sk timetable search.
  * Pure, so the wording and parameters are unit tested.
  */
-import { DIFFICULTY_LABEL, formatDuration } from "@/lib/format";
 import { tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 import { haversineM } from "@/lib/geo";
 import type { LatLng } from "@/lib/types";
 import type { StartPoint } from "@/lib/userLocation";
-import { clockShort } from "@/lib/zoned";
 
 /** The start as a town name for sharing; null for an unnamed GPS fix (we never share coordinates). */
 export function startTown(start: Pick<StartPoint, "label" | "source"> | null, gpsTown?: string | null): string | null {
@@ -17,8 +15,6 @@ export function startTown(start: Pick<StartPoint, "label" | "source"> | null, gp
   if (start.source === "gps") return gpsTown ?? null;
   return start.label.split(",")[0].trim() || null;
 }
-
-const hhmm = clockShort;
 
 /**
  * Query keys of a shared plan: /trasa/pajstun?den=2026-10-17&stretnutie=09:40&deti=1&p=1
@@ -91,44 +87,28 @@ export interface ShareTextInput {
   /** "sobota 17. 10." */
   dayLabel: string;
   withKids: boolean;
-  /** When the walk starts: the meeting time. */
-  meet: Date;
-  /** Where: "na parkovisku", "na zastávke Píla"; null = at the trail (no ride, nothing to meet at). */
-  place: string | null;
-  /** Back where the walk started. */
-  end: Date;
-  /** Where the walk ends, matching `place`: by car "pri aute", by bus "na zastávke". */
-  endPlace: "car" | "stop" | null;
-  /** The hike ends before sunset. Otherwise the message warns instead of promising daylight. */
-  inDaylight: boolean;
-  /** The trail is closed on the shared day: the message says so right under the title. */
+  /** The trail is closed on the shared day: the message says so right under the title (safety, kept on purpose). */
   closedOnDay?: boolean;
-  hikeMin: number;
-  difficulty: keyof typeof DIFFICULTY_LABEL;
   url: string;
 }
 
 /**
- * Chat-ready plan, one fact a line. Only times that hold for everyone: friends leave from
- * different places, so the message has the meeting time, not the sender's departure or home time.
+ * Chat-ready message: the title line and the trip's link, nothing else (Peter, 15 Nov 2026: the longer message with
+ * the meeting place and walk facts was confusing; the trip page holds the plan). The one extra line is the closure
+ * warning on a closed day, because closure data is safety data.
  */
 export function shareText(i: ShareTextInput, lang: Lang = "sk"): string {
   const t = (sk: string) => tr(lang, sk);
-  const meet = i.place ? `${hhmm(i.meet)} ${t("stretnutie")} ${i.place}` : `${hhmm(i.meet)} ${t("začiatok túry")}`;
-  const endWord = t(i.endPlace === "car" ? "späť pri aute" : i.endPlace === "stop" ? "späť na zastávke" : "koniec túry");
-  const walk = tr(lang, "{t} chôdze, {level}", { t: formatDuration(i.hikeMin).replaceAll("\u00a0", " "), level: t(DIFFICULTY_LABEL[i.difficulty]).toLowerCase() });
-  // Step by step, one fact a line (Peter, 2026-10-28: a plain "share trip" message for anyone).
   return [
     `${i.name} · ${i.dayLabel}${i.withKids ? t(" (s deťmi)") : ""}`,
     ...(i.closedOnDay ? [t("Pozor, chodník je v tento deň uzavretý.")] : []),
-    `• ${meet}`,
-    `• ${walk}`,
-    `• ${hhmm(i.end)} ${endWord}`,
-    ...(i.inDaylight ? [] : [t("Pozor, z túry zídete až po západe slnka.")]),
-    "",
-    t("Celý plán je na Túruj, aj kedy vyraziť z tvojho miesta:"),
-    i.url,
+    `${t("Výlet je na turuj.sk:")} ${i.url}`,
   ].join("\n");
+}
+
+/** A pin on the map: opens in whichever maps app the phone has. */
+export function pinLink(p: LatLng): string {
+  return `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}`;
 }
 
 /** "na parkovisku", or with its name when the parking has one ("na parkovisku Pod Kriváňom"). */

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { longDay } from "@/lib/days";
-import { parkingPlace, sharePath, shareText } from "@/lib/links";
+import { sharePath, shareText } from "@/lib/links";
 import type { DayPlan } from "@/lib/dayPlan";
 import type { Closure, Difficulty } from "@/lib/types";
 import { useTripSettings } from "@/lib/tripSettings";
@@ -10,7 +10,6 @@ import { useTripAccess } from "@/components/TripAccess";
 import { sinceArrival, track } from "@/lib/analytics";
 import { activeClosures } from "@/lib/closures";
 import { clock } from "@/lib/zoned";
-import { stopLabel } from "@/lib/format";
 import { useLang, useT } from "@/lib/i18n";
 
 export interface ShareInfo {
@@ -36,21 +35,20 @@ interface Props extends ShareInfo {
 
 /**
  * "Zdieľať výlet" (was "Poslať partii" until Peter, 2026-10-28: not everyone goes with a group): the phone's share sheet with a chat-ready plan and a link. Desktop falls back to copying.
- * Friends leave from different places (Peter, 2026-10-22), so what goes out is the day and the meeting
- * time where the walk starts, never the sender's start; each friend's page works out their own departure.
+ * Friends leave from different places (Peter, 2026-10-22), so what goes out is the day and the place where the walk
+ * starts (car park or stop, with a map pin), never a made-up time or the sender's start; each friend's page works out their own departure.
  */
-export function ShareButton({ plan, date, time, hikeMin, hasDrive, closures = [], label = "Zdieľať výlet", className, onShared, ...trip }: Props) {
+export function ShareButton({ plan, date, time, hasDrive, closures = [], label = "Zdieľať výlet", className, onShared, ...trip }: Props) {
   const { withKids } = useTripSettings();
   const t = useT();
   const lang = useLang();
-  const { transit, choice, stopPick, parking, stop } = useTripAccess();
+  const { transit, choice, stopPick, stop } = useTripAccess();
   const [copied, setCopied] = useState(false);
 
   async function share() {
     if (!plan || !date || !time) return;
-    // Met at a stop by bus, at the parking by car; walking there (or no start), at the trail.
+    // The shared link keeps the bus pick when the sender goes by bus.
     const byStop = hasDrive && transit && stop !== null;
-    const atParking = hasDrive && !transit;
     const url = new URL(
       sharePath(trip.slug, { date, meet: clock(plan.hikeStart), transit: byStop, withKids, pick: byStop ? stopPick : choice }, lang),
       window.location.origin
@@ -59,14 +57,7 @@ export function ShareButton({ plan, date, time, hikeMin, hasDrive, closures = []
       name: trip.name,
       dayLabel: longDay(date, lang),
       withKids,
-      meet: plan.hikeStart,
-      place: byStop ? t("na zastávke {stop}", { stop: stopLabel(stop.name) }) : atParking ? parkingPlace(parking?.name ?? null, lang) : null,
-      end: plan.hikeEnd,
-      endPlace: byStop ? "stop" : atParking ? "car" : null,
-      inDaylight: plan.verdict === "ok" || plan.verdict === "close" || plan.verdict === "tight",
       closedOnDay: activeClosures(closures, date).length > 0,
-      hikeMin,
-      difficulty: trip.difficulty,
       url,
     }, lang);
     // The URL is already the text's last line; passing it twice duplicates it in most chat apps.

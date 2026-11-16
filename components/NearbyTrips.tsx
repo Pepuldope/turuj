@@ -31,7 +31,7 @@ export function NearbyTrips({ lang, items, walks }: { lang: Lang; items: Nearby[
     };
   });
   return (
-    <section className="flex flex-col gap-2">
+    <section id="ine-vylety" className="flex scroll-mt-4 flex-col gap-2">
       <h2 className="px-1 text-base font-semibold text-[var(--foreground)]">{tr(lang, "Ďalšie výlety v okolí")}</h2>
       <NearbyList lang={lang} items={list} />
     </section>

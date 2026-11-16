@@ -4,7 +4,7 @@
   "rules": [
     {
       "id": "tanap-sezonna-uzavera",
-      "reason": "Sezónna uzávera v TANAP-e: vysokohorské úseky sú zatvorené od 1. novembra do 31. mája.",
+      "reason": "Sezónna uzávera v Tatranskom národnom parku (TANAP): vysokohorské úseky sú zatvorené od 1. novembra do 31. mája.",
       "kind": "rocna",
       "starts_on": "2026-11-01",
       "ends_on": "2027-05-31",
@@ -537,7 +537,7 @@
     },
     {
       "id": "tanap-juranova-dolina",
-      "reason": "Sezónna uzávera v TANAP-e: Juráňova dolina cez sedlo Umrlá je zatvorená od 1. novembra do 30. apríla.",
+      "reason": "Sezónna uzávera v Tatranskom národnom parku (TANAP): Juráňova dolina cez sedlo Umrlá je zatvorená od 1. novembra do 30. apríla.",
       "kind": "rocna",
       "starts_on": "2026-11-01",
       "ends_on": "2027-04-30",
@@ -560,7 +560,7 @@
     },
     {
       "id": "tanap-symbolicky-cintorin",
-      "reason": "Sezónna uzávera v TANAP-e: chodník k Symbolickému cintorínu pod Ostrvou je zatvorený od 15. decembra do 30. apríla.",
+      "reason": "Sezónna uzávera v Tatranskom národnom parku (TANAP): chodník k Symbolickému cintorínu pod Ostrvou je zatvorený od 15. decembra do 30. apríla.",
       "kind": "rocna",
       "starts_on": "2026-12-15",
       "ends_on": "2027-04-30",

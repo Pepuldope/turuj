@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cpSkUrl, googleWalkUrl, mapyUrl, mapyWalkUrl, parkingPlace, readSharedPlan, sharePath, shareText, startTown, walkStops } from "./links";
+import { cpSkUrl, googleWalkUrl, mapyUrl, mapyWalkUrl, parkingPlace, pinLink, readSharedPlan, sharePath, shareText, startTown, walkStops } from "./links";
 import { dayAfterNa, dayChips, dayFit, dayInSentence, longDay } from "./days";
 
 const BRATISLAVA = { lat: 48.1486, lon: 17.1077 };
@@ -53,47 +53,20 @@ describe("shared plan links", () => {
     expect(startTown({ label: "Pezinok, okres Pezinok", source: "manual" })).toBe("Pezinok");
   });
 
-  it("writes a chat-ready message with times that hold for every friend", () => {
-    const text = shareText({
-      name: "Vodopád Hučák",
-      dayLabel: "sobota 24. 10.",
-      withKids: true,
-      meet: new Date(2026, 9, 24, 8, 56),
-      place: parkingPlace(null),
-      end: new Date(2026, 9, 24, 9, 41),
-      endPlace: "car",
-      inDaylight: true,
-      hikeMin: 45,
-      difficulty: "lahka",
-      url: "https://turuj.sk/trasa/hucak",
-    });
-    expect(text).toBe(
-      "Vodopád Hučák · sobota 24. 10. (s deťmi)\n" +
-        "• 8:56 stretnutie na parkovisku\n" +
-        "• 45 min chôdze, ľahká\n" +
-        "• 9:41 späť pri aute\n" +
-        "\n" +
-        "Celý plán je na Túruj, aj kedy vyraziť z tvojho miesta:\n" +
-        "https://turuj.sk/trasa/hucak"
-    );
+  it("writes a short chat message: the title line and the trip link, no times (Peter, 15 Nov)", () => {
+    const text = shareText({ name: "Vodopád Hučák", dayLabel: "sobota 24. 10.", withKids: true, url: "https://turuj.sk/trasa/hucak" });
+    expect(text).toBe("Vodopád Hučák · sobota 24. 10. (s deťmi)\nVýlet je na turuj.sk: https://turuj.sk/trasa/hucak");
+    expect(text).not.toMatch(/\d{1,2}:\d{2}/);
+    expect(shareText({ name: "Chleb", dayLabel: "Saturday 10 Oct", withKids: false, url: "u" }, "en")).toBe("Chleb · Saturday 10 Oct\nThe trip is on turuj.sk: u");
   });
 
-  it("warns after sunset and starts at the trail without a ride", () => {
-    const text = shareText({
-      name: "Chleb",
-      dayLabel: "sobota 10. 10.",
-      withKids: false,
-      meet: new Date(2026, 9, 10, 10, 0),
-      place: null,
-      end: new Date(2026, 9, 10, 19, 10),
-      endPlace: null,
-      inDaylight: false,
-      hikeMin: 360,
-      difficulty: "tazka",
-      url: "https://turuj.sk/trasa/chleb",
-    });
-    expect(text).toContain("• 10:00 začiatok túry\n• 6 h chôdze, ťažká\n• 19:10 koniec túry");
-    expect(text).toContain("Pozor, z túry zídete až po západe slnka.");
+  it("keeps the closure warning on a closed day (safety data)", () => {
+    const text = shareText({ name: "Kriváň", dayLabel: "pondelok 16. 11.", withKids: false, closedOnDay: true, url: "u" });
+    expect(text).toBe("Kriváň · pondelok 16. 11.\nPozor, chodník je v tento deň uzavretý.\nVýlet je na turuj.sk: u");
+  });
+
+  it("links a map pin", () => {
+    expect(pinLink({ lat: 49, lon: 20 })).toBe("https://www.google.com/maps/search/?api=1&query=49,20");
   });
 
   it("puts the closure warning right under the title, and only on a closed day", () => {
@@ -101,18 +74,11 @@ describe("shared plan links", () => {
       name: "Chleb",
       dayLabel: "sobota 10. 10.",
       withKids: false,
-      meet: new Date(2026, 9, 10, 10, 0),
-      place: null,
-      end: new Date(2026, 9, 10, 14, 0),
-      endPlace: null,
-      inDaylight: true,
-      hikeMin: 240,
-      difficulty: "tazka" as const,
       url: "https://turuj.sk/trasa/chleb",
     };
     const lines = shareText({ ...base, closedOnDay: true }).split("\n");
     expect(lines[1]).toBe("Pozor, chodník je v tento deň uzavretý.");
-    expect(lines[2]).toBe("• 10:00 začiatok túry");
+    expect(lines[2]).toBe("Výlet je na turuj.sk: https://turuj.sk/trasa/chleb");
     expect(shareText(base)).not.toContain("uzavretý");
     expect(shareText({ ...base, closedOnDay: true }, "en")).toContain("Careful, the trail is closed on this day.");
   });
