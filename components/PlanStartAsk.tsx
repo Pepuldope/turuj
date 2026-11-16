@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { StartPill, StartSheet, focusStandIn } from "@/components/StartPill";
 import { UiIcon } from "@/components/UiIcon";
+import { PickStartMap } from "@/components/PickStartMap";
 import { useUserLocation } from "@/lib/userLocation";
 import { useT } from "@/lib/i18n";
 
@@ -13,6 +14,7 @@ import { useT } from "@/lib/i18n";
 export function PlanStartAsk() {
   const { ready, start, status, message, locate } = useUserLocation();
   const [open, setOpen] = useState(false);
+  const [pickMap, setPickMap] = useState(false);
   const t = useT();
   if (!ready || start) return <StartPill quiet />;
   return (
@@ -53,6 +55,15 @@ export function PlanStartAsk() {
             </span>
             {t("Napíšte mesto alebo obec")}
           </button>
+          {/* A point on the map, right here too (Peter, 16 Nov): in the sheet it sat under the keyboard. */}
+          <button
+            type="button"
+            onClick={() => setPickMap(true)}
+            className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--accent)] bg-[var(--card-bg)]/60 text-sm font-semibold text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+          >
+            <UiIcon name="pin" size={16} />
+            {t("Vybrať bod na mape")}
+          </button>
         </div>
         {message && status !== "locating" && (
           <p role="alert" className="flex items-start gap-1.5 text-sm font-semibold text-[var(--warn)]">
@@ -62,6 +73,7 @@ export function PlanStartAsk() {
         )}
       </section>
       {open && <StartSheet onClose={() => setOpen(false)} focusSearch />}
+      {pickMap && <PickStartMap onClose={() => setPickMap(false)} />}
     </>
   );
 }
