@@ -772,7 +772,7 @@ export const EN: Record<string, string> = {
   "Kontakt": "Contact",
   "O projekte": "About the project",
   "Neplánuj.": "Don't plan.",
-  "Turuj.": "Just go.",
+  "Túruj.": "Just go.",
   "Chcem testovať": "Become a tester",
   "car": "car",
   "stop": "stop",
