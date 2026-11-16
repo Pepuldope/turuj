@@ -9,10 +9,14 @@ name: Deploy
 on:
   push:
     branches: [main]
+    # Workflow-only changes can't change the site, so they don't spend one of the day's deploys
+    # (Peter's 5-a-day rule). A push that also touches anything else still deploys.
+    paths-ignore: [".github/**"]
   # The data workflows push to main with GITHUB_TOKEN, which starts no push event,
-  # so deploy after each of them instead.
+  # so deploy after each of them instead. "Place photos" is not listed: it starts this
+  # workflow itself, and only when it committed new photos (a no-change run used to deploy too).
   workflow_run:
-    workflows: [Place photos, Weekly trip data, Weekly trail map, Weekly train timetable, Monthly report]
+    workflows: [Weekly trip data, Weekly trail map, Weekly train timetable, Monthly report]
     types: [completed]
     branches: [main]
   workflow_dispatch:
