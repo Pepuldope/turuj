@@ -314,7 +314,7 @@ describe("one-line teasers", () => {
   } as Closure;
 
   it("always states the yearly closure rule, and never calls an unknown trail open", () => {
-    expect(closureTeaser("sk", [tanap])).toBe("Zatvorené každý rok 1. 11.–31. 5. (TANAP)");
+    expect(closureTeaser("sk", [tanap])).toBe("Zatvorené každý rok 1. 11.–31. 5. (Tatranský národný park, TANAP)");
     const none = closureTeaser("sk", []);
     expect(none).toBe("Stav chodníka neoverený");
     expect(none.toLowerCase()).not.toContain("otvoren");

@@ -8,8 +8,12 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-/** Pages that may draw on every visit, and why (none since /statistiky is prebuilt, #121). */
-const ALLOWED_PER_VISIT = {};
+/** Pages that may draw on every visit, and why (/statistiky is prebuilt since #121). */
+const ALLOWED_PER_VISIT = {
+  // #232: unknown addresses under /en only call notFound() so the 404 gets English metadata. It is drawn
+  // per visit but only for wrong addresses, and a 404 is the answer there either way (15 Nov 2026).
+  "/en/[...rest]": "English 404 for unknown /en addresses",
+};
 
 const routes = JSON.parse(readFileSync(".next/app-path-routes-manifest.json", "utf8"));
 const prerender = JSON.parse(readFileSync(".next/prerender-manifest.json", "utf8"));

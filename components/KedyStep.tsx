@@ -142,8 +142,8 @@ export function kedyWarnings(p: KedyProps, t: T, lang: Lang, cards: KedyCard[] |
       tone: "warn",
       text:
         p.tanapLate === "late"
-          ? t("V TANAP-e sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte skôr alebo vyberte kratší výlet.")
-          : t("V TANAP-e sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte až po východe slnka."),
+          ? t("V Tatranskom národnom parku (TANAP) sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte skôr alebo vyberte kratší výlet.")
+          : t("V Tatranskom národnom parku (TANAP) sa mimo obcí smie chodiť len od východu do západu slnka. Vyrazte až po východe slnka."),
       fix: p.tanapLate === "late" ? untilFix : afterFix,
     });
   }
