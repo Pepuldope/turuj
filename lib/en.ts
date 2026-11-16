@@ -1081,7 +1081,7 @@ export const EN: Record<string, string> = {
   "{lead} treba vyraziť najneskôr o {lo}": "{lead}: set off by {lo}",
   "{lead} treba vyraziť najneskôr medzi {lo} a {hi} podľa mesiaca": "{lead}: set off between {lo} and {hi} depending on the month",
   "{outside} ({months})": "{outside} ({months})",
-  "Zajtra: {name}": "Tomorrow: {name}",
+  "Pripravte sa na zajtrajší výlet": "Get ready for tomorrow's trip",
   ", búrky okolo {time}": ", thunderstorms around {time}",
   "Vyrazte najneskôr o {time}.": "Leave by {time} at the latest.",
   "Pozor: trasa je zatvorená do {date}.": "Note: the trail is closed until {date}.",

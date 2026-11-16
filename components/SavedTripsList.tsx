@@ -1,7 +1,7 @@
 "use client";
 
 import { setTripStops } from "@/lib/tripStops";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DayPlan } from "@/lib/dayPlan";
 import { useCachedJson } from "@/lib/useDriveRoute";
 import { FORECAST_DAYS, forecastForDay, tripWeatherReport, weatherNotes } from "@/lib/weather";
@@ -73,6 +73,22 @@ export function SavedTripsList() {
     if (navigator.onLine) router.push(href);
     else window.location.assign(href);
   }
+
+  // The evening-before reminder opens /ulozene?otvorit=<slug>: that saved trip with its own day, start and stops,
+  // as a tap on it here would (Peter, 15 Nov, C167). Not saved on this device any more: the trip page as it is.
+  const opened = useRef(false);
+  useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get("otvorit");
+    if (!slug || opened.current) return;
+    const trip = trips.find((x) => x.slug === slug);
+    if (!trip && trips.length === 0) return; // the list may still be loading
+    opened.current = true;
+    window.history.replaceState(null, "", window.location.pathname);
+    if (trip) open(trip);
+    else router.push(langPath(lang, `/trasa/${slug}`));
+    // Once, when the list is there.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trips]);
 
   if (trips.length === 0) {
     return (

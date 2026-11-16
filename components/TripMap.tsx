@@ -300,9 +300,11 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
     ];
   }, [trail.slug, trail.marking, ownColour, points, skip, trailJoin, otherTracks, loop]);
 
-  // The day map draws the line in the marking colours as walked (the sun dial's legend names them): a stretch per sign.
+  // The line in the marking colours as walked, a stretch per sign: on the day map (the sun dial's legend names them)
+  // and on the step maps too, where a stretch past a grey "no marking" sign was drawn in the trail's colour
+  // (Peter, 15 Nov, C168). A route drawn in its own colour (to tell routes apart) keeps it.
   const drawnTracks = useMemo<MapTrack[]>(() => {
-    if (!day || !marks || skip || points.length < 3) return tracks;
+    if (!marks || skip || points.length < 3 || (!day && ownColour)) return tracks;
     const n = points.length;
     const up = loop ? n - 1 : Math.floor((n - 1) / 2);
     const out = (i: number) => signs.filter((s) => s.at <= i).pop()?.colour ?? marks.start;
@@ -318,8 +320,9 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
       runs.push({ slug: `${trail.slug}-m${runs.length}`, points: points.slice(from, i + 1), color: colourOf(from), state: "selected", arrows: loop });
       from = i;
     }
-    return runs;
-  }, [day, marks, skip, points, loop, signs, tracks, trail.slug]);
+    // The step maps keep the other routes around the picked one.
+    return day ? runs : tracks.flatMap((tk) => (tk.slug === trail.slug ? runs : [tk]));
+  }, [day, marks, skip, points, loop, signs, tracks, trail.slug, ownColour]);
 
   const goal = trail.goal_location;
   const goalKind = trail.goal ?? "ine";
