@@ -247,7 +247,7 @@ function FreeRow({ p, near, onAdd, open = true }: { p: Poi; near?: LatLng; onAdd
   const row = usePinRow(`poi-${p.id}`);
   return (
     <Reveal as="li" open={open}>
-    <div {...row.handlers} className={`flex items-center gap-2 py-2 ${row.hover}`}>
+    <div {...row.handlers} className={`-mx-2 flex items-center gap-2 rounded-lg px-2 py-2 ${row.hover}`}>
       <button type="button" onClick={() => showOnMap(p, near)} className={nameBtn}>
         <KindIcon kind={poiIcon(p)} colour={POI_COLOUR[p.kind]} size={44} />
         <span className="flex min-w-0 flex-1 flex-col">
@@ -314,7 +314,7 @@ function PickedRow({
     </>
   );
   return (
-    <div {...row.handlers} className={`flex flex-col py-1.5 ${row.hover}`}>
+    <div {...row.handlers} className={`-mx-2 flex flex-col rounded-lg px-2 py-1.5 ${row.hover}`}>
       <div className="flex items-center gap-2">
         {p ? (
           <button type="button" onClick={() => showOnMap(p, near)} className={nameBtn}>
