@@ -16,6 +16,29 @@ import type { DestinationKind } from "@/lib/tripSchema";
 import { LangLink, useLang } from "@/lib/i18n";
 import { regionIn, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
+import type { ImgHTMLAttributes } from "react";
+
+/**
+ * A photo that fades in once it has loaded (Peter, 17 Nov: thumbnails popped in one by one). A picture that was
+ * already there when the card appeared (cached, or loaded before the page woke up) is shown at once, no fade.
+ */
+function FadeImg({ className = "", ...rest }: ImgHTMLAttributes<HTMLImageElement>) {
+  const [phase, setPhase] = useState<"ready" | "waiting" | "fading">("ready");
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      {...rest}
+      alt={rest.alt ?? ""}
+      ref={(el) => {
+        // Still loading when it showed up: hold it back until the load event.
+        if (el && !el.complete) setPhase((p) => (p === "ready" ? "waiting" : p));
+      }}
+      onLoad={() => setPhase((p) => (p === "waiting" ? "fading" : p))}
+      onError={() => setPhase("ready")}
+      className={`${className} ${phase === "waiting" ? "opacity-0" : phase === "fading" ? "img-fade-in" : ""}`}
+    />
+  );
+}
 
 export interface TripCardItem {
   detail: TrailDetail;
@@ -194,8 +217,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             style={{ background: colour, maskImage: STRIP_FADE, WebkitMaskImage: STRIP_FADE }}
           >
             {thumb ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={thumb} alt="" loading="lazy" decoding="async" crossOrigin="anonymous" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+              <FadeImg src={thumb} alt="" loading="lazy" decoding="async" crossOrigin="anonymous" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
             ) : (
               // No photo: the kind's colour and icon in front of quiet hills whose outline hints at the kind (Peter, 15 Nov).
               <NoPhotoScene goal={goal} colour={colour} />
@@ -214,8 +236,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
       ) : thumb ? (
         // A photo of the place in place of the kind icon (Peter, 2026-10-22); the kind sits on it as a small badge.
         <span aria-hidden className={`relative h-[64px] w-[64px] overflow-hidden rounded-[14px] ${dim ? "opacity-50 grayscale-[75%]" : ""}`} style={{ background: colour }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={thumb} alt={trail.name} loading="lazy" decoding="async" crossOrigin="anonymous" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+          <FadeImg src={thumb} alt={trail.name} loading="lazy" decoding="async" crossOrigin="anonymous" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
           <span
             className="absolute bottom-1 left-1 grid h-[22px] w-[22px] place-items-center rounded-[7px] text-white shadow-[0_0_0_1.5px_#fff]"
             style={{ background: colour }}

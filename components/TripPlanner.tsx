@@ -54,6 +54,7 @@ import { LangLink, useLang, useT } from "@/lib/i18n";
 import { tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 import type { SavedTrail } from "@/lib/savedTrips";
+import { useLeave } from "@/lib/usePresence";
 
 interface Props extends ShareInfo {
   sun: LatLng | null;
@@ -650,16 +651,18 @@ const shortTime = (hhmm: string) => hhmm.replace(/^0/, "");
 
 function UnusualTime({ time, text, better, onBetter, onKeep }: { time: string; text: string; better: string | null; onBetter: () => void; onKeep: () => void }) {
   const t = useT();
+  // A choice fades the dialog out first, then applies it (Peter, 17 Nov).
+  const { state, leave } = useLeave();
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onKeep();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && leave(onKeep);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onKeep]);
+  }, [leave, onKeep]);
   return (
     // In the middle of the screen, also on phones (Peter: a bottom sheet looked too unimportant).
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4" role="alertdialog" aria-modal="true" aria-labelledby="unusual-time">
-      <div className="absolute inset-0 bg-black/50" onClick={onKeep} />
-      <div className="relative flex w-full max-w-[420px] flex-col gap-3 rounded-[20px] border-2 border-[var(--warn)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-float)]">
+      <div data-state={state} className="pres pres-backdrop absolute inset-0 bg-black/50" onClick={() => leave(onKeep)} />
+      <div data-state={state} className="pres pres-pop relative flex w-full max-w-[420px] flex-col gap-3 rounded-[20px] border-2 border-[var(--warn)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-float)]">
         <h2 id="unusual-time" className="flex items-center gap-2 text-lg font-bold">
           <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0 text-[var(--warn)]" aria-hidden="true">
             <path d="M12 3 22 20H2z" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
@@ -674,7 +677,7 @@ function UnusualTime({ time, text, better, onBetter, onKeep }: { time: string; t
           {better && (
             <button
               type="button"
-              onClick={onBetter}
+              onClick={() => leave(onBetter)}
               autoFocus
               className="rounded-xl bg-[var(--accent)] px-4 py-3 text-[15px] font-bold text-[var(--accent-contrast)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
             >
@@ -683,7 +686,7 @@ function UnusualTime({ time, text, better, onBetter, onKeep }: { time: string; t
           )}
           <button
             type="button"
-            onClick={onKeep}
+            onClick={() => leave(onKeep)}
             autoFocus={!better}
             className="rounded-xl border border-[var(--border)] px-4 py-3 text-[15px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
           >

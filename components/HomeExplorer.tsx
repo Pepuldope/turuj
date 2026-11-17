@@ -23,7 +23,10 @@ import type { PlaceSearch, SearchIndexFile } from "@/lib/placeSearch";
 import { useTripSettings } from "@/lib/tripSettings";
 import { knownDriveMin, useStartDrives, useTownDrives } from "@/lib/useDriveRoute";
 import { clearAllStops } from "@/lib/tripStops";
+import { smoothScroll } from "@/lib/motion";
+import { usePresence } from "@/lib/usePresence";
 import { useUserLocation } from "@/lib/userLocation";
+import { Reveal } from "@/components/Reveal";
 import { FilterChips, KidsRow } from "@/components/FilterChips";
 import { MapExpandButton } from "@/components/MapExpandButton";
 import { SeasonScene } from "@/components/SeasonScene";
@@ -329,7 +332,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
       document.body.style.overflow = "";
     };
   }, [fullMap]);
-  const showMapCard = useCallback(() => mapCardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }), []);
+  const showMapCard = useCallback(() => mapCardRef.current?.scrollIntoView({ block: "nearest", behavior: smoothScroll() }), []);
   // Back on the home page the map opens where it was left (kept for this visit, not stored).
   const [mapView, setMapView] = useState<MapView | null>(() => lastView);
   const [focus, setFocus] = useState<MapFocus | null>(null);
@@ -574,7 +577,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
       }
       if (isDesktop) {
         setPreview(null);
-        requestAnimationFrame(() => pickedRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
+        requestAnimationFrame(() => pickedRef.current?.scrollIntoView({ block: "nearest", behavior: smoothScroll() }));
       } else {
         setPreview({ kind: "trip", slug, also, ...at, peek: false });
       }
@@ -632,6 +635,13 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
 
   // A known town typed into the search offers "Vyrážam z …": a start, not only a move of the map.
   const townMatch = useMemo(() => (plain(query).trim().length >= 3 ? (suggestTowns(query, towns, 1)[0] ?? null) : null), [query, towns]);
+  // The results fade out for 120 ms when the box closes, so they keep what they showed (Peter, 17 Nov).
+  const searchOpenNow = searchOpen && !!results;
+  const searchPresence = usePresence(searchOpenNow, 120);
+  const [lastSearch, setLastSearch] = useState({ results, townMatch });
+  if (searchOpenNow && (lastSearch.results !== results || lastSearch.townMatch !== townMatch)) setLastSearch({ results, townMatch });
+  const sr = searchOpenNow ? results : lastSearch.results;
+  const tm = searchOpenNow ? townMatch : lastSearch.townMatch;
   const townTracked = useRef(false);
   useEffect(() => {
     if (!townMatch) {
@@ -724,26 +734,33 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
     ));
 
   const previewTrip = preview?.kind === "trip" ? bySlug.get(preview.slug) : undefined;
-  const sheet = preview && !isDesktop && (preview.kind === "trail" || previewTrip) && (
-    <div role="dialog" aria-label={t("Náhľad výletu")} className="absolute inset-x-0 bottom-0 z-10 flex max-h-[70%] flex-col gap-3 overflow-y-auto rounded-t-[20px] border border-[var(--border)] bg-[var(--card-bg)] p-4 pb-[calc(16px+env(safe-area-inset-bottom))] shadow-[var(--shadow-float)]">
+  // The phone sheet slides up and down; it keeps what it showed while it slides away (Peter, 17 Nov).
+  const [lastPreview, setLastPreview] = useState(preview);
+  if (preview && preview !== lastPreview) setLastPreview(preview);
+  const sp = preview ?? lastPreview;
+  const spTrip = sp?.kind === "trip" ? bySlug.get(sp.slug) : undefined;
+  const sheetOpen = !!(preview && !isDesktop && (preview.kind === "trail" || previewTrip));
+  const sheetPresence = usePresence(sheetOpen, 220);
+  const sheet = sheetPresence.mounted && sp && (sp.kind === "trail" || spTrip) && (
+    <div role="dialog" data-state={sheetPresence.state} aria-label={t("Náhľad výletu")} className="pres pres-sheet absolute inset-x-0 bottom-0 z-10 flex max-h-[70%] flex-col gap-3 overflow-y-auto rounded-t-[20px] border border-[var(--border)] bg-[var(--card-bg)] p-4 pb-[calc(16px+env(safe-area-inset-bottom))] shadow-[var(--shadow-float)]">
       <div className="flex items-center justify-between gap-3">
         <span className="mx-auto -mt-1 h-1 w-10 rounded-full bg-[var(--border)]" aria-hidden />
       </div>
-      {previewTrip ? (
+      {spTrip ? (
         <>
-          <MiniCard item={previewTrip} />
+          <MiniCard item={spTrip} />
           <LangLink
-            href={`/trasa/${previewTrip.detail.trail.slug}`}
+            href={`/trasa/${spTrip.detail.trail.slug}`}
             className="rounded-full bg-[var(--accent)] px-4 py-3 text-center text-[15px] font-bold text-[var(--accent-contrast)]"
           >
             {t("Vybrať tento výlet")}
           </LangLink>
-          {preview.kind === "trip" && preview.also.length > 0 && (
-            <OtherTrips title={t("Týmto miestom vedú aj")} items={preview.also.flatMap((s) => (bySlug.get(s) ? [{ item: bySlug.get(s)!, note: null }] : []))} onPick={goToTrip} />
+          {sp.kind === "trip" && sp.also.length > 0 && (
+            <OtherTrips title={t("Týmto miestom vedú aj")} items={sp.also.flatMap((s) => (bySlug.get(s) ? [{ item: bySlug.get(s)!, note: null }] : []))} onPick={goToTrip} />
           )}
         </>
       ) : (
-        preview.kind === "trail" && (
+        sp.kind === "trail" && (
           <>
             <div className="flex items-center gap-3">
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[var(--segment-bg)] text-[var(--muted)]" aria-hidden>
@@ -755,8 +772,8 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
               </div>
             </div>
             <OtherTrips
-              title={preview.nearby.length ? t("Výlety v okolí") : t("V okolí zatiaľ nemáme výlet.")}
-              items={preview.nearby.flatMap((n) => (bySlug.get(n.slug) ? [{ item: bySlug.get(n.slug)!, note: t("{km} km odtiaľto", { km: decimal(lang, n.km) }) }] : []))}
+              title={sp.nearby.length ? t("Výlety v okolí") : t("V okolí zatiaľ nemáme výlet.")}
+              items={sp.nearby.flatMap((n) => (bySlug.get(n.slug) ? [{ item: bySlug.get(n.slug)!, note: t("{km} km odtiaľto", { km: decimal(lang, n.km) }) }] : []))}
               onPick={goToTrip}
             />
           </>
@@ -915,27 +932,27 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
       </div>
 
 
-      {searchOpen && results && (
-        <div role="listbox" aria-label={t("Výsledky hľadania")} className="absolute top-12 right-0 left-0 z-30 max-h-[60vh] overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-2 shadow-[var(--shadow-float)]">
-          {townMatch && (
+      {searchPresence.mounted && sr && (
+        <div role="listbox" data-state={searchPresence.state} aria-label={t("Výsledky hľadania")} className="pres pres-fade absolute top-12 right-0 left-0 z-30 max-h-[60vh] overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-2 shadow-[var(--shadow-float)]">
+          {tm && (
             <MenuRow
               onClick={() => {
-                setManualStart({ lat: townMatch.location.lat, lon: townMatch.location.lon, label: townMatch.name }, "suggestion");
+                setManualStart({ lat: tm.location.lat, lon: tm.location.lon, label: tm.name }, "suggestion");
                 noteSearch(true);
                 setQuery("");
                 closeMenus();
               }}
               icon={<UiIcon name="pin" size={16} />}
-              title={t("Vyrážam {from}", { from: townFrom(lang, townMatch.id, townMatch.name) })}
+              title={t("Vyrážam {from}", { from: townFrom(lang, tm.id, tm.name) })}
               note={t("Nastaviť ako štart a zoradiť výlety podľa cesty")}
             />
           )}
-          {results.ranges.length > 0 && <MenuTitle>{t("Pohoria")}</MenuTitle>}
-          {results.ranges.map((a) => (
+          {sr.ranges.length > 0 && <MenuTitle>{t("Pohoria")}</MenuTitle>}
+          {sr.ranges.map((a) => (
             <MenuRow key={a.name} onClick={() => showOnMap({ kind: "box", bbox: a.bbox, maxZoom: 11 })} icon={<UiIcon name="up" size={16} />} title={a.name} note={t("Ukázať výlety v pohorí na mape")} />
           ))}
-          {results.trips.length > 0 && <MenuTitle>{t("Výlety")}</MenuTitle>}
-          {results.trips.map(({ detail, hikeMin }) => (
+          {sr.trips.length > 0 && <MenuTitle>{t("Výlety")}</MenuTitle>}
+          {sr.trips.map(({ detail, hikeMin }) => (
             <MenuRow
               key={detail.trail.slug}
               onClick={() => {
@@ -949,18 +966,18 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
               note={`${t(GOAL_LABEL[detail.trail.goal ?? "ine"])} · ${detail.trail.region_name ? regionIn(lang, detail.trail.region_name) : ""} · ${formatDurationShort(hikeMin)}`}
             />
           ))}
-          {results.places.length > 0 && <MenuTitle>{t("Obce a mestá")}</MenuTitle>}
-          {results.places.map((town) => (
+          {sr.places.length > 0 && <MenuTitle>{t("Obce a mestá")}</MenuTitle>}
+          {sr.places.map((town) => (
             <MenuRow key={town.id} onClick={() => showOnMap({ kind: "point", location: town.location, zoom: 10.5 })} icon={<UiIcon name="pin" size={16} />} title={town.name} note={t("Ukázať výlety okolo na mape")} />
           ))}
-          {results.ranges.length + results.trips.length + results.places.length === 0 && !townMatch && (
+          {sr.ranges.length + sr.trips.length + sr.places.length === 0 && !tm && (
             <p className="p-2 text-sm text-[var(--muted)]">{t("Nič sa nenašlo. Skúste názov vrchu, chaty, pohoria alebo obce.")}</p>
           )}
         </div>
       )}
 
-      {filtersOpen && (
-        <div className="absolute top-12 right-0 left-0 z-30 max-h-[70vh] overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-2 shadow-[var(--shadow-float)]">
+      <Reveal open={filtersOpen} className="absolute top-12 right-0 left-0 z-30">
+        <div className="max-h-[70vh] overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-2 shadow-[var(--shadow-float)]">
           <MenuTitle>{t("Cieľ")}</MenuTitle>
           <div className="grid grid-cols-2">
             {[null, ...GOAL_FILTERS].map((g) => (
@@ -1035,13 +1052,13 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
             </button>
           </div>
         </div>
-      )}
+      </Reveal>
     </div>
   );
 
   const focusStart = () => {
     const box = document.querySelector<HTMLElement>("[data-start-chip]");
-    box?.scrollIntoView({ behavior: "smooth", block: "center" });
+    box?.scrollIntoView({ behavior: smoothScroll(), block: "center" });
     box?.querySelector<HTMLInputElement>("input")?.focus({ preventScroll: true });
   };
 
@@ -1385,7 +1402,7 @@ function StartReminder() {
           type="button"
           onClick={() => {
             const card = document.querySelector("[data-start-chip]");
-            card?.scrollIntoView({ block: "start", behavior: "smooth" });
+            card?.scrollIntoView({ block: "start", behavior: smoothScroll() });
             // Ready to type once it is back in view.
             setTimeout(() => (document.querySelector("[data-start-search]") as HTMLInputElement | null)?.focus({ preventScroll: true }), 450);
           }}

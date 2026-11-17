@@ -6,6 +6,7 @@ import type { Fit, Timing } from "@/lib/reviewLimits";
 import "@/lib/legacyStorage";
 import { LangLink, useT } from "@/lib/i18n";
 import { PREVIEW_MESSAGE } from "@/lib/previewGuard";
+import { useLeave } from "@/lib/usePresence";
 
 const REVIEWER_KEY = "turuj-reviewer";
 
@@ -50,6 +51,8 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
   const [timing, setTiming] = useState<Timing | null>(null);
   const [state, setState] = useState<"idle" | "sending" | "error" | "preview">("idle");
   const tx = useT();
+  // Fades and scales away before the parent removes it (Peter, 17 Nov).
+  const { state: motion, leave } = useLeave();
 
   async function send() {
     setState("sending");
@@ -61,15 +64,16 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
       });
       if (r.status === 403 && (await r.json().catch(() => null))?.error === "preview") return setState("preview");
       if (!r.ok) throw new Error(String(r.status));
-      onDone(true);
+      leave(() => onDone(true));
     } catch {
       setState("error");
     }
   }
 
   return (
-    <div role="dialog" aria-modal="true" aria-label={tx("Hodnotenie: {name}", { name })} className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4">
-      <div className="flex w-full max-w-[420px] flex-col gap-4 rounded-[var(--radius-card)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-float)]">
+    <div role="dialog" aria-modal="true" aria-label={tx("Hodnotenie: {name}", { name })} className="fixed inset-0 z-50 grid place-items-center p-4">
+      <div data-state={motion} className="pres pres-backdrop absolute inset-0 bg-black/45" />
+      <div data-state={motion} className="pres pres-pop relative flex w-full max-w-[420px] flex-col gap-4 rounded-[var(--radius-card)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-float)]">
         <div>
           <h2 className="text-lg font-extrabold">{tx("Aký bol výlet?")}</h2>
           <p className="text-sm text-[var(--muted)]">{name} · {tx("zaberie to pár sekúnd")}</p>
@@ -133,7 +137,7 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
         {state === "preview" && <p className="text-sm text-[var(--muted)]">{tx(PREVIEW_MESSAGE)}</p>}
         {state === "error" && <p className="flex items-start gap-1.5 text-sm text-[var(--danger)]"><UiIcon name="warn" size={15} className="mt-0.5" /><span>{tx("Nepodarilo sa odoslať. Skúste to o chvíľu.")}</span></p>}
         <div className="flex justify-between gap-2">
-          <button type="button" onClick={() => onDone(false)} className="rounded-full border border-[var(--border)] px-4 py-2.5 text-sm font-semibold">
+          <button type="button" onClick={() => leave(() => onDone(false))} className="rounded-full border border-[var(--border)] px-4 py-2.5 text-sm font-semibold">
             {tx("Teraz nie")}
           </button>
           <button

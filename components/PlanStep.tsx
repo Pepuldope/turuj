@@ -264,10 +264,11 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     // The step left behind folds once it has left the screen: above it going forward, below it going back.
     const left = document.getElementById(`plan-step-${go.from}`)?.closest("section");
     let folded = false;
-    const foldLeft = () => {
+    // `quiet`: off the screen, at once with the step in view held. Otherwise it rolls shut as usual.
+    const foldLeft = (quiet: boolean) => {
       folded = true;
-      anchorOn(id);
-      setStill((x) => ({ ...x, [go.from]: true }));
+      if (quiet) anchorOn(id);
+      setStill((x) => ({ ...x, [go.from]: quiet }));
       setOpen((o) => ({ ...o, [go.from]: false }));
     };
     const begin = () => (glide.current = glideUnderBar(section, 0, null, (done) => {
@@ -277,8 +278,11 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       const top = box ? box.getBoundingClientRect().top : 0;
       const bottom = box ? box.getBoundingClientRect().bottom : window.innerHeight;
       const off = go.forward ? r.bottom <= top : r.top >= bottom;
-      // Still in view when the glide ends (a short page): it folds now all the same, the step in view held.
-      if (off || done) foldLeft();
+      if (off) foldLeft(true);
+      // Still in view when the glide ends. Going back it is below the step arrived at, so its roll moves nothing above
+      // it: it rolls shut where you can see it (Peter, 17 Nov: on a wide screen it snapped shut in view). Going
+      // forward (a short page) it is above, and folds at once with the step in view held.
+      else if (done) foldLeft(go.forward);
     }));
     if (go.forward) return void begin();
     // Going back, the step above opens first (held in place, holdAnchor): the glide measures its way after that, two

@@ -16,6 +16,10 @@ import { PickPin } from "@/components/PickStartMap";
 import { pageLang, tr } from "@/lib/lang";
 import { mapLocale } from "@/lib/mapLocale";
 import { foldAttribution } from "@/lib/mapAttribution";
+import { reducedMotion } from "@/lib/motion";
+
+/** Camera moves jump instead of gliding when the visitor asked for less motion (Peter, 17 Nov). */
+const still = () => (reducedMotion() ? { duration: 0 } : {});
 
 type MapLibre = typeof import("maplibre-gl");
 type Box = [number, number, number, number];
@@ -741,7 +745,7 @@ export function BrowseMap({
         // stays in the middle and a tap brings that spot under it.
         if (pickingRef.current) {
           if (fine) return setPickAt({ lat: e.lngLat.lat, lon: e.lngLat.lng });
-          return void m.easeTo({ center: e.lngLat, duration: 400 });
+          return void m.easeTo({ center: e.lngLat, duration: reducedMotion() ? 0 : 400 });
         }
         const r = fine ? 6 : 14;
         // Zoomed out: a tap on any line zooms in there, so nothing is a dead end.
@@ -758,7 +762,7 @@ export function BrowseMap({
           const any = m.queryRenderedFeatures([[e.point.x - r, e.point.y - r], [e.point.x + r, e.point.y + r]], {
             layers: ["trip-lines-line", "network-line"].filter((id) => m.getLayer(id)),
           }).length;
-          if (any) m.easeTo({ center: e.lngLat, zoom: areaZoom + 1.5 });
+          if (any) m.easeTo({ center: e.lngLat, zoom: areaZoom + 1.5, ...still() });
           return;
         }
         const found = under(m, e, r);
@@ -777,7 +781,7 @@ export function BrowseMap({
     function zoomToArea(m: MlMap, a: BrowseArea) {
       const cam = m.cameraForBounds([[a.bbox[0], a.bbox[1]], [a.bbox[2], a.bbox[3]]], { padding: 24 });
       // The whole area in view; trips show from the area zoom on, so never stop short of it.
-      m.easeTo({ center: cam?.center ?? [a.location.lon, a.location.lat], zoom: Math.max(cam?.zoom ?? 0, areaZoom + 0.05) });
+      m.easeTo({ center: cam?.center ?? [a.location.lon, a.location.lat], zoom: Math.max(cam?.zoom ?? 0, areaZoom + 0.05), ...still() });
     }
     zoomToAreaRef.current = (a) => map && zoomToArea(map, a);
     hoverAreaRef.current = (id) => map && setHoverArea(map, id);
@@ -954,9 +958,9 @@ export function BrowseMap({
     const pad = { top: 40, left: 40, right: 40, bottom: 40 + insetRef.current };
     if (focus.kind === "box") {
       const [w, s, e, n] = focus.bbox;
-      map.fitBounds([[w, s], [e, n]], { padding: pad, maxZoom: focus.maxZoom ?? 13 });
+      map.fitBounds([[w, s], [e, n]], { padding: pad, maxZoom: focus.maxZoom ?? 13, ...still() });
     } else {
-      map.easeTo({ center: [focus.location.lon, focus.location.lat], zoom: focus.zoom });
+      map.easeTo({ center: [focus.location.lon, focus.location.lat], zoom: focus.zoom, ...still() });
     }
     // Only a new request (key) moves the map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1011,7 +1015,7 @@ export function BrowseMap({
     // A new start (or the first one with no remembered view): show its surroundings, where the nearest trips are.
     const key = start ? `${start.lat.toFixed(4)},${start.lon.toFixed(4)}` : null;
     if (key && key !== startKey.current && (startKey.current !== undefined || !initialRef.current)) {
-      map.easeTo({ center: [start!.lon, start!.lat], zoom: AREA_ZOOM - ctx.shift + START_ZOOM_IN, duration: startKey.current === undefined ? 0 : 900 });
+      map.easeTo({ center: [start!.lon, start!.lat], zoom: AREA_ZOOM - ctx.shift + START_ZOOM_IN, duration: startKey.current === undefined || reducedMotion() ? 0 : 900 });
     }
     startKey.current = key;
     if (fix) {
@@ -1105,7 +1109,7 @@ export function BrowseMap({
               onClick={() => {
                 setStartMenu(false);
                 // On a touch screen the pick pin sits in the middle: start it from the current start.
-                if (!finePointer) ctx?.map.easeTo({ center: [startAt.lon, startAt.lat], duration: 400 });
+                if (!finePointer) ctx?.map.easeTo({ center: [startAt.lon, startAt.lat], duration: reducedMotion() ? 0 : 400 });
                 setPicking(true);
               }}
               className="h-9 flex-1 rounded-[10px] bg-[var(--accent)] px-3.5 font-bold whitespace-nowrap text-[var(--accent-contrast)]"

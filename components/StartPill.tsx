@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useLeave } from "@/lib/usePresence";
 import { StartChip } from "@/components/StartChip";
 import { UiIcon } from "@/components/UiIcon";
 import { useUserLocation } from "@/lib/userLocation";
@@ -93,16 +94,18 @@ export function StartSheet({ onClose, focusSearch = false }: { onClose: () => vo
     box.current?.querySelector<HTMLInputElement>("[data-start-search]")?.focus({ preventScroll: true });
     document.getElementById(STAND_IN)?.remove();
   }, [focusSearch]);
+  // Closing slides the sheet down and fades the backdrop first, then tells the parent (Peter, 17 Nov).
+  const { state, leave } = useLeave();
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && leave(onClose);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [leave, onClose]);
   return (
     <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label={t("Odkiaľ vyrážate")}>
-      <div className="absolute inset-0 bg-black/45" onClick={onClose} />
-      <div ref={box} className="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-[20px] bg-[var(--card-bg)] px-4 pt-[18px] pb-[max(28px,env(safe-area-inset-bottom))] shadow-[var(--shadow-float)] lg:w-[460px]">
-        <StartChip onDone={onClose} />
+      <div data-state={state} className="pres pres-backdrop absolute inset-0 bg-black/45" onClick={() => leave(onClose)} />
+      <div ref={box} data-state={state} className="pres pres-sheet absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-[20px] bg-[var(--card-bg)] px-4 pt-[18px] pb-[max(28px,env(safe-area-inset-bottom))] shadow-[var(--shadow-float)] lg:w-[460px]">
+        <StartChip onDone={() => leave(onClose)} />
       </div>
     </div>
   );

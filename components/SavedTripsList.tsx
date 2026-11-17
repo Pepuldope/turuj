@@ -18,6 +18,7 @@ import { useSavedTrips } from "@/lib/savedTrips";
 import type { SavedTrip } from "@/lib/savedTrips";
 import { useTripSettings } from "@/lib/tripSettings";
 import { useUserLocation } from "@/lib/userLocation";
+import { Reveal } from "@/components/Reveal";
 import { ReviewSheet } from "@/components/ReviewSheet";
 import { SunArc } from "@/components/SunArc";
 import { TrailMode, activeTrip, trackTrailStart } from "@/components/TrailMode";
@@ -32,6 +33,9 @@ function todayIso(): string {
 export function SavedTripsList() {
   const { trips, remove, patch } = useSavedTrips();
   const [reviewing, setReviewing] = useState<SavedTrip | null>(null);
+  // A card moving between "Plánované" and "Absolvované" rolls out of one list and into the other (Peter, 17 Nov), but only
+  // once the visitor has pressed something: the trips come out of storage right after hydration, and that is not an event.
+  const [touched, setTouched] = useState(false);
   const { update } = useTripSettings();
   const { setManualStart } = useUserLocation();
   const router = useRouter();
@@ -102,6 +106,7 @@ export function SavedTripsList() {
   const planned = trips.filter((x) => !x.doneAt);
   const done = trips.filter((x) => x.doneAt);
   const went = (trip: SavedTrip) => {
+    setTouched(true);
     patch(trip.slug, { doneAt: new Date().toISOString() });
     if (!trip.reviewed) setReviewing(trip);
   };
@@ -119,38 +124,51 @@ export function SavedTripsList() {
           }}
         />
       )}
-      {planned.length > 0 && done.length > 0 && <h2 className="text-base font-bold">{t("Plánované")}</h2>}
-      {planned.length > 0 && <TripList trips={planned} today={today} open={open} remove={remove} went={went} start={startTrip} />}
-      {done.length > 0 && (
-        <>
-          <h2 className="pt-2 text-base font-bold">
+      <div className="flex flex-col">
+        <Reveal open={planned.length > 0} className="roll-gap [--roll-gap:20px]" appear={touched} animate={touched}>
+          <Reveal open={done.length > 0} animate={touched} appear={touched}>
+            <h2 className="pb-5 text-base font-bold">{t("Plánované")}</h2>
+          </Reveal>
+          <TripList trips={trips} today={today} open={open} remove={remove} went={went} start={startTrip} animate={touched} />
+        </Reveal>
+        <Reveal open={done.length > 0} className="roll-gap [--roll-gap:20px]" appear={touched} animate={touched}>
+          <h2 className="pt-2 pb-5 text-base font-bold">
             {t("Absolvované")} <span className="font-semibold text-[var(--muted)]">· {done.length}</span>
           </h2>
-          <ul className="flex flex-col gap-2">
-            {done.map((trip) => (
-              <li key={trip.slug} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3">
-                <span className="text-[var(--ok)]" aria-hidden>
-                  ✓
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="font-semibold">{trip.name}</span>
-                  <span className="text-[13px] text-[var(--muted)]">{formatDateSk(trip.date, lang)}</span>
-                </span>
-                {trip.reviewed ? (
-                  <span className="text-[13px] font-semibold text-[var(--muted)]">{t("ohodnotené")}</span>
-                ) : (
-                  <button type="button" onClick={() => setReviewing(trip)} className="rounded-full border border-[var(--accent)] px-3 py-1.5 text-[13px] font-bold text-[var(--accent)]">
-                    {t("Ohodnotiť")}
+          <ul className="flex flex-col">
+            {trips.map((trip) => (
+              <Reveal as="li" key={trip.slug} open={!!trip.doneAt} className="roll-gap [--roll-gap:8px]" appear={touched} animate={touched}>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3">
+                  <span className="text-[var(--ok)]" aria-hidden>
+                    ✓
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="font-semibold">{trip.name}</span>
+                    <span className="text-[13px] text-[var(--muted)]">{formatDateSk(trip.date, lang)}</span>
+                  </span>
+                  {trip.reviewed ? (
+                    <span className="text-[13px] font-semibold text-[var(--muted)]">{t("ohodnotené")}</span>
+                  ) : (
+                    <button type="button" onClick={() => setReviewing(trip)} className="rounded-full border border-[var(--accent)] px-3 py-1.5 text-[13px] font-bold text-[var(--accent)]">
+                      {t("Ohodnotiť")}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTouched(true);
+                      patch(trip.slug, { doneAt: undefined });
+                    }}
+                    className="text-[13px] font-semibold text-[var(--muted)] underline"
+                  >
+                    {t("Ešte nie")}
                   </button>
-                )}
-                <button type="button" onClick={() => patch(trip.slug, { doneAt: undefined })} className="text-[13px] font-semibold text-[var(--muted)] underline">
-                  {t("Ešte nie")}
-                </button>
-              </li>
+                </div>
+              </Reveal>
             ))}
           </ul>
-        </>
-      )}
+        </Reveal>
+      </div>
     </>
   );
 }
@@ -162,7 +180,9 @@ function TripList({
   remove,
   went,
   start,
+  animate,
 }: {
+  animate: boolean;
   trips: SavedTrip[];
   today: string;
   open: (trip: SavedTrip) => void;
@@ -171,9 +191,11 @@ function TripList({
   start: (trip: SavedTrip) => void;
 }) {
   return (
-    <ul className="flex flex-col gap-3">
+    <ul className="flex flex-col">
       {trips.map((trip) => (
-        <TripCard key={trip.slug} trip={trip} today={today} open={open} remove={remove} went={went} start={start} />
+        <Reveal as="li" key={trip.slug} open={!trip.doneAt} className="roll-gap [--roll-gap:12px]" appear={animate} animate={animate}>
+          <TripCard trip={trip} today={today} open={open} remove={remove} went={went} start={start} />
+        </Reveal>
       ))}
     </ul>
   );
@@ -287,7 +309,7 @@ function TripCard({
   const good = plan?.verdict === "ok" || plan?.verdict === "close";
   const weather = useSavedWeather(trip, plan, past);
   return (
-          <li className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] p-4">
+          <div className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-x-3">
               <h2 className="text-lg font-semibold">{trip.name}</h2>
               <span className="text-sm tabular-nums">
@@ -353,6 +375,6 @@ function TripCard({
                 {t("Odstrániť")}
               </button>
             </div>
-          </li>
+          </div>
   );
 }

@@ -19,6 +19,7 @@ import type { TripProfile } from "@/lib/tripProfile";
 import type { LatLng } from "@/lib/types";
 import { hourOf } from "@/lib/zoned";
 import { useLang, useT } from "@/lib/i18n";
+import { reducedMotion } from "@/lib/motion";
 
 const MIN = 60000;
 const HOUR = 60 * MIN;
@@ -398,8 +399,27 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   const scrubRef = useRef(scrub);
   scrubRef.current = scrub;
   const playedRef = useRef(false);
+  // When the mouse leaves, the moment eases back to the resting time over 300 ms instead of snapping (Peter, 17 Nov);
+  // with reduced motion it still snaps. Any new touch of the dial cancels the glide.
+  const backRaf = useRef(0);
+  useEffect(() => () => cancelAnimationFrame(backRaf.current), []);
+  const easeBack = () => {
+    cancelAnimationFrame(backRaf.current);
+    const from = scrubRef.current;
+    if (from === null) return;
+    if (reducedMotion()) return setScrub(null);
+    const t0 = performance.now();
+    backRaf.current = requestAnimationFrame(function step(now) {
+      const f = Math.min(1, (now - t0) / 300);
+      if (f < 1) {
+        setScrub(from + (restT - from) * (1 - Math.pow(1 - f, 3)));
+        backRaf.current = requestAnimationFrame(step);
+      } else setScrub(null);
+    });
+  };
   // Any touch on the dial takes over from the playing day.
   const take = (at: number | null) => {
+    cancelAnimationFrame(backRaf.current);
     setPlaying(false);
     setScrub(at);
   };
@@ -525,7 +545,10 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   const onMove = (e: ReactPointerEvent) => {
     if (dragging.current) take(timeAt(e.clientX));
     // A mouse just passing over does not stop a playing day (it is on its way to the button).
-    else if (e.pointerType === "mouse" && !playing) setScrub(timeAt(e.clientX));
+    else if (e.pointerType === "mouse" && !playing) {
+      cancelAnimationFrame(backRaf.current);
+      setScrub(timeAt(e.clientX));
+    }
   };
   const timeAtRef = useRef(timeAt);
   timeAtRef.current = timeAt;
@@ -556,6 +579,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
         if (!sideways) return;
       }
       if (e.cancelable) e.preventDefault();
+      cancelAnimationFrame(backRaf.current);
       setPlaying(false);
       setScrub(timeAtRef.current(clientX));
     };
@@ -578,7 +602,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
     <div
       className="touch-pan-y select-none [-webkit-touch-callout:none]"
       onPointerMove={onMove}
-      onPointerLeave={(e) => e.pointerType === "mouse" && !playing && setScrub(null)}
+      onPointerLeave={(e) => e.pointerType === "mouse" && !playing && easeBack()}
     >
       <div className="relative">
       <svg

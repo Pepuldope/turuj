@@ -914,3 +914,170 @@ h2,
     }
   }
 }
+
+/*
+ * Things that appear and disappear without rolling: menus, sheets, backdrops, dialogs (Peter, 17 Nov). They come
+ * with lib/usePresence.ts, which keeps them in the page while they leave and sets data-state. Opening is a CSS
+ * animation (so it needs no extra frame to start from), closing is a transition to the closed look. A sheet
+ * slides its own height, a dropdown moves 8 px, a dialog scales from 0.97. Reduced motion: nothing moves, what
+ * appears fades in over 150 ms from a quarter (never a blank frame), and what closes just goes.
+ */
+.pres[data-state="closed"] {
+  pointer-events: none;
+}
+.pres-drop[data-state="closed"] {
+  opacity: 0;
+  translate: 0 -8px;
+  transition:
+    opacity 120ms ease-in,
+    translate 120ms ease-in;
+}
+.pres-drop[data-state="open"] {
+  animation: pres-drop-in 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+@keyframes pres-drop-in {
+  from {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+}
+.pres-fade[data-state="closed"] {
+  opacity: 0;
+  transition: opacity 120ms ease-in;
+}
+.pres-fade[data-state="open"] {
+  animation: pres-fade-in 120ms ease-out;
+}
+@keyframes pres-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.pres-backdrop[data-state="closed"] {
+  opacity: 0;
+  transition: opacity 220ms ease-in;
+}
+.pres-backdrop[data-state="open"] {
+  animation: pres-fade-in 240ms ease-out;
+}
+.pres-sheet[data-state="closed"] {
+  translate: 0 100%;
+  transition: translate 220ms cubic-bezier(0.4, 0, 0.7, 1);
+}
+.pres-sheet[data-state="open"] {
+  animation: pres-sheet-in 320ms cubic-bezier(0.2, 0, 0, 1);
+}
+@keyframes pres-sheet-in {
+  from {
+    translate: 0 100%;
+  }
+}
+/* A bar that floats above the bottom edge (the app bar): it has to leave by its own height plus its gap. */
+.pres-bar[data-state="closed"] {
+  translate: 0 calc(100% + 40px);
+  transition: translate 220ms cubic-bezier(0.4, 0, 0.7, 1);
+}
+.pres-bar[data-state="open"] {
+  animation: pres-bar-in 320ms cubic-bezier(0.2, 0, 0, 1);
+}
+@keyframes pres-bar-in {
+  from {
+    translate: 0 calc(100% + 40px);
+  }
+}
+.pres-pop[data-state="closed"] {
+  opacity: 0;
+  scale: 0.97;
+  transition:
+    opacity 120ms ease-in,
+    scale 120ms ease-in;
+}
+.pres-pop[data-state="open"] {
+  animation: pres-pop-in 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+@keyframes pres-pop-in {
+  from {
+    opacity: 0;
+    scale: 0.97;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pres[data-state="closed"] {
+    translate: none;
+    scale: none;
+    transition: none;
+  }
+  .pres[data-state="open"] {
+    animation: reveal-fade 150ms ease-out;
+  }
+}
+
+/* A photo that has just loaded fades in (components/TripCard.tsx, Peter, 17 Nov); reduced motion keeps only a short fade. */
+.img-fade-in {
+  animation: pres-fade-in 220ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .img-fade-in {
+    animation: reveal-fade 150ms ease-out;
+  }
+}
+
+/*
+ * A list whose rows roll out and in (the saved trips, Peter, 17 Nov): the gap between rows is each row's own top
+ * margin, and it grows and shrinks in step with the row's height. A plain flex gap stays until the row is unmounted,
+ * and then the rest of the list jumps by the gap. Set --roll-gap on the row; the first row has none, and neither
+ * has the row after a first row that is closing.
+ */
+.roll-gap {
+  margin-top: var(--roll-gap, 12px);
+  transition:
+    grid-template-rows 220ms cubic-bezier(0.4, 0, 0.7, 1),
+    margin-top 220ms cubic-bezier(0.4, 0, 0.7, 1);
+}
+.roll-gap[data-open="true"] {
+  transition:
+    grid-template-rows 320ms cubic-bezier(0.2, 0, 0, 1),
+    margin-top 320ms cubic-bezier(0.2, 0, 0, 1);
+}
+.roll-gap:first-child,
+.roll-gap[data-open="false"],
+.roll-gap[data-open="false"]:first-child + .roll-gap {
+  margin-top: 0;
+}
+.roll-gap[data-still="true"] {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .roll-gap,
+  .roll-gap[data-open="true"] {
+    transition: none;
+  }
+}
+
+/*
+ * The same for a row inside a flex column that has its own `gap` (Peter, 17 Nov): while the row is closed or closing
+ * its top margin cancels the gap above it, in step with the height, so nothing jumps when it is finally removed.
+ * Set --roll-gap to the column's gap.
+ */
+.roll-flex-gap {
+  transition:
+    grid-template-rows 220ms cubic-bezier(0.4, 0, 0.7, 1),
+    margin-top 220ms cubic-bezier(0.4, 0, 0.7, 1);
+}
+.roll-flex-gap[data-open="true"] {
+  transition:
+    grid-template-rows 320ms cubic-bezier(0.2, 0, 0, 1),
+    margin-top 320ms cubic-bezier(0.2, 0, 0, 1);
+}
+.roll-flex-gap[data-open="false"] {
+  margin-top: calc(-1 * var(--roll-gap, 12px));
+}
+.roll-flex-gap[data-still="true"] {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .roll-flex-gap,
+  .roll-flex-gap[data-open="true"] {
+    transition: none;
+  }
+}
