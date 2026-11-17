@@ -1,5 +1,6 @@
 "use client";
 
+import { Reveal } from "@/components/Reveal";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent, ReactNode, RefObject } from "react";
 import { KedyDays } from "@/components/KedyDays";
@@ -346,7 +347,10 @@ function Card({ card, today, onPick, children }: { card: KedyCard; today: string
   return (
     <div aria-current="true" className="flex flex-col gap-3 rounded-xl border border-[var(--accent)] bg-[var(--background)] px-4 py-3.5">
       {head}
-      {children}
+      {/* The time slider and the rest roll out when the card is picked (Peter, 17 Nov). The gap above is inside the reveal. */}
+      <Reveal open appear className="-mt-3">
+        <div className="flex flex-col gap-3 pt-3">{children}</div>
+      </Reveal>
     </div>
   );
 }

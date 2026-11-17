@@ -32,7 +32,7 @@ export interface TripProfile {
    */
   places?: { id: string; kind: PoiKind; icon?: PoiIcon; out: number; back: number | null; name?: string; detour?: number }[];
   /** Stops the group added, as stretches of the day spent standing (filled by withStops). */
-  pauses?: { from: number; to: number; name: string; kind?: PoiKind; icon?: PoiIcon }[];
+  pauses?: { from: number; to: number; name: string; kind?: PoiKind; icon?: PoiIcon; goal?: DestinationKind }[];
 }
 
 /** A stop laid on the walk: where it is (share of the walking time) and how long it takes. */
@@ -44,6 +44,8 @@ export interface PauseAt {
   kind?: PoiKind;
   /** Its pictogram (food places by kind of food place). */
   icon?: PoiIcon;
+  /** The time spent at the trip's goal (C190): the goal's kind, for its colour and icon. */
+  goal?: DestinationKind;
 }
 
 /** About this many points is plenty for a 360 px wide picture. */
@@ -233,7 +235,7 @@ export function withStops(profile: TripProfile, stops: PauseAt[], hikeMin: numbe
       stood += s.min / Math.max(1, hikeMin);
       const ele = eleAt(s.at);
       points.push({ ele, at: from, colour }, { ele, at: s.at * walkShare + stood, colour: null });
-      pauses.push({ from, to: s.at * walkShare + stood, name: s.name, kind: s.kind, icon: s.icon });
+      pauses.push({ from, to: s.at * walkShare + stood, name: s.name, kind: s.kind, icon: s.icon, goal: s.goal });
     }
   };
   pts.forEach((p, i) => {

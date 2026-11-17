@@ -63,7 +63,7 @@ const CARD = "rounded-[var(--radius-card)] border border-[var(--border)] bg-[var
 /** One question: the H2 and a one-line teaser answer in the summary, the full answer inside. */
 function Row({ title, teaser, children }: { title: string; teaser: string | null; children: ReactNode }) {
   return (
-    <details className={`group ${CARD}`}>
+    <details className={`group details-roll ${CARD}`}>
       <summary className="flex min-h-14 cursor-pointer rounded-[var(--radius-card)] list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <h2 className="text-base font-semibold leading-snug text-[var(--foreground)]">{title}</h2>

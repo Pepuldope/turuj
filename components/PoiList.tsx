@@ -9,6 +9,7 @@ import type { LatLng, Poi } from "@/lib/types";
 import { UiIcon } from "@/components/UiIcon";
 import { LUNCH, stopFor, useTripStops, visits } from "@/lib/tripStops";
 import type { TripStop } from "@/lib/tripStops";
+import { Reveal } from "@/components/Reveal";
 import { ShowMore, shownRows } from "@/components/ShowMore";
 import { LunchTime, WaySwitch, useLunchPick } from "@/components/StopsRow";
 import { floorTo5 } from "@/lib/days";
@@ -74,9 +75,12 @@ export function PoiList({
   const ordered = [...free.filter((p) => p.detour_min === null), ...free.filter((p) => p.detour_min !== null)];
   const rows = shownRows(ordered.length, all);
   const seen = ordered.filter((_, i) => rows.includes(i));
+  // Every unchosen place stays in the list and rolls out or in with "Zobraziť ďalšie" (Peter, 17 Nov), so each row and each
+  // group of rows carries whether it is shown now.
+  const shownIds = new Set(seen.map((p) => p.id));
   const onTotal = free.filter((p) => p.detour_min === null).length;
-  const on = seen.filter((p) => p.detour_min === null);
-  const off = seen.filter((p) => p.detour_min !== null);
+  const on = ordered.filter((p) => p.detour_min === null);
+  const off = ordered.filter((p) => p.detour_min !== null);
   const word =
     lang === "en" ? (onTotal === 1 ? "place" : "places") : onTotal === 1 ? "miesto" : onTotal < 5 ? "miesta" : "miest";
 
@@ -129,20 +133,20 @@ export function PoiList({
         </section>
       )}
 
-      {on.length > 0 && (
+      <Reveal open={on.some((p) => shownIds.has(p.id))}>
         <Group title={t("Na trase")} side={`${onTotal} ${word}`}>
           {on.map((p) => (
-            <FreeRow key={p.id} p={p} near={near[p.id]} onAdd={() => choose(p)} />
+            <FreeRow key={p.id} p={p} near={near[p.id]} onAdd={() => choose(p)} open={shownIds.has(p.id)} />
           ))}
         </Group>
-      )}
-      {off.length > 0 && (
+      </Reveal>
+      <Reveal open={off.some((p) => shownIds.has(p.id))}>
         <Group title={t("Kúsok bokom")} side={t("odbočka z trasy")}>
           {off.map((p) => (
-            <FreeRow key={p.id} p={p} near={near[p.id]} onAdd={() => choose(p)} />
+            <FreeRow key={p.id} p={p} near={near[p.id]} onAdd={() => choose(p)} open={shownIds.has(p.id)} />
           ))}
         </Group>
-      )}
+      </Reveal>
       <ShowMore kind="places" hidden={ordered.length - seen.length} open={all} onToggle={() => setAll((v) => !v)} />
 
       {advice && plan && (
@@ -238,11 +242,12 @@ const nameBtn =
   "-ml-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-1 pl-1 text-left focus-visible:outline-2 focus-visible:outline-[var(--accent)]";
 
 /** A place not chosen yet: tile, name, kind and where, its minutes, a round "+". */
-function FreeRow({ p, near, onAdd }: { p: Poi; near?: LatLng; onAdd: () => void }) {
+function FreeRow({ p, near, onAdd, open = true }: { p: Poi; near?: LatLng; onAdd: () => void; /** False for a row folded away behind "Zobraziť ďalšie": it rolls out when it turns true. */ open?: boolean }) {
   const t = useT();
   const row = usePinRow(`poi-${p.id}`);
   return (
-    <li {...row.handlers} className={`flex items-center gap-2 py-2 ${row.hover}`}>
+    <Reveal as="li" open={open}>
+    <div {...row.handlers} className={`flex items-center gap-2 py-2 ${row.hover}`}>
       <button type="button" onClick={() => showOnMap(p, near)} className={nameBtn}>
         <KindIcon kind={poiIcon(p)} colour={POI_COLOUR[p.kind]} size={44} />
         <span className="flex min-w-0 flex-1 flex-col">
@@ -259,7 +264,8 @@ function FreeRow({ p, near, onAdd }: { p: Poi; near?: LatLng; onAdd: () => void 
       >
         +
       </button>
-    </li>
+    </div>
+    </Reveal>
   );
 }
 

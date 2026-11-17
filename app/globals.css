@@ -810,3 +810,90 @@ h2,
 .mt-driveend[data-edge="start"] .mt-driveend-box {
   transform: translate(-50%, -50%);
 }
+
+/*
+ * Reveal (components/Reveal.tsx) and the plan steps (components/PlanStep.tsx), Peter, 17 Nov: things that open
+ * roll out. The height glides (grid rows 0fr to 1fr), the content follows a beat later, and closing is quicker
+ * than opening. Keep the numbers in step with REVEAL_OPEN_MS / REVEAL_CLOSE_MS and the step's FOLD_MS / UNFOLD_MS.
+ */
+.reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms cubic-bezier(0.4, 0, 0.7, 1);
+}
+.reveal[data-open="true"] {
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 320ms cubic-bezier(0.2, 0, 0, 1);
+}
+.reveal-clip {
+  min-height: 0;
+  overflow: hidden;
+}
+.reveal[data-settled="true"] > .reveal-clip {
+  overflow: visible;
+}
+/* Closed (or closing): the content goes first, fast, then is hidden for good once the height is gone. */
+.reveal-body {
+  opacity: 0;
+  translate: 0 -6px;
+  visibility: hidden;
+  transition:
+    opacity 120ms ease-in,
+    translate 120ms ease-in,
+    visibility 0s linear 220ms;
+}
+/* Open: the content comes in a little after the height starts moving. */
+.reveal[data-open="true"] > .reveal-clip > .reveal-body {
+  opacity: 1;
+  translate: 0 0;
+  visibility: visible;
+  transition:
+    opacity 240ms ease-out 100ms,
+    translate 300ms cubic-bezier(0.2, 0, 0, 1) 60ms,
+    visibility 0s;
+}
+.reveal[data-still="true"],
+.reveal[data-still="true"] .reveal-body {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal[data-open="true"],
+  .reveal .reveal-body,
+  .reveal[data-open="true"] > .reveal-clip > .reveal-body {
+    transition: none;
+  }
+}
+
+/*
+ * Native <details> sections open and close smoothly where the browser can animate to "auto" height
+ * (Chrome and Safari: ::details-content with interpolate-size). Elsewhere they open as before.
+ */
+@supports selector(::details-content) {
+  .details-roll {
+    interpolate-size: allow-keywords;
+  }
+  .details-roll::details-content {
+    block-size: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      block-size 220ms cubic-bezier(0.4, 0, 0.7, 1),
+      opacity 120ms ease-in,
+      content-visibility 220ms allow-discrete;
+  }
+  .details-roll[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+    transition:
+      block-size 320ms cubic-bezier(0.2, 0, 0, 1),
+      opacity 240ms ease-out 100ms,
+      content-visibility 320ms allow-discrete;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .details-roll::details-content,
+    .details-roll[open]::details-content {
+      transition: none;
+    }
+  }
+}

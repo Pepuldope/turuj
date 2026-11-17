@@ -105,7 +105,7 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
         {tr(lang, "Všetky výlety na mape")}
       </Link>
       {credits.length > 0 && (
-        <details className="text-[13px] text-[var(--muted)]">
+        <details className="details-roll text-[13px] text-[var(--muted)]">
           <summary className="cursor-pointer font-semibold">{tr(lang, "Autori fotiek")}</summary>
           <ul className="mt-2 flex flex-col gap-1">
             {credits.map((t) => (

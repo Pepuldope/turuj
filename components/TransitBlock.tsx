@@ -14,6 +14,7 @@ import type { TransitStop } from "@/lib/types";
 import { clock } from "@/lib/zoned";
 import { focusOnMap } from "@/lib/mapFocus";
 import { useTripAccess } from "@/components/TripAccess";
+import { Reveal } from "@/components/Reveal";
 import { ShowMore, shownRows } from "@/components/ShowMore";
 import { UiIcon } from "@/components/UiIcon";
 import { useLang, useT } from "@/lib/i18n";
@@ -62,14 +63,15 @@ export function StopOptions() {
       {options.length === 0 && <p className="text-sm">{t("Pri trase sme nenašli zastávku vlaku ani autobusu.")}</p>}
       {timed && <p className="text-xs text-[var(--muted)]">{t("Čas od vášho štartu po začiatok túry, najrýchlejšie prvé. ~ je odhad.")}</p>}
       {options.length > 0 && (
-        <ul className="flex flex-col gap-1.5" role="radiogroup" aria-label={t("Zastávka")}>
+        <ul className="-mt-1.5 flex flex-col" role="radiogroup" aria-label={t("Zastávka")}>
           {options.map((s, i) => {
-            if (!rows.includes(i)) return null;
             const selected = i === stopChoice;
             const row = pinRow(`ts-${s.id}`);
             const total = stopTotals[i];
             return (
-              <li key={s.id}>
+              // The extra rows roll out under "Zobraziť ďalšie" (Peter, 17 Nov); the gap above a row is inside the reveal.
+              <Reveal as="li" key={s.id} open={rows.includes(i)}>
+                <div className="pt-1.5">
                 <button
                   {...row.handlers}
                   type="button"
@@ -100,7 +102,8 @@ export function StopOptions() {
                     </span>
                   )}
                 </button>
-              </li>
+              </div>
+              </Reveal>
             );
           })}
         </ul>

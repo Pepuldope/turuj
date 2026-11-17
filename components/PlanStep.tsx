@@ -38,8 +38,14 @@ interface StepsApi {
   isDone: (id: string) => boolean;
 }
 
-/** How long a step takes to fold or unfold (the CSS transition on its body uses the same). */
-const FOLD_MS = 250;
+/**
+ * How long a step takes to fold and to unfold (the `.reveal` rules in app/globals.css use the same). Peter, 17 Nov: steps
+ * and the move from one to the next felt jarring. Closing is quicker than opening, and "Ďalej" no longer starts
+ * everything in one instant: the old step folds first and the next one starts a beat (STEP_GAP_MS) later.
+ */
+const FOLD_MS = 220;
+/** The pause between the left step starting to fold and the next one starting to open. */
+const STEP_GAP_MS = 120;
 /** Finished steps, kept across a route pick like the open steps are (a new page, the same plan). */
 let keptDone: Record<string, boolean> = {};
 
@@ -50,7 +56,7 @@ const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matc
 /** The gap kept between what a scroll brings up and the edge above it. */
 const SCROLL_GAP = 12;
 /** How long the glide to the next step takes. */
-const GLIDE_MS = 450;
+const GLIDE_MS = 400;
 
 /**
  * Scrolls `el` to the top of the window, just under the phone's top bar. The bar's real height is read
@@ -103,7 +109,8 @@ function glideUnderBar(el: Element, holdMs: number, folding: Element | null): ()
   const step = (now: number) => {
     const { box, top } = where();
     const p = Math.min(1, (now - t0) / GLIDE_MS);
-    const eased = 1 - Math.pow(1 - p, 3);
+    // Slow at both ends: a hard start on top of the fold moving under it read as a jerk (Peter, 17 Nov).
+    const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
     const at = from + (top - from) * eased;
     if (box) box.scrollTo({ top: at, behavior: "instant" });
     else window.scrollTo({ top: at, behavior: "instant" });
@@ -150,6 +157,16 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     return () => clearTimeout(later);
   }, []);
   const pending = useRef<{ to: string; from: string; forward: boolean } | null>(null);
+  const gap = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // The running glide, kept here (not as an effect cleanup) so the next step opening a beat later doesn't cancel it.
+  const glide = useRef<(() => void) | null>(null);
+  useEffect(
+    () => () => {
+      clearTimeout(gap.current);
+      glide.current?.();
+    },
+    []
+  );
   const fitFor = (id: string) => steps.find((s) => s.id === id)?.fit;
   const api: StepsApi = {
     steps,
@@ -168,7 +185,11 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       if (fit) fitOnMap(fit);
       // Forward ("Ďalej") marks the step left behind as done; "Späť" leaves the ticks as they are.
       if (forward) setDone((d) => ({ ...d, [from]: true }));
-      setOpen((o) => ({ ...o, [from]: false, [to]: true }));
+      // The left step folds now, the next one opens a beat later (and at once without motion).
+      setOpen((o) => ({ ...o, [from]: false }));
+      clearTimeout(gap.current);
+      if (reduced()) setOpen((o) => ({ ...o, [to]: true }));
+      else gap.current = setTimeout(() => setOpen((o) => ({ ...o, [to]: true })), STEP_GAP_MS);
     },
     openStep: (id) => {
       pending.current = { to: id, from: id, forward: false };
@@ -178,12 +199,12 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       setOpen((o) => ({ ...o, [id]: true }));
     },
     // "Hotovo": the last step closes and is ticked like "Ďalej" does for the others (Peter, 17 Nov), then the view
-    // glides to the day, once the step has folded (250 ms) so the target doesn't move under the scroll.
+    // glides to the day, once the step has folded (FOLD_MS) so the target doesn't move under the scroll.
     toResult: (from) => {
       setDone((d) => ({ ...d, [from]: true }));
       setOpen((o) => ({ ...o, [from]: false }));
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      setTimeout(() => scrollUnderBar(document.getElementById(resultId)), reduce ? 0 : 260);
+      setTimeout(() => scrollUnderBar(document.getElementById(resultId)), reduce ? 0 : FOLD_MS + 40);
     },
     isDone: (id) => !!done[id],
   };
@@ -197,11 +218,13 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     header?.focus({ preventScroll: true });
     const section = header?.closest("section");
     if (!section) return;
+    glide.current?.();
     if (reduced()) return scrollUnderBar(section);
-    // Starts at once and tracks the target while the step left behind folds and this one unfolds.
+    // Starts with the fold of the step left behind and tracks the target while it folds away. The next step
+    // opens a beat later (STEP_GAP_MS), under the target, so it doesn't move it.
     // Only a step left above is folding out from under the target (going back, the target is above it).
     const left = go.forward ? document.getElementById(`plan-step-${go.from}`)?.closest("section") : null;
-    return glideUnderBar(section, FOLD_MS + 150, left ?? null);
+    glide.current = glideUnderBar(section, FOLD_MS + 60, left ?? null);
   }, [open]);
   return <StepsContext.Provider value={api}>{children}</StepsContext.Provider>;
 }
@@ -324,24 +347,22 @@ export function PlanStep({
           <span className="text-[17px] leading-tight font-bold">{title}</span>
           <span className={`flex min-w-0 items-start gap-1.5 text-[13.5px] leading-snug font-semibold ${warn ? "text-[var(--warn)]" : "text-[var(--muted)]"}`}>
             {warn && <UiIcon name="warn" size={14} className="mt-0.5 shrink-0" />}
-            <span className="line-clamp-2 min-w-0">{summary}</span>
+            <FadeOnToggle on={open} className="line-clamp-2 min-w-0">{summary}</FadeOnToggle>
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-0.5 text-[13.5px] font-bold text-[var(--accent)]">
-          {open ? t("Hotovo") : t("Zmeniť")}
+          <FadeOnToggle on={open}>{open ? t("Hotovo") : t("Zmeniť")}</FadeOnToggle>
           <span className={`transition-transform ${open ? "rotate-180" : ""}`}>
             <UiIcon name="down" size={16} />
           </span>
         </span>
       </button>
       {mounted && (
-        // Height glides with the grid-rows trick (0fr ↔ 1fr), plus a fade; off with reduced motion.
-        <div
-          className={`grid transition-[grid-template-rows,opacity] duration-[250ms] ease-out motion-reduce:transition-none ${
-            expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-          }`}
-        >
-        <div className="min-h-0 overflow-hidden">
+        // Rolls out like Reveal: the height glides (grid rows 0fr to 1fr), the content fades in a beat after it starts.
+        // Off with reduced motion (the `.reveal` rules in app/globals.css).
+        <div className="reveal" data-open={expanded}>
+        <div className="reveal-clip">
+        <div className="reveal-body">
         <div id={bodyId} className="flex flex-col gap-2 px-3 pb-2.5">
           {children}
           {/* On to the next choice: the filled accent button (Peter, 2026-11-11), "Späť" stays quiet. */}
@@ -367,8 +388,33 @@ export function PlanStep({
         </div>
         </div>
         </div>
+        </div>
       )}
     </section>
+  );
+}
+
+/**
+ * Fades its text in when the step opens or closes and the text is not the same any more (the summary line,
+ * the "Hotovo" / "Zmeniť" label): they used to swap in one frame. Not on every change of the text: the summary
+ * follows the slider while it is dragged, and that should not flicker. Off with reduced motion.
+ */
+function FadeOnToggle({ on, className, children }: { on: boolean; className?: string; children: ReactNode }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const last = useRef<{ on: boolean; text: string | null }>({ on, text: null });
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const text = el.textContent;
+    if (last.current.text !== null && last.current.on !== on && last.current.text !== text && !reduced()) {
+      el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: "ease-out" });
+    }
+    last.current = { on, text };
+  });
+  return (
+    <span ref={ref} className={className}>
+      {children}
+    </span>
   );
 }
 

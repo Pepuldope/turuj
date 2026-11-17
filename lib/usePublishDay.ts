@@ -54,7 +54,7 @@ export function usePublishDay({
       trail: fullProfile && skip ? trimProfile(fullProfile, skip.skip_out, skip.skip_back) : fullProfile,
       // withApproach leaves the profile alone for a share this small or this big.
       approach: approachShare > 0 && approachShare < 0.5 ? approachShare : 0,
-      pauses: (profile?.pauses ?? []).map(({ from, to, kind, icon }) => ({ from, to, kind, icon })),
+      pauses: (profile?.pauses ?? []).map(({ from, to, kind, icon, goal }) => ({ from, to, kind, icon, goal })),
       goalTime: profile ? goalTime(plan, profile).getTime() : null,
       stops: [...byName].map(([name, times]) => ({ name, times })),
       mode,

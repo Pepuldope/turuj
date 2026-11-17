@@ -6,6 +6,7 @@ import { focusOnMap } from "@/lib/mapFocus";
 import { useTripAccess } from "@/components/TripAccess";
 import { approachMin } from "@/lib/dayPlan";
 import type { ParkingLot } from "@/lib/types";
+import { Reveal } from "@/components/Reveal";
 import { ShowMore, shownRows } from "@/components/ShowMore";
 import { useLang, useT } from "@/lib/i18n";
 import { decimal, tr } from "@/lib/lang";
@@ -68,14 +69,16 @@ export function ParkingOptions() {
         </p>
       )}
       {options.length > 0 && (
-        <ul className="flex flex-col gap-1.5" role="radiogroup" aria-label={t("Parkovisko")}>
+        <ul className="-mt-1.5 flex flex-col" role="radiogroup" aria-label={t("Parkovisko")}>
           {options.map((p, i) => {
-            if (!rows.includes(i)) return null;
             const selected = i === choice;
             const row = pinRow(`pk-${p.id}`);
             const fee = feeLabel(p, lang);
             return (
-              <li key={p.id}>
+              // The extra rows roll out under "Zobraziť ďalšie" (Peter, 17 Nov). The gap above each row is inside the
+              // reveal (a flex gap would leave a space for a row that is still folded).
+              <Reveal as="li" key={p.id} open={rows.includes(i)}>
+                <div className="pt-1.5">
                 <button
                   {...row.handlers}
                   type="button"
@@ -102,7 +105,8 @@ export function ParkingOptions() {
                     </span>
                   </span>
                 </button>
-              </li>
+              </div>
+              </Reveal>
             );
           })}
         </ul>

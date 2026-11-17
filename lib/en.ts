@@ -3,6 +3,15 @@
 // string shown through t()/tr() has no entry here. Trip, place and town names are never translated.
 
 export const EN: Record<string, string> = {
+  "Čas v cieli": "Time at the goal",
+  "O 5 minút kratšie": "5 minutes shorter",
+  "O 5 minút dlhšie": "5 minutes longer",
+  "Prehliadka {tour} min a čakanie na vstup asi {wait} min ({source}).": "Tour {tour} min and about {wait} min waiting for the next start ({source}).",
+  "Prehliadka asi {tour} min ({source}).": "Visit about {tour} min ({source}).",
+  "Odhad podľa typu cieľa ({kind}). Nastavte si, koľko tam chcete byť.": "Estimate for this kind of goal ({kind}). Set how long you want to stay.",
+  "Ráta sa do návratu a západu slnka.": "It counts towards your return and sunset.",
+  "Vrátiť na {min} min": "Back to {min} min",
+  "odhad": "estimate",
   "Preskočiť na výlety": "Skip to trips",
   "Mapa ukazuje tie isté výlety ako zoznam výletov.": "The map shows the same trips as the trip list.",
   "Polohu si neukladáme, použijeme ju len na výpočet cesty.": "We don't store your location; we only use it to work out the journey.",

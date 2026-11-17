@@ -61,7 +61,7 @@ export function TripReviews({ slug, name }: { slug: string; name: string }) {
         </p>
       )}
       {shown && (
-        <details className="text-xs text-[var(--muted)]">
+        <details className="details-roll text-xs text-[var(--muted)]">
           <summary className="cursor-pointer">{tx("Ako fungujú hodnotenia")}</summary>
           <p className="pt-1">
             {tx("Neoveríme, že ste na výlete boli, preto hodnotenia neoznačujeme ako overené. Počet hodnotení z jednej adresy za minútu je obmedzený. Hodnotenia priebežne prezeráme a zjavný spam alebo hromadne pridané hodnotenia mažeme. Sami výlety nehodnotíme za iných a hodnotenia neupravujeme. Hodnotenia členov tímu označíme.")}{" "}

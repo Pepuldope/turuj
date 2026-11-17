@@ -54,7 +54,9 @@ export function useTripPlan(
   /** The trip, to look it up in the start town's weekly drive table while the exact route loads. */
   slug: string | null = null,
   /** Walking from the start (Pešo, a start close to the trail): minutes one way, added to the walk; no ride. */
-  walkThereMin: number | null = null
+  walkThereMin: number | null = null,
+  /** Time spent at the goal (C190, lib/goalStay.ts): on top of the walk, like a stop. */
+  goalStayMin = 0
 ): TripPlan {
   const walking = walkThereMin !== null;
   const { start } = useUserLocation();
@@ -63,7 +65,7 @@ export function useTripPlan(
   const drive = useDriveRoute(start, destination);
   const { minutes: stopMin } = useTripStops(slug);
   // Stops the group added (a buffet, a side trip, lunch) lengthen the day at their own pace, not the kids'.
-  const hikeMin = hikeMinutes(baseHikeMin + (walkThereMin ?? 0) * 2, withKids) + stopMin;
+  const hikeMin = hikeMinutes(baseHikeMin + (walkThereMin ?? 0) * 2, withKids) + stopMin + goalStayMin;
   const driveApprox = drive.status === "error" && start !== null && destination !== null;
   // While the exact route loads, the day is drawn from a distance estimate ("~"), not left waiting.
   const driveGuess = (driveApprox || drive.status === "loading") && start !== null && destination !== null;
