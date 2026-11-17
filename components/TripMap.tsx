@@ -189,6 +189,7 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
     const walk = walkLeg?.map(([lat, lon]) => ({ lat, lon })) ?? [];
     return sidePairs.map(([from, to], i) => {
       return {
+        id: sideStops[i].poi.id,
         points: legOffPath(sideFrom[i].offTrail ? walk : ll, pair(from), sideRoutes[i]?.points ?? [], pair(to)),
         colour: POI_COLOUR[sideStops[i].poi.kind],
       };

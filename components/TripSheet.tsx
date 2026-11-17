@@ -48,7 +48,8 @@ import { startLines, subtitle } from "@/lib/tripAnswers";
 
 /**
  * How many neighbours the "Ďalšie výlety v okolí" block holds in the HTML: the browser shows the first
- * seven that are not closed today and folds the closed ones away (components/NearbyList.tsx).
+ * four that are not closed today, the rest of the open ones behind "Zobraziť ďalšie …", and folds the
+ * closed ones away (components/NearbyList.tsx, C183).
  */
 const NEARBY_COUNT = 14;
 /** Trips without a yearly closure the nearby list always has to offer (C70). */

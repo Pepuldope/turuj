@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { GeoJSONSource, Map as MlMap, Marker, Popup, StyleSpecification } from "maplibre-gl";
+import type { FilterSpecification, GeoJSONSource, Map as MlMap, Marker, Popup, StyleSpecification } from "maplibre-gl";
 import type { BBox, LatLng } from "@/lib/types";
 import { MAP_STYLE_URL, mapPixelRatio } from "@/lib/mapLayers";
 import { onMapFocus, recentFocus } from "@/lib/mapFocus";
@@ -18,6 +18,7 @@ import { mapLocale } from "@/lib/mapLocale";
 import { keepMap, mapShown, takeKeptMap } from "@/lib/keptMap";
 import type { KeptLive, KeptMap } from "@/lib/keptMap";
 import { foldAttribution } from "@/lib/mapAttribution";
+import { isHoverablePin, setHoveredPin, useHoveredPin } from "@/lib/pinHover";
 
 type MapLibre = typeof import("maplibre-gl");
 
@@ -37,6 +38,8 @@ export interface MapTrack {
 
 /** The way off the trail to an added stop and back, in the place's own colour. */
 export interface SideLeg {
+  /** The stop's place id: its row in the plan lights this leg up on a hover. */
+  id?: string;
   points: [number, number][];
   colour: string;
 }
@@ -585,6 +588,25 @@ export function TrailMap({
           layout: { "line-cap": "round", "line-join": "round" },
           paint: { "line-color": ["get", "colour"], "line-width": 5 },
         });
+        // The leg of the stop the mouse is on (its row or its pin): the site blue on top, a bit thicker.
+        // Filtered to nothing until a hover sets the id (the map stays light in both themes).
+        const noSide = ["==", ["get", "id"], ""];
+        map.addLayer({
+          id: "side-hover-casing",
+          type: "line",
+          source: "side",
+          filter: noSide as FilterSpecification,
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#ffffff", "line-width": 11 },
+        });
+        map.addLayer({
+          id: "side-hover-line",
+          type: "line",
+          source: "side",
+          filter: noSide as FilterSpecification,
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#1769d1", "line-width": 7 },
+        });
         // Wide invisible line so thin tracks are easy to tap.
         map.addLayer({
           id: "track-hit",
@@ -745,7 +767,7 @@ export function TrailMap({
           type: "FeatureCollection",
           features: legs.map((l) => ({
             type: "Feature",
-            properties: { colour: l.colour },
+            properties: { colour: l.colour, id: l.id ?? "" },
             geometry: { type: "LineString", coordinates: l.points.map(lngLat) },
           })),
         }
@@ -781,6 +803,12 @@ export function TrailMap({
         const popup = new ml.Popup({ offset: 14, closeButton: false }).setDOMContent(popupContent(m.title, m.lines, m.action));
         keepPopupInView(map, popup);
         const marker = new ml.Marker({ element: el }).setLngLat([m.location.lon, m.location.lat]).setPopup(popup).addTo(map);
+        // The pin and its plan row light up together; a real mouse only, as the rows (a tap is no hover).
+        if (isHoverablePin(m.id)) {
+          el.addEventListener("pointerenter", (e) => e.pointerType === "mouse" && setHoveredPin(m.id));
+          el.addEventListener("pointerleave", (e) => e.pointerType === "mouse" && setHoveredPin(null));
+          el.addEventListener("click", () => setHoveredPin(null));
+        }
         const slug = m.trailSlug;
         const onPick = m.onClick;
         if (slug) el.addEventListener("click", () => onSelectRef.current?.(slug));
@@ -796,6 +824,17 @@ export function TrailMap({
         return marker;
       });
   }, [ctx, markers]);
+
+  // The pin (and for a stop the side walk to it) of the row the mouse is on. A class on the live element, not
+  // the `markers` prop: that would rebuild every pin and close an open popup. Re-applied after a rebuild.
+  const hoveredPin = useHoveredPin();
+  useEffect(() => {
+    if (!ctx) return;
+    liveRef.current.markerIds.forEach((id, i) => liveRef.current.markers[i]?.getElement().classList.toggle("is-hover", id === hoveredPin));
+    const poi = hoveredPin?.startsWith("poi-") ? hoveredPin.slice(4) : "";
+    for (const layer of ["side-hover-casing", "side-hover-line"])
+      if (ctx.map.getLayer(layer)) ctx.map.setFilter(layer, ["==", ["get", "id"], poi] as FilterSpecification);
+  }, [ctx, markers, hoveredPin, sideLegs]);
 
 
   // A row in a list below, or a pick in a plan step, asks for its place: bring the map into view, centre on it

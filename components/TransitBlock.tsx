@@ -19,6 +19,7 @@ import { UiIcon } from "@/components/UiIcon";
 import { useLang, useT } from "@/lib/i18n";
 import { decimal, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
+import { usePinList } from "@/lib/pinHover";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const hhmm = clock;
@@ -50,6 +51,7 @@ export function StopOptions() {
   const t = useT();
   const lang = useLang();
   const [all, setAll] = useState(false);
+  const pinRow = usePinList();
   if (!transit) return null;
   const options = stops.slice(0, MAX_OPTIONS);
   const rows = shownRows(options.length, all, [stopChoice]);
@@ -64,10 +66,12 @@ export function StopOptions() {
           {options.map((s, i) => {
             if (!rows.includes(i)) return null;
             const selected = i === stopChoice;
+            const row = pinRow(`ts-${s.id}`);
             const total = stopTotals[i];
             return (
               <li key={s.id}>
                 <button
+                  {...row.handlers}
                   type="button"
                   role="radio"
                   aria-checked={selected}
@@ -78,7 +82,7 @@ export function StopOptions() {
                   disabled={options.length === 1}
                   className={`flex min-h-11 w-full items-start gap-2.5 rounded-xl border px-2.5 py-1.5 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:cursor-default ${
                     selected ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--border)] hover:border-[var(--accent)]"
-                  }`}
+                  } ${row.hover}`}
                 >
                   <span className="mt-pin mt-pin-transit shrink-0" aria-hidden>
                     <StopIcon mode={s.mode} />

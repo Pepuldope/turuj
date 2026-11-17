@@ -1,5 +1,5 @@
 /** What a folded list holds, for the "Zobraziť ďalšie …" button's Slovak plural. */
-export type MoreKind = "places" | "routes" | "parking" | "stops";
+export type MoreKind = "places" | "routes" | "parking" | "stops" | "trips";
 
 /**
  * The button's text key for `n` hidden rows of `kind`: one, 2 to 4, or 5 and more
@@ -15,4 +15,5 @@ const MORE: Record<MoreKind, [string, string, string]> = {
   routes: ["Zobraziť ďalšiu cestu", "Zobraziť ďalšie {n} cesty", "Zobraziť ďalšie {n} ciest"],
   parking: ["Zobraziť ďalšie parkovisko", "Zobraziť ďalšie {n} parkoviská", "Zobraziť ďalšie {n} parkovísk"],
   stops: ["Zobraziť ďalšiu zastávku", "Zobraziť ďalšie {n} zastávky", "Zobraziť ďalšie {n} zastávok"],
+  trips: ["Zobraziť ďalší výlet", "Zobraziť ďalšie {n} výlety", "Zobraziť ďalších {n} výletov"],
 };
