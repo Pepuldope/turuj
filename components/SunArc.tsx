@@ -328,11 +328,23 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
     const sky = weather ? weatherSkySvg(weather, lo, hi, x, HOR, (at) => sunAltitude(new Date(at), sun.lat, sun.lon) < -3) : null;
 
     // The added stops: where on the hill the walk stands still, and when.
+    // The profile line's height at dial x (the walk runs left to right).
+    const yAtX = (px: number) => {
+      const i = walk.findIndex((p) => p.x >= px);
+      if (i <= 0) return walk[Math.max(0, i)].y;
+      const [a, b] = [walk[i - 1], walk[i]];
+      return a.y + ((b.y - a.y) * (px - a.x)) / (b.x - a.x || 1);
+    };
     const pauses = (profile?.pauses ?? []).map((pa) => {
       const t0 = hs + pa.from * (he - hs);
       const t1 = hs + pa.to * (he - hs);
-      const i = Math.max(0, walk.findIndex((p) => p.t >= t0));
-      return { t0, t1, name: pa.name, kind: pa.kind, icon: pa.icon, x: x((t0 + t1) / 2), x0: x(t0), x1: x(t1), y: walk[i].y };
+      const mid = x((t0 + t1) / 2);
+      // At least a few pixels wide, so a short stop on a long day still shows; drawn along the profile line itself,
+      // so a stretch wider than the level part follows the slope instead of floating off it (Peter, 17 Nov, C188).
+      const half = Math.max(3, (x(t1) - x(t0)) / 2);
+      const [xa, xb] = [mid - half, mid + half];
+      const line = [[xa, yAtX(xa)], ...walk.filter((p) => p.x > xa && p.x < xb).map((p) => [p.x, p.y]), [xb, yAtX(xb)]];
+      return { t0, t1, name: pa.name, kind: pa.kind, icon: pa.icon, x: mid, y: yAtX(mid), d: "M" + line.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join("L") };
     });
 
     return { lo, hi, x, tAt, y, arcX, sunY, walk, pauses, sky, goal: walk[goalIndex], goalT: walk[goalIndex].t, arc, dash, ridge, hill, ticks, breaks, season, deco, snow, capY, capEdge };
@@ -675,12 +687,10 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
             (Peter, 2026-10-24 and 2026-10-26). While the walker is there, the walker turns into the pin. */}
         {scene.pauses.map((pa) => {
           const c = pa.kind ? POI_COLOUR[pa.kind] : WALKER;
-          // At least a few pixels wide, so a short stop on a long day still shows.
-          const half = Math.max(3, (pa.x1 - pa.x0) / 2);
+          // The stretch of the line itself in the place's colour, a little thicker than the line but inside its white edge: it sits on the line, never over it.
           return (
             <g key={pa.t0}>
-              <line x1={pa.x - half} x2={pa.x + half} y1={pa.y} y2={pa.y} stroke="#fff" strokeWidth={8} strokeLinecap="round" />
-              <line x1={pa.x - half} x2={pa.x + half} y1={pa.y} y2={pa.y} stroke={c} strokeWidth={5} strokeLinecap="round" />
+              <path d={pa.d} fill="none" stroke={c} strokeWidth={3.4} strokeLinecap="butt" strokeLinejoin="round" />
               {pa.kind && pa !== atPause && (
                 <g transform={`translate(${pa.x} ${pa.y - 17})`}>
                   <line y1={7} y2={12} stroke={c} strokeWidth={2.2} />

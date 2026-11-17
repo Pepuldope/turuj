@@ -272,13 +272,20 @@ function pinElement(className: string, glyph: string, title: string): HTMLElemen
   return el;
 }
 
-function fit(map: MlMap, b: BBox, duration = 0) {
+/**
+ * The day map frames the walk with small margins (Peter, 17 Nov, C187), more on top for the walker's time pill at a
+ * summit. The pins' labels switch sides where they would run off the map (the markers effect).
+ */
+const DAY_FIT_PADDING = { top: 30, bottom: 14, left: 14, right: 14 };
+type FitPadding = number | typeof DAY_FIT_PADDING;
+
+function fit(map: MlMap, b: BBox, duration = 0, padding: FitPadding = FIT_PADDING) {
   map.fitBounds(
     [
       [b.sw.lon, b.sw.lat],
       [b.ne.lon, b.ne.lat],
     ],
-    { padding: FIT_PADDING, maxZoom: 15, duration }
+    { padding, maxZoom: 15, duration }
   );
 }
 
@@ -365,6 +372,11 @@ export function TrailMap({
   const [ctx, setCtx] = useState<{ ml: MapLibre; map: MlMap } | null>(null);
   const onSelectRef = useRef(onSelectTrail);
   const onHoverRef = useRef(onHoverTrail);
+  // The fit's margin, kept in a ref for the map's own handlers (resize) set up once.
+  const padRef = useRef<FitPadding>(FIT_PADDING);
+  useLayoutEffect(() => {
+    padRef.current = scope === "day" ? DAY_FIT_PADDING : FIT_PADDING;
+  }, [scope]);
   const fittedRef = useRef(false);
   // The map came from the last page of this place: it is already placed, and a focus request made just before
   // (the route pick) was answered by that page's map.
@@ -417,7 +429,7 @@ export function TrailMap({
           return;
         }
         map.resize();
-        if (boundsRef.current && !centredRef.current) fit(map, boundsRef.current);
+        if (boundsRef.current && !centredRef.current) fit(map, boundsRef.current, 0, padRef.current);
       });
       observer.observe(e.el);
       for (const ev of ["pointerdown", "wheel", "touchstart"]) e.el.addEventListener(ev, () => (touchedRef.current = true), { passive: true });
@@ -703,7 +715,7 @@ export function TrailMap({
     const first = openOnRef.current;
     centredRef.current = !fittedRef.current && !!first;
     if (centredRef.current) centreOn(ctx.map, first!.location, first!.context, bounds, 0);
-    else fit(ctx.map, bounds, fittedRef.current && !reducedMotion() ? 600 : 0);
+    else fit(ctx.map, bounds, fittedRef.current && !reducedMotion() ? 600 : 0, padRef.current);
     fittedRef.current = true;
     // The slot can still be settling (a wider layout, a gliding start): once it has, size the map to it and frame the
     // area again, unless the visitor already took the map in hand.
@@ -712,7 +724,7 @@ export function TrailMap({
     const settle = setTimeout(() => {
       if (touchedRef.current || centredRef.current || !boundsRef.current) return;
       map.resize();
-      fit(map, boundsRef.current);
+      fit(map, boundsRef.current, 0, padRef.current);
     }, 900);
     return () => clearTimeout(settle);
     // `bounds` is tracked via boundsKey so a new-but-equal object doesn't refit.
@@ -843,6 +855,31 @@ export function TrailMap({
           });
         return marker;
       });
+    // A pin's time label (the day map) that would run off the map moves to the pin's other side: with the frame tight
+    // round the walk (C187), a goal at the map's edge lost its name. Checked again whenever the map moves or resizes.
+    const labels = [...map.getContainer().querySelectorAll<HTMLElement>(".mt-pin-label")];
+    if (labels.length === 0) return;
+    const keepIn = () => {
+      const box = map.getContainer().getBoundingClientRect();
+      for (const label of labels) {
+        const pin = label.parentElement!.getBoundingClientRect();
+        const w = label.offsetWidth + 5;
+        const roomRight = box.right - pin.right;
+        const roomLeft = pin.left - box.left;
+        const left = label.dataset.side ? label.dataset.side === "left" : label.classList.contains("is-left");
+        label.dataset.side ??= left ? "left" : "right";
+        // The side it asked for while it fits there, else the side with more room.
+        const want = label.dataset.side === "left" ? roomLeft >= w || roomLeft >= roomRight : !(roomRight >= w || roomRight >= roomLeft);
+        label.classList.toggle("is-left", want);
+      }
+    };
+    keepIn();
+    map.on("move", keepIn);
+    map.on("resize", keepIn);
+    return () => {
+      map.off("move", keepIn);
+      map.off("resize", keepIn);
+    };
   }, [ctx, markers, hover]);
 
   // The pin (and for a stop the side walk to it) of the row the mouse is on. A class on the live element, not

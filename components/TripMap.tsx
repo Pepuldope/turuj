@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BBox, LatLng, TrailDetail } from "@/lib/types";
 import { haversineM, legOffPath, nearestOnPath } from "@/lib/geo";
@@ -198,7 +198,18 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
 
   // Parked up the trail: the stretch below the join is drawn faint, the walk you do in full colour.
   // There-and-back tracks run out and back, so that stretch is cut at both ends.
-  const hovered = useHoveredRoute();
+  // Another route lights up under the pointer only while you're choosing the route: step 1's map, or the big map
+  // framing step 1 (or not asked for any step yet). In steps 2-4 and the day map the other routes stay grey
+  // (Peter, 17 Nov, C186: "I don't want a different route showing up when I'm just looking at the one I want to go on").
+  const routeHover = !day && (routesMap || (!focusProp && (!asked || asked.focus === "routes")));
+  const hoveredAny = useHoveredRoute();
+  const hovered = routeHover ? hoveredAny : null;
+  // Leaving step 1 with the pointer on a route: drop it, so it isn't still lit when step 1 comes back.
+  const hadRouteHover = useRef(routeHover);
+  useEffect(() => {
+    if (hadRouteHover.current && !routeHover) setHoveredRoute(null);
+    hadRouteHover.current = routeHover;
+  }, [routeHover]);
   // The other routes' full tracks from the place's GPX (the picked route's file holds them all):
   // the trip file's lines are simplified and looked "low-poly" next to the picked one (Peter, 2026-10-27).
   const otherSlugs = others.map((o) => o.slug).join(",");
@@ -536,9 +547,11 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
         for (const o of others) for (const [lat, lon] of o.points) pts.push({ lat, lon });
         if (goal) pts.push(goal);
       } else if (f === "day") {
-        corners(trail.bbox);
-        // The picked route's own line (a loop's way back can leave the place's box).
+        // Only your day: the picked route's own line and the walk from the car, not the place's box with the
+        // other routes in it (Peter, 17 Nov, C187: frame tight round the walk).
         for (const [lat, lon] of points) pts.push({ lat, lon });
+        for (const [lat, lon] of walkLeg ?? []) pts.push({ lat, lon });
+        if (pts.length === 0) corners(trail.bbox);
         if (rideAt) pts.push(rideAt);
         for (const s of addedStops) {
           const poi = pois.find((p) => p.id === s.id);
@@ -561,13 +574,8 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
       const lats = pts.map((p) => p.lat);
       const lons = pts.map((p) => p.lon);
       const box = { sw: { lat: Math.min(...lats), lon: Math.min(...lons) }, ne: { lat: Math.max(...lats), lon: Math.max(...lons) } };
-      // The day map's walker carries its time pill above it: room on top so the pill isn't cut off at the summit.
-      if (f === "day") {
-        // Room too for the time labels: right of the pins, and the drive's label along the bottom.
-        const h = box.ne.lat - box.sw.lat;
-        const w = box.ne.lon - box.sw.lon;
-        return { sw: { lat: box.sw.lat - h * 0.1, lon: box.sw.lon }, ne: { lat: box.ne.lat + h * 0.18, lon: box.ne.lon + w * 0.22 } };
-      }
+      // The day map is framed tight round the walk (C187): its margins (room for the walker's pill on top) are the
+      // map's fit padding, and the time labels move to the side of their pin that has room (TrailMap).
       if (f !== "routes") return box;
       // The same set of routes seen from another route's page frames to nearly the same box: rounded outwards
       // (about 100 m) so opening another route doesn't glide the map back out to the whole set.
@@ -577,7 +585,7 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
         ne: { lat: Math.ceil(box.ne.lat * r) / r, lon: Math.ceil(box.ne.lon * r) / r },
       };
     },
-    [trail.bbox, others, goal, trailStart, walking, start, transit, stops, parkingLots, pois, rideAt, addedStops, points]
+    [trail.bbox, others, goal, trailStart, walking, start, transit, stops, parkingLots, pois, rideAt, addedStops, points, walkLeg]
   );
   const focusBounds = useMemo(() => (focus ? boundsFor(focus) : null), [focus, boundsFor]);
   // Right after a route was picked in the plan (this is that route's page): fit that route, not the whole set (lib/planUi.ts).
@@ -626,7 +634,7 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
         }
         router.push(langPath(lang, `/trasa/${slug}`), { scroll: false });
       }}
-      onHoverTrail={others.length && !day ? (slug) => setHoveredRoute(others.some((o) => o.slug === slug) ? slug : null) : undefined}
+      onHoverTrail={others.length && routeHover ? (slug) => setHoveredRoute(others.some((o) => o.slug === slug) ? slug : null) : undefined}
       // The day map ("Priebeh dňa") has no hover at all.
       hover={!day}
       ariaLabel={t("Mapa trasy")}

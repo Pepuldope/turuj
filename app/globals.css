@@ -346,6 +346,48 @@ h2,
   }
 }
 
+/* The day map (under Priebeh dňa, phones and wide screens): the route is what matters, so the pins are small and
+   have no white edge or ring (Peter, 17 Nov, C187: the big icons hid the route). */
+.day-map-static .mt-pin {
+  border: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  font-size: 0.625rem;
+}
+.day-map-static .mt-pin-goal {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+}
+.day-map-static .mt-pin-parking,
+.day-map-static .mt-pin-transit,
+.day-map-static .mt-pin-transit.is-active,
+.day-map-static .mt-pin-poi,
+.day-map-static .mt-pin-poi.is-active {
+  width: 18px;
+  height: 18px;
+}
+.day-map-static .mt-pin-transit,
+.day-map-static .mt-pin-transit.is-active {
+  border: 1.5px solid #1d3a6e;
+}
+.day-map-static .mt-pin svg {
+  width: 12px;
+  height: 12px;
+}
+.day-map-static .mt-pin-start {
+  width: 24px;
+  height: 24px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 28%, transparent), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.day-map-static .mt-pin-label,
+.day-map-static .mt-walker-time {
+  font-size: 12px;
+}
+.day-map-static .mt-walker {
+  width: 22px;
+  height: 22px;
+}
+
 /* "Pridať zastávku" in a place's popup (the popup stays light in both themes). */
 .mt-popup-action {
   display: block;

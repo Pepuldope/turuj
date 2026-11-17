@@ -3,6 +3,8 @@ import { dayMoment, dayPlace, onDayMoment } from "@/lib/dayClock";
 import type { DayModel } from "@/lib/dayClock";
 import { formatDurationShort, formatTime } from "@/lib/format";
 import { haversineM, nearestOnPath } from "@/lib/geo";
+import { KIND_ICON } from "@/lib/kindIcons";
+import { POI_COLOUR } from "@/lib/palette";
 import { UI_ICON } from "@/lib/uiIcons";
 import type { LatLng } from "@/lib/types";
 
@@ -197,8 +199,11 @@ export function attachDayWalker(
     const obstacles: Box[] = [];
     for (const m of c.querySelectorAll<HTMLElement>(".maplibregl-marker")) {
       if (m === tag || m === el) continue;
-      const r = m.getBoundingClientRect();
-      obstacles.push({ x0: r.left - cr.left - 2, x1: r.right - cr.left + 2, y0: r.top - cr.top - 2, y1: r.bottom - cr.top + 2 });
+      // The pin and its time label (it hangs outside the pin's own box, on whichever side has room).
+      for (const part of [m, ...m.querySelectorAll<HTMLElement>(".mt-pin-label")]) {
+        const r = part.getBoundingClientRect();
+        obstacles.push({ x0: r.left - cr.left - 2, x1: r.right - cr.left + 2, y0: r.top - cr.top - 2, y1: r.bottom - cr.top + 2 });
+      }
     }
     if (car) obstacles.push(carBox(car));
     const free = (b: Box) => {
@@ -299,10 +304,14 @@ export function attachDayWalker(
     if (!shown) el.style.display = "";
     shown = true;
     marker.setLngLat([where.lon, where.lat]);
-    // The car (or bus, train) where the ride ends before and after the walk, the walker everywhere else.
-    const kind = riding && model.mode !== "foot" ? model.mode : "foot";
+    // The car (or bus, train) where the ride ends before and after the walk, the walker everywhere else. Standing at
+    // a stop the walker turns into that place's pin, as the sun dial's walker does (Peter, 17 Nov, C189).
+    const s = (t - model.hs) / (model.he - model.hs || 1);
+    const pause = riding ? undefined : model.pauses.find((p) => p.kind && s >= p.from && s <= p.to);
+    const kind = pause ? `stop-${pause.icon ?? pause.kind}` : riding && model.mode !== "foot" ? model.mode : "foot";
     if (kind !== lastKind) {
-      glyph.innerHTML = icon(RIDE_ICON[kind]);
+      glyph.innerHTML = icon(pause ? KIND_ICON[pause.icon ?? pause.kind!] : RIDE_ICON[kind as keyof typeof RIDE_ICON]);
+      glyph.style.background = pause ? POI_COLOUR[pause.kind!] : "";
       lastKind = kind;
     }
     const time = formatTime(new Date(t));
