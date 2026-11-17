@@ -251,7 +251,7 @@ ORDER = list(COLUMNS)
 SHARED = ["region", "protected_area", "transit_stop", "closure_rule", "fee", "town", "town_drive"]
 # Belong to one trip: rewritten together with it when its content_hash changes.
 PER_TRIP = ["parking", "trip_transit_stop", "poi", "trip_closure", "trip_fee"]
-KEY = {t: ("town_id" if t == "town_drive" else "id") for t in SHARED}
+KEY = {t: ("town_id" if t == "town_drive" else "id") for t in SHARED} | {"place": "id"}
 
 SCHEMA_HASH = hashlib.sha256(SCHEMA.encode()).hexdigest()[:16]
 
@@ -476,8 +476,15 @@ def incremental_sql(rows, version, have):
             delete(t, "trip_id", redo)
             written += sum(1 for r in rows[t] if r[0] in redo)  # about as many as they had
         delete("trip", "id", redo)
-        delete("place", "id", {i * 2 for i in redo} | {i * 2 + 1 for i in redo})
-        written += 3 * len(redo)
+        written += len(redo)
+    # Places of gone trips only. A changed trip keeps its place ids (2 x trip id, +1 for the start), so
+    # its places are updated in step 3 instead: on D1 every deleted place makes SQLite check that no trip
+    # still points at it, and trip.start_id / destination_id have no index, so each one reads every trip.
+    # Deleting the places of ~550 changed trips read 7.2M rows on 16 Nov 2026, over D1's free 5M a day,
+    # and sign-in failed for the rest of the day.
+    if gone:
+        delete("place", "id", {i * 2 for i in gone} | {i * 2 + 1 for i in gone})
+        written += 2 * len(gone)
     # 2. New and changed shared rows (parents of the trips below).
     for t in SHARED:
         if t == "town_drive":
@@ -489,7 +496,8 @@ def incremental_sql(rows, version, have):
     for t in ["place", "trip", *PER_TRIP]:
         # Place ids are twice the trip id (+1 for the start); everything else starts with the trip id.
         mine = [r for r in rows[t] if (r[0] // 2 if t == "place" else r[0]) in changed]
-        sql += inserts(t, COLUMNS[t], mine)
+        # Places stay in the database (see step 1): written over in place, or added for a new trip.
+        sql += (upserts(t, mine) if t == "place" else inserts(t, COLUMNS[t], mine)) if mine else []
         written += len(mine)
     # 4. Drive tables that changed, then shared rows nothing uses any more (children first).
     fresh = [r for r in rows["town_drive"] if not same(have["town_drive"].get(r[0]), r)]

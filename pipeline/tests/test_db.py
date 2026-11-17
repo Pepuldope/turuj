@@ -75,6 +75,39 @@ def test_incremental_load_ends_where_a_full_load_would():
     assert _dump(con) == _dump(full)
 
 
+def test_changed_trips_keep_their_places_and_only_gone_trips_delete_theirs():
+    # On D1 each deleted place scans every trip (trip.start_id / destination_id have no index):
+    # deleting the places of ~550 changed trips read 7.2M rows on 16 Nov 2026, over the free 5M a day.
+    rows, version = db.build_rows()
+    con = sqlite3.connect(":memory:")
+    con.execute("PRAGMA foreign_keys = ON")
+    con.executescript(db.full_sql(rows, version))
+
+    new = {t: list(r) for t, r in rows.items()}
+    changed = [new["trip"][i] for i in range(0, 40, 2)]
+    gone = new["trip"][-1]
+    for r in changed:
+        i = new["trip"].index(r)
+        new["trip"][i] = r[:2] + ("Iný názov",) + r[3:-1] + ("changed",)
+    start = next(i for i, r in enumerate(new["place"]) if r[0] == changed[0][0] * 2 + 1)
+    new["place"][start] = new["place"][start][:1] + ("Iný štart",) + new["place"][start][2:]
+    new["trip"] = [r for r in new["trip"] if r[0] != gone[0]]
+    for t in db.PER_TRIP:
+        new[t] = [r for r in new[t] if r[0] != gone[0]]
+    new["place"] = [r for r in new["place"] if r[0] // 2 != gone[0]]
+    version = {**version, "trips": len(new["trip"])}
+
+    sql, _ = db.incremental_sql(new, version, _have(con))
+    place_deletes = [s for s in sql.split(";\n") if s.lstrip().startswith("DELETE FROM place ")]
+    assert place_deletes == [f"DELETE FROM place WHERE id IN ({gone[0] * 2},{gone[0] * 2 + 1})"]
+    con.executescript(sql)
+    assert con.execute("PRAGMA foreign_key_check").fetchall() == []
+    assert con.execute("SELECT name FROM place WHERE id = ?", (changed[0][0] * 2 + 1,)).fetchone()[0] == "Iný štart"
+    full = sqlite3.connect(":memory:")
+    full.executescript(db.full_sql(new, version))
+    assert _dump(con) == _dump(full)
+
+
 def test_unchanged_data_writes_only_the_version_and_a_new_schema_reloads_everything():
     rows, version = db.build_rows()
     con = sqlite3.connect(":memory:")
