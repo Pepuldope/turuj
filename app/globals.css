@@ -337,6 +337,15 @@ h2,
   box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--accent);
 }
 
+/* The day map on wide screens is a picture only (PlanStep StepMap, inert): its buttons (full screen, zoom) would do
+   nothing there, so they go. The map credit stays. */
+@media (min-width: 64rem) {
+  .day-map-static button:not(.maplibregl-ctrl-attrib-button),
+  .day-map-static .maplibregl-ctrl-group {
+    display: none;
+  }
+}
+
 /* "Pridať zastávku" in a place's popup (the popup stays light in both themes). */
 .mt-popup-action {
   display: block;

@@ -275,6 +275,23 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
     };
   }, [sideKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Parked up the trail (`skip`): where the walk joins the trail on the way out and back. The stretches before and
+  // after are skipped and drawn faint. Segment indices: the cut on the way out lies in segment `outI`, on the way back in `backI`.
+  const cut = useMemo(() => {
+    if (!skip || !trailJoin || points.length < 3) return null;
+    const ll = points.map(([lat, lon]) => ({ lat, lon }));
+    const mid = Math.floor((points.length - 1) / 2);
+    const out = nearestOnPath(ll.slice(0, mid + 1), trailJoin);
+    const back = nearestOnPath(ll.slice(mid), trailJoin);
+    if (!out || !back) return null;
+    return {
+      outI: out.i,
+      backI: mid + back.i,
+      a: [out.point.lat, out.point.lon] as [number, number],
+      b: [back.point.lat, back.point.lon] as [number, number],
+    };
+  }, [skip, trailJoin, points]);
+
   const tracks = useMemo<MapTrack[]>(() => {
     const color = ownColour ?? trackColor(trail.marking);
     // Drawn where they really run, never shifted aside: a shifted line bent and broke at sharp
@@ -283,29 +300,22 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
     const under = otherTracks.filter((o) => o.state !== "selected");
     const over = otherTracks.filter((o) => o.state === "selected");
     const whole: MapTrack[] = [...under, { slug: trail.slug, points, color, state: "selected", arrows: loop }, ...over];
-    if (!skip || !trailJoin || points.length < 3) return whole;
-    const ll = points.map(([lat, lon]) => ({ lat, lon }));
-    const mid = Math.floor((points.length - 1) / 2);
-    const out = nearestOnPath(ll.slice(0, mid + 1), trailJoin);
-    const back = nearestOnPath(ll.slice(mid), trailJoin);
-    if (!out || !back) return whole;
-    const a: [number, number] = [out.point.lat, out.point.lon];
-    const b: [number, number] = [back.point.lat, back.point.lon];
-    const bi = mid + back.i;
+    if (!cut) return whole;
+    const { a, b, outI, backI: bi } = cut;
     return [
       ...under,
-      { slug: `${trail.slug}-skipped-out`, points: [...points.slice(0, out.i + 1), a], color, state: "dimmed" },
+      { slug: `${trail.slug}-skipped-out`, points: [...points.slice(0, outI + 1), a], color, state: "dimmed" },
       { slug: `${trail.slug}-skipped-back`, points: [b, ...points.slice(bi + 1)], color, state: "dimmed" },
-      { slug: trail.slug, points: [a, ...points.slice(out.i + 1, bi + 1), b], color, state: "selected", arrows: loop },
+      { slug: trail.slug, points: [a, ...points.slice(outI + 1, bi + 1), b], color, state: "selected", arrows: loop },
       ...over,
     ];
-  }, [trail.slug, trail.marking, ownColour, points, skip, trailJoin, otherTracks, loop]);
+  }, [trail.slug, trail.marking, ownColour, points, cut, otherTracks, loop]);
 
   // The line in the marking colours as walked, a stretch per sign: on the day map (the sun dial's legend names them)
   // and on the step maps too, where a stretch past a grey "no marking" sign was drawn in the trail's colour
   // (Peter, 15 Nov, C168). With several routes the picked one too (Peter, 16 Nov); the others keep their list colours.
   const drawnTracks = useMemo<MapTrack[]>(() => {
-    if (!marks || skip || points.length < 3) return tracks;
+    if (!marks || points.length < 3) return tracks;
     const n = points.length;
     const up = loop ? n - 1 : Math.floor((n - 1) / 2);
     const out = (i: number) => signs.filter((s) => s.at <= i).pop()?.colour ?? marks.start;
@@ -315,15 +325,28 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
       return c ? MARKING_COLOR[c] : UNMARKED_COLOUR;
     };
     const runs: MapTrack[] = [];
-    let from = 0;
-    for (let i = 1; i <= n - 1; i++) {
-      if (i < n - 1 && colourOf(i) === colourOf(from)) continue;
-      runs.push({ slug: `${trail.slug}-m${runs.length}`, points: points.slice(from, i + 1), color: colourOf(from), state: "selected", arrows: loop });
-      from = i;
+    // One stretch of the line, cut into runs of one marking colour; its segment k is the path's segment base + k.
+    const stretch = (pts: [number, number][], base: number, state: MapTrack["state"]) => {
+      let from = 0;
+      for (let k = 1; k <= pts.length - 1; k++) {
+        if (k < pts.length - 1 && colourOf(base + k) === colourOf(base + from)) continue;
+        runs.push({ slug: `${trail.slug}-m${runs.length}`, points: pts.slice(from, k + 1), color: colourOf(base + from), state, arrows: loop && state === "selected" });
+        from = k;
+      }
+    };
+    if (!cut) stretch(points, 0, "selected");
+    else {
+      // Parked up the trail: the skipped stretches keep their marking colours too, only faint (Peter, 17 Nov:
+      // with the nearer parking the whole line came out in the route's own colour).
+      const { a, b, outI, backI } = cut;
+      stretch([...points.slice(0, outI + 1), a], 0, "dimmed");
+      stretch([b, ...points.slice(backI + 1)], backI, "dimmed");
+      stretch([a, ...points.slice(outI + 1, backI + 1), b], outI, "selected");
     }
     // The step maps keep the other routes around the picked one.
-    return day ? runs : tracks.flatMap((tk) => (tk.slug === trail.slug ? runs : [tk]));
-  }, [day, marks, skip, points, loop, signs, tracks, trail.slug]);
+    const own = (slug: string) => slug === trail.slug || slug.startsWith(`${trail.slug}-skipped-`);
+    return day ? runs : tracks.flatMap((tk) => (tk.slug === trail.slug ? runs : own(tk.slug) ? [] : [tk]));
+  }, [day, marks, cut, points, loop, signs, tracks, trail.slug]);
 
   const goal = trail.goal_location;
   const goalKind = trail.goal ?? "ine";

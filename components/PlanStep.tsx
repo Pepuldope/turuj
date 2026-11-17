@@ -399,10 +399,20 @@ export function StepMap({ always = false, joined = false, ...props }: Omit<Compo
     io.observe(el);
     return () => io.disconnect();
   }, []);
+  // On wide screens the day map is a picture only: the big map beside the plan is the one to use, this one just shows
+  // your day and the dial's walker (Peter, 17 Nov). `inert`: no clicks, drags, zoom or focus; the wheel scrolls the page.
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    if (!always) return;
+    const mq = window.matchMedia("(min-width: 64rem)");
+    const on = () => setWide(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, [always]);
   return (
-    // `always`: the day map under Priebeh dňa, a little taller. Phones only, like the step maps: on wide screens the
-    // big map is beside the plan and Peter wants one map there (17 Nov).
-    <div ref={ref} className={`${always ? "h-[200px]" : "h-[170px]"} shrink-0 lg:hidden`}>
+    // `always`: the day map under Priebeh dňa is shown on wide screens too (static there, above), a little taller.
+    <div ref={ref} inert={always && wide} className={always ? "day-map-static h-[200px] shrink-0" : "h-[170px] shrink-0 lg:hidden"}>
       {near ? <PhoneTripMap {...props} compact joined={joined} /> : <div className={`h-full bg-[var(--segment-bg)] ${joined ? "" : "rounded-xl border border-[var(--border)]"}`} />}
     </div>
   );
