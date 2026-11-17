@@ -690,11 +690,12 @@ h2,
   }
 }
 
-/* The account + menu card sits in the top right corner on a computer (components/TopBar.tsx):
-   map buttons there move down under it. */
+/* The account + menu card sits in the top right corner on a computer (components/TopBar.tsx): map buttons there
+   move down under it. The card ends at 66 px (12 px from the top, 54 px tall); the buttons' own 10 px margin comes on
+   top of this, so they start 8 px under it (Peter, 17 Nov: 52 px left the + under the card). */
 @media (min-width: 1024px) {
   .maplibregl-ctrl-top-right {
-    margin-top: 52px;
+    margin-top: 64px;
   }
 }
 

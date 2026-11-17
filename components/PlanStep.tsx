@@ -218,9 +218,14 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
         // Below the view: it rolls out as the page comes down to it.
         setStill((x) => ({ ...x, [to]: false }));
       } else {
-        // Above the view: it opens at once, with the step in view held where it is, then the page glides up.
-        anchorOn(from);
-        setStill((x) => ({ ...x, [to]: true }));
+        // Its header off the screen above: it opens at once, with the step in view held where it is, then the page
+        // glides up. Its header on the screen (the visitor scrolled up a bit): it rolls open where it is, nothing held;
+        // holding the step below then pushed the page down and back up (Peter, 17 Nov).
+        const head = document.getElementById(`plan-step-${to}`);
+        const box = head ? underBar(head).box : null;
+        const above = !!head && head.getBoundingClientRect().bottom < (box ? box.getBoundingClientRect().top : 0);
+        if (above) anchorOn(from);
+        setStill((x) => ({ ...x, [to]: above }));
       }
       setOpen((o) => ({ ...o, [to]: true }));
     },
