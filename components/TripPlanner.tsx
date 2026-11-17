@@ -3,6 +3,7 @@
 import { UiIcon } from "@/components/UiIcon";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import type { MapFit } from "@/lib/mapFocus";
 import { outsideDaylight } from "@/lib/dayPlan";
 import type { Verdict } from "@/lib/dayPlan";
 import { EARLIEST_DEPARTURE_HOUR, addDaysIso, dayAfterNa, dayStrip, floorTo5, longDay } from "@/lib/days";
@@ -15,7 +16,7 @@ import { formatDuration, formatDurationShort, formatTime, stopLabel } from "@/li
 import { haversineM } from "@/lib/geo";
 import { walkThereMinutes } from "@/lib/walkThere";
 import { formatKm, walkMinutes } from "@/lib/walkFacts";
-import { fitOnMap } from "@/lib/mapFocus";
+import { fitOnMap, mapFitNow, onMapFit, showDayOnMap } from "@/lib/mapFocus";
 import { parkingPlace, readSharedPlan } from "@/lib/links";
 import { track } from "@/lib/analytics";
 import type { SharedPlan, WalkRoute } from "@/lib/links";
@@ -380,6 +381,30 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
     lastWay.current = wayKey;
     fitOnMap("access");
   }, [wayKey]);
+  // On wide screens the big map shows your day (as the small day map does on phones) while the Priebeh dňa block is in
+  // view, and goes back to the open step's frame when it is left. Two observers give a margin so it doesn't flip at the
+  // edge: on when the block's top passes 60% of the window's height, off when it drops back below 75%.
+  const stepFit = useRef<MapFit | null>(steps.find((s) => s.open)?.fit ?? null);
+  useEffect(() => onMapFit((f) => f !== "day" && (stepFit.current = f)), []);
+  const hasPlan = plan !== null;
+  useEffect(() => {
+    const block = hasPlan ? document.querySelector("#vas-den section") : null;
+    if (!block || !window.matchMedia("(min-width: 1024px)").matches) return;
+    const on = new IntersectionObserver((e) => e[e.length - 1].isIntersecting && showDayOnMap(), { rootMargin: "0px 0px -40% 0px" });
+    const off = new IntersectionObserver(
+      (e) => {
+        if (e[e.length - 1].isIntersecting || mapFitNow() !== "day") return;
+        fitOnMap(stepFit.current ?? "places");
+      },
+      { rootMargin: "0px 0px -25% 0px" }
+    );
+    on.observe(block);
+    off.observe(block);
+    return () => {
+      on.disconnect();
+      off.disconnect();
+    };
+  }, [hasPlan]);
   // The chosen day for the steps before Kedy (route notes, stops' return time): lib/planDay.tsx.
   const planDay: PlanDay = {
     plan,

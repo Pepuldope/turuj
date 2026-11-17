@@ -14,6 +14,29 @@ export function setHoveredPin(id: string | null) {
   for (const l of listeners) l();
 }
 
+// The pins whose description popup is open: they keep the highlight (ring on the pin, outline on the row) until it closes,
+// whatever the mouse does. Set by the map from the popup's own open and close, so a tap that opened it counts as well.
+let open: ReadonlySet<string> = new Set();
+
+export function setPinOpen(id: string, on: boolean) {
+  if (open.has(id) === on) return;
+  const next = new Set(open);
+  if (on) next.add(id);
+  else next.delete(id);
+  open = next;
+  for (const l of listeners) l();
+}
+
+const subscribe = (l: () => void) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
+
+export function useOpenPins(): ReadonlySet<string> {
+  return useSyncExternalStore(subscribe, () => open, () => EMPTY);
+}
+const EMPTY: ReadonlySet<string> = new Set();
+
 export function getHoveredPin(): string | null {
   return hovered;
 }
@@ -24,14 +47,7 @@ export function isHoverablePin(id: string): boolean {
 }
 
 export function useHoveredPin(): string | null {
-  return useSyncExternalStore(
-    (l) => {
-      listeners.add(l);
-      return () => listeners.delete(l);
-    },
-    () => hovered,
-    () => null
-  );
+  return useSyncExternalStore(subscribe, () => hovered, () => null);
 }
 
 /**
@@ -56,13 +72,15 @@ const ROW_HOVER = "outline-2 outline-[var(--accent)] outline outline-offset-[-2p
 /** For a list of rows made in one loop: the hovered pin, the outline for a row, and a clear when the list goes away. */
 export function usePinList() {
   const hovered = useHoveredPin();
+  const opened = useOpenPins();
   useEffect(() => () => setHoveredPin(null), []);
-  return (id: string) => ({ handlers: pinRowHover(id), hover: hovered === id ? ROW_HOVER : "" });
+  return (id: string) => ({ handlers: pinRowHover(id), hover: hovered === id || opened.has(id) ? ROW_HOVER : "" });
 }
 
 /** A row of a pin: its pointer handlers and, while its pin or the row is hovered, the outline class. A row that goes away on a hover lets go of it. */
 export function usePinRow(id: string | null) {
   const hovered = useHoveredPin();
+  const opened = useOpenPins();
   useEffect(
     () => () => {
       if (id && getHoveredPin() === id) setHoveredPin(null);
@@ -71,6 +89,6 @@ export function usePinRow(id: string | null) {
   );
   return {
     handlers: id ? pinRowHover(id) : {},
-    hover: id && hovered === id ? ROW_HOVER : "",
+    hover: id && (hovered === id || opened.has(id)) ? ROW_HOVER : "",
   };
 }

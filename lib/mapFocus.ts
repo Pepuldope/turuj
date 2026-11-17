@@ -44,9 +44,14 @@ export function onMapFocus(cb: (target: MapFocus) => void): () => void {
 // its options) asks it to frame that step's choice. Phones draw a small map inside the step instead.
 const FIT_EVENT = "turuj-map-fit";
 
+let fitNow: MapFit | null = null;
+/** What the big map was last asked to frame (null before any ask). "day" is its day view (under Priebeh dňa). */
+export const mapFitNow = () => fitNow;
+
 /** Only where the big map is (lg and up); phones' step maps frame themselves. */
 export function fitOnMap(focus: MapFit) {
   if (typeof window === "undefined" || !window.matchMedia("(min-width: 1024px)").matches) return;
+  fitNow = focus;
   window.dispatchEvent(new CustomEvent<MapFit>(FIT_EVENT, { detail: focus }));
 }
 
@@ -54,4 +59,9 @@ export function onMapFit(cb: (focus: MapFit) => void): () => void {
   const listener = (e: Event) => cb((e as CustomEvent<MapFit>).detail);
   window.addEventListener(FIT_EVENT, listener);
   return () => window.removeEventListener(FIT_EVENT, listener);
+}
+
+/** The big map shows the day (the sun dial was touched, or its block scrolled into view); nothing when it already does. */
+export function showDayOnMap() {
+  if (fitNow !== "day") fitOnMap("day");
 }

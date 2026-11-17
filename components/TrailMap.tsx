@@ -18,7 +18,7 @@ import { mapLocale } from "@/lib/mapLocale";
 import { keepMap, mapShown, takeKeptMap } from "@/lib/keptMap";
 import type { KeptLive, KeptMap } from "@/lib/keptMap";
 import { foldAttribution } from "@/lib/mapAttribution";
-import { isHoverablePin, setHoveredPin, useHoveredPin } from "@/lib/pinHover";
+import { isHoverablePin, setHoveredPin, setPinOpen, useHoveredPin, useOpenPins } from "@/lib/pinHover";
 
 type MapLibre = typeof import("maplibre-gl");
 
@@ -259,6 +259,8 @@ function arrowImage(): ImageData {
   g.stroke();
   return g.getImageData(0, 0, size, size);
 }
+
+const NO_PINS: ReadonlySet<string> = new Set();
 
 function pinElement(className: string, glyph: string, title: string): HTMLElement {
   const el = document.createElement("div");
@@ -792,6 +794,8 @@ export function TrailMap({
     if (!ctx) return;
     const { ml, map } = ctx;
     for (const m of liveRef.current.markers) m.remove();
+    // The rebuilt pins' popups start closed.
+    for (const id of liveRef.current.markerIds) setPinOpen(id, false);
     // Active last so it sits on top.
     const sorted = [...markers].sort((a, b) => Number(!!a.active) - Number(!!b.active));
     liveRef.current.markerIds = sorted.map((m) => m.id);
@@ -814,6 +818,10 @@ export function TrailMap({
         }
         const popup = new ml.Popup({ offset: 14, closeButton: false }).setDOMContent(popupContent(m.title, m.lines, m.action));
         keepPopupInView(map, popup);
+        if (hover && isHoverablePin(m.id)) {
+          popup.on("open", () => setPinOpen(m.id, true));
+          popup.on("close", () => setPinOpen(m.id, false));
+        }
         const marker = new ml.Marker({ element: el }).setLngLat([m.location.lon, m.location.lat]).setPopup(popup).addTo(map);
         // The pin and its plan row light up together; a real mouse only, as the rows (a tap is no hover).
         if (hover && isHoverablePin(m.id)) {
@@ -840,14 +848,23 @@ export function TrailMap({
   // The pin (and for a stop the side walk to it) of the row the mouse is on. A class on the live element, not
   // the `markers` prop: that would rebuild every pin and close an open popup. Re-applied after a rebuild.
   const globalPin = useHoveredPin();
+  const globalOpen = useOpenPins();
   const hoveredPin = hover ? globalPin : null;
+  const openPins = hover ? globalOpen : NO_PINS;
   useEffect(() => {
     if (!ctx) return;
-    liveRef.current.markerIds.forEach((id, i) => liveRef.current.markers[i]?.getElement().classList.toggle("is-hover", id === hoveredPin));
-    const poi = hoveredPin?.startsWith("poi-") ? hoveredPin.slice(4) : "";
+    liveRef.current.markerIds.forEach((id, i) => liveRef.current.markers[i]?.getElement().classList.toggle("is-hover", id === hoveredPin || openPins.has(id)));
+    const pois = [hoveredPin, ...openPins].filter((id): id is string => !!id && id.startsWith("poi-")).map((id) => id.slice(4));
     for (const layer of ["side-hover-casing", "side-hover-line"])
-      if (ctx.map.getLayer(layer)) ctx.map.setFilter(layer, ["==", ["get", "id"], poi] as FilterSpecification);
-  }, [ctx, markers, hoveredPin, sideLegs]);
+      if (ctx.map.getLayer(layer)) ctx.map.setFilter(layer, ["in", ["get", "id"], ["literal", pois.length ? pois : [""]]] as FilterSpecification);
+  }, [ctx, markers, hoveredPin, openPins, sideLegs]);
+  // A map that goes away takes its open popups with it.
+  useEffect(() => {
+    const live = liveRef;
+    return () => {
+      for (const id of live.current.markerIds) setPinOpen(id, false);
+    };
+  }, []);
 
 
   // A row in a list below, or a pick in a plan step, asks for its place: bring the map into view, centre on it

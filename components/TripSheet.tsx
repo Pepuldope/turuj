@@ -17,6 +17,7 @@ import { StepMap } from "@/components/PlanStep";
 import { ShorterRouteHint } from "@/components/RouteRows";
 import { ClosureBanner } from "@/components/ClosureBanner";
 import { isIndexedVariant, variantHeading } from "@/lib/variantTitles";
+import { UiIcon } from "@/components/UiIcon";
 import { NearbyTrips } from "@/components/NearbyTrips";
 import { nearestMainTrips, noYearlyClosure, withoutYearlyClosure } from "@/lib/nearbyTrips";
 import { TripAnswers, TripHeaderFacts } from "@/components/TripAnswers";
@@ -393,8 +394,14 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
           <NearbyTrips lang={lang} items={nearby} walks={nearbyWalks} />
 
           {town && (
-            <Link href={langPath(lang, `/vylety-z/${town.id}`)} className="accent-on-sunk w-fit px-1 text-sm font-semibold">
-              {tr(lang, "Ďalšie výlety okolo {town}", { town: townOf(lang, town.id, town.name) })} →
+            // Its own card, so it reads as another place to go and not as more of the list above.
+            <Link
+              href={langPath(lang, `/vylety-z/${town.id}`)}
+              className="accent-on-sunk mt-2 flex min-h-14 items-center gap-3 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3 text-base font-semibold hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+            >
+              <UiIcon name="pin" size={18} />
+              <span className="min-w-0 flex-1 leading-snug">{tr(lang, "Ďalšie výlety okolo {town}", { town: townOf(lang, town.id, town.name) })}</span>
+              <UiIcon name="chev" size={16} />
             </Link>
           )}
 
