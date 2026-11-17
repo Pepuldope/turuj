@@ -4,6 +4,8 @@ import { useSyncExternalStore } from "react";
 import { MARKING_COLOR } from "@/lib/mapLayers";
 import type { DayPlan } from "@/lib/dayPlan";
 import type { TripProfile } from "@/lib/tripProfile";
+import type { PoiKind } from "@/lib/tripSchema";
+import type { PoiIcon } from "@/lib/food";
 
 // The sun dial and the day map show the same day: the dial keeps the moment you scrub to, the map
 // puts a walker where you are at that moment. This is the small channel between them: the dial
@@ -21,8 +23,8 @@ export interface DayModel {
   trail: TripProfile | null;
   /** The walk from the parking (or stop) to the trail, as a share of the walking time each way (0 = none). */
   approach: number;
-  /** Stretches of the day spent standing at the stops, as shares of the hike (TripProfile.pauses). */
-  pauses: { from: number; to: number }[];
+  /** Stretches of the day spent standing at the stops, as shares of the hike (TripProfile.pauses), with the place's kind for its pin. */
+  pauses: { from: number; to: number; kind?: PoiKind; icon?: PoiIcon }[];
   /** When the walk reaches its goal, ms. */
   goalTime: number | null;
   /** Each stop's name and when you are there (once, or twice there and back), ms. */
