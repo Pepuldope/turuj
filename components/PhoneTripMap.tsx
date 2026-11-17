@@ -116,7 +116,7 @@ export function PhoneTripMap({
           >
             Na trase
             <span className="font-medium text-[var(--muted)]">{pois.length}</span>
-            <span className={`text-[var(--muted)] transition-transform ${tab ? "rotate-90" : "-rotate-90"}`}>
+            <span className={`text-[var(--muted)] transition-transform motion-reduce:transition-none ${tab ? "rotate-90" : "-rotate-90"}`}>
               <UiIcon name="chev" size={14} />
             </span>
           </button>

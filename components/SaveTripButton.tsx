@@ -1,5 +1,6 @@
 "use client";
 
+import { Reveal } from "@/components/Reveal";
 import { UiIcon } from "@/components/UiIcon";
 import { APP_BAR_KEY } from "@/components/AppBar";
 import { useTripStops } from "@/lib/tripStops";
@@ -110,6 +111,9 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
   const [status, setStatus] = useState<Status>("idle");
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [askShare, setAskShare] = useState(false);
+  // The two boxes under the button swap by rolling (Peter, 17 Nov), but only after the visitor pressed something: a saved
+  // trip is read from storage right after hydration, and that is not an event.
+  const [touched, setTouched] = useState(false);
   // The first trip saved on this device: ask once how they heard of us (after the share offer).
   const [askHeard, setAskHeard] = useState(false);
 
@@ -126,6 +130,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
       saved.hikeMin !== hikeMin);
 
   async function onSave() {
+    setTouched(true);
     // While the drive or the trains load, the plan is still missing them: saving now would keep a wrong day.
     if (!date || !time || !sun || loading) return;
     setStatus("saving");
@@ -216,7 +221,8 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
       {showButton && !(saved && status === "saving") && saveButton}
 
       {/* Order: the confirmation first ("Uložené" + share), then the one-time question, the calendar, navigation, GPX. The app offer is AppPromo, outside this card. */}
-      {saved && askShare && (
+      <Reveal open={!!saved && askShare} className="roll-flex-gap" appear animate={touched}>
+        {saved && (
         <div className="flex flex-col gap-2 rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
           <p role="status">
             <strong>{t("Uložené.")}</strong> {t("Nájdete to v")}{" "}
@@ -243,9 +249,11 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
             </button>
           </div>
         </div>
-      )}
+        )}
+      </Reveal>
 
-      {saved && !askShare && status !== "saving" && (
+      <Reveal open={!!saved && !askShare && status !== "saving"} className="roll-flex-gap" appear animate={touched}>
+        {saved && (
         <p className="rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
           <strong>{t("Už uložené.")}</strong> {t("Nájdete to v")}{" "}
           <LangLink href="/ulozene" className="underline">
@@ -253,11 +261,16 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
           </LangLink>
           , {t("naplánované na")} <strong>{dayAfterNa(saved.date, lang)}</strong> {t("o")} <strong>{saved.time}</strong>
           {saved.offline === "ok" ? t(", funguje aj bez signálu. ") : ". "}
-          <button type="button" onClick={() => remove(slug)} className="underline">
+          <button type="button" onClick={() => {
+              setTouched(true);
+              remove(slug);
+            }}
+            className="underline">
             {t("Odstrániť")}
           </button>
         </p>
-      )}
+        )}
+      </Reveal>
 
       {showButton && saved && status === "saving" && saveButton}
 

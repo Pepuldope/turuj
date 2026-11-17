@@ -53,7 +53,7 @@ export function ShowMore({
       }
     >
       {open ? t("Zobraziť menej") : t(moreKey(kind, hidden), { n: hidden })}
-      <UiIcon name="chev" size={16} className={open ? "-rotate-90" : "rotate-90"} />
+      <UiIcon name="chev" size={16} className={`transition-transform duration-200 motion-reduce:transition-none ${open ? "-rotate-90" : "rotate-90"}`} />
     </button>
   );
 }

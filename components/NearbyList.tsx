@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
+import { Reveal } from "@/components/Reveal";
 import { dayMonthOf, inYearlyRange, pluralClass, todayMonthDay } from "@/lib/closedToday";
 import { tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
@@ -31,9 +32,12 @@ const noop = () => () => {};
 /** Today's "MM-DD" in the browser; null on the server and while hydrating, so the built HTML never depends on the date. */
 const useToday = () => useSyncExternalStore(noop, () => todayMonthDay(), () => null);
 
-function Card({ item, hidden }: { item: NearbyItem; hidden?: boolean }) {
+function Card({ item, hidden, animate }: { item: NearbyItem; hidden?: boolean; animate?: boolean }) {
   return (
-    <li hidden={hidden} className={`${CARD} hover:border-[var(--accent)]`}>
+    // Folded cards stay in the page (inert) and roll out with "Zobraziť ďalšie" (Peter, 17 Nov). The gap above a card is
+    // inside the reveal, so a folded card leaves no space behind.
+    <Reveal as="li" open={!hidden} keepMounted animate={animate}>
+    <div className={`${CARD} mt-2.5 hover:border-[var(--accent)]`}>
       <Link href={item.href} className="flex min-h-14 items-center gap-3 rounded-[var(--radius-card)] px-4 py-3">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-base font-semibold leading-snug text-[var(--foreground)]">{item.name}</span>
@@ -51,7 +55,8 @@ function Card({ item, hidden }: { item: NearbyItem; hidden?: boolean }) {
           <UiIcon name="chev" size={16} />
         </span>
       </Link>
-    </li>
+    </div>
+    </Reveal>
   );
 }
 
@@ -70,7 +75,13 @@ function closedHeading(lang: Lang, n: number): string {
  */
 export function NearbyList({ lang, items }: { lang: Lang; items: NearbyItem[] }) {
   const today = useToday();
-  const [all, setAll] = useState(false);
+  const [all, setAllState] = useState(false);
+  // No motion until the visitor has pressed the button: the first fold after hydration is not an event.
+  const [toggled, setToggled] = useState(false);
+  const setAll = (next: (v: boolean) => boolean) => {
+    setToggled(true);
+    setAllState(next);
+  };
   const closedNow = (i: NearbyItem) => today !== null && i.from !== null && i.to !== null && inYearlyRange(i.from, i.to, today);
   const open = items.filter((i) => !closedNow(i));
   const closed = items.filter(closedNow);
@@ -78,14 +89,14 @@ export function NearbyList({ lang, items }: { lang: Lang; items: NearbyItem[] })
   const end = ends.size === 1 ? [...ends][0] : null;
   return (
     <>
-      <ul className="flex flex-col gap-2.5">
+      <ul className="-mt-2.5 flex flex-col">
         {open.map((item, i) => (
-          <Card key={item.slug} item={item} hidden={today !== null && !all && i >= SHOWN} />
+          <Card key={item.slug} item={item} hidden={today !== null && !all && i >= SHOWN} animate={toggled} />
         ))}
       </ul>
       {today !== null && <ShowMore variant="text" kind="trips" hidden={open.length - SHOWN} open={all} onToggle={() => setAll((v) => !v)} />}
       {closed.length > 0 && (
-        <details className={`group ${CARD}`}>
+        <details className={`group details-roll ${CARD}`}>
           <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 rounded-[var(--radius-card)] px-4 py-3 [&::-webkit-details-marker]:hidden">
             <span className="min-w-0 flex-1 text-base leading-snug font-semibold text-[var(--foreground)]">
               <Nums text={closedHeading(lang, closed.length) + (end ? ` ${tr(lang, "(do {when})", { when: dayMonthOf(end, lang) })}` : "")} />

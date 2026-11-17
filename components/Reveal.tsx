@@ -1,0 +1,105 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import type { ElementType, ReactNode } from "react";
+
+/** How long a reveal takes to open and to close (the `.reveal` rules in app/globals.css use the same numbers). */
+export const REVEAL_OPEN_MS = 320;
+export const REVEAL_CLOSE_MS = 220;
+
+const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/**
+ * Rolls its content out and back: the height glides with the grid-rows trick (0fr to 1fr) and the content
+ * fades in a beat after the height starts (Peter, 17 Nov: "show more" rows and sections popped in).
+ * While `open` is false the content is not in the page: it is unmounted once the closing has finished, so
+ * the hidden rows cost nothing and cannot take focus. `keepMounted` is for content that must stay in the
+ * HTML for search engines and no-script readers (the nearby trips): it stays, hidden and `inert`.
+ * `appear` rolls the content out when it first shows up; without it, content that starts open is just there.
+ * `animate={false}` changes the state without any motion (the first state after hydration).
+ */
+export function Reveal({
+  open,
+  as: Tag = "div",
+  className,
+  appear = false,
+  keepMounted = false,
+  animate = true,
+  children,
+}: {
+  open: boolean;
+  as?: ElementType;
+  className?: string;
+  appear?: boolean;
+  keepMounted?: boolean;
+  animate?: boolean;
+  children: ReactNode;
+}) {
+  // Content that appears (`appear`) with reduced motion is open from its first frame and only fades in: starting closed
+  // showed one empty frame (Peter, 17 Nov). Only in the browser: such content mounts after a tap, never on the server.
+  const [stillAppear] = useState(() => appear && open && typeof window !== "undefined" && reduced());
+  const [mounted, setMounted] = useState(open);
+  const [expanded, setExpanded] = useState(open && (!appear || stillAppear));
+  // Settled: fully open, so the clip is lifted and focus rings and shadows at the edge are not cut off.
+  const [settled, setSettled] = useState(open && (!appear || stillAppear));
+  // With reduced motion nothing moves, but content opened by the visitor fades in (a CSS animation, `data-fade`), so
+  // it doesn't pop (Peter, 17 Nov). Not on the first state: what is open on load is just there.
+  const [fade, setFade] = useState(stillAppear && animate);
+  const firstRun = useRef(true);
+  useEffect(() => {
+    const still = !animate || reduced();
+    const first = firstRun.current;
+    firstRun.current = false;
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMounted(true);
+      if (still) {
+        if (animate && !first) setFade(true);
+        setExpanded(true);
+        setSettled(true);
+        return;
+      }
+      // The rolling itself starts in the effects below, once the closed state is really in the page.
+      return;
+    }
+    setSettled(false);
+    setExpanded(false);
+    if (still) {
+      setMounted(false);
+      return;
+    }
+    const later = setTimeout(() => setMounted(false), REVEAL_CLOSE_MS);
+    return () => clearTimeout(later);
+  }, [open, animate]);
+  // Two frames after the closed state is in the page: it has to be painted once, or there is nothing to animate from.
+  // This waits for the render that mounts the content, not for the effect that asked for it: with the main thread busy
+  // (saving a trip) the two frames used to pass before that render, and the content showed up already open.
+  const rolling = open && mounted && !expanded && animate;
+  useEffect(() => {
+    if (!rolling || reduced()) return;
+    let frame2 = 0;
+    const frame = requestAnimationFrame(() => (frame2 = requestAnimationFrame(() => setExpanded(true))));
+    return () => {
+      cancelAnimationFrame(frame);
+      cancelAnimationFrame(frame2);
+    };
+  }, [rolling]);
+  // Settled a little after it has finished opening.
+  const settling = open && expanded && !settled;
+  useEffect(() => {
+    if (!settling) return;
+    const done = setTimeout(() => setSettled(true), REVEAL_OPEN_MS + 40);
+    return () => clearTimeout(done);
+  }, [settling]);
+  if (!mounted && !keepMounted) return null;
+  const hidden = keepMounted && !expanded;
+  return (
+    <Tag className={`reveal ${className ?? ""}`} data-open={expanded} data-settled={settled} data-still={animate ? undefined : true} data-fade={fade || undefined}>
+      <div className="reveal-clip">
+        <div className="reveal-body" inert={hidden} aria-hidden={hidden || undefined}>
+          {children}
+        </div>
+      </div>
+    </Tag>
+  );
+}

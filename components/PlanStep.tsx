@@ -36,10 +36,14 @@ interface StepsApi {
   toResult: (from: string) => void;
   /** The step was left forward with "Ďalej" (its number shows a tick). */
   isDone: (id: string) => boolean;
+  /** The step opens or folds at once, without its roll (it is off the screen, see `go`). */
+  isStill: (id: string) => boolean;
+  /** Keeps the step being scrolled to where it stands while a step off the screen changes size (call after layout). */
+  holdAnchor: () => void;
 }
 
-/** How long a step takes to fold or unfold (the CSS transition on its body uses the same). */
-const FOLD_MS = 250;
+/** How long a step takes to fold and to unfold (the `.reveal` rules in app/globals.css use the same). */
+const FOLD_MS = 220;
 /** Finished steps, kept across a route pick like the open steps are (a new page, the same plan). */
 let keptDone: Record<string, boolean> = {};
 
@@ -50,7 +54,7 @@ const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matc
 /** The gap kept between what a scroll brings up and the edge above it. */
 const SCROLL_GAP = 12;
 /** How long the glide to the next step takes. */
-const GLIDE_MS = 450;
+const GLIDE_MS = 650;
 
 /**
  * Scrolls `el` to the top of the window, just under the phone's top bar. The bar's real height is read
@@ -83,7 +87,7 @@ function underBar(el: Element): { box: HTMLElement | null; top: number } {
  * once (before or after the fold) is a stale one and the glide overshoots or lands short. It keeps holding the spot until the fold
  * has finished (`holdMs`), and gives way at once to a finger, wheel or key. Returns the stop function.
  */
-function glideUnderBar(el: Element, holdMs: number, folding: Element | null): () => void {
+function glideUnderBar(el: Element, holdMs: number, folding: Element | null, onFrame?: (done: boolean) => void): () => void {
   // The step left behind is above `el` and is still folding away: where `el` will stand is where it stands
   // now minus what is left of that step's body (the body is the section's second child, gone once folded).
   const toFold = () => (folding?.children[1]?.getBoundingClientRect().height ?? 0);
@@ -93,6 +97,15 @@ function glideUnderBar(el: Element, holdMs: number, folding: Element | null): ()
   };
   const start = where();
   const from = start.box ? start.box.scrollTop : window.scrollY;
+  // Glides the distance left to the target, not between two fixed spots: a step folding off the screen moves the
+  // target and the scroll together (holdAnchor), and the glide must not jump with it.
+  const dist0 = start.top - from;
+  // Slow, and slower the further it goes (Peter, 17 Nov: "scroll slowly to the next card"): 0.5-0.9 s.
+  const ms = Math.min(GLIDE_MS + 300, Math.max(GLIDE_MS - 150, GLIDE_MS - 250 + Math.abs(dist0) * 0.4));
+  // Time on the glide's own clock: a frame that comes late (a map starting up) advances it one frame, not the whole
+  // delay, so the glide carries on from where it was instead of jumping ahead.
+  let clock = 0;
+  let last = performance.now();
   const t0 = performance.now();
   let frame = 0;
   const stop = () => {
@@ -102,12 +115,17 @@ function glideUnderBar(el: Element, holdMs: number, folding: Element | null): ()
   for (const ev of ["wheel", "touchstart", "keydown", "mousedown"]) window.addEventListener(ev, stop, { passive: true });
   const step = (now: number) => {
     const { box, top } = where();
-    const p = Math.min(1, (now - t0) / GLIDE_MS);
-    const eased = 1 - Math.pow(1 - p, 3);
-    const at = from + (top - from) * eased;
+    clock += Math.min(now - last, 34);
+    last = now;
+    const p = Math.min(1, clock / ms);
+    // Slow at both ends: a hard start on top of the fold moving under it read as a jerk (Peter, 17 Nov).
+    const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+    const at = top - dist0 * (1 - eased);
     if (box) box.scrollTo({ top: at, behavior: "instant" });
     else window.scrollTo({ top: at, behavior: "instant" });
-    if (now - t0 < Math.max(GLIDE_MS, holdMs)) frame = requestAnimationFrame(step);
+    const more = clock < ms || now - t0 < holdMs;
+    onFrame?.(!more);
+    if (more) frame = requestAnimationFrame(step);
     else stop();
   };
   frame = requestAnimationFrame(step);
@@ -150,6 +168,26 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     return () => clearTimeout(later);
   }, []);
   const pending = useRef<{ to: string; from: string; forward: boolean } | null>(null);
+  // Steps that open or fold without their roll, because they do it off the screen (Peter, 17 Nov).
+  const [still, setStill] = useState<Record<string, boolean>>({});
+  // The step header to keep in place while a step off the screen changes size, until `until`.
+  const anchor = useRef<{ el: Element; top: number; until: number } | null>(null);
+  const anchorOn = (id: string) => {
+    const el = document.getElementById(`plan-step-${id}`)?.closest("section");
+    if (el) anchor.current = { el, top: el.getBoundingClientRect().top, until: performance.now() + 600 };
+  };
+  const holdAnchor = () => {
+    const a = anchor.current;
+    if (!a || performance.now() > a.until) return;
+    const by = a.el.getBoundingClientRect().top - a.top;
+    if (Math.abs(by) < 0.5) return;
+    const { box } = underBar(a.el);
+    if (box) box.scrollTop += by;
+    else window.scrollBy({ top: by, behavior: "instant" });
+  };
+  // The running glide, kept here (not as an effect cleanup) so the next step opening a beat later doesn't cancel it.
+  const glide = useRef<(() => void) | null>(null);
+  useEffect(() => () => glide.current?.(), []);
   const fitFor = (id: string) => steps.find((s) => s.id === id)?.fit;
   const api: StepsApi = {
     steps,
@@ -159,8 +197,12 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
         const fit = fitFor(id);
         if (fit) fitOnMap(fit);
       }
+      setStill((x) => ({ ...x, [id]: false }));
       setOpen((o) => ({ ...o, [id]: !o[id] }));
     },
+    // Peter, 17 Nov: folding one step and unfolding the next while the page scrolls made people a bit seasick. Now the
+    // next step opens and the page glides slowly to it; the step left behind folds only once it is off the screen,
+    // at once and with the scroll held (holdAnchor), so nothing moves in view but the glide itself.
     go: (from, to) => {
       const forward = steps.findIndex((s) => s.id === to) > steps.findIndex((s) => s.id === from);
       pending.current = { to, from, forward };
@@ -168,24 +210,44 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       if (fit) fitOnMap(fit);
       // Forward ("Ďalej") marks the step left behind as done; "Späť" leaves the ticks as they are.
       if (forward) setDone((d) => ({ ...d, [from]: true }));
-      setOpen((o) => ({ ...o, [from]: false, [to]: true }));
+      if (reduced()) {
+        setOpen((o) => ({ ...o, [from]: false, [to]: true }));
+        return;
+      }
+      if (forward) {
+        // Below the view: it rolls out as the page comes down to it.
+        setStill((x) => ({ ...x, [to]: false }));
+      } else {
+        // Its header off the screen above: it opens at once, with the step in view held where it is, then the page
+        // glides up. Its header on the screen (the visitor scrolled up a bit): it rolls open where it is, nothing held;
+        // holding the step below then pushed the page down and back up (Peter, 17 Nov).
+        const head = document.getElementById(`plan-step-${to}`);
+        const box = head ? underBar(head).box : null;
+        const above = !!head && head.getBoundingClientRect().bottom < (box ? box.getBoundingClientRect().top : 0);
+        if (above) anchorOn(from);
+        setStill((x) => ({ ...x, [to]: above }));
+      }
+      setOpen((o) => ({ ...o, [to]: true }));
     },
     openStep: (id) => {
       pending.current = { to: id, from: id, forward: false };
       const fit = fitFor(id);
       if (fit) fitOnMap(fit);
       // A new object even when it is open already, so the effect below runs and brings it into view.
+      setStill((x) => ({ ...x, [id]: false }));
       setOpen((o) => ({ ...o, [id]: true }));
     },
     // "Hotovo": the last step closes and is ticked like "Ďalej" does for the others (Peter, 17 Nov), then the view
-    // glides to the day, once the step has folded (250 ms) so the target doesn't move under the scroll.
+    // glides to the day, once the step has folded (FOLD_MS) so the target doesn't move under the scroll.
     toResult: (from) => {
       setDone((d) => ({ ...d, [from]: true }));
       setOpen((o) => ({ ...o, [from]: false }));
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      setTimeout(() => scrollUnderBar(document.getElementById(resultId)), reduce ? 0 : 260);
+      setTimeout(() => scrollUnderBar(document.getElementById(resultId)), reduce ? 0 : FOLD_MS + 40);
     },
     isDone: (id) => !!done[id],
+    isStill: (id) => !!still[id],
+    holdAnchor,
   };
   // After the new state is on screen: the next step's header gets the focus and the view glides to it.
   useEffect(() => {
@@ -197,11 +259,45 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     header?.focus({ preventScroll: true });
     const section = header?.closest("section");
     if (!section) return;
+    glide.current?.();
     if (reduced()) return scrollUnderBar(section);
-    // Starts at once and tracks the target while the step left behind folds and this one unfolds.
-    // Only a step left above is folding out from under the target (going back, the target is above it).
-    const left = go.forward ? document.getElementById(`plan-step-${go.from}`)?.closest("section") : null;
-    return glideUnderBar(section, FOLD_MS + 150, left ?? null);
+    // Opened from the warnings recap: only the glide.
+    if (go.from === go.to) {
+      glide.current = glideUnderBar(section, 0, null);
+      return;
+    }
+    // The step left behind folds once it has left the screen: above it going forward, below it going back.
+    const left = document.getElementById(`plan-step-${go.from}`)?.closest("section");
+    let folded = false;
+    // `quiet`: off the screen, at once with the step in view held. Otherwise it rolls shut as usual.
+    const foldLeft = (quiet: boolean) => {
+      folded = true;
+      if (quiet) anchorOn(id);
+      setStill((x) => ({ ...x, [go.from]: quiet }));
+      setOpen((o) => ({ ...o, [go.from]: false }));
+    };
+    const begin = () => (glide.current = glideUnderBar(section, 0, null, (done) => {
+      if (folded || !left) return;
+      const r = left.getBoundingClientRect();
+      const { box } = underBar(left);
+      const top = box ? box.getBoundingClientRect().top : 0;
+      const bottom = box ? box.getBoundingClientRect().bottom : window.innerHeight;
+      const off = go.forward ? r.bottom <= top : r.top >= bottom;
+      if (off) foldLeft(true);
+      // Still in view when the glide ends. Going back it is below the step arrived at, so its roll moves nothing above
+      // it: it rolls shut where you can see it (Peter, 17 Nov: on a wide screen it snapped shut in view). Going
+      // forward (a short page) it is above, and folds at once with the step in view held.
+      else if (done) foldLeft(go.forward);
+    }));
+    if (go.forward) return void begin();
+    // Going back, the step above opens first (held in place, holdAnchor): the glide measures its way after that, two
+    // frames on, or it starts from a stale spot and the view flicks back for a frame.
+    let f2 = 0;
+    const f1 = requestAnimationFrame(() => (f2 = requestAnimationFrame(begin)));
+    glide.current = () => {
+      cancelAnimationFrame(f1);
+      cancelAnimationFrame(f2);
+    };
   }, [open]);
   return <StepsContext.Provider value={api}>{children}</StepsContext.Provider>;
 }
@@ -285,17 +381,34 @@ export function PlanStep({
   // (`mounted`), and `expanded` flips a frame after mounting so the opening is animated too.
   const [mounted, setMounted] = useState(open);
   const [expanded, setExpanded] = useState(open);
+  // Reduced motion: opened in the same frame (waiting two frames showed an empty gap, a blink) and faded in instead of
+  // rolled out (`data-fade`, app/globals.css), never on the first state (Peter, 17 Nov).
+  const [fade, setFade] = useState(false);
+  const firstRun = useRef(true);
+  // Opening or folding off the screen ("Ďalej", "Späť"): at once, no roll.
+  const still = api.isStill(id);
   useEffect(() => {
+    const first = firstRun.current;
+    firstRun.current = false;
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setMounted(true);
+      if (reduced() || still) {
+        if (!first && !still) setFade(true);
+        setExpanded(true);
+        return;
+      }
       const frame = requestAnimationFrame(() => requestAnimationFrame(() => setExpanded(true)));
       return () => cancelAnimationFrame(frame);
     }
     setExpanded(false);
-    const later = setTimeout(() => setMounted(false), reduced() ? 0 : FOLD_MS);
+    const later = setTimeout(() => setMounted(false), reduced() || still ? 0 : FOLD_MS);
     return () => clearTimeout(later);
+    // `still` is read as it is when `open` changes; it doesn't start anything by itself.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+  // A step changing size off the screen keeps the step being scrolled to in place, before the frame is drawn.
+  useLayoutEffect(() => api.holdAnchor(), [api, open, expanded, mounted]);
   const bodyId = useId();
   const at = api.steps.findIndex((s) => s.id === id);
   const next = api.steps[at + 1];
@@ -324,24 +437,22 @@ export function PlanStep({
           <span className="text-[17px] leading-tight font-bold">{title}</span>
           <span className={`flex min-w-0 items-start gap-1.5 text-[13.5px] leading-snug font-semibold ${warn ? "text-[var(--warn)]" : "text-[var(--muted)]"}`}>
             {warn && <UiIcon name="warn" size={14} className="mt-0.5 shrink-0" />}
-            <span className="line-clamp-2 min-w-0">{summary}</span>
+            <FadeOnToggle on={open} className="line-clamp-2 min-w-0">{summary}</FadeOnToggle>
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-0.5 text-[13.5px] font-bold text-[var(--accent)]">
-          {open ? t("Hotovo") : t("Zmeniť")}
+          <FadeOnToggle on={open}>{open ? t("Hotovo") : t("Zmeniť")}</FadeOnToggle>
           <span className={`transition-transform ${open ? "rotate-180" : ""}`}>
             <UiIcon name="down" size={16} />
           </span>
         </span>
       </button>
       {mounted && (
-        // Height glides with the grid-rows trick (0fr ↔ 1fr), plus a fade; off with reduced motion.
-        <div
-          className={`grid transition-[grid-template-rows,opacity] duration-[250ms] ease-out motion-reduce:transition-none ${
-            expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-          }`}
-        >
-        <div className="min-h-0 overflow-hidden">
+        // Rolls out like Reveal: the height glides (grid rows 0fr to 1fr), the content fades in a beat after it starts.
+        // Off with reduced motion (the `.reveal` rules in app/globals.css).
+        <div className="reveal" data-open={expanded} data-fade={fade || undefined} data-still={still || undefined}>
+        <div className="reveal-clip">
+        <div className="reveal-body">
         <div id={bodyId} className="flex flex-col gap-2 px-3 pb-2.5">
           {children}
           {/* On to the next choice: the filled accent button (Peter, 2026-11-11), "Späť" stays quiet. */}
@@ -367,8 +478,33 @@ export function PlanStep({
         </div>
         </div>
         </div>
+        </div>
       )}
     </section>
+  );
+}
+
+/**
+ * Fades its text in when the step opens or closes and the text is not the same any more (the summary line,
+ * the "Hotovo" / "Zmeniť" label): they used to swap in one frame. Not on every change of the text: the summary
+ * follows the slider while it is dragged, and that should not flicker. A fade only, so it stays on with reduced motion too.
+ */
+function FadeOnToggle({ on, className, children }: { on: boolean; className?: string; children: ReactNode }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const last = useRef<{ on: boolean; text: string | null }>({ on, text: null });
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const text = el.textContent;
+    if (last.current.text !== null && last.current.on !== on && last.current.text !== text) {
+      el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: "ease-out" });
+    }
+    last.current = { on, text };
+  });
+  return (
+    <span ref={ref} className={className}>
+      {children}
+    </span>
   );
 }
 

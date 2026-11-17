@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { KindIcon } from "@/components/KindIcon";
 import { poiIcon, poiLabel } from "@/lib/food";
 import { focusOnMap } from "@/lib/mapFocus";
@@ -9,6 +9,7 @@ import type { LatLng, Poi } from "@/lib/types";
 import { UiIcon } from "@/components/UiIcon";
 import { LUNCH, stopFor, useTripStops, visits } from "@/lib/tripStops";
 import type { TripStop } from "@/lib/tripStops";
+import { Reveal } from "@/components/Reveal";
 import { ShowMore, shownRows } from "@/components/ShowMore";
 import { LunchTime, WaySwitch, useLunchPick } from "@/components/StopsRow";
 import { floorTo5 } from "@/lib/days";
@@ -61,10 +62,25 @@ export function PoiList({
   const day = usePlanDay();
   const lunch = useLunchPick(slug);
   const [all, setAll] = useState(false);
-  if (pois.length === 0 && stops.stops.length === 0) return null;
+  // Motion only once the visitor has pressed something: the stops come out of storage right after hydration, and that is not an event.
+  const [touched, setTouched] = useState(false);
+  // A place added or taken away rolls out of one list and into the other (Peter, 17 Nov), so a stop that was just removed stays
+  // in "Vybrané" (its row rolling shut) until the roll is over.
+  const chosen = stops.stops;
+  const [listed, setListed] = useState<TripStop[]>(chosen);
+  const withLeaving = keepLeaving(listed, chosen);
+  if (withLeaving.map((s) => s.id).join() !== listed.map((s) => s.id).join()) setListed(withLeaving);
+  const leavingCount = withLeaving.length - chosen.length;
+  useEffect(() => {
+    if (!leavingCount) return;
+    const later = setTimeout(() => setListed(chosen), 400);
+    return () => clearTimeout(later);
+  }, [leavingCount, chosen]);
+  if (pois.length === 0 && stops.stops.length === 0 && withLeaving.length === 0) return null;
 
   const poiOf = (id: string) => pois.find((p) => p.id === id);
   const choose = (p: Poi) => {
+    setTouched(true);
     if (!stops.has(p.id)) focusOnMap({ location: p.location, scope: "places", context: near[p.id] });
     stops.toggle(stopFor(p));
   };
@@ -74,9 +90,14 @@ export function PoiList({
   const ordered = [...free.filter((p) => p.detour_min === null), ...free.filter((p) => p.detour_min !== null)];
   const rows = shownRows(ordered.length, all);
   const seen = ordered.filter((_, i) => rows.includes(i));
+  // Every unchosen place stays in the list and rolls out or in with "Zobraziť ďalšie" (Peter, 17 Nov), so each row and each
+  // group of rows carries whether it is shown now.
+  const shownIds = new Set(seen.map((p) => p.id));
   const onTotal = free.filter((p) => p.detour_min === null).length;
-  const on = seen.filter((p) => p.detour_min === null);
-  const off = seen.filter((p) => p.detour_min !== null);
+  // Chosen places stay in these lists with a closed row, so the row can roll shut where it was (and open again if it is taken back).
+  const onWayOf = (p: Poi) => p.detour_min === null;
+  const on = pois.filter(onWayOf);
+  const off = pois.filter((p) => !onWayOf(p));
   const word =
     lang === "en" ? (onTotal === 1 ? "place" : "places") : onTotal === 1 ? "miesto" : onTotal < 5 ? "miesta" : "miest";
 
@@ -90,7 +111,7 @@ export function PoiList({
 
   return (
     <div className="flex flex-col gap-4">
-      {stops.stops.length > 0 && (
+      <Reveal open={chosen.length > 0} appear={touched} animate={touched}>
         <section aria-label={t("Vybrané zastávky")} className="rounded-xl bg-[var(--accent-soft)] px-3 py-2">
           <p className="flex flex-wrap items-baseline justify-between gap-x-3 pb-1 text-sm">
             <span className="font-bold">{t("Vybrané · {n}", { n: stops.stops.length })}</span>
@@ -105,10 +126,10 @@ export function PoiList({
             </span>
           </p>
           <ul className="divide-y divide-[var(--border)]">
-            {stops.stops.map((s) => {
+            {withLeaving.map((s) => {
               const p = poiOf(s.id);
               return (
-                <li key={s.id}>
+                <Reveal as="li" key={s.id} open={stops.has(s.id)} appear={touched} animate={touched}>
                   <PickedRow
                     stop={s}
                     p={p}
@@ -120,30 +141,36 @@ export function PoiList({
                       ) : null
                     }
                     onWay={(way) => stops.setWay(s.id, way)}
-                    onRemove={() => stops.toggle(s)}
+                    onRemove={() => {
+                      setTouched(true);
+                      stops.toggle(s);
+                    }}
                   />
-                </li>
+                </Reveal>
               );
             })}
           </ul>
         </section>
-      )}
+      </Reveal>
 
-      {on.length > 0 && (
+      <Reveal open={on.some((p) => shownIds.has(p.id))}>
         <Group title={t("Na trase")} side={`${onTotal} ${word}`}>
           {on.map((p) => (
-            <FreeRow key={p.id} p={p} near={near[p.id]} onAdd={() => choose(p)} />
+            <FreeRow key={p.id} p={p} near={near[p.id]} onAdd={() => choose(p)} open={shownIds.has(p.id)} animate={touched} />
           ))}
         </Group>
-      )}
-      {off.length > 0 && (
+      </Reveal>
+      <Reveal open={off.some((p) => shownIds.has(p.id))}>
         <Group title={t("Kúsok bokom")} side={t("odbočka z trasy")}>
           {off.map((p) => (
-            <FreeRow key={p.id} p={p} near={near[p.id]} onAdd={() => choose(p)} />
+            <FreeRow key={p.id} p={p} near={near[p.id]} onAdd={() => choose(p)} open={shownIds.has(p.id)} animate={touched} />
           ))}
         </Group>
-      )}
-      <ShowMore kind="places" hidden={ordered.length - seen.length} open={all} onToggle={() => setAll((v) => !v)} />
+      </Reveal>
+      <ShowMore kind="places" hidden={ordered.length - seen.length} open={all} onToggle={() => {
+          setTouched(true);
+          setAll((v) => !v);
+        }} />
 
       {advice && plan && (
         <div className="flex flex-col gap-1.5 rounded-xl bg-[var(--warn-bg)] p-4 text-[var(--warn)]">
@@ -162,7 +189,10 @@ export function PoiList({
             {removal.length > 0 && advice.removal && (
               <button
                 type="button"
-                onClick={() => removal.forEach((s) => stops.toggle(s))}
+                onClick={() => {
+                  setTouched(true);
+                  removal.forEach((s) => stops.toggle(s));
+                }}
                 className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-2.5 text-left text-sm font-semibold text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
               >
                 <UiIcon name="close" size={16} />
@@ -238,11 +268,12 @@ const nameBtn =
   "-ml-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-1 pl-1 text-left focus-visible:outline-2 focus-visible:outline-[var(--accent)]";
 
 /** A place not chosen yet: tile, name, kind and where, its minutes, a round "+". */
-function FreeRow({ p, near, onAdd }: { p: Poi; near?: LatLng; onAdd: () => void }) {
+function FreeRow({ p, near, onAdd, open = true, animate = true }: { p: Poi; near?: LatLng; onAdd: () => void; /** False for a row folded away behind "Zobraziť ďalšie" or taken into "Vybrané": it rolls out when it turns true, shut when false. */ open?: boolean; animate?: boolean }) {
   const t = useT();
   const row = usePinRow(`poi-${p.id}`);
   return (
-    <li {...row.handlers} className={`flex items-center gap-2 py-2 ${row.hover}`}>
+    <Reveal as="li" open={open} animate={animate}>
+    <div {...row.handlers} className={`-mx-2 flex items-center gap-2 rounded-lg px-2 py-2 ${row.hover}`}>
       <button type="button" onClick={() => showOnMap(p, near)} className={nameBtn}>
         <KindIcon kind={poiIcon(p)} colour={POI_COLOUR[p.kind]} size={44} />
         <span className="flex min-w-0 flex-1 flex-col">
@@ -259,8 +290,18 @@ function FreeRow({ p, near, onAdd }: { p: Poi; near?: LatLng; onAdd: () => void 
       >
         +
       </button>
-    </li>
+    </div>
+    </Reveal>
   );
+}
+
+/** The chosen stops plus the ones taken away a moment ago (kept at the place they had), so their rows can roll shut. */
+function keepLeaving(before: TripStop[], now: TripStop[]): TripStop[] {
+  const out = [...now];
+  before.forEach((s, i) => {
+    if (!now.some((n) => n.id === s.id)) out.splice(Math.min(i, out.length), 0, s);
+  });
+  return out;
 }
 
 /** "+35 min", never split across lines. */
@@ -308,7 +349,7 @@ function PickedRow({
     </>
   );
   return (
-    <div {...row.handlers} className={`flex flex-col py-1.5 ${row.hover}`}>
+    <div {...row.handlers} className={`-mx-2 flex flex-col rounded-lg px-2 py-1.5 ${row.hover}`}>
       <div className="flex items-center gap-2">
         {p ? (
           <button type="button" onClick={() => showOnMap(p, near)} className={nameBtn}>

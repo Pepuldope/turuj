@@ -208,7 +208,7 @@ export function EveReminder({
               aria-hidden
               className={`relative h-6 w-10 shrink-0 rounded-full ${on ? "bg-[var(--accent)]" : "bg-[var(--muted)]"}`}
             >
-              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-[var(--card-bg)] transition-all ${on ? "left-[18px]" : "left-0.5"}`} />
+              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-[var(--card-bg)] transition-all motion-reduce:transition-none ${on ? "left-[18px]" : "left-0.5"}`} />
             </span>
             <span>{t("Pripomenúť večer pred výletom")}</span>
           </button>

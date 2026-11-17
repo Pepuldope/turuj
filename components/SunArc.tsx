@@ -9,7 +9,7 @@ import { LAND, seasonDetails, seasonOf, seeded, snowSvg } from "@/lib/season";
 import { UI_ICON, iconEdge } from "@/lib/uiIcons";
 import { MARKING_COLOR, MARKING_LABEL } from "@/lib/mapLayers";
 import { KIND_ICON } from "@/lib/kindIcons";
-import { POI_COLOUR } from "@/lib/palette";
+import { GOAL_COLOUR, POI_COLOUR } from "@/lib/palette";
 import { sunAltitude } from "@/lib/sun";
 import { GOAL_WORDS } from "@/lib/tripProfile";
 import { LAPSE_PER_M, baseSymbol, skyKind, weatherAt, weatherWords } from "@/lib/weather";
@@ -19,6 +19,7 @@ import type { TripProfile } from "@/lib/tripProfile";
 import type { LatLng } from "@/lib/types";
 import { hourOf } from "@/lib/zoned";
 import { useLang, useT } from "@/lib/i18n";
+import { reducedMotion } from "@/lib/motion";
 
 const MIN = 60000;
 const HOUR = 60 * MIN;
@@ -344,10 +345,13 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
       const half = Math.max(3, (x(t1) - x(t0)) / 2);
       const [xa, xb] = [mid - half, mid + half];
       const line = [[xa, yAtX(xa)], ...walk.filter((p) => p.x > xa && p.x < xb).map((p) => [p.x, p.y]), [xb, yAtX(xb)]];
-      return { t0, t1, name: pa.name, kind: pa.kind, icon: pa.icon, x: mid, y: yAtX(mid), d: "M" + line.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join("L") };
+      return { t0, t1, name: pa.name, kind: pa.kind, icon: pa.icon, goal: pa.goal, x: mid, y: yAtX(mid), d: "M" + line.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join("L") };
     });
 
-    return { lo, hi, x, tAt, y, arcX, sunY, walk, pauses, sky, goal: walk[goalIndex], goalT: walk[goalIndex].t, arc, dash, ridge, hill, ticks, breaks, season, deco, snow, capY, capEdge };
+    // The flag stands in the middle of the time spent at the goal (C190), not at its start (Peter, 17 Nov).
+    const goalStay = pauses.find((pa) => pa.goal);
+    const flag = goalStay ? { x: goalStay.x, y: goalStay.y } : { x: walk[goalIndex].x, y: walk[goalIndex].y };
+    return { lo, hi, x, tAt, y, arcX, sunY, walk, pauses, sky, flag, goal: walk[goalIndex], goalT: walk[goalIndex].t, arc, dash, ridge, hill, ticks, breaks, season, deco, snow, capY, capEdge };
   }, [first, home, hs, he, sunrise, sunset, dusk, plan.dawn, profile, sun.lat, sun.lon, weather]);
   const land = LAND[scene.season];
   const sunR = 8.5 * land.sunScale;
@@ -395,8 +399,27 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   const scrubRef = useRef(scrub);
   scrubRef.current = scrub;
   const playedRef = useRef(false);
+  // When the mouse leaves, the moment eases back to the resting time over 300 ms instead of snapping (Peter, 17 Nov);
+  // with reduced motion it still snaps. Any new touch of the dial cancels the glide.
+  const backRaf = useRef(0);
+  useEffect(() => () => cancelAnimationFrame(backRaf.current), []);
+  const easeBack = () => {
+    cancelAnimationFrame(backRaf.current);
+    const from = scrubRef.current;
+    if (from === null) return;
+    if (reducedMotion()) return setScrub(null);
+    const t0 = performance.now();
+    backRaf.current = requestAnimationFrame(function step(now) {
+      const f = Math.min(1, (now - t0) / 300);
+      if (f < 1) {
+        setScrub(from + (restT - from) * (1 - Math.pow(1 - f, 3)));
+        backRaf.current = requestAnimationFrame(step);
+      } else setScrub(null);
+    });
+  };
   // Any touch on the dial takes over from the playing day.
   const take = (at: number | null) => {
+    cancelAnimationFrame(backRaf.current);
     setPlaying(false);
     setScrub(at);
   };
@@ -467,7 +490,9 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   const markText = markColour ? tx(MARKING_SHORT[markColour] ?? "bez značky") : null;
 
   // Standing at an added stop: the walker shows as that place's pin.
-  const atPause = onTrail ? scene.pauses.find((pa) => pa.kind && t >= pa.t0 && t <= pa.t1) : undefined;
+  const atPause = onTrail ? scene.pauses.find((pa) => (pa.kind || pa.goal) && t >= pa.t0 && t <= pa.t1) : undefined;
+  // Its pin: the place's colour and icon, or the goal's own while you are at the goal (C190).
+  const pausePin = atPause ? (atPause.kind ? { colour: POI_COLOUR[atPause.kind], icon: KIND_ICON[atPause.icon ?? atPause.kind] } : { colour: GOAL_COLOUR[atPause.goal!], icon: KIND_ICON[atPause.goal!] }) : null;
   const marker = onTrail ? "walker" : inCar ? (byBus ? (byTrain ? "train" : "bus") : "car") : "dot";
   const goalWords = profile ? GOAL_WORDS[profile.goalKind] : null;
   const what =
@@ -482,7 +507,9 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
         : t > he
           ? tx("Cesta domov")
           : scene.pauses.some((pa) => t >= pa.t0 && t <= pa.t1)
-            ? `${tx("Zastávka")}: ${tx(scene.pauses.find((pa) => t >= pa.t0 && t <= pa.t1)!.name)}`
+            ? scene.pauses.find((pa) => t >= pa.t0 && t <= pa.t1)!.goal && goalWords
+              ? `${tx(goalWords.at)}: ${profile!.goalName}`
+              : `${tx("Zastávka")}: ${tx(scene.pauses.find((pa) => t >= pa.t0 && t <= pa.t1)!.name)}`
             : Math.abs(t - scene.goalT) < 6 * MIN && goalWords
             ? `${tx(goalWords.at)}: ${profile!.goalName}`
             : t < scene.goalT
@@ -518,7 +545,10 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   const onMove = (e: ReactPointerEvent) => {
     if (dragging.current) take(timeAt(e.clientX));
     // A mouse just passing over does not stop a playing day (it is on its way to the button).
-    else if (e.pointerType === "mouse" && !playing) setScrub(timeAt(e.clientX));
+    else if (e.pointerType === "mouse" && !playing) {
+      cancelAnimationFrame(backRaf.current);
+      setScrub(timeAt(e.clientX));
+    }
   };
   const timeAtRef = useRef(timeAt);
   timeAtRef.current = timeAt;
@@ -549,6 +579,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
         if (!sideways) return;
       }
       if (e.cancelable) e.preventDefault();
+      cancelAnimationFrame(backRaf.current);
       setPlaying(false);
       setScrub(timeAtRef.current(clientX));
     };
@@ -571,7 +602,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
     <div
       className="touch-pan-y select-none [-webkit-touch-callout:none]"
       onPointerMove={onMove}
-      onPointerLeave={(e) => e.pointerType === "mouse" && !playing && setScrub(null)}
+      onPointerLeave={(e) => e.pointerType === "mouse" && !playing && easeBack()}
     >
       <div className="relative">
       <svg
@@ -686,7 +717,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
         {/* Added stops: the time spent there cut out of the walk in the place's colour, its map pin above
             (Peter, 2026-10-24 and 2026-10-26). While the walker is there, the walker turns into the pin. */}
         {scene.pauses.map((pa) => {
-          const c = pa.kind ? POI_COLOUR[pa.kind] : WALKER;
+          const c = pa.kind ? POI_COLOUR[pa.kind] : pa.goal ? GOAL_COLOUR[pa.goal] : WALKER;
           // The stretch of the line itself in the place's colour, a little thicker than the line but inside its white edge: it sits on the line, never over it.
           return (
             <g key={pa.t0}>
@@ -725,11 +756,11 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
 
         {profile && (
           <g>
-            <line x1={scene.goal.x} x2={scene.goal.x} y1={scene.goal.y} y2={scene.goal.y - 13} stroke="#17213a" strokeWidth={1.2} />
-            <path d={`M${scene.goal.x},${scene.goal.y - 13}l8,3l-8,3z`} fill="#f4a51c" />
+            <line x1={scene.flag.x} x2={scene.flag.x} y1={scene.flag.y} y2={scene.flag.y - 13} stroke="#17213a" strokeWidth={1.2} />
+            <path d={`M${scene.flag.x},${scene.flag.y - 13}l8,3l-8,3z`} fill="#f4a51c" />
             <text
-              x={label(scene.goal.x)}
-              y={scene.goal.y - 18 - (onTrail && Math.abs(walker[0] - scene.goal.x) < 40 ? 18 : 0)}
+              x={label(scene.flag.x)}
+              y={scene.flag.y - 18 - (onTrail && Math.abs(walker[0] - scene.flag.x) < 40 ? 18 : 0)}
               textAnchor="middle"
               fontSize={11}
               fontWeight={700}
@@ -798,12 +829,12 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
         ))}
 
         {/* Who is where: the car on the road, the walker on the trail (the place's pin at a stop), a dot at home. */}
-        {atPause?.kind ? (
+        {pausePin ? (
           <g transform={`translate(${walker[0]} ${walker[1] - 13})`}>
             <circle r={11.2} fill={INK} opacity={0.3} />
-            <circle r={10} fill={POI_COLOUR[atPause.kind]} stroke="#fff" strokeWidth={1.8} />
+            <circle r={10} fill={pausePin.colour} stroke="#fff" strokeWidth={1.8} />
             {/* Constant markup from lib/kindIcons.ts, no user data. */}
-            <g transform="translate(-6.6 -6.6) scale(0.55)" color="#fff" dangerouslySetInnerHTML={{ __html: KIND_ICON[atPause.icon ?? atPause.kind] }} />
+            <g transform="translate(-6.6 -6.6) scale(0.55)" color="#fff" dangerouslySetInnerHTML={{ __html: pausePin.icon }} />
           </g>
         ) : (
         <g transform={`translate(${onTrail ? walker[0] : sx} ${onTrail ? walker[1] - 12 : inCar ? HOR - 11 : HOR + 3}) translate(-12.5 -12.5) scale(1.04)`}>

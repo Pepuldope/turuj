@@ -9,6 +9,7 @@ import { LangLink, useLang, useT } from "@/lib/i18n";
 import { PREVIEW_MESSAGE } from "@/lib/previewGuard";
 import { langOfPath, langPath, skPath } from "@/lib/lang";
 import { useSavedTrips } from "@/lib/savedTrips";
+import { usePresence } from "@/lib/usePresence";
 import { UiIcon } from "@/components/UiIcon";
 import { EASE_IN, EASE_OUT, dockMoved, pop } from "@/lib/dockFlip";
 import type { UiIconName } from "@/lib/uiIcons";
@@ -46,6 +47,10 @@ export function TopBar() {
   // Kept with the page it was opened on: a new page closes it.
   const [opened, setOpened] = useState<{ kind: Panel; path: string }>({ kind: null, path });
   const panel = opened.path === path ? opened.kind : null;
+  // The panel stays in the page while it fades out, with the content it had (Peter, 17 Nov).
+  const presence = usePresence(panel !== null, 120);
+  const [shownKind, setShownKind] = useState<Exclude<Panel, null>>("menu");
+  if (panel && panel !== shownKind) setShownKind(panel);
   const setPanel = (p: Panel | ((cur: Panel) => Panel)) => setOpened((o) => ({ kind: typeof p === "function" ? p(o.path === path ? o.kind : null) : p, path }));
   const [shown, setShown] = useState(true);
   const shownRef = useRef(true);
@@ -267,16 +272,24 @@ export function TopBar() {
             aria-label={t("Menu")}
             className="grid h-10 w-10 place-items-center rounded-full border border-[var(--border)] bg-[var(--card-bg)] hover:bg-[var(--segment-bg)] lg:h-[42px] lg:w-[42px] lg:border-0"
           >
-            <UiIcon name={panel === "menu" ? "close" : "menu"} size={20} />
+            {/* The two icons trade places with a quick fade and quarter turn; with reduced motion they just swap. */}
+            <span className="grid place-items-center">
+              <span className={`col-start-1 row-start-1 transition-[opacity,rotate] duration-150 motion-reduce:transition-none ${panel === "menu" ? "rotate-90 opacity-0 motion-reduce:rotate-0" : ""}`}>
+                <UiIcon name="menu" size={20} />
+              </span>
+              <span className={`col-start-1 row-start-1 transition-[opacity,rotate] duration-150 motion-reduce:transition-none ${panel === "menu" ? "" : "-rotate-90 opacity-0 motion-reduce:rotate-0"}`}>
+                <UiIcon name="close" size={20} />
+              </span>
+            </span>
           </button>
         </span>
       </div>
-      {panel && (
-        <div className="absolute inset-x-3 top-[calc(100%+6px)] max-h-[calc(100dvh-80px)] overflow-y-auto rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] p-2 shadow-[var(--shadow-float)] lg:inset-x-auto lg:right-0 lg:w-80"
+      {presence.mounted && (
+        <div data-state={presence.state} className="pres pres-drop absolute inset-x-3 top-[calc(100%+6px)] max-h-[calc(100dvh-80px)] overflow-y-auto rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] p-2 shadow-[var(--shadow-float)] lg:inset-x-auto lg:right-0 lg:w-80"
           // A tapped link closes the panel before the navigation, so it is never left open behind it.
           onClick={(e) => (e.target as Element).closest("a") && setOpened((o) => ({ ...o, kind: null }))}
         >
-          {panel === "menu" ? <MenuList /> : <AccountPanel notice={notice} code={noticeCode} onDone={() => setNotice(null)} />}
+          {shownKind === "menu" ? <MenuList /> : <AccountPanel notice={notice} code={noticeCode} onDone={() => setNotice(null)} />}
         </div>
       )}
     </div>

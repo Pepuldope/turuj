@@ -690,11 +690,12 @@ h2,
   }
 }
 
-/* The account + menu card sits in the top right corner on a computer (components/TopBar.tsx):
-   map buttons there move down under it. */
+/* The account + menu card sits in the top right corner on a computer (components/TopBar.tsx): map buttons there
+   move down under it. The card ends at 66 px (12 px from the top, 54 px tall); the buttons' own 10 px margin comes on
+   top of this, so they start 8 px under it (Peter, 17 Nov: 52 px left the + under the card). */
 @media (min-width: 1024px) {
   .maplibregl-ctrl-top-right {
-    margin-top: 52px;
+    margin-top: 64px;
   }
 }
 
@@ -809,4 +810,275 @@ h2,
 }
 .mt-driveend[data-edge="start"] .mt-driveend-box {
   transform: translate(-50%, -50%);
+}
+
+/*
+ * Reveal (components/Reveal.tsx) and the plan steps (components/PlanStep.tsx), Peter, 17 Nov: things that open
+ * roll out. The height glides (grid rows 0fr to 1fr), the content follows a beat later, and closing is quicker
+ * than opening. Keep the numbers in step with REVEAL_OPEN_MS / REVEAL_CLOSE_MS and the step's FOLD_MS / UNFOLD_MS.
+ */
+.reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms cubic-bezier(0.4, 0, 0.7, 1);
+}
+.reveal[data-open="true"] {
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 320ms cubic-bezier(0.2, 0, 0, 1);
+}
+.reveal-clip {
+  min-height: 0;
+  overflow: hidden;
+}
+.reveal[data-settled="true"] > .reveal-clip {
+  overflow: visible;
+}
+/* Closed (or closing): the content goes first, fast, then is hidden for good once the height is gone. */
+.reveal-body {
+  opacity: 0;
+  translate: 0 -6px;
+  visibility: hidden;
+  transition:
+    opacity 120ms ease-in,
+    translate 120ms ease-in,
+    visibility 0s linear 220ms;
+}
+/* Open: the content comes in a little after the height starts moving. */
+.reveal[data-open="true"] > .reveal-clip > .reveal-body {
+  opacity: 1;
+  translate: 0 0;
+  visibility: visible;
+  transition:
+    opacity 240ms ease-out 100ms,
+    translate 300ms cubic-bezier(0.2, 0, 0, 1) 60ms,
+    visibility 0s;
+}
+.reveal[data-still="true"],
+.reveal[data-still="true"] .reveal-body {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal[data-open="true"],
+  .reveal .reveal-body,
+  .reveal[data-open="true"] > .reveal-clip > .reveal-body {
+    transition: none;
+    translate: none;
+  }
+  /* Nothing moves, but what the visitor opens fades in, so it doesn't pop (Peter, 17 Nov; Apple's own advice). */
+  .reveal[data-fade="true"][data-open="true"] > .reveal-clip > .reveal-body {
+    animation: reveal-fade 150ms ease-out;
+  }
+}
+/* From a quarter, not from nothing: the first frames of a big step can come late, and a blank one read as a blink. */
+@keyframes reveal-fade {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+ * Native <details> sections open and close smoothly where the browser can animate to "auto" height
+ * (Chrome and Safari: ::details-content with interpolate-size). Elsewhere they open as before.
+ */
+@supports selector(::details-content) {
+  .details-roll {
+    interpolate-size: allow-keywords;
+  }
+  .details-roll::details-content {
+    block-size: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      block-size 220ms cubic-bezier(0.4, 0, 0.7, 1),
+      opacity 120ms ease-in,
+      content-visibility 220ms allow-discrete;
+  }
+  .details-roll[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+    transition:
+      block-size 320ms cubic-bezier(0.2, 0, 0, 1),
+      opacity 240ms ease-out 100ms,
+      content-visibility 320ms allow-discrete;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .details-roll::details-content,
+    .details-roll[open]::details-content {
+      transition: none;
+    }
+    .details-roll[open]::details-content {
+      animation: reveal-fade 150ms ease-out;
+    }
+  }
+}
+
+/*
+ * Things that appear and disappear without rolling: menus, sheets, backdrops, dialogs (Peter, 17 Nov). They come
+ * with lib/usePresence.ts, which keeps them in the page while they leave and sets data-state. Opening is a CSS
+ * animation (so it needs no extra frame to start from), closing is a transition to the closed look. A sheet
+ * slides its own height, a dropdown moves 8 px, a dialog scales from 0.97. Reduced motion: nothing moves, what
+ * appears fades in over 150 ms from a quarter (never a blank frame), and what closes just goes.
+ */
+.pres[data-state="closed"] {
+  pointer-events: none;
+}
+.pres-drop[data-state="closed"] {
+  opacity: 0;
+  translate: 0 -8px;
+  transition:
+    opacity 120ms ease-in,
+    translate 120ms ease-in;
+}
+.pres-drop[data-state="open"] {
+  animation: pres-drop-in 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+@keyframes pres-drop-in {
+  from {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+}
+.pres-fade[data-state="closed"] {
+  opacity: 0;
+  transition: opacity 120ms ease-in;
+}
+.pres-fade[data-state="open"] {
+  animation: pres-fade-in 120ms ease-out;
+}
+@keyframes pres-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.pres-backdrop[data-state="closed"] {
+  opacity: 0;
+  transition: opacity 220ms ease-in;
+}
+.pres-backdrop[data-state="open"] {
+  animation: pres-fade-in 240ms ease-out;
+}
+.pres-sheet[data-state="closed"] {
+  translate: 0 100%;
+  transition: translate 220ms cubic-bezier(0.4, 0, 0.7, 1);
+}
+.pres-sheet[data-state="open"] {
+  animation: pres-sheet-in 320ms cubic-bezier(0.2, 0, 0, 1);
+}
+@keyframes pres-sheet-in {
+  from {
+    translate: 0 100%;
+  }
+}
+/* A bar that floats above the bottom edge (the app bar): it has to leave by its own height plus its gap. */
+.pres-bar[data-state="closed"] {
+  translate: 0 calc(100% + 40px);
+  transition: translate 220ms cubic-bezier(0.4, 0, 0.7, 1);
+}
+.pres-bar[data-state="open"] {
+  animation: pres-bar-in 320ms cubic-bezier(0.2, 0, 0, 1);
+}
+@keyframes pres-bar-in {
+  from {
+    translate: 0 calc(100% + 40px);
+  }
+}
+.pres-pop[data-state="closed"] {
+  opacity: 0;
+  scale: 0.97;
+  transition:
+    opacity 120ms ease-in,
+    scale 120ms ease-in;
+}
+.pres-pop[data-state="open"] {
+  animation: pres-pop-in 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+@keyframes pres-pop-in {
+  from {
+    opacity: 0;
+    scale: 0.97;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pres[data-state="closed"] {
+    translate: none;
+    scale: none;
+    transition: none;
+  }
+  .pres[data-state="open"] {
+    animation: reveal-fade 150ms ease-out;
+  }
+}
+
+/* A photo that has just loaded fades in (components/TripCard.tsx, Peter, 17 Nov); reduced motion keeps only a short fade. */
+.img-fade-in {
+  animation: pres-fade-in 220ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .img-fade-in {
+    animation: reveal-fade 150ms ease-out;
+  }
+}
+
+/*
+ * A list whose rows roll out and in (the saved trips, Peter, 17 Nov): the gap between rows is each row's own top
+ * margin, and it grows and shrinks in step with the row's height. A plain flex gap stays until the row is unmounted,
+ * and then the rest of the list jumps by the gap. Set --roll-gap on the row; the first row has none, and neither
+ * has the row after a first row that is closing.
+ */
+.roll-gap {
+  margin-top: var(--roll-gap, 12px);
+  transition:
+    grid-template-rows 220ms cubic-bezier(0.4, 0, 0.7, 1),
+    margin-top 220ms cubic-bezier(0.4, 0, 0.7, 1);
+}
+.roll-gap[data-open="true"] {
+  transition:
+    grid-template-rows 320ms cubic-bezier(0.2, 0, 0, 1),
+    margin-top 320ms cubic-bezier(0.2, 0, 0, 1);
+}
+.roll-gap:first-child,
+.roll-gap[data-open="false"],
+.roll-gap[data-open="false"]:first-child + .roll-gap {
+  margin-top: 0;
+}
+.roll-gap[data-still="true"] {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .roll-gap,
+  .roll-gap[data-open="true"] {
+    transition: none;
+  }
+}
+
+/*
+ * The same for a row inside a flex column that has its own `gap` (Peter, 17 Nov): while the row is closed or closing
+ * its top margin cancels the gap above it, in step with the height, so nothing jumps when it is finally removed.
+ * Set --roll-gap to the column's gap.
+ */
+.roll-flex-gap {
+  transition:
+    grid-template-rows 220ms cubic-bezier(0.4, 0, 0.7, 1),
+    margin-top 220ms cubic-bezier(0.4, 0, 0.7, 1);
+}
+.roll-flex-gap[data-open="true"] {
+  transition:
+    grid-template-rows 320ms cubic-bezier(0.2, 0, 0, 1),
+    margin-top 320ms cubic-bezier(0.2, 0, 0, 1);
+}
+.roll-flex-gap[data-open="false"] {
+  margin-top: calc(-1 * var(--roll-gap, 12px));
+}
+.roll-flex-gap[data-still="true"] {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .roll-flex-gap,
+  .roll-flex-gap[data-open="true"] {
+    transition: none;
+  }
 }

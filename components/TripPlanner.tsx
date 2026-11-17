@@ -36,6 +36,7 @@ import type { StepDef } from "@/components/PlanStep";
 import { ParkingOptions, feeLabel, parkingTitle, summaryWalk } from "@/components/ParkingBlock";
 import { NoStartNote, PlanStartAsk } from "@/components/PlanStartAsk";
 import { StopsRow } from "@/components/StopsRow";
+import { GoalStayRow } from "@/components/GoalStayRow";
 import { SunArc } from "@/components/SunArc";
 import { DayMapLegend } from "@/components/DayMapLegend";
 import { goalTime, trailColours } from "@/lib/dayClock";
@@ -46,12 +47,14 @@ import { StopOptions, TransitHandoff, TransitLegs } from "@/components/TransitBl
 import { TravelSwitch } from "@/components/TravelSwitch";
 import { GOAL_WORDS, trimProfile, withApproach, withStops } from "@/lib/tripProfile";
 import { LUNCH, STAY_MIN, keepStopsOf, stopsMinutes, useTripStops } from "@/lib/tripStops";
+import { goalStayDefault, useGoalStay } from "@/lib/goalStay";
 import type { LunchPick } from "@/components/StopsRow";
 import type { PauseAt, TripProfile } from "@/lib/tripProfile";
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 import type { SavedTrail } from "@/lib/savedTrips";
+import { useLeave } from "@/lib/usePresence";
 
 interface Props extends ShareInfo {
   sun: LatLng | null;
@@ -141,7 +144,12 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
     }
     return trailStart ? { name: trip.name, location: trailStart } : null;
   }, [transit, stop, parking, trailStart, trip.name, t]);
-  const tripPlan = useTripPlan(sun, rideTo, baseHikeMin, transitAccess && stop?.mode === "vlak" ? stop.location : null, transitAccess, trip.slug, walking ? walkThere : null);
+  // Time at the goal (C190): the kind's default, a guided tour's own number, or the visitor's; it lengthens the day like a stop.
+  const goalKind = fullProfile?.goalKind ?? null;
+  const stayDefault = goalKind ? goalStayDefault(goalKind, goal?.name) : null;
+  const goalStay = useGoalStay(trip.slug, stayDefault?.min ?? 0);
+  const stayMin = goalKind ? goalStay.min : 0;
+  const tripPlan = useTripPlan(sun, rideTo, baseHikeMin, transitAccess && stop?.mode === "vlak" ? stop.location : null, transitAccess, trip.slug, walking ? walkThere : null, stayMin);
   const { plan, date, time, driveMin, roadMin, driveApprox, driveStatus, rail } = tripPlan;
   // The stops the group added stand on the walk where it passes them (lunch at the goal).
   const { stops, minutes: stopMin } = useTripStops(trip.slug);
@@ -150,7 +158,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
   useEffect(() => keepStopsOf(trip.slug), [trip.slug]);
   // Walking time alone (the plan's time less the stops), and when the walk starts: the lunch break's
   // clock time maps onto the walk with these (Peter 2026-10-27: lunch when you want it, not only at the goal).
-  const walkOnlyMin = Math.max(1, tripPlan.hikeMin - stopsMinutes(stops));
+  const walkOnlyMin = Math.max(1, tripPlan.hikeMin - stopsMinutes(stops) - stayMin);
   const hikeStartMs = plan?.hikeStart.getTime() ?? null;
   const lunchTime = stops.find((s) => s.id === LUNCH.id)?.at;
   const lunchFrac = useMemo(() => {
@@ -166,11 +174,13 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
       .reduce((sum, s) => {
         const place = walkProfile.places?.find((p) => p.id === s.id);
         return place && place.out * walkOnlyMin < elapsed ? sum + s.min : sum;
-      }, 0);
+      }, goalAt * walkOnlyMin < elapsed ? stayMin : 0);
     return Math.min(1, Math.max(0, (elapsed - before) / walkOnlyMin));
-  }, [walkProfile, lunchTime, hikeStartMs, stops, walkOnlyMin]);
+  }, [walkProfile, lunchTime, hikeStartMs, stops, walkOnlyMin, stayMin]);
   const profile = useMemo(() => {
-    if (!walkProfile || !stops.length) return walkProfile;
+    if (!walkProfile || (!stops.length && !stayMin)) return walkProfile;
+    // The time at the goal first: arrive, look round, then lunch there if it's at the goal too.
+    const atGoal: PauseAt[] = stayMin > 0 ? [{ at: walkProfile.points[walkProfile.goalIndex].at, min: stayMin, name: goal?.name ?? trip.name, goal: walkProfile.goalKind }] : [];
     const pauses = stops.flatMap((s): PauseAt[] => {
       // Lunch shows as food on the sun dial, like a buffet stop.
       if (s.id === LUNCH.id) return [{ at: lunchFrac ?? 0, min: s.min, name: s.name, kind: "obcerstvenie", icon: "restauracia" }];
@@ -182,8 +192,8 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
         ...(way !== "tam" && place.back !== null ? [{ at: place.back, min: s.min, name: s.name, kind: place.kind, icon: place.icon }] : []),
       ];
     });
-    return withStops(walkProfile, pauses, tripPlan.hikeMin);
-  }, [walkProfile, stops, tripPlan.hikeMin, lunchFrac]);
+    return withStops(walkProfile, [...atGoal, ...pauses], tripPlan.hikeMin);
+  }, [walkProfile, stops, tripPlan.hikeMin, lunchFrac, stayMin, goal?.name, trip.name]);
   // Lunch: times to pick, and food places (or huts) the walk passes around then.
   const lunch = useMemo<LunchPick | undefined>(() => {
     if (!walkProfile || hikeStartMs === null || !plan) return undefined;
@@ -192,7 +202,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
       const stood = stops.reduce((sum, s) => {
         const at = walkProfile.places?.find((p) => p.id === s.id)?.out;
         return at != null && at < frac ? sum + s.min : sum;
-      }, 0);
+      }, walkProfile.points[walkProfile.goalIndex].at < frac ? stayMin : 0);
       return new Date(hikeStartMs + (frac * walkOnlyMin + stood) * 60000);
     };
     const goal = clock(walkProfile.points[walkProfile.goalIndex].at);
@@ -221,7 +231,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
         time: formatTime(clock(at)),
       }));
     return { times, goalTime: formatTime(goal), foods };
-  }, [walkProfile, hikeStartMs, plan, walkOnlyMin, lunchFrac, stops]);
+  }, [walkProfile, hikeStartMs, plan, walkOnlyMin, lunchFrac, stops, stayMin]);
   const [shared, setShared] = useState<SharedPlan | null>(null);
   const weather = useTripWeather(plan, trailStart, goal, walkProfile?.points[0]?.ele ?? null);
   // The day strip marks the days in the forecast whose walk (same start time) gets rain, snow, fog or storms.
@@ -484,16 +494,26 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
           // The stops alone push the walk past sunset: the step's own box (PoiList, R1w) says why and how out.
           warn={ready && stopsAdvice(plan, stops.map((s) => ({ id: s.id, name: s.name, minutes: s.min }))) !== null}
           summary={
-            stops.length === 0 ? (
-              hasPlaces ? t("Zatiaľ žiadna nevybraná") : t("Prestávka na obed? Pridajte ju nižšie")
-            ) : (
-              <>
-                {stopsWord} · <span className="font-data">+{formatDurationShort(stopMin)}</span>
-              </>
-            )
+            <>
+              {goalKind && (
+                <>
+                  {t("V cieli")} <span className="font-data">{formatDurationShort(stayMin)}</span> ·{" "}
+                </>
+              )}
+              {stops.length === 0 ? (
+                hasPlaces ? t("Zatiaľ žiadna nevybraná") : t("Prestávka na obed? Pridajte ju nižšie")
+              ) : (
+                <>
+                  {stopsWord} · <span className="font-data">+{formatDurationShort(stopMin)}</span>
+                </>
+              )}
+            </>
           }
         >
           <NoStartNote>{t("Návrat počítame bez cesty autom.")}</NoStartNote>
+          {goalKind && stayDefault && (
+            <GoalStayRow min={stayMin} changed={goalStay.changed} fallback={stayDefault} kind={goalKind} onSet={goalStay.set} onReset={goalStay.reset} />
+          )}
           {placesMap}
           <StopsRow slug={trip.slug} hasPlaces={hasPlaces} loop={!!walkProfile?.loop} lunch={lunch} />
           {places}
@@ -631,16 +651,18 @@ const shortTime = (hhmm: string) => hhmm.replace(/^0/, "");
 
 function UnusualTime({ time, text, better, onBetter, onKeep }: { time: string; text: string; better: string | null; onBetter: () => void; onKeep: () => void }) {
   const t = useT();
+  // A choice fades the dialog out first, then applies it (Peter, 17 Nov).
+  const { state, leave } = useLeave();
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onKeep();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && leave(onKeep);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onKeep]);
+  }, [leave, onKeep]);
   return (
     // In the middle of the screen, also on phones (Peter: a bottom sheet looked too unimportant).
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4" role="alertdialog" aria-modal="true" aria-labelledby="unusual-time">
-      <div className="absolute inset-0 bg-black/50" onClick={onKeep} />
-      <div className="relative flex w-full max-w-[420px] flex-col gap-3 rounded-[20px] border-2 border-[var(--warn)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-float)]">
+      <div data-state={state} className="pres pres-backdrop absolute inset-0 bg-black/50" onClick={() => leave(onKeep)} />
+      <div data-state={state} className="pres pres-pop relative flex w-full max-w-[420px] flex-col gap-3 rounded-[20px] border-2 border-[var(--warn)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-float)]">
         <h2 id="unusual-time" className="flex items-center gap-2 text-lg font-bold">
           <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0 text-[var(--warn)]" aria-hidden="true">
             <path d="M12 3 22 20H2z" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
@@ -655,7 +677,7 @@ function UnusualTime({ time, text, better, onBetter, onKeep }: { time: string; t
           {better && (
             <button
               type="button"
-              onClick={onBetter}
+              onClick={() => leave(onBetter)}
               autoFocus
               className="rounded-xl bg-[var(--accent)] px-4 py-3 text-[15px] font-bold text-[var(--accent-contrast)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
             >
@@ -664,7 +686,7 @@ function UnusualTime({ time, text, better, onBetter, onKeep }: { time: string; t
           )}
           <button
             type="button"
-            onClick={onKeep}
+            onClick={() => leave(onKeep)}
             autoFocus={!better}
             className="rounded-xl border border-[var(--border)] px-4 py-3 text-[15px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
           >

@@ -8,6 +8,8 @@ import type { StartHow } from "@/lib/analytics";
 import type { Place } from "@/lib/geocode";
 import { useUserLocation } from "@/lib/userLocation";
 import { UiIcon } from "@/components/UiIcon";
+import { Reveal } from "@/components/Reveal";
+import { smoothScroll } from "@/lib/motion";
 import { PickStartMap } from "@/components/PickStartMap";
 import { useLang, useT } from "@/lib/i18n";
 import { useStartFlash } from "@/lib/startFlash";
@@ -151,7 +153,7 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
         </div>
       )}
 
-      {expanded && (
+      <Reveal open={expanded}>
         <div className="flex flex-col gap-2 pt-1">
           <form
             className="flex h-12 items-center gap-2 rounded-xl border-2 border-[var(--accent)] bg-[var(--card-bg)] px-3 shadow-[0_2px_8px_rgba(23,105,209,0.12)] has-[input:focus]:ring-1 has-[input:focus]:ring-[var(--accent)]"
@@ -263,7 +265,7 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
                 if (!browse || onDone) return setPickOwn(true);
                 setPicking(true);
                 setOpen(false);
-                browse.scrollIntoView({ block: "center", behavior: "smooth" });
+                browse.scrollIntoView({ block: "center", behavior: smoothScroll() });
               }}
               className="flex h-10 items-center justify-center gap-2 rounded-[10px] border border-dashed border-[var(--border)] text-sm font-semibold text-[var(--accent)] hover:border-[var(--accent)]"
             >
@@ -275,7 +277,7 @@ export function StartChip({ onDone }: { /** Shown in a panel (the trip page's "Z
           <p className="-mt-1 text-center text-xs text-[var(--muted)]">{t("Polohu si neukladáme, použijeme ju len na výpočet cesty.")}</p>
 
         </div>
-      )}
+      </Reveal>
 
       {pickOwn && (
         <PickStartMap

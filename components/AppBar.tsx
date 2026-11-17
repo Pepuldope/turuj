@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePresence } from "@/lib/usePresence";
 import { track } from "@/lib/analytics";
 import { useInstalled } from "@/lib/installApp";
 import { useSavedTrips } from "@/lib/savedTrips";
@@ -65,9 +66,11 @@ export function AppBar({ hidden }: { hidden?: boolean }) {
     } catch {}
   }
 
-  if (!show || installed || hidden || !scrolled || typing) return null;
+  // Slides up from the bottom edge when it shows up and back down when it goes (Peter, 17 Nov).
+  const presence = usePresence(show && !installed && !hidden && scrolled && !typing, 220);
+  if (!presence.mounted) return null;
   return (
-    <div className="fixed inset-x-3 bottom-[calc(12px+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-md items-center gap-3 rounded-2xl bg-[#14233b] p-3 pl-4 text-white shadow-[var(--shadow-float)]">
+    <div data-state={presence.state} className="pres pres-bar fixed inset-x-3 bottom-[calc(12px+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-md items-center gap-3 rounded-2xl bg-[#14233b] p-3 pl-4 text-white shadow-[var(--shadow-float)]">
       <span className="max-[359px]:hidden"><UiIcon name="phone" size={22} /></span>
       <span className="flex min-w-0 flex-1 flex-col leading-tight">
         <b className="text-[15px]">{t("Túruj ako appka")}</b>

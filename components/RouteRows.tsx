@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Reveal } from "@/components/Reveal";
 import { formatDuration } from "@/lib/format";
 import type { RouteBrief } from "@/lib/tripSchema";
 import { useTripSettings } from "@/lib/tripSettings";
@@ -63,8 +64,9 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
   // Pages of the sibling routes are loaded ahead (whole, not just their shell) while the list is open,
   // so a tap finds its page ready (a route switch hitched on the round trip). At most a handful.
   let ahead = 0;
-  return routes.map((r, i) => shown && !shown.includes(i) ? null : (
-    <li key={r.slug}>
+  // The extra rows roll out under "Zobraziť ďalšie" (Peter, 17 Nov), so every row is a Reveal that is open when it is shown.
+  return routes.map((r, i) => (
+    <Reveal as="li" key={r.slug} open={!shown || shown.includes(i)}>
       <LangLink
         // Opened from a town page, the town stays with the trip, so its back link still leads there (C170).
         href={`/trasa/${r.slug}${town ? `?z=${town.id}` : ""}`}
@@ -114,7 +116,7 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
           {/* The chosen day's light for this route's walk, not tied to a time: Kedy comes after this step (Peter, 2026-11-12). */}
           {day && !day.loading && day.plan && <DayNote note={routeNote(day.plan.sunrise, day.plan.sunset, numbers[i].min)} dayWord={day.dayWord} leadMs={day.leadMs} />}
       </LangLink>
-    </li>
+    </Reveal>
   ));
 }
 

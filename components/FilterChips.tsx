@@ -5,6 +5,7 @@ import { BAD_SKY_LABEL, badSkySvg } from "@/lib/weatherIcons";
 import type { BadSky } from "@/lib/weather";
 import { addDaysIso, dayStrip, isoDate, shortDate, shortDay } from "@/lib/days";
 import { useTripSettings } from "@/lib/tripSettings";
+import { Reveal } from "@/components/Reveal";
 import { UiIcon } from "@/components/UiIcon";
 import { track } from "@/lib/analytics";
 import { useLang, useT } from "@/lib/i18n";
@@ -118,7 +119,8 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
         </button>
       </div>
 
-      {showStrip && days && (
+      <Reveal open={showStrip}>
+        {days && (
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between text-[12.5px] font-bold text-[var(--muted)]">
             <span className="capitalize">{stripMonths(days.strip[0].iso, days.strip[days.strip.length - 1].iso, lang)}</span>
@@ -182,7 +184,8 @@ export function FilterChips({ variant = "home", activeDate, dayWeather }: Props)
             })}
           </div>
         </div>
-      )}
+        )}
+      </Reveal>
     </div>
   );
 }
@@ -233,12 +236,12 @@ export function Switch({ on, label, onChange, small = false }: { on: boolean; la
       aria-checked={on}
       aria-label={label}
       onClick={() => onChange(!on)}
-      className={`relative shrink-0 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
+      className={`relative shrink-0 rounded-full transition-colors motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
         small ? "h-[22px] w-9" : "h-7 w-[46px]"
       } ${on ? "bg-[var(--accent)]" : "bg-[#cfd5de]"}`}
     >
       <span
-        className={`absolute top-[3px] left-[3px] rounded-full bg-white shadow transition-transform ${small ? "h-4 w-4" : "h-[22px] w-[22px]"} ${
+        className={`absolute top-[3px] left-[3px] rounded-full bg-white shadow transition-transform motion-reduce:transition-none ${small ? "h-4 w-4" : "h-[22px] w-[22px]"} ${
           on ? (small ? "translate-x-[14px]" : "translate-x-[18px]") : ""
         }`}
       />

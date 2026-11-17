@@ -276,7 +276,7 @@ function pinElement(className: string, glyph: string, title: string): HTMLElemen
  * The day map frames the walk with small margins (Peter, 17 Nov, C187), more on top for the walker's time pill at a
  * summit. The pins' labels switch sides where they would run off the map (the markers effect).
  */
-const DAY_FIT_PADDING = { top: 30, bottom: 14, left: 14, right: 14 };
+const DAY_FIT_PADDING = { top: 44, bottom: 14, left: 14, right: 14 };
 type FitPadding = number | typeof DAY_FIT_PADDING;
 
 function fit(map: MlMap, b: BBox, duration = 0, padding: FitPadding = FIT_PADDING) {

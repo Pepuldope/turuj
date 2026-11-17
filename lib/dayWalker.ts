@@ -4,7 +4,7 @@ import type { DayModel } from "@/lib/dayClock";
 import { formatDurationShort, formatTime } from "@/lib/format";
 import { haversineM, nearestOnPath } from "@/lib/geo";
 import { KIND_ICON } from "@/lib/kindIcons";
-import { POI_COLOUR } from "@/lib/palette";
+import { GOAL_COLOUR, POI_COLOUR } from "@/lib/palette";
 import { UI_ICON } from "@/lib/uiIcons";
 import type { LatLng } from "@/lib/types";
 
@@ -307,11 +307,13 @@ export function attachDayWalker(
     // The car (or bus, train) where the ride ends before and after the walk, the walker everywhere else. Standing at
     // a stop the walker turns into that place's pin, as the sun dial's walker does (Peter, 17 Nov, C189).
     const s = (t - model.hs) / (model.he - model.hs || 1);
-    const pause = riding ? undefined : model.pauses.find((p) => p.kind && s >= p.from && s <= p.to);
-    const kind = pause ? `stop-${pause.icon ?? pause.kind}` : riding && model.mode !== "foot" ? model.mode : "foot";
+    const pause = riding ? undefined : model.pauses.find((p) => (p.kind || p.goal) && s >= p.from && s <= p.to);
+    // At the goal (its stay, C190) the walker turns into the goal's own pin.
+    const pin = pause ? (pause.kind ? { key: pause.icon ?? pause.kind, svg: KIND_ICON[pause.icon ?? pause.kind], colour: POI_COLOUR[pause.kind] } : { key: pause.goal!, svg: KIND_ICON[pause.goal!], colour: GOAL_COLOUR[pause.goal!] }) : null;
+    const kind = pin ? `stop-${pin.key}` : riding && model.mode !== "foot" ? model.mode : "foot";
     if (kind !== lastKind) {
-      glyph.innerHTML = icon(pause ? KIND_ICON[pause.icon ?? pause.kind!] : RIDE_ICON[kind as keyof typeof RIDE_ICON]);
-      glyph.style.background = pause ? POI_COLOUR[pause.kind!] : "";
+      glyph.innerHTML = icon(pin ? pin.svg : RIDE_ICON[kind as keyof typeof RIDE_ICON]);
+      glyph.style.background = pin ? pin.colour : "";
       lastKind = kind;
     }
     const time = formatTime(new Date(t));
