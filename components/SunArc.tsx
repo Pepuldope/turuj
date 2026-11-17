@@ -4,7 +4,6 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import type { DayPlan } from "@/lib/dayPlan";
 import { formatDuration, formatDurationShort, formatTime } from "@/lib/format";
-import { showDayOnMap } from "@/lib/mapFocus";
 import { publishDayMoment, UNMARKED_COLOUR } from "@/lib/dayClock";
 import { LAND, seasonDetails, seasonOf, seeded, snowSvg } from "@/lib/season";
 import { UI_ICON, iconEdge } from "@/lib/uiIcons";
@@ -386,7 +385,6 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
   const playedRef = useRef(false);
   // Any touch on the dial takes over from the playing day.
   const take = (at: number | null) => {
-    showDayOnMap();
     setPlaying(false);
     setScrub(at);
   };
@@ -818,10 +816,7 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
       </svg>
       <button
         type="button"
-        onClick={() => {
-          showDayOnMap();
-          setPlaying((p) => !p);
-        }}
+        onClick={() => setPlaying((p) => !p)}
         aria-pressed={playing}
         aria-label={playing ? tx("Zastaviť") : tx("Prehrať celý deň")}
         title={playing ? tx("Zastaviť") : tx("Prehrať celý deň")}

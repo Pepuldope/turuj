@@ -91,9 +91,7 @@ const pair = (p: LatLng): [number, number] => [p.lat, p.lon];
 export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = false, marks, colour: ownColour, focus: focusProp, placeKey }: Props) {
   const t = useT();
   // The day map (under Priebeh dňa) is about your day: your route, the ride's end, your stops, the goal and the walker. Not the other routes or the drive.
-  // On wide screens the big map takes this over while the Priebeh dňa block is in view (it asks for the "day" frame, TripPlanner).
-  const [asked, setAsked] = useState<{ focus: MapFit; n: number } | null>(null);
-  const day = focusProp === "day" || (!focusProp && asked?.focus === "day");
+  const day = focusProp === "day";
   const others = useMemo(() => (day ? [] : othersProp), [day, othersProp]);
   // The route step's map shows every option at once (quiet grey), a tap on one picks it, as its row in the list does.
   const routesMap = focusProp === "routes";
@@ -106,6 +104,7 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
   const points = path ?? gpxPoints;
   const { start } = useUserLocation();
   // The big map takes its frame from the plan step the visitor opens; a step's own map keeps the one it was given.
+  const [asked, setAsked] = useState<{ focus: MapFit; n: number } | null>(null);
   useEffect(() => (focusProp ? undefined : onMapFit((focus) => setAsked((a) => ({ focus, n: (a?.n ?? 0) + 1 })))), [focusProp]);
   const focus = focusProp ?? asked?.focus ?? null;
   // Parking and stops show on the access (step 3), day and big maps, not on the route and stops step maps.
@@ -582,7 +581,7 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
       markers={dayMarkers}
       bounds={pickedBounds ?? focusBounds ?? bounds}
       // The day map frames the picked route again when another is picked, even if its box came out the same.
-      refit={focusProp === "day" ? trail.slug : asked?.n}
+      refit={day ? trail.slug : asked?.n}
       scope={focusProp}
       focusFloor={(f) => (f ? boundsFor(f) : null)}
       openOn={openOn}

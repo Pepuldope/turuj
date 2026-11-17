@@ -393,8 +393,8 @@ export function StepMap({ always = false, joined = false, ...props }: Omit<Compo
     return () => io.disconnect();
   }, []);
   return (
-    // `always`: the day map under Priebeh dňa is a little taller. On wide screens it is not shown: the big map takes its job (TripPlanner).
-    <div ref={ref} className={`${always ? "h-[200px]" : "h-[170px]"} shrink-0 lg:hidden`}>
+    // `always`: the day map under Priebeh dňa is shown on wide screens too, a little taller.
+    <div ref={ref} className={always ? "h-[200px] shrink-0" : "h-[170px] shrink-0 lg:hidden"}>
       {near ? <PhoneTripMap {...props} compact joined={joined} /> : <div className={`h-full bg-[var(--segment-bg)] ${joined ? "" : "rounded-xl border border-[var(--border)]"}`} />}
     </div>
   );
