@@ -308,10 +308,21 @@ export function PlanStep({
   // (`mounted`), and `expanded` flips a frame after mounting so the opening is animated too.
   const [mounted, setMounted] = useState(open);
   const [expanded, setExpanded] = useState(open);
+  // Reduced motion: opened in the same frame (waiting two frames showed an empty gap, a blink) and faded in instead of
+  // rolled out (`data-fade`, app/globals.css), never on the first state (Peter, 17 Nov).
+  const [fade, setFade] = useState(false);
+  const firstRun = useRef(true);
   useEffect(() => {
+    const first = firstRun.current;
+    firstRun.current = false;
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setMounted(true);
+      if (reduced()) {
+        if (!first) setFade(true);
+        setExpanded(true);
+        return;
+      }
       const frame = requestAnimationFrame(() => requestAnimationFrame(() => setExpanded(true)));
       return () => cancelAnimationFrame(frame);
     }
@@ -360,7 +371,7 @@ export function PlanStep({
       {mounted && (
         // Rolls out like Reveal: the height glides (grid rows 0fr to 1fr), the content fades in a beat after it starts.
         // Off with reduced motion (the `.reveal` rules in app/globals.css).
-        <div className="reveal" data-open={expanded}>
+        <div className="reveal" data-open={expanded} data-fade={fade || undefined}>
         <div className="reveal-clip">
         <div className="reveal-body">
         <div id={bodyId} className="flex flex-col gap-2 px-3 pb-2.5">
@@ -397,7 +408,7 @@ export function PlanStep({
 /**
  * Fades its text in when the step opens or closes and the text is not the same any more (the summary line,
  * the "Hotovo" / "Zmeniť" label): they used to swap in one frame. Not on every change of the text: the summary
- * follows the slider while it is dragged, and that should not flicker. Off with reduced motion.
+ * follows the slider while it is dragged, and that should not flicker. A fade only, so it stays on with reduced motion too.
  */
 function FadeOnToggle({ on, className, children }: { on: boolean; className?: string; children: ReactNode }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -406,7 +417,7 @@ function FadeOnToggle({ on, className, children }: { on: boolean; className?: st
     const el = ref.current;
     if (!el) return;
     const text = el.textContent;
-    if (last.current.text !== null && last.current.on !== on && last.current.text !== text && !reduced()) {
+    if (last.current.text !== null && last.current.on !== on && last.current.text !== text) {
       el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: "ease-out" });
     }
     last.current = { on, text };

@@ -347,7 +347,10 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
       return { t0, t1, name: pa.name, kind: pa.kind, icon: pa.icon, goal: pa.goal, x: mid, y: yAtX(mid), d: "M" + line.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join("L") };
     });
 
-    return { lo, hi, x, tAt, y, arcX, sunY, walk, pauses, sky, goal: walk[goalIndex], goalT: walk[goalIndex].t, arc, dash, ridge, hill, ticks, breaks, season, deco, snow, capY, capEdge };
+    // The flag stands in the middle of the time spent at the goal (C190), not at its start (Peter, 17 Nov).
+    const goalStay = pauses.find((pa) => pa.goal);
+    const flag = goalStay ? { x: goalStay.x, y: goalStay.y } : { x: walk[goalIndex].x, y: walk[goalIndex].y };
+    return { lo, hi, x, tAt, y, arcX, sunY, walk, pauses, sky, flag, goal: walk[goalIndex], goalT: walk[goalIndex].t, arc, dash, ridge, hill, ticks, breaks, season, deco, snow, capY, capEdge };
   }, [first, home, hs, he, sunrise, sunset, dusk, plan.dawn, profile, sun.lat, sun.lon, weather]);
   const land = LAND[scene.season];
   const sunR = 8.5 * land.sunScale;
@@ -729,11 +732,11 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
 
         {profile && (
           <g>
-            <line x1={scene.goal.x} x2={scene.goal.x} y1={scene.goal.y} y2={scene.goal.y - 13} stroke="#17213a" strokeWidth={1.2} />
-            <path d={`M${scene.goal.x},${scene.goal.y - 13}l8,3l-8,3z`} fill="#f4a51c" />
+            <line x1={scene.flag.x} x2={scene.flag.x} y1={scene.flag.y} y2={scene.flag.y - 13} stroke="#17213a" strokeWidth={1.2} />
+            <path d={`M${scene.flag.x},${scene.flag.y - 13}l8,3l-8,3z`} fill="#f4a51c" />
             <text
-              x={label(scene.goal.x)}
-              y={scene.goal.y - 18 - (onTrail && Math.abs(walker[0] - scene.goal.x) < 40 ? 18 : 0)}
+              x={label(scene.flag.x)}
+              y={scene.flag.y - 18 - (onTrail && Math.abs(walker[0] - scene.flag.x) < 40 ? 18 : 0)}
               textAnchor="middle"
               fontSize={11}
               fontWeight={700}

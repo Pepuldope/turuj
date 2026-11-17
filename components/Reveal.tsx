@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ElementType, ReactNode } from "react";
 
 /** How long a reveal takes to open and to close (the `.reveal` rules in app/globals.css use the same numbers). */
@@ -39,12 +39,19 @@ export function Reveal({
   const [expanded, setExpanded] = useState(open && !appear);
   // Settled: fully open, so the clip is lifted and focus rings and shadows at the edge are not cut off.
   const [settled, setSettled] = useState(open && !appear);
+  // With reduced motion nothing moves, but content opened by the visitor fades in (a CSS animation, `data-fade`), so
+  // it doesn't pop (Peter, 17 Nov). Not on the first state: what is open on load is just there.
+  const [fade, setFade] = useState(false);
+  const firstRun = useRef(true);
   useEffect(() => {
     const still = !animate || reduced();
+    const first = firstRun.current;
+    firstRun.current = false;
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setMounted(true);
       if (still) {
+        if (animate && !first) setFade(true);
         setExpanded(true);
         setSettled(true);
         return;
@@ -71,7 +78,7 @@ export function Reveal({
   if (!mounted && !keepMounted) return null;
   const hidden = keepMounted && !expanded;
   return (
-    <Tag className={`reveal ${className ?? ""}`} data-open={expanded} data-settled={settled} data-still={animate ? undefined : true}>
+    <Tag className={`reveal ${className ?? ""}`} data-open={expanded} data-settled={settled} data-still={animate ? undefined : true} data-fade={fade || undefined}>
       <div className="reveal-clip">
         <div className="reveal-body" inert={hidden} aria-hidden={hidden || undefined}>
           {children}
