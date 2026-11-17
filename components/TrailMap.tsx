@@ -87,6 +87,8 @@ interface Props {
   onSelectTrail?: (slug: string) => void;
   /** The pointer moved onto a track (its slug) or off every track (null). */
   onHoverTrail?: (slug: string | null) => void;
+  /** False: no hover highlight at all on this map's pins (the day map). Default true. */
+  hover?: boolean;
   /** Drive from the trip's start to the parking, drawn dashed under the trail. */
   driveLeg?: [number, number][];
   /** On foot from where the car stops to the trail start, drawn dotted. */
@@ -347,6 +349,7 @@ export function TrailMap({
   openOn,
   onSelectTrail,
   onHoverTrail,
+  hover = true,
   driveLeg,
   walkLeg,
   sideLegs,
@@ -374,7 +377,7 @@ export function TrailMap({
   const floorRef = useRef(focusFloor);
   const openOnRef = useRef(openOn);
   // The pins and what the map's handlers call live on the map itself, so they go with it when it is kept.
-  const liveRef = useRef<KeptLive>({ select: () => {}, hover: () => {}, hoverOn: () => false, markers: [], markerIds: [], userMarkers: [] });
+  const liveRef = useRef<KeptLive>({ select: () => {}, hover: () => {}, hoverOn: () => false, hovered: null, markers: [], markerIds: [], userMarkers: [] });
   const { fix, start } = useUserLocation();
 
   useEffect(() => {
@@ -457,7 +460,7 @@ export function TrailMap({
       });
       let detachNetwork: (() => void) | null = null;
       let detachLimit: (() => void) | null = null;
-      const live: KeptLive = { select: () => {}, hover: () => {}, hoverOn: () => false, markers: [], markerIds: [], userMarkers: [] };
+      const live: KeptLive = { select: () => {}, hover: () => {}, hoverOn: () => false, hovered: null, markers: [], markerIds: [], userMarkers: [] };
       const e: KeptMap = {
         el,
         map,
@@ -640,14 +643,23 @@ export function TrailMap({
           if (slug) live.select(slug);
         });
         map.on("mousemove", "track-hit", (ev) => {
-          const slug = ev.features?.[0]?.properties?.slug as string | undefined;
           if (!live.hoverOn()) return;
           map.getCanvas().style.cursor = "pointer";
-          live.hover(slug ?? null);
+          // Where routes overlap the topmost feature under the cursor is whichever is drawn last, and the hovered
+          // route is drawn on top: so keep the hovered one while it is still under the cursor, or it flips back and forth.
+          const slugs = map
+            .queryRenderedFeatures(ev.point, { layers: ["track-hit"] })
+            .map((f) => f.properties?.slug as string | undefined)
+            .filter((x): x is string => !!x);
+          const first = ev.features?.[0]?.properties?.slug as string | undefined;
+          const keep = live.hovered && slugs.includes(live.hovered) ? live.hovered : null;
+          live.hovered = keep ?? first ?? null;
+          live.hover(live.hovered);
         });
         map.on("mouseleave", "track-hit", () => {
           if (!live.hoverOn()) return;
           map.getCanvas().style.cursor = "";
+          live.hovered = null;
           live.hover(null);
         });
         e.loaded = true;
@@ -804,7 +816,7 @@ export function TrailMap({
         keepPopupInView(map, popup);
         const marker = new ml.Marker({ element: el }).setLngLat([m.location.lon, m.location.lat]).setPopup(popup).addTo(map);
         // The pin and its plan row light up together; a real mouse only, as the rows (a tap is no hover).
-        if (isHoverablePin(m.id)) {
+        if (hover && isHoverablePin(m.id)) {
           el.addEventListener("pointerenter", (e) => e.pointerType === "mouse" && setHoveredPin(m.id));
           el.addEventListener("pointerleave", (e) => e.pointerType === "mouse" && setHoveredPin(null));
           el.addEventListener("click", () => setHoveredPin(null));
@@ -823,11 +835,12 @@ export function TrailMap({
           });
         return marker;
       });
-  }, [ctx, markers]);
+  }, [ctx, markers, hover]);
 
   // The pin (and for a stop the side walk to it) of the row the mouse is on. A class on the live element, not
   // the `markers` prop: that would rebuild every pin and close an open popup. Re-applied after a rebuild.
-  const hoveredPin = useHoveredPin();
+  const globalPin = useHoveredPin();
+  const hoveredPin = hover ? globalPin : null;
   useEffect(() => {
     if (!ctx) return;
     liveRef.current.markerIds.forEach((id, i) => liveRef.current.markers[i]?.getElement().classList.toggle("is-hover", id === hoveredPin));

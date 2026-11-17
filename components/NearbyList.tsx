@@ -83,7 +83,7 @@ export function NearbyList({ lang, items }: { lang: Lang; items: NearbyItem[] })
           <Card key={item.slug} item={item} hidden={today !== null && !all && i >= SHOWN} />
         ))}
       </ul>
-      {today !== null && <ShowMore kind="trips" hidden={open.length - SHOWN} open={all} onToggle={() => setAll((v) => !v)} />}
+      {today !== null && <ShowMore variant="text" kind="trips" hidden={open.length - SHOWN} open={all} onToggle={() => setAll((v) => !v)} />}
       {closed.length > 0 && (
         <details className={`group ${CARD}`}>
           <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 rounded-[var(--radius-card)] px-4 py-3 [&::-webkit-details-marker]:hidden">

@@ -330,21 +330,11 @@ h2,
 }
 
 /* The pin whose row in the plan the mouse is on (or the mouse is on the pin itself): the site blue ring on a
-   white gap, a touch bigger, above its neighbours. `scale`, not `transform`: MapLibre positions the pin with transform. */
-.mt-pin {
-  transition: scale 120ms, box-shadow 120ms;
-}
-
+   white gap, above its neighbours. Never a size or position change: MapLibre places the pin with transform, and a
+   pin that moved under the mouse would leave it and flicker. */
 .mt-pin.is-hover {
-  scale: 1.15;
   z-index: 3;
-  box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--accent);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mt-pin {
-    transition: none;
-  }
+  box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--accent);
 }
 
 /* "Pridať zastávku" in a place's popup (the popup stays light in both themes). */

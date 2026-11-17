@@ -603,7 +603,9 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
         }
         router.push(langPath(lang, `/trasa/${slug}`), { scroll: false });
       }}
-      onHoverTrail={others.length ? (slug) => setHoveredRoute(others.some((o) => o.slug === slug) ? slug : null) : undefined}
+      onHoverTrail={others.length && !day ? (slug) => setHoveredRoute(others.some((o) => o.slug === slug) ? slug : null) : undefined}
+      // The day map ("Priebeh dňa") has no hover at all.
+      hover={!day}
       ariaLabel={t("Mapa trasy")}
       persistKey={keptMapKey(placeKey, focusProp)}
     />

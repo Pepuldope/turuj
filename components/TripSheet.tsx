@@ -390,13 +390,13 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
             walk={{ points: trip.path.map(([lon, lat]) => [+lat.toFixed(5), +lon.toFixed(5)]), loop: trip.route === "okruh" }}
           />
 
+          <NearbyTrips lang={lang} items={nearby} walks={nearbyWalks} />
+
           {town && (
-            <Link href={langPath(lang, `/vylety-z/${town.id}`)} className="accent-on-sunk w-fit text-sm font-semibold">
+            <Link href={langPath(lang, `/vylety-z/${town.id}`)} className="accent-on-sunk w-fit px-1 text-sm font-semibold">
               {tr(lang, "Ďalšie výlety okolo {town}", { town: townOf(lang, town.id, town.name) })} →
             </Link>
           )}
-
-          <NearbyTrips lang={lang} items={nearby} walks={nearbyWalks} />
 
           {/* C2: something wrong on this trip (closed trail, car park, photo) goes straight to us. */}
           <Link
