@@ -3,7 +3,7 @@ import type { WeatherForecast, WeatherStep } from "@/lib/weather";
 // MET Norway Locationforecast 2.0 (CC BY 4.0), shared by /api/weather and the evening reminder.
 // Their terms: identify the app in User-Agent, at most 4 decimals, cache, never call it from the browser.
 
-export const MET_UA = "Turuj/1.0 https://github.com/Pepuldope/turuj nemcok.peter123@gmail.com";
+export const MET_UA = "Turuj/1.0 https://github.com/Pepuldope/turuj info@turuj.sk";
 /** MET answering slowly must not hold the page or the cron. */
 export const MET_TIMEOUT_MS = 8000;
 

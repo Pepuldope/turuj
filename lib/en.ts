@@ -395,6 +395,9 @@ export const EN: Record<string, string> = {
   "Zobraziť ďalšiu zastávku": "Show 1 more stop",
   "Zobraziť ďalšie {n} zastávky": "Show {n} more stops",
   "Zobraziť ďalšie {n} zastávok": "Show {n} more stops",
+  "Zobraziť ďalší výlet": "Show 1 more trip",
+  "Zobraziť ďalšie {n} výlety": "Show {n} more trips",
+  "Zobraziť ďalších {n} výletov": "Show {n} more trips",
   "Zobraziť menej": "Show fewer",
 
   // Trip facts and routes

@@ -1,6 +1,6 @@
 import { InfoPage } from "@/components/InfoPage";
 import { LangLink } from "@/lib/i18n";
-import { CONTACT_EMAIL, OWNER_EMAIL } from "@/lib/site";
+import { CONTACT_EMAIL } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
@@ -36,8 +36,7 @@ export default function AboutPage() {
 
       <h2>Contact</h2>
       <p>
-        Write to us at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>, or to Peter directly at{" "}
-        <a href={`mailto:${OWNER_EMAIL}`}>{OWNER_EMAIL}</a>.
+        Write to us at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
       </p>
       <p>
         Found a mistake in a route or a car park? <LangLink href="/nahlasit-chybu">Report a problem</LangLink>. Send

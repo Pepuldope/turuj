@@ -9,6 +9,27 @@ import type { PoiKind } from "@/lib/types";
 import { LUNCH, useTripStops } from "@/lib/tripStops";
 import type { StopWay, TripStop } from "@/lib/tripStops";
 import { useT } from "@/lib/i18n";
+import { usePinRow } from "@/lib/pinHover";
+
+/** A food place the walk passes around lunch: a chip that picks it; its map pin lights up on a hover. */
+function FoodChip({ f, onPick }: { f: LunchPick["foods"][number]; onPick: () => void }) {
+  const t = useT();
+  const row = usePinRow(`poi-${f.stop.id}`);
+  return (
+    <li {...row.handlers} className="min-w-0 max-w-full">
+      <button
+        type="button"
+        onClick={onPick}
+        aria-label={t("Obed v {name}", { name: f.stop.name })}
+        className={`flex max-w-full min-w-0 items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--card-bg)] py-1 pr-3 pl-1.5 text-[13px] font-semibold hover:border-[var(--accent)] ${row.hover} focus-visible:outline-2 focus-visible:outline-[var(--accent)]`}
+      >
+        <KindIcon kind={f.icon} colour={POI_COLOUR[f.kind]} size={20} />
+        <span className="truncate">{f.stop.name}</span>
+        <span className="font-data shrink-0 text-[var(--muted)]">{f.time}</span>
+      </button>
+    </li>
+  );
+}
 
 /** The lunch break's choices, worked out by the planner from the day's times. */
 export interface LunchPick {
@@ -75,18 +96,7 @@ export function StopsRow({
           <p className="text-xs font-semibold text-[var(--muted)]">{t("Okolo obeda idete popri:")}</p>
           <ul className="flex flex-wrap gap-1.5">
             {lunch.foods.map((f) => (
-              <li key={f.stop.id} className="min-w-0 max-w-full">
-                <button
-                  type="button"
-                  onClick={() => lunchAt(f.stop)}
-                  aria-label={t("Obed v {name}", { name: f.stop.name })}
-                  className="flex max-w-full min-w-0 items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--card-bg)] py-1 pr-3 pl-1.5 text-[13px] font-semibold hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
-                >
-                  <KindIcon kind={f.icon} colour={POI_COLOUR[f.kind]} size={20} />
-                  <span className="truncate">{f.stop.name}</span>
-                  <span className="font-data shrink-0 text-[var(--muted)]">{f.time}</span>
-                </button>
-              </li>
+              <FoodChip key={f.stop.id} f={f} onPick={() => lunchAt(f.stop)} />
             ))}
           </ul>
         </div>

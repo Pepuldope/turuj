@@ -329,6 +329,23 @@ h2,
   box-shadow: 0 0 0 3px #fff, 0 0 0 5px #1769d1;
 }
 
+/* The pin whose row in the plan the mouse is on (or the mouse is on the pin itself): the site blue ring on a
+   white gap, above its neighbours. Never a size or position change: MapLibre places the pin with transform, and a
+   pin that moved under the mouse would leave it and flicker. */
+.mt-pin.is-hover {
+  z-index: 3;
+  box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--accent);
+}
+
+/* The day map on wide screens is a picture only (PlanStep StepMap, inert): its buttons (full screen, zoom) would do
+   nothing there, so they go. The map credit stays. */
+@media (min-width: 64rem) {
+  .day-map-static button:not(.maplibregl-ctrl-attrib-button),
+  .day-map-static .maplibregl-ctrl-group {
+    display: none;
+  }
+}
+
 /* "Pridať zastávku" in a place's popup (the popup stays light in both themes). */
 .mt-popup-action {
   display: block;

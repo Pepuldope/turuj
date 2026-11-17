@@ -17,6 +17,7 @@ import { useLang, useT } from "@/lib/i18n";
 import { tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 import { usePlanDay } from "@/lib/planDay";
+import { usePinRow } from "@/lib/pinHover";
 import { stopsAdvice } from "@/lib/stopsAdvice";
 
 /**
@@ -239,8 +240,9 @@ const nameBtn =
 /** A place not chosen yet: tile, name, kind and where, its minutes, a round "+". */
 function FreeRow({ p, near, onAdd }: { p: Poi; near?: LatLng; onAdd: () => void }) {
   const t = useT();
+  const row = usePinRow(`poi-${p.id}`);
   return (
-    <li className="flex items-center gap-2 py-2">
+    <li {...row.handlers} className={`flex items-center gap-2 py-2 ${row.hover}`}>
       <button type="button" onClick={() => showOnMap(p, near)} className={nameBtn}>
         <KindIcon kind={poiIcon(p)} colour={POI_COLOUR[p.kind]} size={44} />
         <span className="flex min-w-0 flex-1 flex-col">
@@ -286,6 +288,8 @@ function PickedRow({
 }) {
   const t = useT();
   const isLunch = stop.id === LUNCH.id;
+  // The lunch break has no pin.
+  const row = usePinRow(p ? `poi-${p.id}` : null);
   const colour = p ? POI_COLOUR[p.kind] : POI_COLOUR.obcerstvenie;
   const body = (
     <>
@@ -304,7 +308,7 @@ function PickedRow({
     </>
   );
   return (
-    <div className="flex flex-col py-1.5">
+    <div {...row.handlers} className={`flex flex-col py-1.5 ${row.hover}`}>
       <div className="flex items-center gap-2">
         {p ? (
           <button type="button" onClick={() => showOnMap(p, near)} className={nameBtn}>

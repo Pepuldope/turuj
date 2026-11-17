@@ -25,7 +25,20 @@ export function shownRows(total: number, open: boolean, keep: number[] = [], lim
  * The button under a folded list: "Zobraziť ďalšie 5 miest" / "Zobraziť menej". A full-width tinted,
  * bordered control (not the filled accent, that is for the step's own action) so it is not missed.
  */
-export function ShowMore({ kind, hidden, open, onToggle }: { kind: MoreKind; hidden: number; open: boolean; onToggle: () => void }) {
+export function ShowMore({
+  kind,
+  hidden,
+  open,
+  onToggle,
+  variant = "box",
+}: {
+  kind: MoreKind;
+  hidden: number;
+  open: boolean;
+  onToggle: () => void;
+  /** "text": a soft link-like toggle on the page background (the nearby trips), no border, fill or full width. */
+  variant?: "box" | "text";
+}) {
   const t = useT();
   if (hidden <= 0 && !open) return null;
   return (
@@ -33,7 +46,11 @@ export function ShowMore({ kind, hidden, open, onToggle }: { kind: MoreKind; hid
       type="button"
       onClick={onToggle}
       aria-expanded={open}
-      className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[var(--accent)]/30 bg-[var(--accent-soft)] px-4 text-sm font-bold text-[var(--accent)] transition-colors hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] motion-reduce:transition-none"
+      className={
+        variant === "text"
+          ? "accent-on-sunk flex min-h-11 w-fit cursor-pointer items-center gap-1.5 px-1 text-sm font-semibold hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+          : "flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[var(--accent)]/30 bg-[var(--accent-soft)] px-4 text-sm font-bold text-[var(--accent)] transition-colors hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] motion-reduce:transition-none"
+      }
     >
       {open ? t("Zobraziť menej") : t(moreKey(kind, hidden), { n: hidden })}
       <UiIcon name="chev" size={16} className={open ? "-rotate-90" : "rotate-90"} />

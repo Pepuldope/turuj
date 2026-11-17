@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { dayMonthOf, inYearlyRange, pluralClass, todayMonthDay } from "@/lib/closedToday";
 import { tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 import { Nums } from "@/components/Nums";
+import { ShowMore } from "@/components/ShowMore";
 import { UiIcon } from "@/components/UiIcon";
 
 /** One neighbouring trip, all text ready (the server wrote it in the page's language). */
@@ -21,8 +22,8 @@ export interface NearbyItem {
   to: string | null;
 }
 
-/** How many not-closed neighbours show. */
-const SHOWN = 7;
+/** How many not-closed neighbours show before "Zobraziť ďalšie …" (Peter, 17 Nov, C183: was 7). */
+const SHOWN = 4;
 
 const CARD = "rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)]";
 
@@ -64,10 +65,12 @@ function closedHeading(lang: Lang, n: number): string {
 /**
  * The neighbour cards. In the built HTML (and without JavaScript) every one is a plain link in distance
  * order. In the browser, trips whose yearly closure is in force today move into one collapsed card at
- * the end and only the first SHOWN of the rest stay visible: the links remain in the page either way.
+ * the end and only the first SHOWN of the rest stay visible, the others behind "Zobraziť ďalšie …":
+ * the links remain in the page either way.
  */
 export function NearbyList({ lang, items }: { lang: Lang; items: NearbyItem[] }) {
   const today = useToday();
+  const [all, setAll] = useState(false);
   const closedNow = (i: NearbyItem) => today !== null && i.from !== null && i.to !== null && inYearlyRange(i.from, i.to, today);
   const open = items.filter((i) => !closedNow(i));
   const closed = items.filter(closedNow);
@@ -77,9 +80,10 @@ export function NearbyList({ lang, items }: { lang: Lang; items: NearbyItem[] })
     <>
       <ul className="flex flex-col gap-2.5">
         {open.map((item, i) => (
-          <Card key={item.slug} item={item} hidden={today !== null && i >= SHOWN} />
+          <Card key={item.slug} item={item} hidden={today !== null && !all && i >= SHOWN} />
         ))}
       </ul>
+      {today !== null && <ShowMore variant="text" kind="trips" hidden={open.length - SHOWN} open={all} onToggle={() => setAll((v) => !v)} />}
       {closed.length > 0 && (
         <details className={`group ${CARD}`}>
           <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 rounded-[var(--radius-card)] px-4 py-3 [&::-webkit-details-marker]:hidden">

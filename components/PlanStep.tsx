@@ -33,7 +33,7 @@ interface StepsApi {
   /** Opens `id` (the others stay as they are), brings its header into view under the top bar and moves focus there. */
   openStep: (id: string) => void;
   /** Scrolls to the plan's result: the sun dial, the times and Uložiť. */
-  toResult: () => void;
+  toResult: (from: string) => void;
   /** The step was left forward with "Ďalej" (its number shows a tick). */
   isDone: (id: string) => boolean;
 }
@@ -177,7 +177,14 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       // A new object even when it is open already, so the effect below runs and brings it into view.
       setOpen((o) => ({ ...o, [id]: true }));
     },
-    toResult: () => scrollUnderBar(document.getElementById(resultId)),
+    // "Hotovo": the last step closes and is ticked like "Ďalej" does for the others (Peter, 17 Nov), then the view
+    // glides to the day, once the step has folded (250 ms) so the target doesn't move under the scroll.
+    toResult: (from) => {
+      setDone((d) => ({ ...d, [from]: true }));
+      setOpen((o) => ({ ...o, [from]: false }));
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      setTimeout(() => scrollUnderBar(document.getElementById(resultId)), reduce ? 0 : 260);
+    },
     isDone: (id) => !!done[id],
   };
   // After the new state is on screen: the next step's header gets the focus and the view glides to it.
@@ -341,7 +348,7 @@ export function PlanStep({
           <div className="flex flex-col items-start gap-0.5 pt-0.5">
             <button
               type="button"
-              onClick={() => (next ? api.go(id, next.id) : api.toResult())}
+              onClick={() => (next ? api.go(id, next.id) : api.toResult(id))}
               className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-[var(--accent)] px-4 py-2 text-[15px] font-bold text-[var(--accent-contrast)] transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
             >
               {next ? t("Ďalej: {n}. {title}", { n: next.n, title: next.title }) : t("Hotovo: pozrite si svoj deň")}
@@ -392,9 +399,20 @@ export function StepMap({ always = false, joined = false, ...props }: Omit<Compo
     io.observe(el);
     return () => io.disconnect();
   }, []);
+  // On wide screens the day map is a picture only: the big map beside the plan is the one to use, this one just shows
+  // your day and the dial's walker (Peter, 17 Nov). `inert`: no clicks, drags, zoom or focus; the wheel scrolls the page.
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    if (!always) return;
+    const mq = window.matchMedia("(min-width: 64rem)");
+    const on = () => setWide(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, [always]);
   return (
-    // `always`: the day map under Priebeh dňa is shown on wide screens too, a little taller.
-    <div ref={ref} className={always ? "h-[200px] shrink-0" : "h-[170px] shrink-0 lg:hidden"}>
+    // `always`: the day map under Priebeh dňa is shown on wide screens too (static there, above), a little taller.
+    <div ref={ref} inert={always && wide} className={always ? "day-map-static h-[200px] shrink-0" : "h-[170px] shrink-0 lg:hidden"}>
       {near ? <PhoneTripMap {...props} compact joined={joined} /> : <div className={`h-full bg-[var(--segment-bg)] ${joined ? "" : "rounded-xl border border-[var(--border)]"}`} />}
     </div>
   );

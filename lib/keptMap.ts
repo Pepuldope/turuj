@@ -13,6 +13,8 @@ export interface KeptLive {
   hover: (slug: string | null) => void;
   /** The owner wants hover events at all (the tap cursor is only set then). */
   hoverOn: () => boolean;
+  /** The track slug the mouse last hovered here (kept while it stays under the cursor where routes overlap). */
+  hovered: string | null;
   markers: Marker[];
   markerIds: string[];
   userMarkers: Marker[];
