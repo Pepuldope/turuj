@@ -51,6 +51,10 @@ export const COUNTED_HOSTS = [
 /** Public contact (Cloudflare Email Routing forwards it to Peter). */
 export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "info@turuj.sk";
 
+/** Social profiles shown in the footer. Instagram is hidden while the address is empty. */
+export const FACEBOOK_URL = "https://facebook.com/turuj.sk";
+export const INSTAGRAM_URL = "";
+
 
 /**
  * Link-preview image (1200x630): "Kam na výlet?" beside a sample trip card, over the site's hills in the season of the

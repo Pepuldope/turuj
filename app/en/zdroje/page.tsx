@@ -1,4 +1,5 @@
 import { InfoPage } from "@/components/InfoPage";
+import { LangLink } from "@/lib/i18n";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
@@ -54,7 +55,8 @@ export default function SourcesPage() {
         <li>
           Photos of places: <a href="https://commons.wikimedia.org">Wikimedia Commons</a> via{" "}
           <a href="https://www.wikidata.org">Wikidata</a>, free licences only (CC0, CC BY, CC BY-SA, public domain). The
-          author and licence of each photo are below the list on the town&apos;s page.
+          author and licence of each photo are below the list on the town&apos;s page. Have a better photo?{" "}
+          <LangLink href="/poslat-fotku">Send it to us.</LangLink>
         </li>
         <li>
           Exact bus and train connections: a link to <a href="https://cp.sk">cp.sk</a>, Google Maps and Apple Maps.
