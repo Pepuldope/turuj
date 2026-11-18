@@ -6,6 +6,7 @@ import { GOAL_COLOUR } from "@/lib/palette";
 import type { TownTile as Tile } from "@/lib/townTrips";
 import { langPath, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
+import { photoFocus } from "@/lib/photoFocus";
 
 /** A town page tile: the place's photo (or its kind's colour and a hill), name, drive and walk. */
 export function TownTile({ tile, lang = "sk", townId }: { tile: Tile; lang?: Lang; /** The town page this tile is on: the trip page then starts from it (?z=) unless a start is already chosen. */ townId?: string }) {
@@ -21,6 +22,7 @@ export function TownTile({ tile, lang = "sk", townId }: { tile: Tile; lang?: Lan
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={tile.photo.url}
+            style={{ objectPosition: photoFocus(tile.photo.url) }}
             alt={tile.name}
             loading="lazy"
             decoding="async"
