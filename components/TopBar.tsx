@@ -12,6 +12,7 @@ import { useSavedTrips } from "@/lib/savedTrips";
 import { usePresence } from "@/lib/usePresence";
 import { UiIcon } from "@/components/UiIcon";
 import { EASE_IN, EASE_OUT, dockMoved, pop } from "@/lib/dockFlip";
+import { autoScrolling } from "@/lib/motion";
 import type { UiIconName } from "@/lib/uiIcons";
 
 // The account button and the menu (Peter, 2026-10-29). Phone: a bar along the top that slides
@@ -87,7 +88,8 @@ export function TopBar() {
     };
     const onScroll = () => {
       const y = window.scrollY;
-      if (y > 8 && performance.now() - lastInput > 1200) {
+      // The page scrolling itself (a plan step's glide) is not the visitor either, even right after a drag (lib/motion.ts).
+      if (y > 8 && (performance.now() - lastInput > 1200 || autoScrolling())) {
         last = y;
         if (shownRef.current) setSolid(true);
         return;

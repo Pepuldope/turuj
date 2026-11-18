@@ -6,7 +6,8 @@ import { PhoneTripMap } from "@/components/PhoneTripMap";
 import { UiIcon } from "@/components/UiIcon";
 import { fitOnMap } from "@/lib/mapFocus";
 import { hasKeptMap, keptMapKey } from "@/lib/keptMap";
-import { pickedAnchor, rememberOpenSteps, stepsKeptFromRoutePick } from "@/lib/planUi";
+import { landAfterRoutePick, noteStepWhileRouteLoads, pickedAnchor, rememberOpenSteps, stepsKeptFromRoutePick } from "@/lib/planUi";
+import { markAutoScroll } from "@/lib/motion";
 import { setRouteStepOpen } from "@/lib/routeHover";
 import type { MapFit } from "@/lib/mapFocus";
 import { useT } from "@/lib/i18n";
@@ -67,6 +68,7 @@ function scrollUnderBar(el: Element | null | undefined) {
   if (!el) return;
   const behavior: ScrollBehavior = reduced() ? "auto" : "smooth";
   const { box, top } = underBar(el);
+  markAutoScroll(behavior === "smooth" ? 900 : 150);
   if (box) box.scrollTo({ top, behavior });
   else window.scrollTo({ top, behavior });
 }
@@ -122,6 +124,7 @@ function glideUnderBar(el: Element, holdMs: number, folding: Element | null, onF
     // Slow at both ends: a hard start on top of the fold moving under it read as a jerk (Peter, 17 Nov).
     const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
     const at = top - dist0 * (1 - eased);
+    markAutoScroll();
     if (box) box.scrollTo({ top: at, behavior: "instant" });
     else window.scrollTo({ top: at, behavior: "instant" });
     const more = clock < ms || now - t0 < holdMs;
@@ -138,11 +141,14 @@ function glideUnderBar(el: Element, holdMs: number, folding: Element | null, onF
  * from the server) so "Ďalej" can fold one and open the next. Nothing is remembered across visits.
  */
 export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDef[]; resultId: string; children: ReactNode }) {
+  // A step the visitor headed to after picking a route, while the route's page was still on its way (lib/planUi.ts).
+  const [landing] = useState(landAfterRoutePick);
   // After picking a route (a new page, same plan) the steps stay as they were.
   const [open, setOpen] = useState<Record<string, boolean>>(() => {
     const kept = stepsKeptFromRoutePick();
     if (!kept) keptDone = {};
-    return kept ?? Object.fromEntries(steps.map((s) => [s.id, !!s.open]));
+    const o = kept ?? Object.fromEntries(steps.map((s) => [s.id, !!s.open]));
+    return landing ? { ...o, [landing.from]: landing.from === landing.to, [landing.to]: true } : o;
   });
   useEffect(() => rememberOpenSteps(open), [open]);
   // The big map lights up other routes only while step 1 is open (C186), however it was shut.
@@ -155,8 +161,9 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
   }, [done]);
   // The new route's page may be taller or shorter above the plan: put the route step back where it stood in the window,
   // so a pick doesn't move the visitor.
+  // Not when the visitor already went on to another step: the glide below takes them there instead.
   useLayoutEffect(() => {
-    const anchor = pickedAnchor();
+    const anchor = landing ? null : pickedAnchor();
     if (anchor === null) return;
     const hold = () => {
       const el = document.getElementById("plan-step-route")?.closest("section");
@@ -165,14 +172,17 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       if (Math.abs(by) < 1) return;
       let box: HTMLElement | null = el.parentElement;
       while (box && box !== document.body && !(/(auto|scroll)/.test(getComputedStyle(box).overflowY) && box.scrollHeight > box.clientHeight)) box = box.parentElement;
+      markAutoScroll();
       if (box && box !== document.body) box.scrollTop += by;
       else window.scrollBy(0, by);
     };
     hold();
     const later = setTimeout(hold, 400);
     return () => clearTimeout(later);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const pending = useRef<{ to: string; from: string; forward: boolean } | null>(null);
+  // Landing after a route pick, the first run of the effect below glides on to the step the visitor headed to.
+  const pending = useRef<{ to: string; from: string; forward: boolean } | null>(landing ? { to: landing.to, from: landing.to, forward: false } : null);
   // Steps that open or fold without their roll, because they do it off the screen (Peter, 17 Nov).
   const [still, setStill] = useState<Record<string, boolean>>({});
   // The step header to keep in place while a step off the screen changes size, until `until`.
@@ -204,6 +214,7 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     const by = a.el.getBoundingClientRect().top - a.top;
     if (Math.abs(by) < 0.5) return;
     const { box } = underBar(a.el);
+    markAutoScroll();
     if (box) box.scrollTop += by;
     else window.scrollBy({ top: by, behavior: "instant" });
   };
@@ -227,6 +238,7 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     // at once and with the scroll held (holdAnchor), so nothing moves in view but the glide itself.
     go: (from, to) => {
       const forward = steps.findIndex((s) => s.id === to) > steps.findIndex((s) => s.id === from);
+      noteStepWhileRouteLoads(from, to);
       pending.current = { to, from, forward };
       const fit = fitFor(to);
       if (fit) fitOnMap(fit);
@@ -252,6 +264,7 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       setOpen((o) => ({ ...o, [to]: true }));
     },
     openStep: (id) => {
+      noteStepWhileRouteLoads(id, id);
       pending.current = { to: id, from: id, forward: false };
       const fit = fitFor(id);
       if (fit) fitOnMap(fit);
