@@ -1,4 +1,5 @@
 import { InfoPage } from "@/components/InfoPage";
+import { LangLink } from "@/lib/i18n";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
@@ -56,7 +57,7 @@ export default function SourcesPage() {
           Fotky miest: <a href="https://commons.wikimedia.org">Wikimedia Commons</a> cez{" "}
           <a href="https://www.wikidata.org">Wikidata</a>, len voľné licencie (CC0, CC BY, CC BY-SA, voľné dielo). Autor a licencia
           každej fotky sú pod zoznamom na stránke mesta. Kde fotka z Commons chýba, fotka z ulice z{" "}
-          <a href="https://www.mapillary.com">Mapillary</a> (CC BY-SA 4.0, autor pri fotke).
+          <a href="https://www.mapillary.com">Mapillary</a> (CC BY-SA 4.0, autor pri fotke). Máte lepšiu fotku? <LangLink href="/poslat-fotku">Pošlite nám ju.</LangLink>
         </li>
         <li>
           Presné spoje autobusov a vlakov: odkaz na <a href="https://cp.sk">cp.sk</a>, Google Mapy a Apple Mapy.

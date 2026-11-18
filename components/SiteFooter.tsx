@@ -1,14 +1,14 @@
 "use client";
 
-import { CONTACT_EMAIL, TESTER_FORM_URL } from "@/lib/site";
+import { CONTACT_EMAIL, FACEBOOK_URL, INSTAGRAM_URL, TESTER_FORM_URL } from "@/lib/site";
 import { useAccount } from "@/lib/account";
 import { LangLink, useT } from "@/lib/i18n";
 import { UiIcon } from "@/components/UiIcon";
 import type { UiIconName } from "@/lib/uiIcons";
 
-type FooterLink = { href: string; label: string; icon: UiIconName };
+type FooterLink = { href: string; label: string; icon: UiIconName; external?: true; event?: string };
 
-/** Three short groups, so a new link (e.g. "Získať aplikáciu") just joins one. */
+/** Four short groups, so a new link (e.g. "Získať aplikáciu") just joins one. */
 const GROUPS: { title: string; links: FooterLink[] }[] = [
   {
     title: "Výlety",
@@ -35,6 +35,14 @@ const GROUPS: { title: string; links: FooterLink[] }[] = [
       { href: "/podmienky", label: "Podmienky", icon: "doc" },
       { href: "/upozornenie", label: "Upozornenie", icon: "warn" },
       { href: "/uzavery", label: "Uzávery", icon: "barrier" },
+    ],
+  },
+  {
+    title: "Pridajte sa",
+    links: [
+      { href: "/poslat-fotku", label: "Pošlite nám fotku", icon: "camera" },
+      { href: FACEBOOK_URL, label: "Facebook", icon: "facebook", external: true, event: "social_facebook_open" },
+      ...(INSTAGRAM_URL ? [{ href: INSTAGRAM_URL, label: "Instagram", icon: "instagram" as const, external: true as const, event: "social_instagram_open" }] : []),
     ],
   },
 ];
@@ -102,12 +110,26 @@ export function SiteFooter() {
               <h2 className="pb-1 text-[11px] font-extrabold tracking-[0.07em] text-[var(--foreground)] uppercase">
                 {t(g.title)}
               </h2>
-              {g.links.map((l) => (
-                <LangLink key={l.href} href={l.href} className={LINK}>
-                  <UiIcon name={l.icon} size={16} />
-                  <span className="min-w-0">{t(l.label)}</span>
-                </LangLink>
-              ))}
+              {g.links.map((l) =>
+                l.external ? (
+                  <a
+                    key={l.href}
+                    href={l.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-umami-event={l.event}
+                    className={LINK}
+                  >
+                    <UiIcon name={l.icon} size={16} />
+                    <span className="min-w-0">{t(l.label)}</span>
+                  </a>
+                ) : (
+                  <LangLink key={l.href} href={l.href} className={LINK}>
+                    <UiIcon name={l.icon} size={16} />
+                    <span className="min-w-0">{t(l.label)}</span>
+                  </LangLink>
+                ),
+              )}
               {g.title === "Kontakt" && (
                 <a
                   href={`mailto:${CONTACT_EMAIL}`}
