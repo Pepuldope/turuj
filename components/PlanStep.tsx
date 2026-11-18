@@ -7,6 +7,7 @@ import { UiIcon } from "@/components/UiIcon";
 import { fitOnMap } from "@/lib/mapFocus";
 import { hasKeptMap, keptMapKey } from "@/lib/keptMap";
 import { pickedAnchor, rememberOpenSteps, stepsKeptFromRoutePick } from "@/lib/planUi";
+import { setRouteStepOpen } from "@/lib/routeHover";
 import type { MapFit } from "@/lib/mapFocus";
 import { useT } from "@/lib/i18n";
 import { groupPlanWarnings } from "@/lib/planWarnings";
@@ -144,6 +145,10 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     return kept ?? Object.fromEntries(steps.map((s) => [s.id, !!s.open]));
   });
   useEffect(() => rememberOpenSteps(open), [open]);
+  // The big map lights up other routes only while step 1 is open (C186), however it was shut.
+  const hasRouteStep = steps.some((s) => s.id === "route");
+  useEffect(() => setRouteStepOpen(hasRouteStep ? !!open.route : null), [hasRouteStep, open.route]);
+  useEffect(() => () => setRouteStepOpen(null), []);
   const [done, setDone] = useState<Record<string, boolean>>(() => keptDone);
   useEffect(() => {
     keptDone = done;

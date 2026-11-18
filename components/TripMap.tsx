@@ -23,7 +23,7 @@ import { stopFor, useTripStops } from "@/lib/tripStops";
 import { focusOnMap, onMapFit } from "@/lib/mapFocus";
 import type { MapFit } from "@/lib/mapFocus";
 import { justPickedRoute, markRoutePicked } from "@/lib/planUi";
-import { setHoveredRoute, useHoveredRoute } from "@/lib/routeHover";
+import { setHoveredRoute, useHoveredRoute, useRouteStepOpen } from "@/lib/routeHover";
 import { NETWORK_ON } from "@/lib/trailNetwork";
 import { useLang, useT } from "@/lib/i18n";
 import { langPath } from "@/lib/lang";
@@ -201,7 +201,9 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
   // Another route lights up under the pointer only while you're choosing the route: step 1's map, or the big map
   // framing step 1 (or not asked for any step yet). In steps 2-4 and the day map the other routes stay grey
   // (Peter, 17 Nov, C186: "I don't want a different route showing up when I'm just looking at the one I want to go on").
-  const routeHover = !day && (routesMap || (!focusProp && (!asked || asked.focus === "routes")));
+  // Shutting step 1 by its header asks the map for nothing new, so whether it is open is read too (Peter, 18 Nov).
+  const routeStepOpen = useRouteStepOpen();
+  const routeHover = !day && (routesMap || (!focusProp && routeStepOpen !== false && (!asked || asked.focus === "routes")));
   const hoveredAny = useHoveredRoute();
   const hovered = routeHover ? hoveredAny : null;
   // Leaving step 1 with the pointer on a route: drop it, so it isn't still lit when step 1 comes back.
