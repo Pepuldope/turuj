@@ -46,6 +46,7 @@ import { describeEn } from "@/lib/describeEn";
 import { describeTripEn } from "@/lib/tripJsonLdEn";
 import { markSigns } from "@/lib/markSigns";
 import { startLines, subtitle } from "@/lib/tripAnswers";
+import { photoFocus } from "@/lib/photoFocus";
 
 /**
  * How many neighbours the "Ďalšie výlety v okolí" block holds in the HTML: the browser shows the first
@@ -255,6 +256,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.url}
+                  style={{ objectPosition: photoFocus(photo.url) }}
                   alt={trail.name}
                   decoding="async"
                   fetchPriority="high"

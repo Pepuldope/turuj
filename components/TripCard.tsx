@@ -17,6 +17,7 @@ import { LangLink, useLang } from "@/lib/i18n";
 import { regionIn, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 import type { ImgHTMLAttributes } from "react";
+import { photoFocus } from "@/lib/photoFocus";
 
 /**
  * A photo that fades in once it has loaded (Peter, 17 Nov: thumbnails popped in one by one). A picture that was
@@ -217,7 +218,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
             style={{ background: colour, maskImage: STRIP_FADE, WebkitMaskImage: STRIP_FADE }}
           >
             {thumb ? (
-              <FadeImg src={thumb} alt="" loading="lazy" decoding="async" crossOrigin="anonymous" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+              <FadeImg src={thumb} style={{ objectPosition: photoFocus(thumb) }} alt="" loading="lazy" decoding="async" crossOrigin="anonymous" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
             ) : (
               // No photo: the kind's colour and icon in front of quiet hills whose outline hints at the kind (Peter, 15 Nov).
               <NoPhotoScene goal={goal} colour={colour} />
@@ -236,7 +237,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
       ) : thumb ? (
         // A photo of the place in place of the kind icon (Peter, 2026-10-22); the kind sits on it as a small badge.
         <span aria-hidden className={`relative h-[64px] w-[64px] overflow-hidden rounded-[14px] ${dim ? "opacity-50 grayscale-[75%]" : ""}`} style={{ background: colour }}>
-          <FadeImg src={thumb} alt={trail.name} loading="lazy" decoding="async" crossOrigin="anonymous" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+          <FadeImg src={thumb} style={{ objectPosition: photoFocus(thumb) }} alt={trail.name} loading="lazy" decoding="async" crossOrigin="anonymous" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
           <span
             className="absolute bottom-1 left-1 grid h-[22px] w-[22px] place-items-center rounded-[7px] text-white shadow-[0_0_0_1.5px_#fff]"
             style={{ background: colour }}
