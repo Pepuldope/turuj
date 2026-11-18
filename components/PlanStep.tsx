@@ -188,6 +188,9 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
   const [still, setStill] = useState<Record<string, boolean>>({});
   // The step header to keep in place while a step off the screen changes size, until `until`.
   const anchor = useRef<{ el: Element; top: number; until: number } | null>(null);
+  const anchorEl = (el: Element | null | undefined) => {
+    if (el) anchor.current = { el, top: el.getBoundingClientRect().top, until: performance.now() + 600 };
+  };
   const anchorOn = (id: string) => {
     const el = document.getElementById(`plan-step-${id}`)?.closest("section");
     if (el) anchor.current = { el, top: el.getBoundingClientRect().top, until: performance.now() + 600 };
@@ -273,13 +276,32 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       setStill((x) => ({ ...x, [id]: false }));
       setOpen((o) => ({ ...o, [id]: true }));
     },
-    // "Hotovo": the last step closes and is ticked like "Ďalej" does for the others (Peter, 17 Nov), then the view
-    // glides to the day, once the step has folded (FOLD_MS) so the target doesn't move under the scroll.
+    // "Hotovo": the last step is ticked like "Ďalej" does for the others (Peter, 17 Nov) and the view glides to the day.
+    // Like "Ďalej", the step folds only once it has left the screen above, at once and with the day held where it is.
+    // Folded first, it pulled everything under it (the day too) up past the top in a quarter second, and the scroll then
+    // came back up for it: "scrolls down rapidly and then back up" (Peter, 18 Nov).
     toResult: (from) => {
       setDone((d) => ({ ...d, [from]: true }));
-      setOpen((o) => ({ ...o, [from]: false }));
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      setTimeout(() => scrollUnderBar(document.getElementById(resultId)), reduce ? 0 : FOLD_MS + 40);
+      const result = document.getElementById(resultId);
+      const left = document.getElementById(`plan-step-${from}`)?.closest("section");
+      glide.current?.();
+      if (!result || !left || reduced()) {
+        setOpen((o) => ({ ...o, [from]: false }));
+        setTimeout(() => scrollUnderBar(result), 0);
+        return;
+      }
+      let folded = false;
+      glide.current = glideUnderBar(result, 0, null, (end) => {
+        rebaseAnchor();
+        if (folded) return;
+        const { box } = underBar(left);
+        const off = left.getBoundingClientRect().bottom <= (box ? box.getBoundingClientRect().top : 0);
+        if (!off && !end) return;
+        folded = true;
+        anchorEl(result);
+        setStill((x) => ({ ...x, [from]: true }));
+        setOpen((o) => ({ ...o, [from]: false }));
+      });
     },
     isDone: (id) => !!done[id],
     isStill: (id) => !!still[id],
