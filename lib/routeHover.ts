@@ -23,3 +23,25 @@ export function useHoveredRoute(): string | null {
     () => null
   );
 }
+
+// Whether the plan's step 1 (Kadiaľ pôjdete) is open, so the big map lights up other routes only while the route
+// is being chosen, also when step 1 is shut by a tap on its header (Peter, 18 Nov). Null on pages without the plan.
+let routeStep: boolean | null = null;
+const stepListeners = new Set<() => void>();
+
+export function setRouteStepOpen(open: boolean | null) {
+  if (open === routeStep) return;
+  routeStep = open;
+  for (const l of stepListeners) l();
+}
+
+export function useRouteStepOpen(): boolean | null {
+  return useSyncExternalStore(
+    (l) => {
+      stepListeners.add(l);
+      return () => stepListeners.delete(l);
+    },
+    () => routeStep,
+    () => null
+  );
+}

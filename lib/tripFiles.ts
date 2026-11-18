@@ -2,7 +2,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { driveDestination, routeWalk, trailDetailFrom, walkFromCar } from "@/lib/data";
 import { summaryFromList } from "@/lib/trips";
 import { EN_TRIPS_AHEAD } from "@/lib/site";
-import { LOOP_SUFFIX, loopPartner, loopTrip } from "@/lib/loopRoute";
+import { LOOP_SUFFIX, loopPartner, loopTrip, orderRoutes } from "@/lib/loopRoute";
 import type { RouteBrief, TownDriveFile, TripDetail, TripIndex, TripList, TripSummary } from "@/lib/tripSchema";
 import type { TrailDetail } from "@/lib/types";
 import type { RouteWalk } from "@/lib/walkFacts";
@@ -261,5 +261,5 @@ export async function withLoopRoutes(routes: RouteBrief[]): Promise<RouteBrief[]
       up: t.path.map(([lon, lat]) => [lon, lat] as [number, number]),
     });
   }
-  return [...routes, ...loops];
+  return orderRoutes([...routes, ...loops]);
 }

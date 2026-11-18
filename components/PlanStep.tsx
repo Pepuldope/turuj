@@ -7,6 +7,7 @@ import { UiIcon } from "@/components/UiIcon";
 import { fitOnMap } from "@/lib/mapFocus";
 import { hasKeptMap, keptMapKey } from "@/lib/keptMap";
 import { pickedAnchor, rememberOpenSteps, stepsKeptFromRoutePick } from "@/lib/planUi";
+import { setRouteStepOpen } from "@/lib/routeHover";
 import type { MapFit } from "@/lib/mapFocus";
 import { useT } from "@/lib/i18n";
 import { groupPlanWarnings } from "@/lib/planWarnings";
@@ -144,6 +145,10 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     return kept ?? Object.fromEntries(steps.map((s) => [s.id, !!s.open]));
   });
   useEffect(() => rememberOpenSteps(open), [open]);
+  // The big map lights up other routes only while step 1 is open (C186), however it was shut.
+  const hasRouteStep = steps.some((s) => s.id === "route");
+  useEffect(() => setRouteStepOpen(hasRouteStep ? !!open.route : null), [hasRouteStep, open.route]);
+  useEffect(() => () => setRouteStepOpen(null), []);
   const [done, setDone] = useState<Record<string, boolean>>(() => keptDone);
   useEffect(() => {
     keptDone = done;
@@ -176,6 +181,23 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     const el = document.getElementById(`plan-step-${id}`)?.closest("section");
     if (el) anchor.current = { el, top: el.getBoundingClientRect().top, until: performance.now() + 600 };
   };
+  // The glide moves the page on purpose: after each of its frames the held step's spot is measured again, so a hold
+  // only undoes what changed in size since that frame. Measured once at the click, a hold that came late (the step
+  // left behind folding as the glide ends, within the 600 ms) pulled the page back onto the step being left,
+  // and "Späť" ended there with the step asked for open off the screen above (Peter, 18 Nov).
+  const rebaseAnchor = () => {
+    const a = anchor.current;
+    if (a) a.top = a.el.getBoundingClientRect().top;
+  };
+  // The visitor's own wheel, finger or key takes over: nothing is held after that.
+  useEffect(() => {
+    const drop = () => (anchor.current = null);
+    const evs = ["wheel", "touchstart", "keydown", "mousedown"];
+    for (const ev of evs) window.addEventListener(ev, drop, { passive: true, capture: true });
+    return () => {
+      for (const ev of evs) window.removeEventListener(ev, drop, { capture: true });
+    };
+  }, []);
   const holdAnchor = () => {
     const a = anchor.current;
     if (!a || performance.now() > a.until) return;
@@ -263,7 +285,7 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     if (reduced()) return scrollUnderBar(section);
     // Opened from the warnings recap: only the glide.
     if (go.from === go.to) {
-      glide.current = glideUnderBar(section, 0, null);
+      glide.current = glideUnderBar(section, 0, null, rebaseAnchor);
       return;
     }
     // The step left behind folds once it has left the screen: above it going forward, below it going back.
@@ -276,7 +298,14 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       setStill((x) => ({ ...x, [go.from]: quiet }));
       setOpen((o) => ({ ...o, [go.from]: false }));
     };
-    const begin = () => (glide.current = glideUnderBar(section, 0, null, (done) => {
+    const begin = () => {
+      // Going back, the step being left was held while the step above opened; that is done by now, and it must not
+      // be held while the page glides away from it.
+      if (!go.forward) anchor.current = null;
+      glide.current = glideUnderBar(section, 0, null, onFrame);
+    };
+    const onFrame = (done: boolean) => {
+      rebaseAnchor();
       if (folded || !left) return;
       const r = left.getBoundingClientRect();
       const { box } = underBar(left);
@@ -288,7 +317,7 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       // it: it rolls shut where you can see it (Peter, 17 Nov: on a wide screen it snapped shut in view). Going
       // forward (a short page) it is above, and folds at once with the step in view held.
       else if (done) foldLeft(go.forward);
-    }));
+    };
     if (go.forward) return void begin();
     // Going back, the step above opens first (held in place, holdAnchor): the glide measures its way after that, two
     // frames on, or it starts from a stale spot and the view flicks back for a frame.

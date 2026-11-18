@@ -106,3 +106,18 @@ export function loopTrip(own: TripDetail, other: TripDetail): TripDetail {
     gpx_url: "",
   };
 }
+
+/**
+ * The order of the route list (Peter, 18 Nov): the main route, then "Iným chodníkom", then the loops; the rest
+ * ("Iná cesta", "Cez …", "Kratšia" …) after them, as they were. The colours follow the list.
+ */
+export function orderRoutes(routes: RouteBrief[]): RouteBrief[] {
+  const rank = (r: RouteBrief) => {
+    const label = r.route_label ?? "Hlavná cesta";
+    if (label === "Hlavná cesta") return 0;
+    if (label === "Iným chodníkom") return 1;
+    if (r.slug.endsWith(LOOP_SUFFIX)) return 2;
+    return 3;
+  };
+  return routes.map((r, i) => ({ r, i })).sort((a, b) => rank(a.r) - rank(b.r) || a.i - b.i).map(({ r }) => r);
+}
