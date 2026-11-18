@@ -59,10 +59,10 @@ const SCROLL_GAP = 12;
 const GLIDE_MS = 650;
 
 /**
- * Scrolls `el` to the top of the window, just under the phone's top bar. The bar's real height is read
- * from the page (its safe-area padding for the notch included) and counted as if it were shown: it comes
- * back whenever the page scrolls up, and a gap that is a little too big when it hides is harmless, one
- * too small would leave the card under the bar. Wide screens have no bar over the column.
+ * Scrolls `el` to the top of the window: just under the phone's top bar when the bar is showing (its real height read
+ * from the page, safe-area padding for the notch included), at the very top when it is hidden. The page's own glide
+ * leaves the bar as it was (lib/motion.ts), so it lines up either way; counted always, the hidden bar left an empty
+ * strip over the step (Peter, 18 Nov). Wide screens have no bar over the column.
  */
 function scrollUnderBar(el: Element | null | undefined) {
   if (!el) return;
@@ -80,7 +80,8 @@ function underBar(el: Element): { box: HTMLElement | null; top: number } {
   while (box && box !== document.body && !(/(auto|scroll)/.test(getComputedStyle(box).overflowY) && box.scrollHeight > box.clientHeight)) box = box.parentElement;
   if (box && box !== document.body) return { box, top: box.scrollTop + el.getBoundingClientRect().top - box.getBoundingClientRect().top - SCROLL_GAP };
   const phone = window.matchMedia("(max-width: 1023.98px)").matches;
-  const bar = phone ? document.querySelector<HTMLElement>("[data-topbar]") : null;
+  // TopBar sets data-dock: "out" while the bar is slid away.
+  const bar = phone && document.documentElement.dataset.dock !== "out" ? document.querySelector<HTMLElement>("[data-topbar]") : null;
   return { box: null, top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - (bar?.offsetHeight ?? 0) - SCROLL_GAP) };
 }
 
