@@ -577,7 +577,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
       }
       if (isDesktop) {
         setPreview(null);
-        requestAnimationFrame(() => pickedRef.current?.scrollIntoView({ block: "nearest", behavior: smoothScroll() }));
+        requestAnimationFrame(() => revealPicked(pickedRef));
       } else {
         setPreview({ kind: "trip", slug, also, ...at, peek: false });
       }
@@ -1438,4 +1438,40 @@ function SkyEdge({ colour }: { colour: string }) {
   // At the top it lies over the (see-through) phone top bar, so iOS finds the sky there and not the
   // bar; scrolled, under it, so the white bar coming in on the way up shows (Peter, 2026-11-05).
   return <div aria-hidden="true" className="sky-edge" style={{ background: `linear-gradient(${c}, ${c} 25%, transparent)`, zIndex: top ? 41 : undefined }} />;
+}
+
+/**
+ * Brings the picked card (and its "Otvoriť výlet") into view, then looks again a few times over 1.5 s and scrolls
+ * the rest of the way if it isn't all on the screen: the card gets its last lines (drive time, stops) after the
+ * first scroll, and after scrolling the list down and back up a pick could leave the button below the edge
+ * (Peter, 18 Nov). The visitor's own wheel, finger or key ends it.
+ */
+function revealPicked(ref: { current: HTMLElement | null }) {
+  ref.current?.scrollIntoView({ block: "nearest", behavior: smoothScroll() });
+  let quit = false;
+  const evs = ["wheel", "touchstart", "keydown", "mousedown"];
+  const stop = () => {
+    quit = true;
+    for (const ev of evs) window.removeEventListener(ev, stop);
+  };
+  for (const ev of evs) window.addEventListener(ev, stop, { passive: true });
+  const check = (left: number) => {
+    const el = ref.current;
+    if (quit || !el) return stop();
+    let box: HTMLElement | null = el.parentElement;
+    while (box && box !== document.body && !(/(auto|scroll)/.test(getComputedStyle(box).overflowY) && box.scrollHeight > box.clientHeight)) box = box.parentElement;
+    const scroller = box && box !== document.body ? box : null;
+    const r = el.getBoundingClientRect();
+    const edge = Math.min(window.innerHeight, scroller ? scroller.getBoundingClientRect().bottom : window.innerHeight);
+    const top = scroller ? scroller.getBoundingClientRect().top : 0;
+    // Short of the edge: scroll by what is missing, but never so far that the card's top leaves the screen.
+    const by = Math.min(r.bottom - edge, r.top - top);
+    if (by > 1) {
+      if (scroller) scroller.scrollBy({ top: by, behavior: "instant" });
+      else window.scrollBy({ top: by, behavior: "instant" });
+    }
+    if (left > 0) setTimeout(() => check(left - 1), 250);
+    else stop();
+  };
+  setTimeout(() => check(4), 500);
 }
