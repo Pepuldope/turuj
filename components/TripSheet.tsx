@@ -33,7 +33,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { TrackEvent } from "@/components/TrackEvent";
 import { TripSeenFlag } from "@/components/TripSeenFlag";
 import { TripBackLink } from "@/components/TripBackLink";
-import { absoluteUrl } from "@/lib/site";
+import { OG_IMAGE, absoluteUrl } from "@/lib/site";
 import type { RouteBrief, Town, TripDetail } from "@/lib/tripSchema";
 import type { TrailDetail } from "@/lib/types";
 import { LOOP_SUFFIX } from "@/lib/loopRoute";
@@ -91,7 +91,7 @@ function trailJsonLd(detail: TrailDetail, photo: PlacePhoto | null, town: Town |
         url,
         // The page's own "O výlete" text when there is one (Slovak pages); English pages get an English line from the trip data (F18), else the short line.
         ...(about.length ? { description: about.join(" ") } : enDescription ? { description: enDescription } : trail.description ? { description: trail.description } : {}),
-        image: photo ? photoImage(photo) : absoluteUrl("/og-image.png"),
+        image: photo ? photoImage(photo) : absoluteUrl(OG_IMAGE.url),
         // Only when an entry fee is known; no known fee doesn't mean free.
         ...(detail.fees.some((f) => f.kind === "vstupne") ? { isAccessibleForFree: false } : {}),
         publicAccess: true,

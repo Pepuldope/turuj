@@ -1,3 +1,5 @@
+import { seasonOf } from "@/lib/season";
+
 // Site-wide settings in one place. None of these are secrets (the repo is
 // public and every value ends up in the page anyway), so they live in code.
 // To change one, edit this file; each can also be overridden by an env var.
@@ -50,16 +52,22 @@ export const COUNTED_HOSTS = [
 export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "info@turuj.sk";
 
 
-/** Link-preview image (1200x630) from the brand guide. */
+/**
+ * Link-preview image (1200x630): "Kam na výlet?" beside a sample trip card, over the site's hills in the season of the
+ * day the page is built (Peter, 18 Nov: the old one looked like a sea). Static pages are rebuilt at least every Monday
+ * by the data run, so the picture follows the season within a week. Files in public/og/{season}.png and -en.png;
+ * public/og-image.png stays for old links.
+ */
+const OG_SEASON = seasonOf(new Date());
 export const OG_IMAGE = {
-  url: "/og-image.png",
+  url: `/og/${OG_SEASON}.png`,
   width: 1200,
   height: 630,
-  alt: "Túruj – kam na výlet, aby ste boli späť za svetla",
+  alt: "Túruj – kam na výlet, kde zaparkovať a kedy najneskôr vyraziť, aby ste boli späť za svetla",
 };
 
-/** The same picture with the English headline (public/og-image-en.png) for the /en pages. */
-export const OG_IMAGE_EN = { ...OG_IMAGE, url: "/og-image-en.png", alt: "Túruj – where to go for a day trip, and be back before dark" };
+/** The same picture with the English text for the /en pages. */
+export const OG_IMAGE_EN = { ...OG_IMAGE, url: `/og/${OG_SEASON}-en.png`, alt: "Túruj – where to go for a day trip, where to park and when to leave to be back before dark" };
 
 export const REPO_URL = "https://github.com/Pepuldope/turuj";
 

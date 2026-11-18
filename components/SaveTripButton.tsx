@@ -110,7 +110,9 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
   const lang = useLang();
   const [status, setStatus] = useState<Status>("idle");
   const [progress, setProgress] = useState({ done: 0, total: 0 });
-  const [askShare, setAskShare] = useState(false);
+  // Right after saving, the green box asks about the evening-before reminder (Peter, 18 Nov: the switch further down
+  // wasn't seen); sharing is the plain button under it.
+  const [askEve, setAskEve] = useState(false);
   // The two boxes under the button swap by rolling (Peter, 17 Nov), but only after the visitor pressed something: a saved
   // trip is read from storage right after hydration, and that is not an event.
   const [touched, setTouched] = useState(false);
@@ -166,7 +168,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
       savedAt: new Date().toISOString(),
       offline: "pending",
     });
-    setAskShare(true);
+    setAskEve(true);
 
     if (!("serviceWorker" in navigator)) {
       patch(slug, { offline: "failed" });
@@ -220,8 +222,8 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
       {showButton && <ClosureGuard closures={closures} date={date} />}
       {showButton && !(saved && status === "saving") && saveButton}
 
-      {/* Order: the confirmation first ("Uložené" + share), then the one-time question, the calendar, navigation, GPX. The app offer is AppPromo, outside this card. */}
-      <Reveal open={!!saved && askShare} className="roll-flex-gap" appear animate={touched}>
+      {/* Order: the confirmation with the reminder question first, then share, the calendar, navigation, GPX. The app offer is AppPromo, outside this card. */}
+      <Reveal open={!!saved && askEve} className="roll-flex-gap" appear animate={touched}>
         {saved && (
         <div className="flex flex-col gap-2 rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
           <p role="status">
@@ -231,28 +233,12 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
             </LangLink>
             .
           </p>
-          <p className="font-semibold">{t("Zdieľať výlet?")}</p>
-          <div className="flex flex-wrap gap-2">
-            <ShareButton
-              {...trip}
-              plan={loading ? null : plan}
-              date={date}
-              time={time}
-              hikeMin={hikeMin}
-              hasDrive={route !== null || driveMin !== null}
-              closures={closures}
-              className={closedDay ? secondary : "rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-bold text-[var(--accent-contrast)]"}
-              onShared={() => setAskShare(false)}
-            />
-            <button type="button" onClick={() => setAskShare(false)} className="px-2 text-sm underline">
-              {t("Teraz nie")}
-            </button>
-          </div>
+          <EveReminder ask trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch(slug, { eve })} onAsked={() => setAskEve(false)} />
         </div>
         )}
       </Reveal>
 
-      <Reveal open={!!saved && !askShare && status !== "saving"} className="roll-flex-gap" appear animate={touched}>
+      <Reveal open={!!saved && !askEve && status !== "saving"} className="roll-flex-gap" appear animate={touched}>
         {saved && (
         <p className="rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
           <strong>{t("Už uložené.")}</strong> {t("Nájdete to v")}{" "}
@@ -276,7 +262,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
 
       {saved && askHeard && <HeardFrom onDone={() => setAskHeard(false)} />}
 
-      {!askShare && share}
+      {share}
 
       {status === "error" && (
         <p className="flex items-start gap-1.5 text-sm text-[var(--warn)]">
@@ -285,7 +271,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
         </p>
       )}
 
-      {saved && status !== "saving" && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch(slug, { eve })} />}
+      {saved && status !== "saving" && !askEve && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch(slug, { eve })} />}
 
       {saved && <ClosureGuard closures={closures} date={date} />}
       {nav}

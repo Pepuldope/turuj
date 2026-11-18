@@ -1,7 +1,7 @@
 "use client";
 
 import { UiIcon } from "@/components/UiIcon";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLang, useT } from "@/lib/i18n";
 import { langPath } from "@/lib/lang";
 import { EVE_MAX_AHEAD_MS, closedUntilFor, eveAtFor, eveWanted } from "@/lib/eve";
@@ -26,6 +26,9 @@ const compact =
 
 type State = "idle" | "busy" | "denied" | "failed" | "noservice";
 
+/** What was last sent to the server per trip, kept across the question and the switch below it (they mount in turn). */
+const sentFor = new Map<string, string>();
+
 export function EveReminder({
   trip,
   plan,
@@ -33,6 +36,8 @@ export function EveReminder({
   closures,
   where,
   onChange,
+  ask = false,
+  onAsked,
 }: {
   trip: SavedTrip;
   plan: DayPlan | null;
@@ -41,6 +46,10 @@ export function EveReminder({
   /** Where the walk starts (parking, stop or trailhead), for the event's place; the trip name without it. */
   where?: { name: string; location: LatLng } | null;
   onChange: (eve: boolean) => void;
+  /** Right after saving: asked as a question in the green box ("Zapnúť pripomienku" / "Teraz nie") instead of the switch. */
+  ask?: boolean;
+  /** The question is answered (or there is nothing to ask). */
+  onAsked?: () => void;
 }) {
   const t = useT();
   const lang = useLang();
@@ -91,11 +100,10 @@ export function EveReminder({
   }
 
   // First time on a device that already allowed notifications: on by default. Later changes of the plan are sent again.
-  const sent = useRef("");
   useEffect(() => {
-    if (can !== "ok" || !job || trip.eve === false || sent.current === jobKey) return;
+    if (can !== "ok" || !job || trip.eve === false || sentFor.get(trip.slug) === jobKey) return;
     if (trip.eve === undefined && Notification.permission !== "granted") return;
-    sent.current = jobKey;
+    sentFor.set(trip.slug, jobKey);
     register().then(
       (ok) => {
         if (!ok) return;
@@ -109,27 +117,32 @@ export function EveReminder({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [can, jobKey, trip.eve]);
 
-  async function toggle() {
+  /** Switches the reminder over; true when it is on afterwards. */
+  async function toggle(): Promise<boolean> {
     setState("busy");
     try {
       if (trip.eve === true) {
         const sub = await currentSub();
         if (sub) await post({ action: "eve-cancel", sub: sub.toJSON(), slug: trip.slug });
         onChange(false);
-        return setState("idle");
+        setState("idle");
+        return false;
       }
       if (!(await plant())) {
         setDetail(lastPushError);
-        return setState((s) => (s === "denied" ? s : "failed"));
+        setState((s) => (s === "denied" ? s : "failed"));
+        return false;
       }
-      sent.current = jobKey;
+      sentFor.set(trip.slug, jobKey);
       onChange(true);
-      track("eve_planned", { trail: trip.slug, how: "switch" });
+      track("eve_planned", { trail: trip.slug, how: ask ? "ask" : "switch" });
       setState("idle");
+      return true;
     } catch (err) {
       setDetail(err instanceof Error ? `${err.name}: ${err.message}` : String(err));
       // The browser could not reach its own push service (Brave and some others have none): trying again won't help.
       setState(err instanceof Error && err.name === "AbortError" && /push service/i.test(err.message) ? "noservice" : "failed");
+      return false;
     }
   }
 
@@ -192,6 +205,89 @@ export function EveReminder({
           : null;
   const testing = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("eve-test") === "1";
 
+  const warning =
+    state === "denied"
+      ? t("Upozornenia sú v prehliadači zakázané. Povoľte ich v nastaveniach stránky alebo použite kalendár.")
+      : state === "noservice"
+        ? t("Tento prehliadač teraz upozornenia nastaviť nevie. Použite kalendár alebo iný prehliadač.")
+        : state === "failed"
+          ? t("Pripomienku sa teraz nepodarilo nastaviť. Skúste to znova alebo použite kalendár.")
+          : null;
+  const calendarRow = (
+    // One row, even at 360 px: the label says what it is, the buttons only say where.
+    <div className="flex items-center gap-2">
+      <span className="min-w-0 flex-1 text-sm font-semibold">{t("Pridať do kalendára")}</span>
+      <button type="button" onClick={download} aria-label={apple ? t("Do Apple Kalendára") : t("Do iného kalendára (súbor .ics)")} className={compact}>
+        {apple ? "Apple" : t("Iný")}
+      </button>
+      <a
+        // Built from the saved day and time on every render (this card only exists in the browser, after a save),
+        // so a long-press or "open in new tab" carries the event too.
+        href={typeof window === "undefined" ? "https://calendar.google.com/calendar/render" : googleCalendarUrl(eventOf())}
+        target="_blank"
+        rel="noopener"
+        aria-label={t("Do Google Kalendára")}
+        onClick={() => track("ics_download", { trail: trip.slug, to: "google" })}
+        className={compact}
+      >
+        Google
+      </a>
+    </div>
+  );
+
+  // The question in the green box right after saving (Peter, 18 Nov). Where Túruj can send the reminder: one big
+  // button; where it can't (an iPhone outside the installed app, a day too near or too far): the calendar instead.
+  if (ask) {
+    const later = (
+      <button type="button" onClick={onAsked} className="min-h-10 px-2 text-sm underline">
+        {t("Teraz nie")}
+      </button>
+    );
+    // Already on (this device allowed notifications before): say so, with the way out.
+    if (on)
+      return (
+        <p>
+          {t("Napíšeme vám o 19:00 deň vopred: počasie a kedy vyraziť.")}{" "}
+          <button type="button" disabled={state === "busy"} onClick={() => void toggle().then(() => onAsked?.())} className="underline">
+            {t("Zrušiť pripomienku")}
+          </button>
+        </p>
+      );
+    if (showSwitch)
+      return (
+        <div className="flex flex-col gap-2">
+          <p className="font-semibold">{t("Pripomenúť večer pred výletom?")}</p>
+          <p>{t("Napíšeme vám o 19:00 deň vopred: počasie a kedy vyraziť.")}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={state === "busy"}
+              onClick={() => void toggle().then((ok) => ok && onAsked?.())}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-[var(--accent)] px-4 text-sm font-bold text-[var(--accent-contrast)] disabled:opacity-60"
+            >
+              <UiIcon name="clock" size={16} />
+              {t("Zapnúť pripomienku")}
+            </button>
+            {later}
+          </div>
+          {warning && (
+            <>
+              <p className="flex items-start gap-1.5 text-xs text-[var(--warn)]"><UiIcon name="warn" size={14} className="mt-px" /><span>{warning}</span></p>
+              {calendarRow}
+            </>
+          )}
+        </div>
+      );
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="font-semibold">{t("Pripomenúť výlet z kalendára?")}</p>
+        {offReason ? <p>{offReason}</p> : can === "iphone-browser" && <p>{t("Na iPhone príde pripomienka z kalendára. Upozornenia od Túruja fungujú po pridaní na plochu.")}</p>}
+        {calendarRow}
+        <div>{later}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-2">
       {showSwitch && (
@@ -213,9 +309,7 @@ export function EveReminder({
             <span>{t("Pripomenúť večer pred výletom")}</span>
           </button>
           {on && <p className="text-xs text-[var(--muted)]">{t("Napíšeme vám o 19:00 deň vopred: počasie a kedy vyraziť.")}</p>}
-          {state === "denied" && <p className="flex items-start gap-1.5 text-xs text-[var(--warn)]"><UiIcon name="warn" size={14} className="mt-px" /><span>{t("Upozornenia sú v prehliadači zakázané. Povoľte ich v nastaveniach stránky alebo použite kalendár.")}</span></p>}
-          {state === "noservice" && <p className="flex items-start gap-1.5 text-xs text-[var(--warn)]"><UiIcon name="warn" size={14} className="mt-px" /><span>{t("Tento prehliadač teraz upozornenia nastaviť nevie. Použite kalendár alebo iný prehliadač.")}</span></p>}
-          {state === "failed" && <p className="flex items-start gap-1.5 text-xs text-[var(--warn)]"><UiIcon name="warn" size={14} className="mt-px" /><span>{t("Pripomienku sa teraz nepodarilo nastaviť. Skúste to znova alebo použite kalendár.")}</span></p>}
+          {warning && <p className="flex items-start gap-1.5 text-xs text-[var(--warn)]"><UiIcon name="warn" size={14} className="mt-px" /><span>{warning}</span></p>}
           {testing && on && (
             <button type="button" onClick={sendTest} className="self-start text-xs underline">
               {t("Poslať skúšobnú pripomienku teraz")}
@@ -243,30 +337,7 @@ export function EveReminder({
           <p className="text-xs text-[var(--muted)]">{offReason}</p>
         </div>
       )}
-      {/* One row, even at 360 px: the label says what it is, the buttons only say where. */}
-      <div className="flex items-center gap-2">
-        <span className="min-w-0 flex-1 text-sm font-semibold">{t("Pridať do kalendára")}</span>
-        <button
-          type="button"
-          onClick={download}
-          aria-label={apple ? t("Do Apple Kalendára") : t("Do iného kalendára (súbor .ics)")}
-          className={compact}
-        >
-          {apple ? "Apple" : t("Iný")}
-        </button>
-        <a
-          // Built from the saved day and time on every render (this card only exists in the browser, after a save),
-          // so a long-press or "open in new tab" carries the event too.
-          href={typeof window === "undefined" ? "https://calendar.google.com/calendar/render" : googleCalendarUrl(eventOf())}
-          target="_blank"
-          rel="noopener"
-          aria-label={t("Do Google Kalendára")}
-          onClick={() => track("ics_download", { trail: trip.slug, to: "google" })}
-          className={compact}
-        >
-          Google
-        </a>
-      </div>
+      {calendarRow}
       {can === "iphone-browser" && (
         <p className="text-xs text-[var(--muted)]">{t("Na iPhone príde pripomienka z kalendára. Upozornenia od Túruja fungujú po pridaní na plochu.")}</p>
       )}

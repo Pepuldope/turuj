@@ -11,7 +11,7 @@ Cloudflare dashboard, never into the repo (it is public).
 | Slovak titles, descriptions, canonical URLs, link previews | `lib/seo.ts`, each `page.tsx` | No |
 | `sitemap.xml` (home, every trip, info pages) and `robots.txt` | `app/sitemap.ts`, `app/robots.ts` | No |
 | Structured data (WebSite, Organization, TouristAttraction, breadcrumbs) | `components/JsonLd.tsx` | No |
-| Brand icons and preview image | `app/icon.svg`, `app/apple-icon.png`, `public/og-image.png` | No |
+| Brand icons and preview image | `app/icon.svg`, `app/apple-icon.png`, `public/og/{season}.png` (+ `-en`, picked in `lib/site.ts`) | No |
 | Privacy, disclaimer, sources pages + footer | `/sukromie`, `/upozornenie`, `/zdroje` | Optional contact e-mail |
 | Umami visitor stats + product events | `components/Analytics.tsx`, `lib/analytics.ts` | **Step 1** |
 | "People with 4+ visit days" counter + report at `/statistiky` | `app/api/visit`, `lib/visitStore.ts`, Cloudflare D1 | No |
