@@ -285,9 +285,17 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       const result = document.getElementById(resultId);
       const left = document.getElementById(`plan-step-${from}`)?.closest("section");
       glide.current?.();
-      if (!result || !left || reduced()) {
+      if (!result || !left) {
         setOpen((o) => ({ ...o, [from]: false }));
-        setTimeout(() => scrollUnderBar(result), 0);
+        return;
+      }
+      // Reduced motion: a jump to the day, then the fold with the day held. Folded first, the jump was measured with the
+      // step still open and the fold then pushed the day off the top (found 18 Nov).
+      if (reduced()) {
+        scrollUnderBar(result);
+        anchorEl(result);
+        setStill((x) => ({ ...x, [from]: true }));
+        setOpen((o) => ({ ...o, [from]: false }));
         return;
       }
       let folded = false;
