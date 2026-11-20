@@ -3,6 +3,7 @@ import { closedLast } from "@/lib/homeOrder";
 import { getKnownTownIds } from "@/lib/townTrips";
 import { HomeExplorer } from "@/components/HomeExplorer";
 import { JsonLd } from "@/components/JsonLd";
+import { webApplicationLd } from "@/lib/appScreens";
 import { pageMetadata } from "@/lib/seo";
 import { CONTACT_EMAIL, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL, absoluteUrl } from "@/lib/site";
 
@@ -57,6 +58,7 @@ export default async function Home() {
               areaServed: { "@type": "Country", name: "Slovensko" },
               contactPoint: { "@type": "ContactPoint", contactType: "customer support", email: CONTACT_EMAIL, availableLanguage: ["sk", "en"] },
             },
+            webApplicationLd("sk", "/"),
           ],
         }}
       />

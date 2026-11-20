@@ -1,3 +1,4 @@
+import { AppScreens } from "@/components/AppScreens";
 import { InfoPage } from "@/components/InfoPage";
 import { LangLink } from "@/lib/i18n";
 import { pageMetadata } from "@/lib/seo";
@@ -16,6 +17,8 @@ export default function HowItWorksPage() {
       title="How Túruj works"
       intro="Túruj plans day trips into the mountains and nature of Slovakia. In five minutes you know where to go, how to get there and the latest time to set off."
     >
+      <AppScreens />
+
       <h2>1. Say where you start and when</h2>
       <p>
         On the home page, enter the town or place you leave from and pick a day: today, tomorrow or another. Túruj sorts

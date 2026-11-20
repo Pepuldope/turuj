@@ -25,5 +25,28 @@
       "sizes": "any",
       "type": "image/svg+xml"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "/screens/sk-home.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Výlety podľa cesty z vášho štartu, s časom, kedy najneskôr vyraziť"
+    },
+    {
+      "src": "/screens/sk-plan.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Váš deň: cesta autom, túra, slnko a počasie po hodinách"
+    },
+    {
+      "src": "/screens/sk-saved.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Uložené výlety fungujú aj bez signálu"
+    }
   ]
 }

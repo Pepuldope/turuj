@@ -3,6 +3,7 @@ import { closedLast } from "@/lib/homeOrder";
 import { getKnownTownIds } from "@/lib/townTrips";
 import { HomeExplorer } from "@/components/HomeExplorer";
 import { JsonLd } from "@/components/JsonLd";
+import { webApplicationLd } from "@/lib/appScreens";
 import { pageMetadata } from "@/lib/seo";
 import { SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/site";
 
@@ -51,6 +52,7 @@ export default async function EnglishHome() {
               url: absoluteUrl("/"),
               logo: absoluteUrl("/icons/icon-512.png"),
             },
+            webApplicationLd("en", "/"),
           ],
         }}
       />
