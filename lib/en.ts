@@ -51,6 +51,14 @@ export const EN: Record<string, string> = {
   "Kedy obed": "When to have lunch",
   "na cieli {t}": "at the destination {t}",
   "Zrušiť": "Cancel",
+  // App screenshots (components/AppScreens.tsx)
+  "Ako Túruj vyzerá": "What Túruj looks like",
+  "Výlety podľa cesty z vášho štartu, s časom, kedy najneskôr vyraziť": "Trips sorted by the drive from your start, with the latest time to leave",
+  "Váš deň: cesta autom, túra, slnko a počasie po hodinách": "Your day: the drive, the hike, the sun and the weather hour by hour",
+  "Uložené výlety fungujú aj bez signálu": "Saved trips work without signal",
+  "Túruj na mobile: zoznam výletov z Popradu s časom, kedy vyraziť": "Túruj on a phone: a list of trips from Poprad with the time to leave",
+  "Túruj na mobile: plán dňa pre Roklinu Suchá Belá s mapou, slnkom a počasím": "Túruj on a phone: the day plan for the Suchá Belá gorge with the map, the sun and the weather",
+  "Túruj na mobile: uložený výlet v Mojich výletoch": "Túruj on a phone: a saved trip in My trips",
   // Weather
   " (prehánky)": " (showers)",
   " ({how}, do {mm} mm/h)": " ({how}, up to {mm} mm/h)",
