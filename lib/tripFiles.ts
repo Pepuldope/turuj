@@ -3,7 +3,7 @@ import { driveDestination, routeWalk, trailDetailFrom, walkFromCar } from "@/lib
 import { summaryFromList } from "@/lib/trips";
 import { EN_TRIPS_AHEAD } from "@/lib/site";
 import { LOOP_SUFFIX, loopPartner, loopTrip, orderRoutes } from "@/lib/loopRoute";
-import type { RouteBrief, TownDriveFile, TripDetail, TripIndex, TripList, TripSummary } from "@/lib/tripSchema";
+import type { DestinationKind, RouteBrief, TownDriveFile, TripDetail, TripIndex, TripList, TripSummary } from "@/lib/tripSchema";
 import type { TrailDetail } from "@/lib/types";
 import type { RouteWalk } from "@/lib/walkFacts";
 
@@ -199,6 +199,36 @@ export async function getTripPhoto(slug: string, osm?: string | null): Promise<P
   photoKeys ??= readPublicJson<Record<string, string>>("data/photo-keys.json").then((f) => f ?? {});
   const all = await getPhotos();
   return all[osm ?? (await photoKeys)[slug] ?? `trip/${slug}`] ?? null;
+}
+
+/** A no-photo place's terrain for the trip page banner (data/terrain.json, pipeline/terrain.py). */
+export interface TerrainBanner {
+  kind: DestinationKind;
+  /** Three packed skyline layers of the banner window (lib/terrainScene.ts). */
+  layers: number[][];
+}
+
+type TerrainPlaces = Record<string, { k: DestinationKind; banner: number[][] }>;
+let terrain: Promise<TerrainPlaces> | null = null;
+
+/**
+ * The banner terrain of a place, by its photos.json key; null when it has none (it has a photo, the weekly terrain
+ * job has not seen it yet, or the page is drawn in the Worker). data/terrain.json is NOT a static asset (it would be
+ * one more file for the host and a second copy of data the page needs once): it is read from the disk while the pages
+ * are built ahead, and a page drawn later in the Worker simply keeps its season picture. Server only.
+ */
+export async function getTerrainBanner(placeKey: string): Promise<TerrainBanner | null> {
+  terrain ??= (async () => {
+    try {
+      const { readFile } = await import("node:fs/promises");
+      const { join } = await import("node:path");
+      return (JSON.parse(await readFile(join(process.cwd(), "data", "terrain.json"), "utf8")) as { places: TerrainPlaces }).places;
+    } catch {
+      return {};
+    }
+  })();
+  const p = (await terrain)[placeKey];
+  return p ? { kind: p.k, layers: p.banner } : null;
 }
 
 /** Car minutes from one precomputed town to every trip, by slug; empty for an unknown town. */

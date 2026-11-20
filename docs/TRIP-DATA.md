@@ -18,6 +18,8 @@ binding on Cloudflare, the disk elsewhere). Small bundled data: `lib/trips.ts`.
 | `public/data/map/meta.json`, `overview.json`, `c/<ix>_<iy>.json` | Trip lines for the home map: a simplified overview for zoomed-out views and detailed lines per grid cell, so the map loads only the part in view (`pipeline/maplines.py`) | pipeline |
 | `data/towns.json` | `Towns`: the towns of the drive table (bundled, small) | pipeline |
 | `public/gpx/<main slug>.gpx` | full-resolution GPX of every route to a place, main route first, each `<trk>` with its trip's slug in `<desc>`; a trip's `gpx_url` is `/gpx/<main slug>.gpx`, or `…#<slug>` for another route | pipeline |
+| `data/terrain.json` | The real skyline of every place without a photo, banner and card windows (build-time only, not a static asset; also the weekly job's cache) | `pipeline/terrain.py` |
+| `public/data/terrain-cards.json` | The card windows only, `{v, places: {id: [kind, near, mid, far]}, trips: {slug: id}}`, the one static file the terrain pictures add | `pipeline/terrain.py` |
 | `data/closure-rules.json` | `ClosureRules`: seasonal and one-off closures, each with an official source and check date | by hand |
 | `data/fee-rules.json` | `FeeRules`: entry fees OSM doesn't carry, each with a source | by hand |
 | `data/pipeline-report.md` | counts, regressions against the 10 hand-picked trips, unresolved rule names | pipeline |
@@ -94,6 +96,50 @@ are hashes of the slug, so they stay the same week to week) and writes only the 
 that changed. A full load (the first one, or after a schema change) writes about 65k rows
 (2026-10-16), so at most one full load fits in a day.
 
+## Terrain pictures (places without a photo)
+
+About 1,300 of the 2,100 places have no free photo. Instead of a generic hill scene their home-list card and the header
+of their trip page show a picture drawn from the place's **real terrain** (C201, Peter 20 Nov 2026). Drafts and the
+approved mockups: `Túruj/brand-ux/mockups/2026-11-20-terrain-outlines/`.
+
+How it is made (`pipeline/terrain.py`, drawing in `lib/terrainScene.ts`):
+
+- Input: the main trip of every destination (not `variant_of`, highest `rank`) whose OSM id is not in `photos.json`.
+- Elevation: AWS Terrain Tiles (terrarium PNG, zoom 12, Mapzen, open data), downloaded into `pipeline/.cache/terrain`
+  (`TERRAIN_TILES` to move it) and decoded once per run.
+- Peaks, castles, lookouts, huts: a viewer 3.5-13 km out and 200 m above the ground, 12 directions x 4 distances; the
+  view where the place stands out best wins, with a bias to the side the trail comes from. Three depth bands (near, the
+  place's own, far). Summits snap to the highest elevation point within 120 m of the mapped spot; **huts stay where they are mapped**.
+- Waterfalls, lakes, gorges, caves, other: the viewer stands at the place (a lake: 120 m back on the approach side), eye
+  2 m up (gorge 3 m), bands 60-700 / 700-3000 / 3000+ m, and the look direction with the highest skyline wins (a gorge:
+  walls high, middle low).
+- The 241 columns of the 80 degree view are cut to the two windows that are drawn (card: 34 degrees with the place at 0.75
+  across; banner: 64 degrees, centred), simplified to within half a pixel and stored as ints in 0.05 degree, delta coded
+  (`pack_layer`). All numpy, one vectorised ray march per view: about 0.2 s a place once the tiles are on disk.
+- Places are kept between runs by (id, lat, lon, `ALGO`): a normal week computes only new places and drops those that now
+  have a photo. **Raise `ALGO` in `pipeline/terrain.py` to recompute everything** after changing the algorithm or the packing.
+  The files hold no date, so a week with nothing new changes nothing and starts no deploy.
+- Re-run: `.github/workflows/terrain.yml` (after "Place photos" on main, or by hand from the Actions tab). Locally:
+  `python -m pipeline.terrain` (everything; network and a few minutes) or `python -m pipeline.terrain --only "Kriváň,Mača" --out /tmp/terrain`
+  (a sample into another folder). `python -m pytest -q pipeline/tests/test_terrain.py` has the synthetic-terrain tests.
+
+Where it is used: `components/TripCard.tsx` (`NoPhotoScene`) loads `/data/terrain-cards.json` once for all cards and draws
+card A; where a trip has no entry (or the file is missing) the old hills of `lib/cardScenes.ts` stay. `components/TripSheet.tsx`
+draws the banner inline, at build time, from `data/terrain.json` (read through `getTerrainBanner` in `lib/tripFiles.ts`;
+a page first drawn in the Worker has no disk and keeps its season picture). Credit: the trip page's header and `/zdroje`.
+
+Hard rules from Peter (each is a test in `lib/terrainScene.test.ts` and `pipeline/tests/test_terrain.py`):
+
+1. A building or feature touches the ground along its whole base, never floats: castle, hut and tower get the ground
+   raised under the footprint with gentle slopes; water lands in a pool on the ground; a lake has ground all round; a
+   cave's floor is the ground line; every tree's base is on a ground line.
+2. Card: the summit / sign / feature sits at x = 0.75 of the 96 wide strip, never under the white kind icon.
+3. No flag marker. The banner's waterfall is drawn 1.4 x the card's scale.
+4. Deterministic: the same place always gives the same picture (seeded by the place id, not by slug or time).
+
+The card file must stay under 150 KB gzipped (`lib/assetBudget.test.ts`); the deploy is near Cloudflare's 20,000-file
+limit, so no other static file is added for this.
+
 ## Licences and credit
 
 - OpenStreetMap data, © OpenStreetMap contributors, ODbL 1.0. Commercial use allowed;
@@ -101,6 +147,7 @@ that changed. A full load (the first one, or after a schema change) writes about
   to https://www.openstreetmap.org/copyright.
 - Elevation: Copernicus DEM GLO-30, © DLR e.V. 2010-2014 and © Airbus Defence and Space
   GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA. Free, commercial use allowed.
+- Terrain pictures: elevation data from AWS Terrain Tiles (Mapzen, open data; per-source credits in the Tilezen attribution list), credited on the trip page header and `/zdroje`.
 - Drive times: OSRM (BSD-2) on OSM data.
 - Wikidata (ranking only): CC0.
 
