@@ -528,8 +528,10 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
 
   // Cards come in pages; a new filter or another part of the map starts again from the first page.
   const filterKey = [goalFilter.join(), diffFilter.join(), timeFilter.join(), farFilter, withKids, easier, date, travel, query].join("|");
-  const [paging, setPaging] = useState({ key: filterKey, n: PAGE });
+  // `from`: where the last "Ukázať ďalšie" started, so the cards it added slide in (and only those).
+  const [paging, setPaging] = useState<{ key: string; n: number; from?: number }>({ key: filterKey, n: PAGE });
   const limit = paging.key === filterKey ? paging.n : PAGE;
+  const addedFrom = paging.key === filterKey ? paging.from : undefined;
   const visible = useMemo(() => {
     const page = scoped.slice(0, limit);
     // A trip picked on the map is always in the list, first if it would not be shown.
@@ -719,10 +721,13 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
         : null;
 
   const pickedItem = isDesktop && selected ? bySlug.get(selected) : undefined;
+  // The list under it: the picked card is shown on its own above.
+  const listed = pickedItem ? visible.filter((i) => i !== pickedItem) : visible;
 
   const cardList = (items: TripCardItem[]) =>
-    items.map((item) => (
+    items.map((item, i) => (
       <TripCard
+        enter={addedFrom !== undefined && i >= addedFrom ? i - addedFrom : undefined}
         key={item.detail.trail.id}
         item={item}
         dayWord={dayWord}
@@ -1145,13 +1150,13 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
         </div>
       )}
 
-      {cardList(pickedItem ? visible.filter((i) => i !== pickedItem) : visible)}
+      {cardList(listed)}
 
       {scoped.length > limit && (
         <button
           type="button"
-          onClick={() => setPaging({ key: filterKey, n: limit + PAGE })}
-          className="w-fit self-center rounded-full border border-[var(--border)] bg-[var(--card-bg)] px-4 py-2 text-sm font-semibold text-[var(--accent)]"
+          onClick={() => setPaging({ key: filterKey, n: limit + PAGE, from: listed.length })}
+          className="w-fit self-center rounded-full border border-[var(--border)] bg-[var(--card-bg)] px-4 py-2 text-sm font-semibold text-[var(--accent)] transition-transform duration-150 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
         >
           {t("Ukázať ďalšie")}
         </button>

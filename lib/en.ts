@@ -83,6 +83,7 @@ export const EN: Record<string, string> = {
   "na vrchole až {t} °C": "down to {t} °C at the top",
   "Prepnúť": "Switch",
   "Predpoveď na tento deň ešte nie je.": "There is no forecast for this day yet.",
+  "Predpoveď na tento deň sa neuložila.": "The forecast for this day was not saved.",
   "Predpoveď počasia sa načíta, keď budete mať signál.": "The forecast loads once you have signal.",
   "Uložená predpoveď z {when}.": "Saved forecast from {when}.",
   "Suchšie pri odchode o": "Drier if you leave at",

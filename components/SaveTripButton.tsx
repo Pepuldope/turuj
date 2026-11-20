@@ -24,7 +24,7 @@ import { HeardFrom } from "@/components/HeardFrom";
 import { EveReminder } from "@/components/EveReminder";
 import type { ShareInfo } from "@/components/ShareButton";
 import type { TripWeather } from "@/components/WeatherBlock";
-import { forecastForDay } from "@/lib/weather";
+import { forecastForDay, mergeForecast } from "@/lib/weather";
 
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { langPath } from "@/lib/lang";
@@ -138,6 +138,8 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
     setStatus("saving");
     track("trip_saved", { trail: slug, took: sinceArrival() });
     if (trips.length === 0) setAskHeard(true);
+    // The kept forecast counts only for the same day and the same place.
+    const keep = saved?.date === date && saved.weather?.url === weather?.urls?.below ? saved.weather : null;
     save({
       slug,
       name,
@@ -160,9 +162,10 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
         ? {
             url: weather.urls.below,
             topUrl: weather.urls.above,
-            below: weather.below ? forecastForDay(weather.below, date) : null,
-            above: weather.below && weather.above ? forecastForDay(weather.above, date) : null,
-            at: weather.below ? new Date().toISOString() : null,
+            // Saved again for the same day: the hours already gone stay from the kept copy (lib/weather.ts mergeForecast).
+            below: weather.below ? mergeForecast(keep?.below, forecastForDay(weather.below, date)) : (keep?.below ?? null),
+            above: weather.below && weather.above ? mergeForecast(keep?.above, forecastForDay(weather.above, date)) : (keep?.above ?? null),
+            at: weather.below ? new Date().toISOString() : (keep?.at ?? null),
           }
         : saved?.weather,
       savedAt: new Date().toISOString(),

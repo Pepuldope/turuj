@@ -4,7 +4,7 @@ import { setTripStops } from "@/lib/tripStops";
 import { useEffect, useRef, useState } from "react";
 import type { DayPlan } from "@/lib/dayPlan";
 import { useCachedJson } from "@/lib/useDriveRoute";
-import { FORECAST_DAYS, forecastForDay, tripWeatherReport, weatherNotes } from "@/lib/weather";
+import { FORECAST_DAYS, forecastForDay, mergeForecast, tripWeatherReport, weatherNotes } from "@/lib/weather";
 import type { WeatherForecast } from "@/lib/weather";
 import { weatherUrl, wetText } from "@/components/WeatherBlock";
 import type { Lang } from "@/lib/lang";
@@ -212,17 +212,21 @@ function copyTime(iso: string, lang: Lang): string {
 /**
  * The trip day's forecast for a saved trip: a fresh one when there is signal (and the copy is updated with it),
  * otherwise the copy saved with the trip. Old trips without a copy ask at the sun's place (the trail start or parking).
+ * A fresh forecast only adds to the copy: MET's starts at the current hour, so on the trip day the hours already gone
+ * stay as they were kept. Once the trip is over the copy is frozen and shown as it is (Peter, 20 Nov: past trips
+ * showed no weather at all).
  */
 function useSavedWeather(trip: SavedTrip, plan: DayPlan | null, past: boolean) {
   const { patch } = useSavedTrips();
   const [now] = useState(() => Date.now());
   const saved = trip.weather;
-  const inRange = !!plan && !past && plan.hikeStart.getTime() - now < FORECAST_DAYS * DAY;
+  const over = past || (!!plan && plan.segments[plan.segments.length - 1].end.getTime() < now);
+  const inRange = !!plan && !over && plan.hikeStart.getTime() - now < FORECAST_DAYS * DAY;
   const url = saved?.url ?? weatherUrl(trip.sun);
   const live = useCachedJson<WeatherForecast>(inRange ? url : null);
   const liveTop = useCachedJson<WeatherForecast>(inRange ? (saved?.topUrl ?? null) : null);
-  const below = live.data ? forecastForDay(live.data, trip.date) : null;
-  const above = liveTop.data ? forecastForDay(liveTop.data, trip.date) : null;
+  const below = live.data ? mergeForecast(saved?.below, forecastForDay(live.data, trip.date)) : null;
+  const above = liveTop.data ? mergeForecast(saved?.above, forecastForDay(liveTop.data, trip.date)) : null;
   const key = `${live.data?.updated}|${liveTop.data?.updated}`;
   useEffect(() => {
     if (!below) return;
@@ -232,7 +236,11 @@ function useSavedWeather(trip: SavedTrip, plan: DayPlan | null, past: boolean) {
     });
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
   const none = { below: null, above: null, copyAt: null };
-  if (!inRange) return { ...none, missing: plan && !past ? ("far" as const) : null };
+  if (over) {
+    if (saved?.below?.steps.length) return { below: saved.below, above: saved.above, copyAt: saved.at, missing: null };
+    return { ...none, missing: plan ? ("lost" as const) : null };
+  }
+  if (!inRange) return { ...none, missing: plan ? ("far" as const) : null };
   if (below) return { below, above: above ?? saved?.above ?? null, copyAt: null, missing: null };
   const loading = live.status === "loading" || live.status === "idle";
   if (saved?.below) return { below: saved.below, above: saved.above, copyAt: loading ? null : saved.at, missing: null };
@@ -240,12 +248,14 @@ function useSavedWeather(trip: SavedTrip, plan: DayPlan | null, past: boolean) {
 }
 
 /** The weather lines under the dial: the day in words and temperatures, rain, storm/wind/frost notes, and how old a saved copy is. */
-function SavedWeatherLines({ plan, below, above, copyAt, missing }: { plan: DayPlan; below: WeatherForecast | null; above: WeatherForecast | null; copyAt: string | null; missing: "far" | "signal" | null }) {
+function SavedWeatherLines({ plan, below, above, copyAt, missing }: { plan: DayPlan; below: WeatherForecast | null; above: WeatherForecast | null; copyAt: string | null; missing: "far" | "signal" | "lost" | null }) {
   const t = useT();
   const lang = useLang();
   if (!below) {
     if (!missing) return null;
-    return <p className="text-[13px] text-[var(--muted)]">{missing === "far" ? t("Predpoveď na tento deň ešte nie je.") : t("Predpoveď počasia sa načíta, keď budete mať signál.")}</p>;
+    const text =
+      missing === "far" ? t("Predpoveď na tento deň ešte nie je.") : missing === "lost" ? t("Predpoveď na tento deň sa neuložila.") : t("Predpoveď počasia sa načíta, keď budete mať signál.");
+    return <p className="text-[13px] text-[var(--muted)]">{text}</p>;
   }
   const from = plan.segments[0].start;
   const to = plan.segments[plan.segments.length - 1].end;
@@ -342,7 +352,7 @@ function TripCard({
                     {t(VERDICT_SHORT[plan.verdict])}
                   </span>
                 </p>
-                {!past && <SavedWeatherLines plan={plan} below={weather.below} above={weather.above} copyAt={weather.copyAt} missing={weather.missing} />}
+                <SavedWeatherLines plan={plan} below={weather.below} above={weather.above} copyAt={weather.copyAt} missing={weather.missing} />
               </>
             )}
             <div className="flex flex-wrap gap-3 pt-1">

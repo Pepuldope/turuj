@@ -322,6 +322,18 @@ export function tripWeatherReport(
   };
 }
 
+/**
+ * A newer forecast laid over a kept copy: MET's forecast starts at the current hour, so on the trip day a fresh one has
+ * lost the hours already gone. Those are kept from the copy (every step that starts before the fresh one's first), the
+ * rest is the fresh forecast. Without a copy, the fresh one as it is.
+ */
+export function mergeForecast(kept: WeatherForecast | null | undefined, fresh: WeatherForecast): WeatherForecast {
+  if (!kept?.steps.length || !fresh.steps.length) return fresh.steps.length ? fresh : (kept ?? fresh);
+  const first = new Date(fresh.steps[0].t).getTime();
+  const gone = kept.steps.filter((s) => new Date(s.t).getTime() < first);
+  return gone.length ? { updated: fresh.updated, steps: [...gone, ...fresh.steps] } : fresh;
+}
+
 /** The same Slovak clock time `n` calendar days later (a plain +24 h would slip an hour across a clock change). */
 export function shiftDays(d: Date, n: number): Date {
   const w = wallClock(d);
