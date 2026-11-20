@@ -19,6 +19,10 @@
 /og-image-en.png
   Cache-Control: public, max-age=604800
 
+# Place photos (C196): a file name is tied to one Commons photo, so a week.
+/photos/c/*
+  Cache-Control: public, max-age=604800
+
 # GPX files change with the weekly trip refresh: a day.
 /gpx/*
   Cache-Control: public, max-age=86400
