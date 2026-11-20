@@ -156,6 +156,8 @@ export interface PlacePhoto {
   page: string;
   /** Where it was found; "mapillary" = a street-level photo kept in public/photos/m/. */
   via?: string;
+  /** Set by scripts/fetch-photos.mjs in CI when `url` is a self-hosted copy: the Commons thumbnail it was made from. */
+  src?: string;
 }
 
 /** Width of the share image (og:image), one of Wikimedia's standard thumbnail steps (F15). */
@@ -166,10 +168,12 @@ const SHARE_W = 1280;
  * 500 px, too small for share previews). The original's width is not in photos.json (only the 500 px
  * thumb's), so no cap is possible: Commons serves JPEG/PNG requests wider than the file by scaling up
  * (checked: a 402 px original answers 200 at 1280px), and a 1280 px card is what share previews want.
- * Mapillary, self-hosted, and un-thumbnailed Commons URLs are returned as they are. The page's own
- * <img> keeps the 500 px file.
+ * A self-hosted copy (/photos/c/, 500 px only) uses its Commons original (`src`) for the 1280 px step.
+ * Mapillary and un-thumbnailed Commons URLs are returned as they are. The page's own <img> keeps the 500 px file.
  */
 export function shareImage(p: PlacePhoto): { url: string; width: number; height: number } {
+  // Only the 500 px copy is self-hosted (file limit, C196): the share size comes from the Commons original.
+  if (p.src && p.url.startsWith("/photos/c/")) p = { ...p, url: p.src };
   const m = /^(https:\/\/(?:thumb|upload)\.wikimedia\.org\/wikipedia\/commons\/thumb\/.+\/)\d+px-([^/]+)$/.exec(p.url);
   if (p.via === "mapillary" || !m || p.w <= 0 || p.w >= SHARE_W) return { url: p.url, width: p.w, height: p.h };
   return { url: `${m[1]}${SHARE_W}px-${m[2]}`, width: SHARE_W, height: Math.round((p.h * SHARE_W) / p.w) };

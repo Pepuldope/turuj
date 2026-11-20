@@ -22,7 +22,7 @@ for (const t of trips) {
   const key = t.destination?.osm ?? `trip/${t.slug}`;
   const p = photos[key];
   if (!p) continue;
-  thumbs[t.slug] = p.url.replace("/500px-", "/250px-");
+  thumbs[t.slug] = (p.src ?? p.url).replace("/500px-", "/250px-") // 250 px stays on Commons (C196: file limit);
   keys[t.slug] = key;
 }
 writeFileSync("public/data/photo-thumbs.json", JSON.stringify(thumbs));

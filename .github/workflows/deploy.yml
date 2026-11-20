@@ -66,6 +66,16 @@ jobs:
           cache: npm
       - if: env.CF_READY == 'true'
         run: npm ci
+      # Self-host the place photos so image search credits turuj.sk, not Wikimedia (C196). Commons URLs
+      # stay as the fallback for any photo that fails to download; the cache saves re-downloading.
+      - if: env.CF_READY == 'true'
+        uses: actions/cache@v6
+        with:
+          path: public/photos/c
+          key: commons-photos-${{ hashFiles('public/data/photos.json') }}
+          restore-keys: commons-photos-
+      - if: env.CF_READY == 'true'
+        run: node scripts/fetch-photos.mjs
       # Same commands as Workers Builds. WORKERS_CI_COMMIT_SHA gives the build its
       # deployment id (next.config.ts), so open tabs reload after a deploy.
       - if: env.CF_READY == 'true'

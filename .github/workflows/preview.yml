@@ -34,6 +34,16 @@ jobs:
           cache: npm
       - if: env.CF_READY == 'true'
         run: npm ci
+      # Self-host the place photos so image search credits turuj.sk, not Wikimedia (C196). Commons URLs
+      # stay as the fallback for any photo that fails to download; the cache saves re-downloading.
+      - if: env.CF_READY == 'true'
+        uses: actions/cache@v6
+        with:
+          path: public/photos/c
+          key: commons-photos-${{ hashFiles('public/data/photos.json') }}
+          restore-keys: commons-photos-
+      - if: env.CF_READY == 'true'
+        run: node scripts/fetch-photos.mjs
       - if: env.CF_READY == 'true'
         run: npx opennextjs-cloudflare build && node scripts/fast-pages.mjs
         env:
