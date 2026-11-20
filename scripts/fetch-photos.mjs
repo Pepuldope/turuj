@@ -1,15 +1,17 @@
-// Self-hosts the place photos (CI deploy only, before the build): downloads the 250/500/1280 px Commons
-// thumbnails of every photo in public/data/photos.json into public/photos/c/ and points `url` at the
+// Self-hosts the place photos (CI deploy only, before the build): downloads the 500 px Commons
+// thumbnail of every photo in public/data/photos.json into public/photos/c/ and points `url` at the
 // 500 px copy (`src` keeps the Commons URL), so image search credits turuj.sk, not Wikimedia. An entry
-// switches only when all three files exist; otherwise it keeps its Commons URL. Never fails a deploy.
+// switches only when its file exists; otherwise it keeps its Commons URL. Never fails a deploy.
 // Usage: node scripts/fetch-photos.mjs [--file public/data/photos.json] [--dir public/photos/c]
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, renameSync, statSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const COMMONS_THUMB = /^(https:\/\/(?:thumb|upload)\.wikimedia\.org\/wikipedia\/commons\/thumb\/.+\/)\d+px-([^/]+)$/;
-const STEPS = [250, 500, 1280];
+// Only the 500 px step: the 250/1280 px ones come from Commons via `src` (Workers Free allows 20,000
+// static files per deploy and the site alone is ~17,600; three sizes came to 20,113 on 20 Nov).
+const STEPS = [500];
 const UA = "TurujPhotoFetch/1.0 (https://turuj.sk; info@turuj.sk)";
 const CONCURRENCY = 4;
 const RETRIES = 4;
@@ -85,6 +87,12 @@ export async function localise({ photos, dir, fetchImpl = fetch, now = Date.now,
     }
   };
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+  // Drop cached files no current photo uses (a photo replaced, a size no longer kept): every file ships
+  // as a static asset, and Workers Free stops a deploy past 20,000 of them.
+  const wanted = new Set(entries.flatMap(([, p]) => STEPS.map((w) => localName(p.src ?? p.url, w))));
+  let removed = 0;
+  for (const name of readdirSync(dir)) if (!wanted.has(name)) { rmSync(join(dir, name), { force: true }); removed++; }
+  if (removed) console.log(`photos: ${removed} unused cached files removed`);
   const kept = entries.length - local;
   console.log(`photos: ${local} local, ${kept} kept on Commons, ${downloaded} downloaded now`);
   return { photos, local, kept, downloaded };

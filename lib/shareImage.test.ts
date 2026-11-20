@@ -9,8 +9,9 @@ describe("shareImage", () => {
     const s = shareImage(photo("https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/F.jpg/500px-F.jpg"));
     expect(s).toEqual({ url: "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/F.jpg/1280px-F.jpg", width: 1280, height: 960 });
   });
-  it("re-addresses a self-hosted copy to its 1280 px file", () => {
-    expect(shareImage(photo("/photos/c/0123456789-F.jpg-500px.jpg"))).toEqual({ url: "/photos/c/0123456789-F.jpg-1280px.jpg", width: 1280, height: 960 });
+  it("takes a self-hosted copy's share size from its Commons original", () => {
+    const src = "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/F.jpg/500px-F.jpg";
+    expect(shareImage(photo("/photos/c/0123456789-F.jpg-500px.jpg", { src }))).toEqual({ url: "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/F.jpg/1280px-F.jpg", width: 1280, height: 960 });
   });
   it("leaves Mapillary photos alone", () => {
     expect(shareImage(photo("/photos/m/a.jpg", { via: "mapillary" })).url).toBe("/photos/m/a.jpg");
