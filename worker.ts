@@ -35,6 +35,7 @@ import { cleanup } from "./lib/cleanup";
 import type { D1Like } from "./lib/d1";
 import { edgeHit, edgeKey } from "./lib/edgeCache";
 import { pick } from "./lib/pageEntry";
+import { tripJson } from "./lib/tripJson";
 import { pulledResponse } from "./lib/pulledTrips";
 import pulledTrips from "./data/pulled-trips.json";
 import { sendDue } from "./lib/pushPlan";
@@ -151,6 +152,17 @@ const worker = {
     // though its page is built ahead (lib/pulledTrips.ts).
     const pulled = pulledResponse(req, pulledTrips);
     if (pulled) return pulled;
+    // A trip's own file comes from D1 (lib/tripJson.ts), not from a static file: the deploy is
+    // under Cloudflare's 20,000-file limit only without them. Nothing in D1: the assets answer (or 404).
+    if ((req.method === "GET" || req.method === "HEAD") && new URL(req.url).pathname.startsWith("/data/trips/")) {
+      try {
+        const res = await tripJson(req, env.VISITS_DB, ctx);
+        if (res) return res;
+      } catch (err) {
+        console.warn("[trip-json] fell back to the assets:", err);
+      }
+      return env.ASSETS.fetch(req);
+    }
     try {
       const page = (await fastPage(req, env)) ?? (await keptAnswer(req));
       if (page) return page;

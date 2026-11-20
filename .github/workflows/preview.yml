@@ -48,6 +48,17 @@ jobs:
         run: npx opennextjs-cloudflare build && node scripts/fast-pages.mjs
         env:
           WORKERS_CI_COMMIT_SHA: ${{ github.sha }}
+      # Trip files are served from D1 (lib/tripJson.ts), not as static assets: Cloudflare's free plan allows
+      # 20,000 files per deploy (C198). Dropped only when D1 holds them; if that can't be confirmed the
+      # files stay (the budget check below then fails the deploy if there are too many). To undo: delete this step.
+      - if: env.CF_READY == 'true'
+        # Reads D1 with the Trip database workflow's token (D1 access); the deploy token may not have it.
+        run: node scripts/prune-trip-assets.mjs || echo "::warning::Trip files NOT pruned from the assets (D1 not confirmed to hold them); see the log above."
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - if: env.CF_READY == 'true'
+        run: node scripts/asset-budget.mjs
       # Alias from the branch name: "claude/project-thread-7gs4ec" -> "project-thread-7gs4ec".
       - if: env.CF_READY == 'true'
         id: alias

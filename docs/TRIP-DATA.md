@@ -13,7 +13,7 @@ binding on Cloudflare, the disk elsewhere). Small bundled data: `lib/trips.ts`.
 | `public/data/trips/index.json` | `TripIndex`: the main route of every place as a `TripSummary` (home, sitemap, API, database load) | pipeline |
 | `data/trip-variants.json` | The other routes of each place, same shape (database load only; the site never reads it, so pages stay light) | pipeline |
 | `public/data/trips/list.json` | `TripList`: every main route (as in the index) without description and OSM ids; the home page fetches it | pipeline |
-| `public/data/trips/<slug>.json` | `TripDetail`: summary + path, marking colours, other parking/stops, POIs | pipeline |
+| `public/data/trips/<slug>.json` | `TripDetail`: summary + path, marking colours, other parking/stops, POIs. On the live site not a static file: the Worker serves the same address from the `trip_json` table in D1 (docs/DEPLOY-CLOUDFLARE.md) | pipeline |
 | `public/data/drive/<town>.json` | `TownDriveFile`: car minutes and km from one of ~140 towns to every main route's parking | pipeline (OSRM) |
 | `public/data/map/meta.json`, `overview.json`, `c/<ix>_<iy>.json` | Trip lines for the home map: a simplified overview for zoomed-out views and detailed lines per grid cell, so the map loads only the part in view (`pipeline/maplines.py`) | pipeline |
 | `data/towns.json` | `Towns`: the towns of the drive table (bundled, small) | pipeline |
@@ -92,7 +92,7 @@ only checks the SQL. It skips a load the database already holds (fingerprint in
 database holds (each trip row carries a `content_hash` of itself and its parking, stops and POIs; ids
 are hashes of the slug, so they stay the same week to week) and writes only the trips and shared rows
 that changed. A full load (the first one, or after a schema change) writes about 65k rows
-(2026-10-16), so at most one full load fits in a day.
+(2026-10-16), so at most one full load fits in a day. `trip_json` (each trip's file, exact text, plus a hash) is outside that schema: it is never dropped and only changed rows are written; a body over one statement's limit is written in pieces.
 
 ## Licences and credit
 

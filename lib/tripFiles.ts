@@ -1,4 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDb } from "@/lib/d1";
+import { slugOfPath, tripBody } from "@/lib/tripJson";
 import { driveDestination, routeWalk, trailDetailFrom, walkFromCar } from "@/lib/data";
 import { summaryFromList } from "@/lib/trips";
 import { EN_TRIPS_AHEAD } from "@/lib/site";
@@ -10,6 +12,7 @@ import type { RouteWalk } from "@/lib/walkFacts";
 // The trip files the weekly pipeline writes to public/data (docs/TRIP-DATA.md),
 // read on the server. They are static assets, not part of the code bundle, so
 // the number of trips doesn't count against Cloudflare's Worker size limit.
+// (A trip's own file is pruned from the deploy's assets and read from D1 instead: lib/tripJson.ts.)
 // On Cloudflare they come from the ASSETS binding; in local dev, tests and the
 // build, from the disk. Server only.
 
@@ -30,6 +33,11 @@ async function readPublicJson<T>(path: string): Promise<T | null> {
     if (assets) {
       const res = await assets.fetch(new Request(`https://assets.local/${path}`));
       if (res.ok) return (await res.json()) as T;
+      // A trip's own file is not a static asset on the live site (C198): the Worker answers it from D1,
+      // but this fetch goes straight to the assets, so read the row itself.
+      const slug = slugOfPath(`/${path}`);
+      const body = slug ? await tripBody(await getDb(), slug) : null;
+      if (body) return JSON.parse(body) as T;
     }
   } catch {
     // Not on Cloudflare: read the disk below.
