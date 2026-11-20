@@ -57,13 +57,11 @@ export function ClosureBanner({ closures, region = null, nearbyHref = "/" }: Pro
   }
 
   // The trip date only exists in the browser (it is filled in after hydration,
-  // in local time). Don't guess from the server's clock: wait for it.
+  // in local time). Don't guess from the server's clock: wait for it. The box stays empty (it only
+  // holds the space): search and AI crawlers don't run JavaScript and would read a "checking…" line
+  // as the page's closure status, right under the real closure rule above.
   if (!date) {
-    return (
-      <div data-nosnippet className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4">
-        <p className="font-semibold">{t("Overujeme uzávery…")}</p>
-      </div>
-    );
+    return <div aria-busy="true" className="min-h-14 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4" />;
   }
 
   // Check the day the user plans to go, not today: a closure starting next

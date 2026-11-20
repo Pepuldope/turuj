@@ -1,7 +1,12 @@
 // IndexNow (G2): tell Bing, Yandex and the other IndexNow engines which pages exist, right after a
-// deploy. Reads the live sitemaps of https://turuj.sk and POSTs every URL to api.indexnow.org.
-// Usage: node scripts/indexnow.mjs [--dry]   (--dry lists the counts and sends nothing)
+// deploy. Reads the live sitemaps of https://turuj.sk and POSTs URLs to api.indexnow.org.
+// Usage: node scripts/indexnow.mjs [--dry] [--state <file>]   (--dry lists the counts and sends nothing)
 // The key file is public/<key>.txt and must be live at https://turuj.sk/<key>.txt before this runs.
+//
+// IndexNow asks for new or changed pages only, not the same list again on every deploy (we deploy
+// up to 5 times a day). With --state, the script remembers what it sent: on most deploys it sends
+// only URLs that weren't in the last list, and the full list at most once a week (the Monday data
+// run changes nearly every trip page). Without --state (or with no saved state) it sends everything.
 
 const HOST = "turuj.sk";
 const SITE = `https://${HOST}`;
@@ -9,6 +14,9 @@ const KEY = "4dea437f29603b230815bcbcf01020e3";
 const ENDPOINT = "https://api.indexnow.org/indexnow";
 const BATCH = 10000;
 const dry = process.argv.includes("--dry");
+const stateArg = process.argv.indexOf("--state");
+const STATE = stateArg > -1 ? process.argv[stateArg + 1] : null;
+const WEEK_MS = 7 * 24 * 3600 * 1000;
 
 async function get(url) {
   const res = await fetch(url, { headers: { "User-Agent": "turuj-indexnow" } });
@@ -26,11 +34,25 @@ for (const sm of sitemaps) {
   for (const u of locs(await get(sm))) if (new URL(u).host === HOST) urls.add(u);
 }
 const all = [...urls];
-console.log(`${sitemaps.length} sitemap(s), ${all.length} URLs`);
+
+const { readFileSync, writeFileSync } = await import("node:fs");
+let prev = null;
+if (STATE) {
+  try {
+    prev = JSON.parse(readFileSync(STATE, "utf8"));
+  } catch {
+    prev = null; // first run or no cache: send everything
+  }
+}
+const now = Date.now();
+const full = !prev || !Array.isArray(prev.urls) || !(now - prev.fullAt < WEEK_MS);
+const seen = new Set(full ? [] : prev.urls);
+const send = all.filter((u) => !seen.has(u));
+console.log(`${sitemaps.length} sitemap(s), ${all.length} URLs; sending ${send.length} (${full ? "full weekly list" : "new since last run"})`);
 if (dry) process.exit(0);
 
-for (let i = 0; i < all.length; i += BATCH) {
-  const urlList = all.slice(i, i + BATCH);
+for (let i = 0; i < send.length; i += BATCH) {
+  const urlList = send.slice(i, i + BATCH);
   const res = await fetch(ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json; charset=utf-8" },
@@ -43,3 +65,5 @@ for (let i = 0; i < all.length; i += BATCH) {
     process.exit(1);
   }
 }
+
+if (STATE) writeFileSync(STATE, JSON.stringify({ fullAt: full ? now : prev.fullAt, urls: all }));
