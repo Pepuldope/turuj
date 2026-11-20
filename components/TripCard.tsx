@@ -16,7 +16,7 @@ import type { DestinationKind } from "@/lib/tripSchema";
 import { LangLink, useLang } from "@/lib/i18n";
 import { regionIn, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
-import type { ImgHTMLAttributes } from "react";
+import type { CSSProperties, ImgHTMLAttributes } from "react";
 import { photoFocus } from "@/lib/photoFocus";
 
 /**
@@ -84,6 +84,8 @@ interface Props {
   onClose?: () => void;
   onActive: (slug: string) => void;
   registerItem: (slug: string, el: HTMLElement | null) => void;
+  /** Added by "Ukázať ďalšie": the card slides in, this many places after the first new one (a short stagger). */
+  enter?: number;
 }
 
 /** Leaving within this long counts as "tesne" (amber). */
@@ -162,7 +164,7 @@ function useThumb(slug: string): string | null {
 }
 
 /** One trip: what it is, how long to get there and walk, and when to leave. */
-export function TripCard({ item, dayWord, transit, active, onClose, onActive, registerItem }: Props) {
+export function TripCard({ item, dayWord, transit, active, onClose, onActive, registerItem, enter }: Props) {
   const { detail, hikeMin, carMin, driveMin, driveApprox, driveLoading, distanceM, nearStop } = item;
   const { withKids } = useTripSettings();
   const lang = useLang();
@@ -197,7 +199,8 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
       href={`/trasa/${trail.slug}`}
       onMouseEnter={() => onActive(trail.slug)}
       onFocus={() => onActive(trail.slug)}
-      className={`relative grid ${big ? "grid-cols-[64px_minmax(0,1fr)]" : "grid-cols-[84px_minmax(0,1fr)]"} gap-3 overflow-hidden rounded-[var(--radius-card)] border bg-[var(--card-bg)] p-3 transition-colors hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
+      style={enter !== undefined ? ({ "--in": Math.min(enter, 8) } as CSSProperties) : undefined}
+      className={`${enter !== undefined ? "card-in " : ""}relative grid ${big ? "grid-cols-[64px_minmax(0,1fr)]" : "grid-cols-[84px_minmax(0,1fr)]"} gap-3 overflow-hidden rounded-[var(--radius-card)] border bg-[var(--card-bg)] p-3 transition-colors hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
         big ? "border-2 border-[var(--accent)] shadow-[0_10px_28px_rgba(20,35,59,0.22)]" : active ? "trip-card-active border-[var(--accent)]" : "border-[var(--border)]"
       }`}
     >
