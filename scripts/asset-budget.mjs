@@ -1,8 +1,12 @@
 // Counts the static files of the deploy against Cloudflare Workers Free's limit of 20,000 per deploy
-// (C198: the deploy of 2026-11-20 had 18,478). Run after the build and the prune step. Prints the count,
+// (C198: the deploy of 2026-11-20 read 18,684). Run after the build and the prune step. Prints the count,
 // adds it to the run summary, warns from 19,000 and fails from 19,900 naming the biggest folders.
+//
+// Counts .open-next/assets AND the page cache in .open-next/cache: `opennextjs-cloudflare deploy` copies the
+// pre-built pages into the assets ("Populating Workers static assets", /cdn-cgi/_next_cache/...) only at deploy
+// time, after this step. Counting the assets folder alone missed ~8,500 files (20 Nov preview: 10,169 vs 18,684).
 
-import { appendFileSync, readdirSync } from "node:fs";
+import { appendFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -28,6 +32,22 @@ export function countFiles(dir) {
   return { total, folders };
 }
 
+/** Assets plus the page cache the deploy will add (its __fetch folder is not copied). */
+export function countDeploy(assetsDir, cacheDir) {
+  const a = countFiles(assetsDir);
+  const folders = new Map(a.folders);
+  let total = a.total;
+  if (existsSync(cacheDir)) {
+    for (const e of readdirSync(cacheDir, { withFileTypes: true })) {
+      if (!e.isDirectory() || e.name === "__fetch") continue;
+      const c = countFiles(join(cacheDir, e.name));
+      total += c.total;
+      folders.set("pre-built pages (page cache)", (folders.get("pre-built pages (page cache)") ?? 0) + c.total);
+    }
+  }
+  return { total, folders };
+}
+
 /** The verdict for a count: level "ok" | "warn" | "fail", the line to print and the biggest folders. */
 export function judge(total, folders) {
   const biggest = [...folders].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([f, n]) => `${f} (${n})`);
@@ -38,8 +58,7 @@ export function judge(total, folders) {
 }
 
 function main(argv) {
-  const dir = argv[0] ?? ".open-next/assets";
-  const { total, folders } = countFiles(dir);
+  const { total, folders } = countDeploy(argv[0] ?? ".open-next/assets", argv[1] ?? ".open-next/cache");
   const verdict = judge(total, folders);
   console.log(verdict.line);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${verdict.line}\n`);
