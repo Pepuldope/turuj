@@ -599,7 +599,6 @@ export const EN: Record<string, string> = {
   "Platí každý rok od {period}": "Applies every year from {period}",
   "Platí od {period}": "Applies from {period}",
   "Správca: {who}.": "Managed by: {who}.",
-  "Overujeme uzávery…": "Checking closures…",
   "Chodník je v deň výletu ({date}) uzavretý": "The trail is closed on {date}, your trip day",
   "V deň výletu ({date}) nepoznáme uzáveru tohto chodníka": "No known closure of this trail on {date}",
   "Stav chodníka neoverený": "Trail status not checked",
