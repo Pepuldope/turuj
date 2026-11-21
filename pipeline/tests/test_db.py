@@ -159,3 +159,58 @@ def test_values_that_sqlite_cannot_read_back_stop_the_load():
             db.q(bad)
     assert db.same((None, 1.5), (None, 1.5000000001))
     assert not db.same((None,), (1.5,)) and not db.same((1.5,), (None,))
+
+
+def test_trip_json_holds_each_file_byte_for_byte_and_leaves_index_and_list_out():
+    rows, _ = db.build_rows()
+    slugs = {r[0] for r in rows["trip_json"]}
+    assert slugs and "index" not in slugs and "list" not in slugs
+    con = sqlite3.connect(":memory:")
+    con.executescript(db.full_sql(rows, db.build_rows()[1]))
+    tdir = db.ROOT / "public" / "data" / "trips"
+    for slug, body in con.execute("SELECT slug, body FROM trip_json ORDER BY slug LIMIT 25").fetchall():
+        assert body == (tdir / f"{slug}.json").read_bytes().decode("utf-8")
+    assert con.execute("SELECT count(*) FROM trip_json").fetchone()[0] == len(slugs)
+    assert con.execute("SELECT count(*) FROM trip_json WHERE hash = ''").fetchone()[0] == 0
+
+
+def test_a_body_over_the_statement_limit_goes_in_as_pieces_and_reads_back_whole():
+    body = "{" + "'š" * 40_000 + "}\n"  # ~120 KB, with quotes and two-byte letters
+    rows = {"trip_json": [("big", body, "h1"), ("small", "{}", "h2")]}
+    sql, written = db.trip_json_sql(rows)
+    assert written == 2 and all(len(s.encode()) < db.MAX_STATEMENT_BYTES for s in sql)
+    con = sqlite3.connect(":memory:")
+    for s in sql:
+        con.execute(s)
+    assert con.execute("SELECT body, hash FROM trip_json WHERE slug = 'big'").fetchone() == (body, "h1")
+    assert con.execute("SELECT body FROM trip_json WHERE slug = 'small'").fetchone()[0] == "{}"
+
+
+def test_trip_json_writes_only_changed_rows_and_deletes_gone_slugs():
+    rows = {"trip_json": [("a", "{1}", "ha"), ("b", "{2}", "hb"), ("c", "{3}", "hc")]}
+    con = sqlite3.connect(":memory:")
+    for s in db.trip_json_sql(rows)[0]:
+        con.execute(s)
+    have = {slug: h for slug, h in con.execute("SELECT slug, hash FROM trip_json")}
+    new = {"trip_json": [("a", "{1}", "ha"), ("b", "{22}", "hb2"), ("d", "{4}", "hd")]}
+    sql, written = db.trip_json_sql(new, have)
+    assert written == 3  # b changed, d new, c gone
+    assert not any("'a'" in s for s in sql)
+    for s in sql:
+        con.execute(s)
+    assert dict(con.execute("SELECT slug, body FROM trip_json")) == {"a": "{1}", "b": "{22}", "d": "{4}"}
+
+
+def test_a_database_without_trip_json_gets_all_of_it_and_the_fingerprint_follows_the_files():
+    rows, version = db.build_rows()
+    con = sqlite3.connect(":memory:")
+    con.executescript(db.full_sql(rows, version))
+    con.execute("DROP TABLE trip_json")
+    con.executescript(db.TRIP_JSON_SCHEMA)
+    sql, written = db.incremental_sql(rows, version, _have(con))
+    assert written > len(rows["trip_json"])
+    con.executescript(sql)
+    assert con.execute("SELECT count(*) FROM trip_json").fetchone()[0] == len(rows["trip_json"])
+    before = db.fingerprint(db.data_body(rows))
+    rows["trip_json"][0] = rows["trip_json"][0][:2] + ("changed",)
+    assert db.fingerprint(db.data_body(rows)) != before

@@ -98,3 +98,12 @@ export function edgeJson<T>(origin: string, path: string, maxAgeS: number) {
     },
   };
 }
+
+/** Keep `res` in the edge cache under `key` (it needs its own Cache-Control max-age). Errors are ignored. */
+export async function edgePut(key: Request, res: Response): Promise<void> {
+  try {
+    await edgeCache()?.put(key, res);
+  } catch {
+    // Not kept this time.
+  }
+}

@@ -55,6 +55,22 @@ Local runtime secrets go in `.dev.vars` (git-ignored), e.g. `ORS_API_KEY=...`.
   has a trip file and a built page, and each place one GPX file holding all its routes, so ~15,500
   files for 6,463 routes at 2,131 places (2026-10-17; a GPX per route had reached 19,812). The check
   warns over 19,000. Past the limit, build only the main routes ahead in `app/trasa/[slug]/page.tsx`.
+- Trip files are not static files any more (C198, 2026-11-20; the deploy had 18,478 of the 20,000).
+  The address `/data/trips/<slug>.json` is answered by `worker.ts` from the `trip_json` table in D1
+  (`lib/tripJson.ts`), with the same bytes as the file; `index.json` and `list.json` in that folder
+  stay static files. One request reads one row by primary key, and the answer is kept in the edge
+  cache for an hour, so repeats read no rows (D1 free: 5M rows read a day). It never starts Next.js.
+  If D1 has no row or fails, the Worker falls back to the static asset (so local dev works).
+  The weekly "Trip database" workflow (`pipeline/db.py`) fills `trip_json`, writing only changed rows.
+  After the build, `scripts/prune-trip-assets.mjs` deletes the per-trip files from `.open-next/assets`,
+  but only when D1 says `trip_json` holds about as many rows as there are files (otherwise it warns and
+  the files stay). Then `scripts/asset-budget.mjs` prints `Static files: X of 20,000` in the run
+  summary, warns from 19,000 and fails the deploy from 19,900, naming the biggest folders. Server code
+  that reads a trip file through the assets (`lib/tripFiles.ts`) falls back to the `trip_json` row.
+  First time: run the "Trip database" workflow by hand once before merging, so the table is full.
+  To undo: remove the "prune-trip-assets" step from `deploy.yml` and `preview.yml` (the files then ship
+  as before; the Worker route keeps working either way). The Worker now counts these requests against
+  the 100k a day, which static files did not.
 - KV's free plan writes 1,000 entries a day. A deploy starts the cache fresh; past the limit, those
   pages are drawn per visit again until the next day.
 - `@opennextjs/cloudflare` requires Next.js ≥ 16.3.8, so `next` is pinned there.

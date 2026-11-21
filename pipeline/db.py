@@ -255,6 +255,17 @@ KEY = {t: ("town_id" if t == "town_drive" else "id") for t in SHARED} | {"place"
 
 SCHEMA_HASH = hashlib.sha256(SCHEMA.encode()).hexdigest()[:16]
 
+# Each trip's own file, byte for byte, for the Worker to answer /data/trips/<slug>.json from (worker.ts,
+# lib/tripJson.ts): Cloudflare's free plan allows 20,000 static files per deploy and these were 6,500 of them
+# (C198). Kept out of SCHEMA on purpose: it is never dropped, so a full load of the trip tables doesn't leave
+# the site without trip files, and adding it forces no reload. WITHOUT ROWID: a lookup reads one row, not
+# an index row and a table row. hash '' marks a body that is still being written in pieces.
+TRIP_JSON_SCHEMA = (
+    "CREATE TABLE IF NOT EXISTS trip_json (slug TEXT PRIMARY KEY, body TEXT NOT NULL, hash TEXT NOT NULL) WITHOUT ROWID;"
+)
+NOT_TRIP_FILES = {"index.json", "list.json"}  # same folder, but served as static files
+PIECE_BYTES = 30_000  # a body too big for one statement is written in pieces of about this size
+
 
 def norm(v):
     """A value as the database hands it back: booleans as 0/1, lists and objects as compact JSON."""
@@ -379,6 +390,7 @@ def build_rows(root=ROOT):
         print(f"trips name closure rules no longer in closure-rules.json, left out: {', '.join(sorted(orphans))}", file=sys.stderr)
     rows["closure_rule"] = [
         (r["id"], r["reason"], r["kind"], r["starts_on"], r["ends_on"], r["source_url"], r["verified_on"], r.get("applies_to")) for r in closures]
+    rows["trip_json"] = trip_json_rows(root)
     rows["town"] = [(town_id[t["id"]], t["id"], t["name"], t["location"]["lat"], t["location"]["lon"]) for t in town_list]
 
     # Main trips in id order: the order of every town_drive array (lib/tripDb.ts reads it the same way).
@@ -396,6 +408,51 @@ def build_rows(root=ROOT):
     return rows, version
 
 
+def trip_json_rows(root=ROOT):
+    """(slug, body, hash) for every per-trip file, body = the file's exact text."""
+    out = []
+    for f in sorted((root / "public" / "data" / "trips").glob("*.json")):
+        if f.name in NOT_TRIP_FILES:
+            continue
+        body = f.read_bytes().decode("utf-8")
+        out.append((f.stem, body, hashlib.sha256(body.encode()).hexdigest()[:16]))
+    return out
+
+
+def trip_json_sql(rows, have=None):
+    """The trip_json statements: rows whose hash differs from `have` ({slug: hash}, None = unknown, write
+    all) are upserted, slugs no longer in the files are deleted. Returns (statements, rows written).
+    A body over one statement's limit goes in as pieces, hash '' until the last one is in."""
+    cols = "slug,body,hash"
+    upsert = "\nON CONFLICT(slug) DO UPDATE SET body=excluded.body,hash=excluded.hash;"
+    sql = [TRIP_JSON_SCHEMA]
+    fresh = [r for r in rows["trip_json"] if have is None or have.get(r[0]) != r[2]]
+    small = [r for r in fresh if len(q(r[1]).encode()) <= PIECE_BYTES]
+    sql += [s[:-1] + upsert for s in inserts("trip_json", ["slug", "body", "hash"], small)]
+    for slug, body, h in fresh:
+        if len(q(body).encode()) <= PIECE_BYTES:
+            continue
+        pieces, cur, size = [], [], 2
+        for ch in body:
+            n = len(ch.encode()) + (ch == "'")  # a quote is doubled in the literal
+            if size + n > PIECE_BYTES:
+                pieces.append("".join(cur))
+                cur, size = [], 2
+            cur.append(ch)
+            size += n
+        pieces.append("".join(cur))
+        sql.append(f"INSERT INTO trip_json ({cols}) VALUES ({q(slug)},{q(pieces[0])},'')" + upsert)
+        sql += [f"UPDATE trip_json SET body=body||{q(p)} WHERE slug={q(slug)};" for p in pieces[1:]]
+        sql.append(f"UPDATE trip_json SET hash={q(h)} WHERE slug={q(slug)};")
+    written = len(fresh)
+    if have is not None:
+        wanted = {r[0] for r in rows["trip_json"]}
+        for part in chunks(set(have) - wanted):
+            sql.append(f"DELETE FROM trip_json WHERE slug IN ({','.join(q(i) for i in part)});")
+            written += len(part)
+    return sql, written
+
+
 def version_sql(version, fp):
     return inserts("data_version", ["id", "generated_at", "osm_data_at", "trips", "fingerprint", "schema_hash"],
                    [(1, version["generated_at"], version["osm_data_at"], version["trips"], fp, SCHEMA_HASH)])
@@ -403,15 +460,18 @@ def version_sql(version, fp):
 
 def data_body(rows):
     """Everything a load writes but the version row, as one text: its hash is the fingerprint."""
-    return SCHEMA + "\n".join(s for t in ORDER for s in inserts(t, COLUMNS[t], rows[t]))
+    body = SCHEMA + "\n".join(s for t in ORDER for s in inserts(t, COLUMNS[t], rows[t]))
+    return body + "\ntrip_json:" + ",".join(f"{slug}={h}" for slug, _, h in rows["trip_json"])
 
 
-def full_sql(rows, version):
-    """Drop and refill every trip table (the first load, and after any schema change)."""
+def full_sql(rows, version, have_trip_json=None):
+    """Drop and refill every trip table (the first load, and after any schema change). trip_json is not
+    dropped: only its changed rows are written (all of them when `have_trip_json` is unknown)."""
     sql = [f"DROP TABLE IF EXISTS {t};" for t in TABLES]
     sql.append(SCHEMA.strip())
     for t in ORDER:
         sql += inserts(t, COLUMNS[t], rows[t])
+    sql += trip_json_sql(rows, have_trip_json)[0]
     sql += version_sql(version, fingerprint(data_body(rows)))
     return "\n".join(sql) + "\n"
 
@@ -421,6 +481,7 @@ HAVE_QUERIES = [
     "SELECT schema_hash FROM data_version WHERE id = 1",
     "SELECT id, content_hash FROM trip",
     *[f"SELECT {','.join(COLUMNS[t])} FROM {t}" for t in SHARED],
+    "SELECT slug, hash FROM trip_json",  # last; the table is made first (--trip-json-sql)
 ]
 
 
@@ -430,6 +491,7 @@ def have_from_results(results):
     have = {"schema_hash": rs[0][0]["schema_hash"] if rs[0] else None, "trip": {r["id"]: r["content_hash"] for r in rs[1]}}
     for t, got in zip(SHARED, rs[2:]):
         have[t] = {r[KEY[t]]: tuple(r[c] for c in COLUMNS[t]) for r in got}
+    have["trip_json"] = {r["slug"]: r["hash"] for r in rs[2 + len(SHARED)]}
     return have
 
 
@@ -507,6 +569,10 @@ def incremental_sql(rows, version, have):
         old = set(have[t]) - {r[0] for r in rows[t]}
         delete(t, KEY[t], old)
         written += len(old)
+    # 5. The trips' own files for the Worker (lib/tripJson.ts), changed ones only.
+    extra, n = trip_json_sql(rows, have.get("trip_json"))
+    sql += extra
+    written += n
     sql += version_sql(version, fingerprint(data_body(rows)))
     return "\n".join(sql) + "\n", written + 1
 
@@ -550,20 +616,28 @@ def main(argv=None):
     ap.add_argument("--out", type=Path, help="write here instead of stdout")
     ap.add_argument("--parts", type=Path, help="also write the load in parts here (part-001.sql, ...), run in order")
     ap.add_argument("--fingerprint", action="store_true", help="print only the data fingerprint")
+    ap.add_argument("--trip-json-sql", action="store_true", help="print the statement that makes the trip_json table (run before --have-sql)")
+    ap.add_argument("--without-trip-json", action="store_true", help="leave the trips' own files (87 MB) out of the load, for tests of the other tables")
     ap.add_argument("--have-sql", action="store_true", help="print the queries whose JSON results --have reads")
     ap.add_argument("--have", type=Path, help="wrangler's JSON results of --have-sql: write only what changed")
     args = ap.parse_args(argv)
+    if args.trip_json_sql:
+        print(TRIP_JSON_SCHEMA)
+        return
     if args.have_sql:
         print("; ".join(HAVE_QUERIES))
         return
     rows, version = build_rows()
+    if args.without_trip_json:
+        rows["trip_json"] = []
     if args.fingerprint:
         print(fingerprint(data_body(rows)))
         return
-    sql = None
+    sql, have = None, None
     if args.have and args.have.exists():
         try:
-            sql, written = incremental_sql(rows, version, have_from_results(json.loads(args.have.read_text())))
+            have = have_from_results(json.loads(args.have.read_text()))
+            sql, written = incremental_sql(rows, version, have)
         except (ValueError, KeyError, IndexError, TypeError) as err:
             print(f"database state unreadable ({err!r}): full load", file=sys.stderr)
         full_rows = sum(len(r) for r in rows.values()) + 1
@@ -577,7 +651,7 @@ def main(argv=None):
         else:
             print(f"incremental load, about {written} rows written", file=sys.stderr)
     if sql is None:
-        sql = full_sql(rows, version)
+        sql = full_sql(rows, version, have["trip_json"] if have else None)
         print(f"full load, about {sum(len(r) for r in rows.values()) + 1} rows written", file=sys.stderr)
     if args.parts:
         args.parts.mkdir(parents=True, exist_ok=True)

@@ -30,7 +30,7 @@ function d1(sqlite: DatabaseSync): D1Like {
 }
 
 beforeAll(() => {
-  const sql = execFileSync("python3", ["-m", "pipeline.db"], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  const sql = execFileSync("python3", ["-m", "pipeline.db", "--without-trip-json"], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec("PRAGMA foreign_keys = ON;");
   sqlite.exec(sql);

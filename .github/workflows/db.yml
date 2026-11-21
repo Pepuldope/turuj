@@ -84,6 +84,9 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
+          # trip_json (each trip's own file for the Worker) is not part of the dropped-and-refilled
+          # schema; make sure it exists so the query below can read it.
+          npx wrangler d1 execute "$DB" --remote --command "$(python -m pipeline.db --trip-json-sql)" -y
           npx wrangler d1 execute "$DB" --remote --json --command "$(python -m pipeline.db --have-sql)" \
             > build/have.json 2>/dev/null || rm -f build/have.json
           python -m pipeline.db --have build/have.json --out build/db.sql --parts build/parts
