@@ -9,7 +9,9 @@ import type { UiIconName } from "@/lib/uiIcons";
 type FooterLink = { href: string; label: string; icon: UiIconName; external?: true; event?: string };
 
 /** Four short groups, so a new link (e.g. "Získať aplikáciu") just joins one. */
-const GROUPS: { title: string; links: FooterLink[] }[] = [
+// `cls`: place in the three-column layout. "O projekte" (the long one) fills the third column, so "Pridajte sa"
+// sits under "Kontakt" instead of starting a fourth row under everything.
+const GROUPS: { title: string; links: FooterLink[]; cls?: string }[] = [
   {
     title: "Výlety",
     links: [
@@ -27,6 +29,7 @@ const GROUPS: { title: string; links: FooterLink[] }[] = [
   },
   {
     title: "O projekte",
+    cls: "@md:col-start-3 @md:row-span-2 @md:row-start-1",
     links: [
       { href: "/ako-to-funguje", label: "Ako to funguje", icon: "help" },
       { href: "/o-nas", label: "O nás", icon: "person" },
@@ -39,6 +42,7 @@ const GROUPS: { title: string; links: FooterLink[] }[] = [
   },
   {
     title: "Pridajte sa",
+    cls: "@md:col-start-2 @md:row-start-2",
     links: [
       { href: "/poslat-fotku", label: "Pošlite nám fotku", icon: "camera" },
       { href: FACEBOOK_URL, label: "Facebook", icon: "facebook", external: true, event: "social_facebook_open" },
@@ -106,7 +110,7 @@ export function SiteFooter() {
           className="grid grid-cols-2 gap-x-4 gap-y-4 @md:grid-cols-3"
         >
           {GROUPS.map((g) => (
-            <div key={g.title} className="flex min-w-0 flex-col gap-0.5">
+            <div key={g.title} className={`flex min-w-0 flex-col gap-0.5 ${g.cls ?? ""}`}>
               <h2 className="pb-1 text-[11px] font-extrabold tracking-[0.07em] text-[var(--foreground)] uppercase">
                 {t(g.title)}
               </h2>
