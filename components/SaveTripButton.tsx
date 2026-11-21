@@ -11,7 +11,7 @@ import type { TripProfile } from "@/lib/tripProfile";
 import { offlineMapUrls } from "@/lib/tiles";
 import { dayAfterNa } from "@/lib/days";
 import { useSavedTrips } from "@/lib/savedTrips";
-import type { SavedTrail } from "@/lib/savedTrips";
+import type { SavedTrail, SavedTrip } from "@/lib/savedTrips";
 import { useInstalled } from "@/lib/installApp";
 import { useTripSettings } from "@/lib/tripSettings";
 import type { TripPlan } from "@/lib/useTripPlan";
@@ -28,7 +28,10 @@ import { forecastForDay, mergeForecast } from "@/lib/weather";
 
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { langPath } from "@/lib/lang";
-interface Props extends ShareInfo {
+/** What saving a trip needs from its page. */
+interface SaveInput {
+  slug: string;
+  name: string;
   gpxUrl: string | null;
   bbox: BBox | null;
   sun: LatLng | null;
@@ -39,14 +42,25 @@ interface Props extends ShareInfo {
   trail?: SavedTrail;
   /** The trail's closure rules, for the evening-before reminder (empty when none is known). */
   closures?: Closure[];
+  /** The trip page's forecast: the trip day's part is kept with the saved trip, so its card shows the weather offline. */
+  weather?: TripWeather | null;
+}
+
+/** Where on the page the save was tapped: the "Uložiť a navigovať" card, or the box of a friend's shared plan. */
+type SaveFrom = "card" | "shared";
+
+interface Props extends ShareInfo {
+  sun: LatLng | null;
+  tripPlan: TripPlan;
+  closures?: Closure[];
+  /** The page's one save (useTripSave), shared with the box of a friend's plan. */
+  saving: TripSave;
   /** Where the walk starts (parking, stop or trailhead), as the calendar event's place. */
   where?: { name: string; location: LatLng } | null;
   /** The navigation buttons: they go after the calendar and before the app block. */
   nav?: ReactNode;
   /** The GPX download, the last action of the card. */
   gpx?: ReactNode;
-  /** The trip page's forecast: the trip day's part is kept with the saved trip, so its card shows the weather offline. */
-  weather?: TripWeather | null;
 }
 
 type Status = "idle" | "saving" | "error";
@@ -95,24 +109,21 @@ const secondary =
   "rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-2.5 text-sm font-semibold hover:border-[var(--accent)] disabled:opacity-60";
 
 /**
- * "Uložiť výlet" is the main button (PD2): it remembers the trip on this
- * device and stores it for offline use. Right after saving, one tap offers to
- * send the plan to the group.
+ * Saving one trip, once per trip page: the page has two places to tap it (the "Uložiť a navigovať" card and,
+ * on a friend's shared link, the box at the top; C91), and both show the same progress and result.
  */
-export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], where = null, nav = null, gpx = null, weather = null, ...trip }: Props) {
-  const { slug, name } = trip;
+export function useTripSave({ slug, name, gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], weather = null }: SaveInput) {
   const { trips, save, patch, remove } = useSavedTrips();
   const { start } = useUserLocation();
   const { travel } = useTripSettings();
-  const { plan, date, time, hikeMin, driveMin, route, transit, fixed, withKids, loading } = tripPlan;
+  const { date, time, hikeMin, driveMin, transit, fixed, withKids, loading } = tripPlan;
   const { stops } = useTripStops(slug);
-  const t = useT();
   const lang = useLang();
   const [status, setStatus] = useState<Status>("idle");
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   // Right after saving, the green box asks about the evening-before reminder (Peter, 18 Nov: the switch further down
-  // wasn't seen); sharing is the plain button under it.
-  const [askEve, setAskEve] = useState(false);
+  // wasn't seen); sharing is the plain button under it. It asks where the save was tapped.
+  const [askEve, setAskEve] = useState<SaveFrom | null>(null);
   // The two boxes under the button swap by rolling (Peter, 17 Nov), but only after the visitor pressed something: a saved
   // trip is read from storage right after hydration, and that is not an event.
   const [touched, setTouched] = useState(false);
@@ -131,12 +142,12 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
       (saved.withKids ?? false) !== withKids ||
       saved.hikeMin !== hikeMin);
 
-  async function onSave() {
+  async function onSave(from: SaveFrom = "card") {
     setTouched(true);
     // While the drive or the trains load, the plan is still missing them: saving now would keep a wrong day.
     if (!date || !time || !sun || loading) return;
     setStatus("saving");
-    track("trip_saved", { trail: slug, took: sinceArrival() });
+    track("trip_saved", { trail: slug, took: sinceArrival(), ...(from === "shared" ? { from } : {}) });
     if (trips.length === 0) setAskHeard(true);
     // The kept forecast counts only for the same day and the same place.
     const keep = saved?.date === date && saved.weather?.url === weather?.urls?.below ? saved.weather : null;
@@ -171,7 +182,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
       savedAt: new Date().toISOString(),
       offline: "pending",
     });
-    setAskEve(true);
+    setAskEve(from);
 
     if (!("serviceWorker" in navigator)) {
       patch(slug, { offline: "failed" });
@@ -195,6 +206,43 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
     }
   }
 
+  return {
+    saved,
+    changed,
+    closedDay,
+    status,
+    progress,
+    askEve,
+    askHeard,
+    touched,
+    /** Saving can't start yet: no day or time, or the drive or the trains are still loading. */
+    notReady: !date || !time || loading,
+    onSave,
+    patch: (change: Partial<SavedTrip>) => patch(slug, change),
+    remove: () => {
+      setTouched(true);
+      remove(slug);
+    },
+    doneAskEve: () => setAskEve(null),
+    doneAskHeard: () => setAskHeard(false),
+  };
+}
+
+export type TripSave = ReturnType<typeof useTripSave>;
+
+/**
+ * "Uložiť výlet" is the main button (PD2): it remembers the trip on this
+ * device and stores it for offline use. Right after saving, one tap offers to
+ * send the plan to the group.
+ */
+export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = null, nav = null, gpx = null, ...trip }: Props) {
+  const { plan, date, time, hikeMin, driveMin, route, loading } = tripPlan;
+  const { saved, changed, closedDay, status, progress, askHeard, touched, onSave, patch, remove } = saving;
+  // The reminder question shows where the save was tapped: here, or in the box of a friend's plan.
+  const askEve = saving.askEve === "card";
+  const t = useT();
+  const lang = useLang();
+
   // "pending" while this page isn't saving: the save was cut off (page closed, phone asleep).
   const showButton = !saved || changed || saved.offline === "failed" || saved.offline === "pending" || status === "saving";
   const share = (
@@ -211,7 +259,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
   );
 
   const saveButton = (
-        <button type="button" onClick={onSave} disabled={status === "saving" || !date || !time || loading} className={closedDay ? `${secondary} min-h-11 w-full` : primary}>
+        <button type="button" onClick={() => onSave()} disabled={status === "saving" || saving.notReady} className={closedDay ? `${secondary} min-h-11 w-full` : primary}>
           {status === "saving"
             ? t("Ukladám aj na cestu bez signálu... ({done}/{total})", { done: progress.done, total: progress.total || "?" })
             : saved
@@ -236,7 +284,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
             </LangLink>
             .
           </p>
-          <EveReminder ask trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch(slug, { eve })} onAsked={() => setAskEve(false)} />
+          <EveReminder ask trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch({ eve })} onAsked={saving.doneAskEve} />
         </div>
         )}
       </Reveal>
@@ -250,11 +298,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
           </LangLink>
           , {t("naplánované na")} <strong>{dayAfterNa(saved.date, lang)}</strong> {t("o")} <strong>{saved.time}</strong>
           {saved.offline === "ok" ? t(", funguje aj bez signálu. ") : ". "}
-          <button type="button" onClick={() => {
-              setTouched(true);
-              remove(slug);
-            }}
-            className="underline">
+          <button type="button" onClick={remove} className="underline">
             {t("Odstrániť")}
           </button>
         </p>
@@ -263,7 +307,7 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
 
       {showButton && saved && status === "saving" && saveButton}
 
-      {saved && askHeard && <HeardFrom onDone={() => setAskHeard(false)} />}
+      {saved && askHeard && <HeardFrom onDone={saving.doneAskHeard} />}
 
       {share}
 
@@ -274,11 +318,53 @@ export function SaveTripButton({ gpxUrl, bbox, sun, tripPlan, profile, trail, cl
         </p>
       )}
 
-      {saved && status !== "saving" && !askEve && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch(slug, { eve })} />}
+      {saved && status !== "saving" && !askEve && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch({ eve })} />}
 
       {saved && <ClosureGuard closures={closures} date={date} />}
       {nav}
       {gpx}
+    </div>
+  );
+}
+
+/**
+ * In the box of a friend's shared plan (C91): the friend keeps the plan in one tap, with the offline copy and
+ * the question about the evening-before reminder, without scrolling to the "Uložiť a navigovať" card. On a
+ * closed day it stays away: the card below holds the closure box and its own save.
+ */
+export function SharedSave({ saving, plan, sun, closures = [], where = null }: { saving: TripSave; plan: TripPlan["plan"]; sun: LatLng | null; closures?: Closure[]; where?: Props["where"] }) {
+  const t = useT();
+  const { saved, changed, status, progress } = saving;
+  if (saving.closedDay) return null;
+  if (status === "saving")
+    return (
+      <p role="status" className="font-semibold">
+        {t("Ukladám aj na cestu bez signálu... ({done}/{total})", { done: progress.done, total: progress.total || "?" })}
+      </p>
+    );
+  if (saved && !changed)
+    return (
+      <div className="flex flex-col gap-2">
+        <p role="status">
+          <strong>{t("Uložené.")}</strong> {t("Nájdete to v")}{" "}
+          <LangLink href="/ulozene" className="underline">
+            {t("Mojich výletoch")}
+          </LangLink>
+          {saved.offline === "ok" ? t(", funguje aj bez signálu. ").trimEnd() : "."}
+        </p>
+        {saving.askEve === "shared" && (
+          <div className="rounded-xl bg-[var(--card-bg)] p-3">
+            <EveReminder ask trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => saving.patch({ eve })} onAsked={saving.doneAskEve} />
+          </div>
+        )}
+      </div>
+    );
+  return (
+    <div className="flex flex-col gap-1.5">
+      <button type="button" onClick={() => saving.onSave("shared")} disabled={saving.notReady} className={primary}>
+        {t("Uložiť si výlet")}
+      </button>
+      <p className="text-xs text-[var(--muted)]">{t("Aj s mapou bez signálu a pripomienkou večer vopred.")}</p>
     </div>
   );
 }

@@ -29,7 +29,7 @@ import { KedyBody, kedySummary, kedyWarnings } from "@/components/KedyStep";
 import type { KedyProps } from "@/components/KedyStep";
 import { hasLeg, latestSetStart } from "@/lib/kedyTimeline";
 import { NavHandoff } from "@/components/NavHandoff";
-import { AppPromo, SaveTripButton } from "@/components/SaveTripButton";
+import { AppPromo, SaveTripButton, SharedSave, useTripSave } from "@/components/SaveTripButton";
 import type { ShareInfo } from "@/components/ShareButton";
 import { PlanStep, PlanStepsProvider, PlanWarningsRecap, StepInfo } from "@/components/PlanStep";
 import type { StepDef } from "@/components/PlanStep";
@@ -240,6 +240,9 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
     [plan, weather.strip]
   );
 
+  // One save for the page: the "Uložiť a navigovať" card and the box of a friend's shared plan both use it.
+  const saving = useTripSave({ slug: trip.slug, name: trip.name, gpxUrl, bbox, sun, tripPlan, profile, trail, closures, weather });
+
   // A shared link opens the sender's day, kids pace and parking or stop (once, then it's ours to change).
   // Friends leave from different places, so it brings a meeting time where the walk starts and this
   // page works out the departure from our own start. A link for a day already gone only says so.
@@ -402,6 +405,15 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
       if (date) update({ time: hhmm });
     },
   };
+  // On a friend's plan: the way to a trip of one's own (C202).
+  const ownTrip = (
+    <p>
+      <LangLink href="/" onClick={() => track("own_trip_link", { trail: trip.slug })} className="inline-flex min-h-6 items-center gap-0.5 font-semibold underline">
+        {t("Naplánujte si vlastný výlet")}
+        <UiIcon name="chev" size={14} />
+      </LangLink>
+    </p>
+  );
   const stopsWord = t(stops.length === 1 ? "{n} zastávka" : stops.length < 5 ? "{n} zastávky" : "{n} zastávok", { n: stops.length });
 
   return (
@@ -433,13 +445,18 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
             ) : (
               <p className="text-[var(--muted)]">{t("Odchod {time} z miesta kamaráta, nižšie je prepočítaný z vášho.", { time: shared.time ?? "" })}</p>
             )}
+            <SharedSave saving={saving} plan={plan} sun={sun} closures={closures} where={calendarPlace} />
+            {ownTrip}
           </div>
         )}
 
         {expired && (
-          <p className="rounded-[var(--radius-card)] bg-[var(--accent-soft)] p-4 text-sm">
-            {t("Plán od kamaráta bol na")} <strong>{dayAfterNa(expired.date, lang)}</strong>{t(", ten deň už prešiel. Nižšie si vyberte nový deň.")}
-          </p>
+          <div className="flex flex-col gap-2 rounded-[var(--radius-card)] bg-[var(--accent-soft)] p-4 text-sm">
+            <p>
+              {t("Plán od kamaráta bol na")} <strong>{dayAfterNa(expired.date, lang)}</strong>{t(", ten deň už prešiel. Nižšie si vyberte nový deň.")}
+            </p>
+            {ownTrip}
+          </div>
         )}
       </section>
 
@@ -618,7 +635,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
       {/* Its own card (Peter, 2026-11-11): save, share, navigate and the GPX are what you do with a finished plan. Named "Uložiť a navigovať" (Peter, 2026-11-13; was "Vyraziť"). */}
       <section data-nosnippet aria-label={t("Uložiť a navigovať")} className={`${part} [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer`}>
         <h2 className="text-[1.35rem] leading-tight font-bold">{t("Uložiť a navigovať")}</h2>
-        <SaveTripButton gpxUrl={gpxUrl} bbox={bbox} sun={sun} tripPlan={tripPlan} profile={profile} trail={trail} closures={closures} where={calendarPlace} weather={weather} {...trip} nav={<NavHandoff slug={trip.slug} drive={destination} start={start} walkFrom={walkStart} walk={walk} join={trailJoin} />} gpx={gpxAction} />
+        <SaveTripButton sun={sun} tripPlan={tripPlan} closures={closures} saving={saving} where={calendarPlace} {...trip} nav={<NavHandoff slug={trip.slug} drive={destination} start={start} walkFrom={walkStart} walk={walk} join={trailJoin} />} gpx={gpxAction} />
       </section>
       <AppPromo />
 

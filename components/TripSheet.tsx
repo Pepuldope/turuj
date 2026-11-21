@@ -330,6 +330,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
             name={trail.name}
             difficulty={trail.difficulty}
             familyFriendly={trail.family_friendly}
+            facts={{ distanceM: trail.distance_m, walkMin: trail.duration_min, ascentM: trail.ascent_m }}
             sun={sun}
             goal={{
               lat: trip.destination.location.lat,

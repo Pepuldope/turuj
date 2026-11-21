@@ -12,6 +12,7 @@ export type AnalyticsEvent =
   | "share" // "Zdieľať výlet" tapped
   | "share_sent" // the share sheet sent it, or the text was copied
   | "shared_open" // a friend opened a shared plan link
+  | "own_trip_link" // "Naplánujte si vlastný výlet" tapped on a friend's shared plan
   | "gpx_download" // "Stiahnuť GPX trasu" tapped
   | "nav_open" // hand-off to Google Maps / a map app
   | "transit_open" // cp.sk link opened

@@ -60,6 +60,17 @@ describe("shared plan links", () => {
     expect(shareText({ name: "Chleb", dayLabel: "Saturday 10 Oct", withKids: false, url: "u" }, "en")).toBe("Chleb · Saturday 10 Oct\nThe trip is on turuj.sk: u");
   });
 
+  it("adds one line of walk facts, with no times and nothing about the reader (C78, C74)", () => {
+    const facts = { distanceM: 5200, walkMin: 110, ascentM: 310 };
+    const text = shareText({ name: "Hrad Pajštún z Borinky", dayLabel: "sobota 28. 11.", withKids: false, facts, url: "u" });
+    expect(text).toBe("Hrad Pajštún z Borinky · sobota 28. 11.\n5,2 km · 1 h 50 min chôdze · +310 m\nVýlet je na turuj.sk: u");
+    expect(text).not.toMatch(/\d{1,2}:\d{2}/);
+    expect(text).not.toContain("\u00a0");
+    expect(shareText({ name: "Chleb", dayLabel: "Saturday 10 Oct", withKids: false, facts, url: "u" }, "en")).toBe("Chleb · Saturday 10 Oct\n5.2 km · 1 h 50 min walking · +310 m\nThe trip is on turuj.sk: u");
+    // On a closed day the warning stays right under the title.
+    expect(shareText({ name: "Kriváň", dayLabel: "pondelok 16. 11.", withKids: false, closedOnDay: true, facts, url: "u" }).split("\n")[1]).toBe("Pozor, chodník je v tento deň uzavretý.");
+  });
+
   it("keeps the closure warning on a closed day (safety data)", () => {
     const text = shareText({ name: "Kriváň", dayLabel: "pondelok 16. 11.", withKids: false, closedOnDay: true, url: "u" });
     expect(text).toBe("Kriváň · pondelok 16. 11.\nPozor, chodník je v tento deň uzavretý.\nVýlet je na turuj.sk: u");

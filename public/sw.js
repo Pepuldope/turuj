@@ -1,7 +1,7 @@
 // Túruj service worker.
 //
-// Cache-on-plan, not cache-everything: nothing is precached at install time.
-// A trip is only cached when the visitor taps "Uložiť výlet" on its
+// Cache-on-plan, not cache-everything: nothing is precached at install time except the
+// small "no signal" page (OFFLINE_URL). A trip is only cached when the visitor taps "Uložiť výlet" on its
 // trip sheet, which postMessage()s a CACHE_TRIP request here with the exact
 // URLs to store (the trip page itself, its GPX file, and the OpenFreeMap style,
 // vector tiles, sprites and glyphs for the trail's bbox; see lib/tiles.ts).
@@ -16,8 +16,24 @@ const SHELL_URLS = ["/ulozene"];
 const SEEN_CACHE = "turuj-seen";
 const MAX_SEEN = 200;
 
-self.addEventListener("install", () => {
+// The one file kept before anything is saved: the "Ste bez signálu" page (C203). A page opened with no
+// signal and no saved copy gets it instead of the browser's error. It lists the trips saved on this device.
+const OFFLINE_URL = "/offline.html";
+
+self.addEventListener("install", (event) => {
   self.skipWaiting();
+  event.waitUntil(
+    (async () => {
+      try {
+        // "reload": past the browser's own copy, so a new service worker brings the page's new version.
+        const res = await fetch(new Request(OFFLINE_URL, { cache: "reload" }));
+        // A fresh answer: the host may redirect to the address without ".html", and a redirected answer can't be shown for a page.
+        if (res.ok) await (await caches.open(STATIC_CACHE)).put(OFFLINE_URL, new Response(await res.blob(), { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } }));
+      } catch {
+        // No signal while installing: without the page, the browser's own error shows, as before.
+      }
+    })()
+  );
 });
 
 self.addEventListener("activate", (event) => {
@@ -188,6 +204,8 @@ self.addEventListener("fetch", (event) => {
         } catch (err) {
           const saved = await caches.match(key, { ignoreSearch: true });
           if (saved) return saved;
+          const offline = await caches.match(OFFLINE_URL);
+          if (offline) return offline;
           throw err;
         }
       }
