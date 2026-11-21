@@ -1,7 +1,7 @@
 "use client";
 
 import { transitMinutes } from "@/lib/drive";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EARLIEST_DEPARTURE_HOUR } from "@/lib/days";
 import type { DayFit } from "@/lib/days";
 import { DIFFICULTY_LABEL, GOAL_LABEL, formatDurationShort, formatFromUser, formatTime, stopLabel } from "@/lib/format";
@@ -18,6 +18,8 @@ import { regionIn, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 import type { CSSProperties, ImgHTMLAttributes } from "react";
 import { photoFocus } from "@/lib/photoFocus";
+import { cardSvg } from "@/lib/terrainScene";
+import type { CardEntry } from "@/lib/terrainScene";
 
 /**
  * A photo that fades in once it has loaded (Peter, 17 Nov: thumbnails popped in one by one). A picture that was
@@ -124,18 +126,62 @@ const PILL_CLASS = {
 const STRIP_FADE =
   "linear-gradient(to right, #000 calc(100% - 16px), rgba(0,0,0,.82) calc(100% - 12px), rgba(0,0,0,.5) calc(100% - 7px), rgba(0,0,0,.18) calc(100% - 3px), transparent)";
 
-/** The card strip for a trip without a photo: two hill tones mixed from the kind colour, and the kind's icon centred in front. */
-function NoPhotoScene({ goal, colour }: { goal: DestinationKind; colour: string }) {
+/** public/data/terrain-cards.json (pipeline/terrain.py): every no-photo place's real skyline, and trip slug -> place. */
+interface TerrainCards {
+  v: number;
+  places: Record<string, CardEntry>;
+  trips: Record<string, string>;
+}
+
+let terrainP: Promise<TerrainCards | null> | null = null;
+
+/** The terrain file, loaded once for every card; null while loading, and after a failed or unknown-format load (cards then keep the hill scene). */
+function useTerrainCards(): { loaded: boolean; cards: TerrainCards | null } {
+  const [state, setState] = useState<{ loaded: boolean; cards: TerrainCards | null }>({ loaded: false, cards: null });
+  useEffect(() => {
+    let live = true;
+    terrainP ??= fetch("/data/terrain-cards.json")
+      .then((r) => (r.ok ? (r.json() as Promise<TerrainCards>) : null))
+      .then((c) => (c && c.v === 1 ? c : null))
+      .catch(() => {
+        terrainP = null;
+        return null;
+      });
+    terrainP.then((cards) => live && setState({ loaded: true, cards }));
+    return () => {
+      live = false;
+    };
+  }, []);
+  return state;
+}
+
+/**
+ * The card strip for a trip without a photo: the kind's colour and icon in front of the place's real terrain outline
+ * (lib/terrainScene.ts, C201), or, where the terrain data has no entry for it, quiet hills whose outline hints at the kind.
+ * Until the terrain file is there only the colour and the icon show, so the hills don't change under the eye.
+ */
+function NoPhotoScene({ goal, colour, slug }: { goal: DestinationKind; colour: string; slug: string }) {
+  const { loaded, cards } = useTerrainCards();
+  const id = cards?.trips[slug];
+  const entry = id ? cards?.places[id] : undefined;
+  const terrain = useMemo(() => (id && entry ? cardSvg(id, entry) : null), [id, entry]);
   const scene = CARD_SCENES[goal] ?? CARD_SCENES.ine;
   const back = { fill: `color-mix(in srgb, #fff 15%, ${colour})` };
   const front = { fill: `color-mix(in srgb, #fff 30%, ${colour})` };
   return (
     <>
-      <svg viewBox="0 0 96 150" preserveAspectRatio="xMidYMax slice" aria-hidden className="absolute inset-0 h-full w-full">
-        <path d={scene.back} fillRule={scene.backEvenOdd ? "evenodd" : undefined} style={back} />
-        {scene.water && <path d={scene.water} style={front} />}
-        <path d={scene.front ?? FRONT_HILL} fillRule={scene.frontEvenOdd ? "evenodd" : undefined} style={front} />
-      </svg>
+      {terrain ? (
+        // Constant markup drawn from our own elevation data, no user data.
+        <span aria-hidden className="img-fade-in absolute inset-0" dangerouslySetInnerHTML={{ __html: terrain }} />
+      ) : (
+        loaded && (
+          <svg viewBox="0 0 96 150" preserveAspectRatio="xMidYMax slice" aria-hidden className="img-fade-in absolute inset-0 h-full w-full">
+            <path d={scene.back} fillRule={scene.backEvenOdd ? "evenodd" : undefined} style={back} />
+            {scene.water && <path d={scene.water} style={front} />}
+            <path d={scene.front ?? FRONT_HILL} fillRule={scene.frontEvenOdd ? "evenodd" : undefined} style={front} />
+          </svg>
+        )
+      )}
       {/* Constant markup from lib/kindIcons.ts, no user data. */}
       <span className="absolute top-1/2 left-0 grid w-[90px] -translate-y-1/2 place-items-center text-white" dangerouslySetInnerHTML={{ __html: kindSvg(goal, 30) }} />
     </>
@@ -224,7 +270,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
               <FadeImg src={thumb} style={{ objectPosition: photoFocus(thumb) }} alt="" loading="lazy" decoding="async" crossOrigin="anonymous" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
             ) : (
               // No photo: the kind's colour and icon in front of quiet hills whose outline hints at the kind (Peter, 15 Nov).
-              <NoPhotoScene goal={goal} colour={colour} />
+              <NoPhotoScene goal={goal} colour={colour} slug={trail.slug} />
             )}
           </span>
           {thumb && (

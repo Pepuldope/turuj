@@ -57,6 +57,11 @@ export default function SourcesPage() {
           author and licence of each photo are below the list on the town&apos;s page.
         </li>
         <li>
+          The shape of the land in the pictures of places without a photo: elevation data{" "}
+          <a href="https://registry.opendata.aws/terrain-tiles/">AWS Terrain Tiles</a> (Mapzen, open data; original sources
+          in <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">this list</a>).
+        </li>
+        <li>
           Exact bus and train connections: a link to <a href="https://cp.sk">cp.sk</a>, Google Maps and Apple Maps.
         </li>
       </ul>

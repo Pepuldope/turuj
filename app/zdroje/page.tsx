@@ -59,6 +59,11 @@ export default function SourcesPage() {
           <a href="https://www.mapillary.com">Mapillary</a> (CC BY-SA 4.0, autor pri fotke).
         </li>
         <li>
+          Tvar krajiny na obrázkoch miest bez fotky: výškové dáta{" "}
+          <a href="https://registry.opendata.aws/terrain-tiles/">AWS Terrain Tiles</a> (Mapzen, otvorené dáta; pôvodné zdroje
+          pozri v <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">zozname</a>).
+        </li>
+        <li>
           Presné spoje autobusov a vlakov: odkaz na <a href="https://cp.sk">cp.sk</a>, Google Mapy a Apple Mapy.
         </li>
       </ul>

@@ -716,6 +716,7 @@ export const EN: Record<string, string> = {
   "Toto sa nenačítalo. Skúste to znova.": "This didn't load. Please try again.",
   "zaberie to pár sekúnd": "it takes a few seconds",
   "Foto": "Photo",
+  "Výškové dáta": "Elevation data",
   "Autori fotiek": "Photo authors",
   "voľné dielo": "public domain",
   "Ak sa telefón spýta, či ikonu pridať na plochu, ťuknite Pridať.": "If the phone asks whether to add the icon to the home screen, tap Add.",
