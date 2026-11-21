@@ -61,6 +61,11 @@ export function TownTile({ tile, lang = "sk", townId }: { tile: Tile; lang?: Lan
         <span>{tr(lang, "{t} autom", { t: formatDurationShort(tile.carMin) })}</span>
         <span>{tr(lang, "{t} pešo", { t: formatDurationShort(tile.walkMin) })}</span>
       </span>
+      {tile.leaveBy && (
+        <span className="text-[13px] whitespace-nowrap text-[var(--muted)]">
+          {tr(lang, "vyrazte do")} <span className="font-data text-[17px] text-[var(--time)]">{tile.leaveBy}</span>
+        </span>
+      )}
     </IntentLink>
   );
 }

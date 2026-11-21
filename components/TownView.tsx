@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ClosedSinks } from "@/components/ClosedSinks";
 import { TownTile } from "@/components/TownTile";
+import { ShownBetween } from "@/components/ShownBetween";
+import { UiIcon } from "@/components/UiIcon";
+import { dayMonthOf, todayMonthDay } from "@/lib/closedToday";
+import { HOLIDAY_DATES, HOLIDAY_SHOWN, HOLIDAY_SUN_DAY } from "@/lib/holidayBlock";
 import { getTown, getTownTrips } from "@/lib/townTrips";
 import { tripsCount } from "@/lib/format";
 import { townFrom, townOf } from "@/lib/townNames";
@@ -28,7 +32,7 @@ export function townMetadata(id: string, lang: Lang) {
 export async function TownView({ id, lang }: { id: string; lang: Lang }) {
   const data = await getTownTrips(id, lang);
   if (!data) notFound();
-  const { town, total, rows } = data;
+  const { town, total, rows, holiday } = data;
   const url = absoluteUrl(langPath(lang, `/vylety-z/${town.id}`));
   const around = townOf(lang, town.id, town.name);
   const listed = rows.flatMap((r) => r.tiles).filter((t, i, all) => all.findIndex((x) => x.slug === t.slug) === i);
@@ -41,7 +45,7 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
         (kids ? ` Z výletov na tejto stránke sa ${kids === 1 ? "1 hodí" : kids < 5 ? `${kids} hodia` : `${kids} hodí`} aj pre rodiny s deťmi.` : "") +
         " Pri každom nájdete parkovanie, autobus či vlak a čas, kedy najneskôr vyraziť."
       : null;
-  const credits = rows.flatMap((r) => r.tiles).filter((t, i, all) => t.photo && all.findIndex((x) => x.slug === t.slug) === i);
+  const credits = [...(holiday?.tiles ?? []), ...rows.flatMap((r) => r.tiles)].filter((t, i, all) => t.photo && all.findIndex((x) => x.slug === t.slug) === i);
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-6">
@@ -83,6 +87,50 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
         <p className="font-medium text-[var(--muted)]">{tr(lang, "{n} do hodiny a pol autom", { n: tripsCount(total, lang) })}</p>
         {intro && <p className="mt-1 text-sm text-[var(--muted)]">{intro}</p>}
       </header>
+      {holiday && (
+        // Christmas holidays (C64b): short trips with kids and when to leave, while the days are shortest.
+        <ShownBetween from={HOLIDAY_SHOWN.from} to={HOLIDAY_SHOWN.to}>
+          <section className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-0.5">
+              <h2 className="flex items-baseline justify-between gap-2 text-[1.35rem] leading-tight font-extrabold tracking-tight">
+                {tr(lang, "Cez sviatky")}
+                <span className="text-sm font-medium text-[var(--muted)]">{holiday.tiles.length}</span>
+              </h2>
+              <p className="text-[12.5px] text-[var(--muted)]">
+                {tr(lang, "Krátke výlety s deťmi")} ·{" "}
+                <span className="whitespace-nowrap">
+                  {dayMonthOf(HOLIDAY_DATES.from, lang)} – {dayMonthOf(HOLIDAY_DATES.to, lang)}
+                </span>
+              </p>
+            </div>
+            <p className="flex items-start gap-2.5 rounded-xl bg-[var(--sun-soft)] px-3 py-2.5 text-sm leading-snug">
+              <span className="mt-px flex-none text-[var(--time)]">
+                <UiIcon name="sunset" size={22} />
+              </span>
+              <span>
+                {tr(lang, "Slnko zapadá o")} <b className="font-data text-xl leading-none whitespace-nowrap text-[var(--time)]">{holiday.sunset}</b>{" "}
+                <span className="text-[12.5px] whitespace-nowrap text-[var(--muted)]">({dayMonthOf(HOLIDAY_SUN_DAY, lang)})</span>. {tr(lang, "Dni sú krátke, z túry buďte dole ešte za svetla.")}
+              </span>
+            </p>
+            <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1.5 [scrollbar-width:none]">
+              {holiday.tiles.map((tile) => (
+                <div key={tile.slug} className="flex-none snap-start">
+                  <TownTile tile={tile} lang={lang} townId={town.id} />
+                </div>
+              ))}
+            </div>
+            <p className="flex gap-1.5 text-[12.5px] leading-snug text-[var(--muted)]">
+              <span className="mt-px flex-none">
+                <UiIcon name="clock" size={15} />
+              </span>
+              <span>
+                {tr(lang, "Čas „vyrazte do“ ráta cestu autom {from} a túru detským tempom tak, aby ste boli dole pol hodiny pred západom slnka.", { from: townFrom(lang, town.id, town.name) })}{" "}
+                {tr(lang, "Bez známej uzávery k {date}, stav chodníka neoverený. Hrady a jaskyne môžu mať cez sviatky zatvorené, overte si ich.", { date: dayMonthOf(todayMonthDay(), lang) })}
+              </span>
+            </p>
+          </section>
+        </ShownBetween>
+      )}
       {rows.map((row) => (
         <section key={row.title} className="flex flex-col gap-2.5">
           <h2 className="flex items-baseline justify-between gap-2 text-[1.35rem] leading-tight font-extrabold tracking-tight">

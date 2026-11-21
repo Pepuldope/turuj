@@ -693,11 +693,6 @@ export const EN: Record<string, string> = {
 
   // Home and lists
   "Kam na výlet?": "Where to today?",
-  "Kam vyrazíme?": "Where are we off to?",
-  "Kam do hôr?": "Which hills today?",
-  "Kam ťa to ťahá?": "What's calling you?",
-  "Vyrazme von!": "Let's get outside!",
-  "Hory čakajú.": "The mountains are waiting.",
   "Hlavná navigácia": "Main navigation",
   "Výlety": "Trips",
   "Všetky výlety": "All trips",
@@ -813,6 +808,12 @@ export const EN: Record<string, string> = {
   "Hrady a zrúcaniny": "Castles and ruins",
   "Jaskyne, plesá a vodopády": "Caves, tarns and waterfalls",
   "S deťmi do hodiny": "With kids, within an hour",
+  "Cez sviatky": "Over the holidays",
+  "Krátke výlety s deťmi": "Short trips with kids",
+  "Slnko zapadá o": "Sunset is at",
+  "Dni sú krátke, z túry buďte dole ešte za svetla.": "The days are short: be off the trail while it is still light.",
+  "Čas „vyrazte do“ ráta cestu autom {from} a túru detským tempom tak, aby ste boli dole pol hodiny pred západom slnka.": "“Leave by” counts the drive {from} and the walk at kids' pace, so that you are down half an hour before sunset.",
+  "Bez známej uzávery k {date}, stav chodníka neoverený. Hrady a jaskyne môžu mať cez sviatky zatvorené, overte si ich.": "No known closure as of {date}; trail condition not verified. Castles and caves may be closed over the holidays, so check before you go.",
 
   // Trip page
   "{name} – výlet {from}: túra, parkovanie": "{name} – day trip {from}: hike, parking",
