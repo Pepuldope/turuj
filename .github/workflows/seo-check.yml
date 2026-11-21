@@ -13,7 +13,7 @@ jobs:
   seo:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - name: html lang on the branch preview
