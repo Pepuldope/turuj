@@ -53,7 +53,7 @@ export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "info@turu
 
 /** Social profiles shown in the footer. Instagram is hidden while the address is empty. */
 export const FACEBOOK_URL = "https://facebook.com/turuj.sk";
-export const INSTAGRAM_URL = "";
+export const INSTAGRAM_URL = "https://instagram.com/turuj.sk";
 
 
 /**

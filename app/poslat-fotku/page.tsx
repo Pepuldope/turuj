@@ -1,7 +1,6 @@
 import { InfoPage } from "@/components/InfoPage";
-import { UiIcon } from "@/components/UiIcon";
+import { SendPhotoButton, photoConsent } from "@/components/SendPhotoButton";
 import { pageMetadata } from "@/lib/seo";
-import { CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata = pageMetadata({
   title: "Pošlite nám fotku z výletu",
@@ -9,10 +8,7 @@ export const metadata = pageMetadata({
   path: "/poslat-fotku",
 });
 
-const CONSENT =
-  "Fotku som odfotil(a) ja. Súhlasím, aby ju Túruj bezplatne používal na turuj.sk a na svojich sociálnych sieťach s mojím menom pri fotke. Súhlas môžem kedykoľvek zrušiť e-mailom a fotku odstránime.";
-const BODY = `Výlet / miesto: \n\nMeno pri fotke (alebo anonymne): \n\n${CONSENT}\n\n(Fotku priložte k tomuto e-mailu.)`;
-const MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Fotka z výletu")}&body=${encodeURIComponent(BODY)}`;
+const CONSENT = photoConsent("sk");
 
 export default function SendPhotoPage() {
   return (
@@ -31,14 +27,7 @@ export default function SendPhotoPage() {
       <p className="rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] p-3">{CONSENT}</p>
       <p>Odoslaním fotky tento súhlas potvrdzujete.</p>
 
-      <a
-        href={MAILTO}
-        data-umami-event="photo_send_open"
-        className="inline-flex w-fit items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2.5 font-bold !text-[var(--accent-contrast)] !no-underline hover:opacity-90"
-      >
-        <UiIcon name="mail" size={16} />
-        Poslať fotku e-mailom
-      </a>
+      <SendPhotoButton lang="sk" />
       <p className="text-xs text-[var(--muted)]">Fotky prezeráme ručne, na stránku sa dostanú do pár dní.</p>
     </InfoPage>
   );

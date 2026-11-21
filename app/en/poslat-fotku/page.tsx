@@ -1,7 +1,6 @@
 import { InfoPage } from "@/components/InfoPage";
-import { UiIcon } from "@/components/UiIcon";
+import { SendPhotoButton, photoConsent } from "@/components/SendPhotoButton";
 import { pageMetadata } from "@/lib/seo";
-import { CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata = pageMetadata({
   title: "Send us a photo from your trip",
@@ -10,10 +9,7 @@ export const metadata = pageMetadata({
   lang: "en",
 });
 
-const CONSENT =
-  "I took this photo myself. I agree that Túruj may use it free of charge on turuj.sk and on its social media, with my name credited next to it. I can withdraw this consent at any time by e-mail and the photo will be removed.";
-const BODY = `Trip / place: \n\nName to show with the photo (or anonymous): \n\n${CONSENT}\n\n(Please attach the photo to this e-mail.)`;
-const MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Trip photo")}&body=${encodeURIComponent(BODY)}`;
+const CONSENT = photoConsent("en");
 
 export default function SendPhotoPage() {
   return (
@@ -32,14 +28,7 @@ export default function SendPhotoPage() {
       <p className="rounded-xl border border-[var(--card-edge)] bg-[var(--card-bg)] p-3">{CONSENT}</p>
       <p>By sending the photo you confirm this consent.</p>
 
-      <a
-        href={MAILTO}
-        data-umami-event="photo_send_open"
-        className="inline-flex w-fit items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2.5 font-bold !text-[var(--accent-contrast)] !no-underline hover:opacity-90"
-      >
-        <UiIcon name="mail" size={16} />
-        Send the photo by e-mail
-      </a>
+      <SendPhotoButton lang="en" />
       <p className="text-xs text-[var(--muted)]">We review photos by hand; they reach the site within a few days.</p>
     </InfoPage>
   );
