@@ -28,6 +28,12 @@ export function townMetadata(id: string, lang: Lang) {
   });
 }
 
+/** A row of tiles: a sideways-scrolling rail on phones; from 1024 px (a mouse, no swipe) a grid, 5 across,
+ *  so a row's 10 tiles are all in view (Peter, 21 Nov 2026: the town page was a phone column on a PC). */
+const RAIL =
+  "-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1.5 [scrollbar-width:none] " +
+  "lg:mx-0 lg:grid lg:snap-none lg:grid-cols-5 lg:gap-x-4 lg:gap-y-5 lg:overflow-visible lg:px-0 lg:pb-0";
+
 /** A browse page: rows of photo tiles, the place first and the facts second. */
 export async function TownView({ id, lang }: { id: string; lang: Lang }) {
   const data = await getTownTrips(id, lang);
@@ -48,7 +54,7 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
   const credits = [...(holiday?.tiles ?? []), ...rows.flatMap((r) => r.tiles)].filter((t, i, all) => t.photo && all.findIndex((x) => x.slug === t.slug) === i);
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-6">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-6 lg:max-w-4xl lg:gap-8 lg:px-6">
       {/* schema.org data: breadcrumbs and the trips the page lists, so search engines see the page as a list of places. */}
       <JsonLd
         data={{
@@ -85,7 +91,7 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
       <header className="flex flex-col gap-1">
         <h1 className="text-[2.3rem] leading-none font-extrabold tracking-tight">{tr(lang, "Okolo {town}", { town: around })}</h1>
         <p className="font-medium text-[var(--muted)]">{tr(lang, "{n} do hodiny a pol autom", { n: tripsCount(total, lang) })}</p>
-        {intro && <p className="mt-1 text-sm text-[var(--muted)]">{intro}</p>}
+        {intro && <p className="mt-1 text-sm text-[var(--muted)] lg:max-w-2xl">{intro}</p>}
       </header>
       {holiday && (
         // Christmas holidays (C64b): short trips with kids and when to leave, while the days are shortest.
@@ -103,7 +109,7 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
                 </span>
               </p>
             </div>
-            <p className="flex items-start gap-2.5 rounded-xl bg-[var(--sun-soft)] px-3 py-2.5 text-sm leading-snug">
+            <p className="flex items-start gap-2.5 rounded-xl bg-[var(--sun-soft)] px-3 py-2.5 text-sm leading-snug lg:w-fit lg:pr-5">
               <span className="mt-px flex-none text-[var(--time)]">
                 <UiIcon name="sunset" size={22} />
               </span>
@@ -112,14 +118,14 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
                 <span className="text-[12.5px] whitespace-nowrap text-[var(--muted)]">({dayMonthOf(HOLIDAY_SUN_DAY, lang)})</span>. {tr(lang, "Dni sú krátke, z túry buďte dole ešte za svetla.")}
               </span>
             </p>
-            <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1.5 [scrollbar-width:none]">
+            <div className={RAIL}>
               {holiday.tiles.map((tile) => (
                 <div key={tile.slug} className="flex-none snap-start">
                   <TownTile tile={tile} lang={lang} townId={town.id} />
                 </div>
               ))}
             </div>
-            <p className="flex gap-1.5 text-[12.5px] leading-snug text-[var(--muted)]">
+            <p className="flex gap-1.5 text-[12.5px] leading-snug text-[var(--muted)] lg:max-w-2xl">
               <span className="mt-px flex-none">
                 <UiIcon name="clock" size={15} />
               </span>
@@ -137,7 +143,7 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
             {tr(lang, row.title)}
             <span className="text-sm font-medium text-[var(--muted)]">{row.count}</span>
           </h2>
-          <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1.5 [scrollbar-width:none]">
+          <div className={RAIL}>
             {row.tiles.map((tile) => (
               <ClosedSinks key={tile.slug} range={tile.closedRange}>
                 <TownTile tile={tile} lang={lang} townId={town.id} />
@@ -148,7 +154,7 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
       ))}
       <Link
         href={langPath(lang, "/")}
-        className="flex h-11 items-center justify-center rounded-xl bg-[var(--accent)] font-bold text-[var(--accent-contrast)]"
+        className="flex h-11 items-center justify-center rounded-xl bg-[var(--accent)] font-bold text-[var(--accent-contrast)] lg:w-fit lg:px-10"
       >
         {tr(lang, "Všetky výlety na mape")}
       </Link>
