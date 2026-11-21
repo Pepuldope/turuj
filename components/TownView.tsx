@@ -7,7 +7,7 @@ import { ShownBetween } from "@/components/ShownBetween";
 import { UiIcon } from "@/components/UiIcon";
 import { dayMonthOf, todayMonthDay } from "@/lib/closedToday";
 import { HOLIDAY_DATES, HOLIDAY_SHOWN, HOLIDAY_SUN_DAY } from "@/lib/holidayBlock";
-import { getTown, getTownTrips } from "@/lib/townTrips";
+import { SATELLITE_TOWNS, getTownTrips } from "@/lib/townTrips";
 import { tripsCount } from "@/lib/format";
 import { townFrom, townOf } from "@/lib/townNames";
 import { pageMetadata } from "@/lib/seo";
@@ -17,15 +17,36 @@ import { langPath, tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 import { photoSource } from "@/lib/tripFiles";
 
-export function townMetadata(id: string, lang: Lang) {
-  const town = getTown(id);
-  if (!town) return { title: tr(lang, "Mesto sa nenašlo"), robots: { index: false } };
-  return pageMetadata({
-    title: tr(lang, "Výlety {from} a okolia – túry na jeden deň", { from: townFrom(lang, town.id, town.name) }),
-    description: tr(lang, "Jednodňové výlety do hôr a prírody do hodiny a pol autom z mesta {town}: hrady, vrcholy, jaskyne, výlety s deťmi. Koľko trvá cesta a túra a kedy vyraziť.", { town: town.name }),
-    path: `/vylety-z/${town.id}`,
-    lang,
+/** "12 túr" (1 túra, 2-4 túry, 5+ túr); "12 hikes" in English. */
+function hikesCount(n: number, lang: Lang): string {
+  if (lang === "en") return n === 1 ? "1 hike" : `${n} hikes`;
+  return n === 1 ? "1 túra" : n >= 2 && n <= 4 ? `${n} túry` : `${n.toLocaleString("sk-SK")} túr`;
+}
+
+/**
+ * Title and description in the words people search: "výlety v okolí {mesta}" (research 01 #4, 02 §7; C40).
+ * Towns with only a few trips within an hour count the whole 1.5 h reach instead, so the title never says "2 túry".
+ */
+export async function townMetadata(id: string, lang: Lang) {
+  const data = await getTownTrips(id, lang);
+  if (!data) return { title: tr(lang, "Mesto sa nenašlo"), robots: { index: false } };
+  const { town, total, withinHour, kidsWithinHour } = data;
+  const around = townOf(lang, town.id, town.name);
+  const title =
+    lang === "en"
+      ? tr(lang, "Day trips & hikes from {town}", { town: town.name })
+      : withinHour >= 10
+        ? `Výlety v okolí ${around}: ${hikesCount(withinHour, lang)} do 1 h autom`
+        : `Výlety v okolí ${around}: ${hikesCount(total, lang)} do 1,5 h autom`;
+  const description = tr(lang, "{hour} do hodiny autom {from}, z toho {kids} pre rodiny s deťmi, spolu {total} do hodiny a pol. Hrady, vrcholy, jaskyne: pri každom parkovanie, autobus či vlak a kedy najneskôr vyraziť.", {
+    hour: tripsCount(withinHour, lang),
+    from: townFrom(lang, town.id, town.name),
+    kids: kidsWithinHour.toLocaleString(lang === "en" ? "en-GB" : "sk-SK"),
+    total: total.toLocaleString(lang === "en" ? "en-GB" : "sk-SK"),
   });
+  const meta = pageMetadata({ title, description, path: `/vylety-z/${town.id}`, lang });
+  // A small town next to a bigger one with the same trips: open to people, not offered to search engines.
+  return SATELLITE_TOWNS[town.id] ? { ...meta, robots: { index: false, follow: true } } : meta;
 }
 
 /** A browse page: rows of photo tiles, the place first and the facts second. */
@@ -59,13 +80,13 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
               itemListElement: [
                 { "@type": "ListItem", position: 1, name: tr(lang, "Výlety"), item: absoluteUrl(langPath(lang, "/")) },
                 { "@type": "ListItem", position: 2, name: tr(lang, "Výlety z miest"), item: absoluteUrl(langPath(lang, "/vylety-z")) },
-                { "@type": "ListItem", position: 3, name: tr(lang, "Okolo {town}", { town: around }), item: url },
+                { "@type": "ListItem", position: 3, name: tr(lang, "Výlety v okolí {town}", { town: around }), item: url },
               ],
             },
             {
               "@type": "ItemList",
               "@id": `${url}#vylety`,
-              name: tr(lang, "Výlety okolo {town}", { town: around }),
+              name: tr(lang, "Výlety v okolí {town}", { town: around }),
               numberOfItems: listed.length,
               itemListElement: listed.map((t, i) => ({
                 "@type": "ListItem",
@@ -83,7 +104,7 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
         </Link>
       </div>
       <header className="flex flex-col gap-1">
-        <h1 className="text-[2.3rem] leading-none font-extrabold tracking-tight">{tr(lang, "Okolo {town}", { town: around })}</h1>
+        <h1 className="text-[2.3rem] leading-none font-extrabold tracking-tight">{tr(lang, "Výlety v okolí {town}", { town: around })}</h1>
         <p className="font-medium text-[var(--muted)]">{tr(lang, "{n} do hodiny a pol autom", { n: tripsCount(total, lang) })}</p>
         {intro && <p className="mt-1 text-sm text-[var(--muted)]">{intro}</p>}
       </header>
@@ -134,7 +155,7 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
       {rows.map((row) => (
         <section key={row.title} className="flex flex-col gap-2.5">
           <h2 className="flex items-baseline justify-between gap-2 text-[1.35rem] leading-tight font-extrabold tracking-tight">
-            {tr(lang, row.title)}
+            {tr(lang, row.title, { town: around })}
             <span className="text-sm font-medium text-[var(--muted)]">{row.count}</span>
           </h2>
           <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1.5 [scrollbar-width:none]">

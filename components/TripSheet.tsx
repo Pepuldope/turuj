@@ -105,7 +105,7 @@ function trailJsonLd(detail: TrailDetail, photo: PlacePhoto | null, town: Town |
         itemListElement: [
           { "@type": "ListItem", position: 1, name: tr(lang, "Výlety"), item: absoluteUrl(langPath(lang, "/")) },
           ...(town
-            ? [{ "@type": "ListItem", position: 2, name: tr(lang, "Okolo {town}", { town: townOf(lang, town.id, town.name) }), item: absoluteUrl(langPath(lang, `/vylety-z/${town.id}`)) }]
+            ? [{ "@type": "ListItem", position: 2, name: tr(lang, "Výlety v okolí {town}", { town: townOf(lang, town.id, town.name) }), item: absoluteUrl(langPath(lang, `/vylety-z/${town.id}`)) }]
             : []),
           { "@type": "ListItem", position: town ? 3 : 2, name: trail.name, item: url },
         ],

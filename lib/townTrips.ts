@@ -23,14 +23,38 @@ const KNOWN_TRIPS = 3;
 const KNOWN_RANK = 70;
 const KNOWN_MIN = 30;
 
+/**
+ * Small towns right next to a bigger one, whose page lists nearly the same trips (C40, research
+ * register B02; Peter picked "short list" on 21 Nov 2026). Their pages stay for visitors but are
+ * noindex,follow and left out of the sitemap, so search engines rank the bigger town's page.
+ * Value: the bigger town. Bojnice and Rajecké Teplice are kept on purpose (people stay there on holiday).
+ */
+export const SATELLITE_TOWNS: Record<string, string> = {
+  "nova-dubnica": "dubnica-nad-vahom",
+  nemsova: "dubnica-nad-vahom",
+  ilava: "dubnica-nad-vahom",
+  leopoldov: "hlohovec",
+  vrutky: "martin",
+  sliac: "zvolen",
+  "velky-saris": "presov",
+  "krasno-nad-kysucou": "cadca",
+  sladkovicovo: "galanta",
+  svit: "poprad",
+  novaky: "prievidza",
+  "liptovsky-hradok": "liptovsky-mikulas",
+  podolinec: "spisska-bela",
+  gbely: "holic",
+};
+
 /** The biggest towns, shown first in the town list. */
 export const BIG_TOWNS = ["bratislava", "kosice", "presov", "zilina", "nitra", "banska-bystrica", "trnava", "trencin", "martin", "poprad"];
 
 /** Rows of a town page after "V meste", by what the trip leads to. */
 const KIND_ROWS: { title: string; kinds: DestinationKind[] }[] = [
-  { title: "Hrady a zrúcaniny", kinds: ["hrad"] },
-  { title: "Vrcholy", kinds: ["vrchol"] },
-  { title: "Vyhliadky", kinds: ["vyhliadka"] },
+  // Headings in the words people search (research 02 #5, C40); the town only in the first, so it doesn't read as stuffing.
+  { title: "Hrady a zrúcaniny v okolí {town}", kinds: ["hrad"] },
+  { title: "Túry na vrcholy", kinds: ["vrchol"] },
+  { title: "Vyhliadky a rozhľadne", kinds: ["vyhliadka"] },
   { title: "Jaskyne, plesá a vodopády", kinds: ["jaskyna", "pleso", "vodopad", "roklina"] },
 ];
 
@@ -77,6 +101,9 @@ export interface TownHoliday {
 export interface TownTrips {
   town: Town;
   total: number;
+  /** Trips within an hour by car, and how many of them suit kids (title and description). */
+  withinHour: number;
+  kidsWithinHour: number;
   rows: TownRow[];
   /** Null outside the season, for the smaller towns and when too few trips fit. */
   holiday: TownHoliday | null;
@@ -129,8 +156,9 @@ export async function getTownTrips(id: string, lang: Lang = "sk"): Promise<TownT
   ];
   // Kids get their own row of trips not already shown above, so the page doesn't repeat itself.
   const kids = outside.filter((r) => r.trip.family_friendly && r.carMin <= 60);
-  rows.push(row("S deťmi do hodiny", kids.filter((r) => !shown.has(r.trip.slug))));
-  return { town, total: reach.length, rows: rows.filter((r) => r.tiles.length > 0), holiday: holiday() };
+  rows.push(row("S deťmi do hodiny autom", kids.filter((r) => !shown.has(r.trip.slug))));
+  const hour = reach.filter((r) => r.carMin <= 60);
+  return { town, total: reach.length, withinHour: hour.length, kidsWithinHour: hour.filter((r) => r.trip.family_friendly).length, rows: rows.filter((r) => r.tiles.length > 0), holiday: holiday() };
 
   /** Short trips with kids for the Christmas holidays, best known first, each with its "leave by" time. */
   function holiday(): TownHoliday | null {
