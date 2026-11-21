@@ -57,7 +57,8 @@ export function TownTile({ tile, lang = "sk", townId }: { tile: Tile; lang?: Lan
         )}
       </span>
       <span className="text-[15px] leading-tight font-bold">{tile.name}</span>
-      <span className="flex flex-wrap gap-x-2 text-[13px] text-[var(--muted)]">
+      {/* With a "leave by" line under it, drive and walk each get their own line, so the times line up along the row. */}
+      <span className={`flex text-[13px] text-[var(--muted)] ${tile.leaveBy ? "flex-col" : "flex-wrap gap-x-2"}`}>
         <span>{tr(lang, "{t} autom", { t: formatDurationShort(tile.carMin) })}</span>
         <span>{tr(lang, "{t} pešo", { t: formatDurationShort(tile.walkMin) })}</span>
       </span>
