@@ -69,3 +69,6 @@ public/data/home-list.json
 public/data/trails/t/
 # Self-hosted Commons photos (scripts/fetch-photos.mjs, CI only)
 public/photos/c/
+
+# Generated share pictures (scripts/share-pics.ts, CI only)
+public/og/p/

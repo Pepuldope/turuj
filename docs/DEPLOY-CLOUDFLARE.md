@@ -71,6 +71,13 @@ Local runtime secrets go in `.dev.vars` (git-ignored), e.g. `ORS_API_KEY=...`.
   To undo: remove the "prune-trip-assets" step from `deploy.yml` and `preview.yml` (the files then ship
   as before; the Worker route keeps working either way). The Worker now counts these requests against
   the 100k a day, which static files did not.
+- Share pictures (C207, 2026-11-21): in the deploy and preview workflows, after `fetch-photos`,
+  `scripts/share-pics.ts` makes a 1200x630 JPEG per place with a photo (photo, Túruj logo, kind icon and
+  name, no numbers) in `public/og/p/` and sets `share` on its entry in `public/data/photos.json`;
+  `shareImage()` then uses it as the og:image. The files are not in git and are cached by
+  `actions/cache` (file names carry a hash of everything drawn, so only changed places are redrawn;
+  bump `TEMPLATE_VERSION` to redraw all). It adds ~850 static files. Chromium is installed only when
+  `--plan` finds something missing. A failure never stops a deploy: the place just keeps sharing the raw photo.
 - KV's free plan writes 1,000 entries a day. A deploy starts the cache fresh; past the limit, those
   pages are drawn per visit again until the next day.
 - `@opennextjs/cloudflare` requires Next.js ≥ 16.3.8, so `next` is pinned there.
