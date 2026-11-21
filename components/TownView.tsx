@@ -23,6 +23,9 @@ function hikesCount(n: number, lang: Lang): string {
   return n === 1 ? "1 túra" : n >= 2 && n <= 4 ? `${n} túry` : `${n.toLocaleString("sk-SK")} túr`;
 }
 
+/** Fewer trips than this within an hour: title and description count the whole 1.5 h reach. */
+const HOUR_MIN = 10;
+
 /**
  * Title and description in the words people search: "výlety v okolí {mesta}" (research 01 #4, 02 §7; C40).
  * Towns with only a few trips within an hour count the whole 1.5 h reach instead, so the title never says "2 túry".
@@ -30,20 +33,19 @@ function hikesCount(n: number, lang: Lang): string {
 export async function townMetadata(id: string, lang: Lang) {
   const data = await getTownTrips(id, lang);
   if (!data) return { title: tr(lang, "Mesto sa nenašlo"), robots: { index: false } };
-  const { town, total, withinHour, kidsWithinHour } = data;
+  const { town, total, withinHour, kidsWithinHour, kidsTotal } = data;
   const around = townOf(lang, town.id, town.name);
+  const near = withinHour >= HOUR_MIN;
   const title =
     lang === "en"
       ? tr(lang, "Day trips & hikes from {town}", { town: town.name })
-      : withinHour >= 10
-        ? `Výlety v okolí ${around}: ${hikesCount(withinHour, lang)} do 1 h autom`
-        : `Výlety v okolí ${around}: ${hikesCount(total, lang)} do 1,5 h autom`;
-  const description = tr(lang, "{hour} do hodiny autom {from}, z toho {kids} pre rodiny s deťmi, spolu {total} do hodiny a pol. Hrady, vrcholy, jaskyne: pri každom parkovanie, autobus či vlak a kedy najneskôr vyraziť.", {
-    hour: tripsCount(withinHour, lang),
-    from: townFrom(lang, town.id, town.name),
-    kids: kidsWithinHour.toLocaleString(lang === "en" ? "en-GB" : "sk-SK"),
-    total: total.toLocaleString(lang === "en" ? "en-GB" : "sk-SK"),
-  });
+      : `Výlety v okolí ${around}: ${hikesCount(near ? withinHour : total, lang)} do ${near ? "1" : "1,5"} h autom`;
+  const num = (n: number) => n.toLocaleString(lang === "en" ? "en-GB" : "sk-SK");
+  const from = townFrom(lang, town.id, town.name);
+  const facts = " " + tr(lang, "Hrady, vrcholy, jaskyne: pri každom parkovanie, autobus či vlak a kedy najneskôr vyraziť.");
+  const description = near
+    ? tr(lang, "{hour} do hodiny autom {from}, z toho {kids} pre rodiny s deťmi, spolu {total} do hodiny a pol.", { hour: tripsCount(withinHour, lang), from, kids: num(kidsWithinHour), total: num(total) }) + facts
+    : tr(lang, "{total} do hodiny a pol autom {from}, z toho {kids} pre rodiny s deťmi.", { total: tripsCount(total, lang), from, kids: num(kidsTotal) }) + facts;
   const meta = pageMetadata({ title, description, path: `/vylety-z/${town.id}`, lang });
   // A small town next to a bigger one with the same trips: open to people, not offered to search engines.
   return SATELLITE_TOWNS[town.id] ? { ...meta, robots: { index: false, follow: true } } : meta;

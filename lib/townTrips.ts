@@ -104,6 +104,7 @@ export interface TownTrips {
   /** Trips within an hour by car, and how many of them suit kids (title and description). */
   withinHour: number;
   kidsWithinHour: number;
+  kidsTotal: number;
   rows: TownRow[];
   /** Null outside the season, for the smaller towns and when too few trips fit. */
   holiday: TownHoliday | null;
@@ -158,7 +159,7 @@ export async function getTownTrips(id: string, lang: Lang = "sk"): Promise<TownT
   const kids = outside.filter((r) => r.trip.family_friendly && r.carMin <= 60);
   rows.push(row("S deťmi do hodiny autom", kids.filter((r) => !shown.has(r.trip.slug))));
   const hour = reach.filter((r) => r.carMin <= 60);
-  return { town, total: reach.length, withinHour: hour.length, kidsWithinHour: hour.filter((r) => r.trip.family_friendly).length, rows: rows.filter((r) => r.tiles.length > 0), holiday: holiday() };
+  return { town, total: reach.length, withinHour: hour.length, kidsWithinHour: hour.filter((r) => r.trip.family_friendly).length, kidsTotal: reach.filter((r) => r.trip.family_friendly).length, rows: rows.filter((r) => r.tiles.length > 0), holiday: holiday() };
 
   /** Short trips with kids for the Christmas holidays, best known first, each with its "leave by" time. */
   function holiday(): TownHoliday | null {
