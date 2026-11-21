@@ -50,14 +50,19 @@ export default function SourcesPage() {
         </li>
         <li>
           Vlaky: cestovný poriadok <a href="https://www.zsr.sk">ŽSR</a> vo formáte GTFS z{" "}
-          <a href="https://data.slovensko.sk">data.slovensko.sk</a>, licencia{" "}
-          <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>. Linky autobusov na zastávkach: údaje © OpenStreetMap.
+          <a href="https://data.slovensko.sk/datasety/ebeeedf1-aca2-451a-bdc0-35d536714888">data.slovensko.sk</a>, licencia CC BY (uvedenie autora),
+          upravené do vlastného formátu. Linky autobusov na zastávkach: údaje © OpenStreetMap.
         </li>
         <li>
           Fotky miest: <a href="https://commons.wikimedia.org">Wikimedia Commons</a> cez{" "}
           <a href="https://www.wikidata.org">Wikidata</a>, len voľné licencie (CC0, CC BY, CC BY-SA, voľné dielo). Autor a licencia
           každej fotky sú pod zoznamom na stránke mesta. Kde fotka z Commons chýba, fotka z ulice z{" "}
           <a href="https://www.mapillary.com">Mapillary</a> (CC BY-SA 4.0, autor pri fotke). Máte lepšiu fotku? <LangLink href="/poslat-fotku">Pošlite nám ju.</LangLink>
+        </li>
+        <li>
+          Tvar krajiny na obrázkoch miest bez fotky: výškové dáta{" "}
+          <a href="https://registry.opendata.aws/terrain-tiles/">AWS Terrain Tiles</a> (Mapzen, otvorené dáta; pôvodné zdroje
+          pozri v <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">zozname</a>).
         </li>
         <li>
           Presné spoje autobusov a vlakov: odkaz na <a href="https://cp.sk">cp.sk</a>, Google Mapy a Apple Mapy.

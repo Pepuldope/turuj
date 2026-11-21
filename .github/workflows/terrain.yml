@@ -1,0 +1,79 @@
+name: Place terrain
+
+# Real-terrain pictures for the places without a photo (pipeline/terrain.py, lib/terrainScene.ts, docs/TRIP-DATA.md).
+# Runs when "Place photos" is done on main (so it knows which places still have no photo), and commits
+# data/terrain.json and public/data/terrain-cards.json only when they changed. Places already computed are kept
+# (keyed by id, position and algorithm version), so a normal week computes only the few new ones; the first run, or
+# one after ALGO is raised, computes ~1,300 (about 5 minutes of work plus the elevation tiles' download).
+# A week with nothing new commits nothing and starts no deploy (docs/DEPLOY-CLOUDFLARE.md: each deploy counts).
+on:
+  # Only the weekly chain on main (same filter as photos.yml: a PR check of the chain must not commit or deploy).
+  workflow_run:
+    workflows: ["Place photos"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write # start deploy.yml after a commit to main
+
+concurrency:
+  group: terrain-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  terrain:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'pull_request')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      # Only the three packages it needs (their pins are in pipeline/requirements.txt), not osmium, rasterio and the rest.
+      - run: grep -E '^(numpy|pillow|pytest)' pipeline/requirements.txt | xargs pip install
+      - run: python -m pytest -q pipeline/tests/test_terrain.py
+      - run: python -m pipeline.terrain
+      - run: npm ci --ignore-scripts
+      # The card file is the one new static file every visitor loads: check its size and shape before it ships.
+      - run: npx vitest run lib/assetBudget.test.ts lib/terrainScene.test.ts
+      - name: Commit the terrain data
+        id: commit
+        run: |
+          git config user.name "turuj-data-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp data/terrain.json "$RUNNER_TEMP/terrain.json"
+          cp public/data/terrain-cards.json "$RUNNER_TEMP/terrain-cards.json"
+          for attempt in 1 2 3; do
+            git fetch origin "${GITHUB_REF_NAME}"
+            git checkout -f --detach "origin/${GITHUB_REF_NAME}"
+            # A run that started before the terrain code, its files or the photo list changed on the branch would put
+            # an older result over them: leave that to next week's run.
+            if ! git diff --quiet "$GITHUB_SHA" HEAD -- pipeline/terrain.py data/terrain.json public/data/terrain-cards.json public/data/photos.json; then
+              echo "Terrain code, files or the photo list changed on ${GITHUB_REF_NAME} during this run: not committing."; exit 0
+            fi
+            cp "$RUNNER_TEMP/terrain.json" data/terrain.json
+            cp "$RUNNER_TEMP/terrain-cards.json" public/data/terrain-cards.json
+            git add data/terrain.json public/data/terrain-cards.json
+            if git diff --cached --quiet; then echo "No changes."; exit 0; fi
+            git commit -m "Terrain pictures for places without a photo"
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              echo "committed=true" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            sleep $((attempt * 5))
+          done
+          exit 1
+      # Deploy only when the data changed on main (deploy.yml does not follow this workflow by itself).
+      - name: Deploy the new pictures
+        if: steps.commit.outputs.committed == 'true' && github.ref_name == 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main -R "$GITHUB_REPOSITORY"

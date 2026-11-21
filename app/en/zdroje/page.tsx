@@ -49,14 +49,19 @@ export default function SourcesPage() {
         </li>
         <li>
           Trains: the <a href="https://www.zsr.sk">ŽSR</a> (Slovak railways) timetable in GTFS format from{" "}
-          <a href="https://data.slovensko.sk">data.slovensko.sk</a>, licence{" "}
-          <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>. Bus lines at stops: data © OpenStreetMap.
+          <a href="https://data.slovensko.sk/datasety/ebeeedf1-aca2-451a-bdc0-35d536714888">data.slovensko.sk</a>, licence CC BY (attribution),
+          converted to our own format. Bus lines at stops: data © OpenStreetMap.
         </li>
         <li>
           Photos of places: <a href="https://commons.wikimedia.org">Wikimedia Commons</a> via{" "}
           <a href="https://www.wikidata.org">Wikidata</a>, free licences only (CC0, CC BY, CC BY-SA, public domain). The
           author and licence of each photo are below the list on the town&apos;s page. Have a better photo?{" "}
           <LangLink href="/poslat-fotku">Send it to us.</LangLink>
+        </li>
+        <li>
+          The shape of the land in the pictures of places without a photo: elevation data{" "}
+          <a href="https://registry.opendata.aws/terrain-tiles/">AWS Terrain Tiles</a> (Mapzen, open data; original sources
+          in <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">this list</a>).
         </li>
         <li>
           Exact bus and train connections: a link to <a href="https://cp.sk">cp.sk</a>, Google Maps and Apple Maps.

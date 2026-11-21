@@ -67,3 +67,5 @@ public/data/home-list.json
 /layout-check/
 # Trail overview tiles, cut at build time (scripts/line-tiles.mjs)
 public/data/trails/t/
+# Self-hosted Commons photos (scripts/fetch-photos.mjs, CI only)
+public/photos/c/

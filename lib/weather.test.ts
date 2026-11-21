@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { badDays, baseSymbol, forecastForDay, betterDay, betterTime, skyKind, summarize, tripWeatherReport, weatherAt, weatherNotes, weatherWords } from "@/lib/weather";
+import { badDays, baseSymbol, forecastForDay, mergeForecast, betterDay, betterTime, skyKind, summarize, tripWeatherReport, weatherAt, weatherNotes, weatherWords } from "@/lib/weather";
 import type { WeatherForecast } from "@/lib/weather";
 
 const hourly = (h: number, temp: number, rain: number, symbol: string) => ({
@@ -224,5 +224,26 @@ describe("forecastForDay", () => {
     const day = forecastForDay({ updated: "x", steps }, "2026-11-16");
     expect(day.updated).toBe("x");
     expect(day.steps.map((s) => s.t)).toEqual(["2026-11-15T23:00:00Z", "2026-11-16T10:00:00Z", "2026-11-17T04:00:00Z"]);
+  });
+});
+
+describe("merge forecast (saved trips keep the hours already gone)", () => {
+  const step = (t: string, temp: number) => ({ t, temp, wind: 2, rain: 0, hours: 1, symbol: "cloudy" });
+  const kept: WeatherForecast = { updated: "a", steps: [step("2026-11-18T07:00:00Z", 1), step("2026-11-18T08:00:00Z", 2), step("2026-11-18T09:00:00Z", 3)] };
+  const fresh: WeatherForecast = { updated: "b", steps: [step("2026-11-18T09:00:00Z", 5), step("2026-11-18T10:00:00Z", 6)] };
+
+  it("keeps the copy's earlier hours and takes the fresh ones from its first step on", () => {
+    const m = mergeForecast(kept, fresh);
+    expect(m.updated).toBe("b");
+    expect(m.steps.map((s) => s.temp)).toEqual([1, 2, 5, 6]);
+  });
+
+  it("is the fresh forecast without a copy, and the copy when the fresh one has no steps for the day", () => {
+    expect(mergeForecast(null, fresh)).toBe(fresh);
+    expect(mergeForecast(kept, { updated: "c", steps: [] })).toBe(kept);
+  });
+
+  it("drops nothing when the fresh forecast reaches back as far as the copy", () => {
+    expect(mergeForecast(fresh, kept)).toBe(kept);
   });
 });

@@ -7,6 +7,8 @@
 // again on 2026-10-14.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { existsSync } from "node:fs";
+import { gzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 
 const MB = 1024 * 1024;
@@ -41,6 +43,16 @@ describe("files the Worker reads stay small enough for its CPU limit", () => {
     // Mapillary photos are our own files ("/photos/m/…"), covered by 'self'.
     const hosts = new Set(Object.values(photos).filter((p) => !p.url.startsWith("/")).map((p) => new URL(p.url).origin));
     for (const host of hosts) expect(imgSrc.split(" ")).toContain(host);
+  });
+
+  // Every card on the home list loads this (C201, pipeline/terrain.py): the only static file the terrain pictures add
+  // (the deploy is near Cloudflare's 20,000-file limit). Not there before the first run of the terrain workflow.
+  it.skipIf(!existsSync(join(DATA, "terrain-cards.json")))("terrain pictures for the cards: small, one entry per place, every trip maps to one", () => {
+    const raw = readFileSync(join(DATA, "terrain-cards.json"));
+    expect(gzipSync(raw).length).toBeLessThan(150 * 1024);
+    const f = JSON.parse(raw.toString("utf8")) as { v: number; places: Record<string, number[][]>; trips: Record<string, string> };
+    expect(f.v).toBe(1);
+    for (const id of new Set(Object.values(f.trips))) expect(f.places[id], id).toBeDefined();
   });
 
   it("the trip page never loads the whole index", () => {

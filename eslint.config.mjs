@@ -18,6 +18,11 @@ const eslintConfig = defineConfig([
     // Stand-alone redirect Worker, deployed by hand (not part of the app).
     "workers/**",
   ]),
+  // Stand-alone CommonJS helper scripts (run by hand with node): require() is how they load modules.
+  {
+    files: ["**/*.cjs"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
 ]);
 
 export default eslintConfig;

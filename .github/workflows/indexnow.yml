@@ -1,7 +1,7 @@
 name: IndexNow
 
-# Tells Bing, Yandex and the other IndexNow engines about every URL in the live sitemaps (G2),
-# once a deploy to main has succeeded. The key file public/<key>.txt ships with the site.
+# Tells Bing, Yandex and the other IndexNow engines about the URLs in the live sitemaps (G2),
+# once a deploy to main has succeeded: new ones each time, all of them once a week. The key file public/<key>.txt ships with the site.
 # Never runs on branches or previews; "Run workflow" does it by hand.
 
 on:
@@ -20,4 +20,15 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - run: node scripts/indexnow.mjs
+      # What was sent last time (scripts/indexnow.mjs --state): new URLs on each deploy, the full list weekly.
+      # Caches can't be overwritten, so each run saves under its own key and the next one restores the newest.
+      - uses: actions/cache/restore@v6
+        with:
+          path: .indexnow-state.json
+          key: indexnow-state-${{ github.run_id }}
+          restore-keys: indexnow-state-
+      - run: node scripts/indexnow.mjs --state .indexnow-state.json
+      - uses: actions/cache/save@v6
+        with:
+          path: .indexnow-state.json
+          key: indexnow-state-${{ github.run_id }}

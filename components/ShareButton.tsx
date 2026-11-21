@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { longDay } from "@/lib/days";
 import { sharePath, shareText } from "@/lib/links";
+import type { WalkFacts } from "@/lib/links";
 import type { DayPlan } from "@/lib/dayPlan";
 import type { Closure, Difficulty } from "@/lib/types";
 import { useTripSettings } from "@/lib/tripSettings";
@@ -17,6 +18,8 @@ export interface ShareInfo {
   name: string;
   difficulty: Difficulty;
   familyFriendly: boolean;
+  /** The walk as the trip page states it, for the message's facts line. */
+  facts?: WalkFacts;
 }
 
 interface Props extends ShareInfo {
@@ -58,6 +61,7 @@ export function ShareButton({ plan, date, time, hasDrive, closures = [], label =
       dayLabel: longDay(date, lang),
       withKids,
       closedOnDay: activeClosures(closures, date).length > 0,
+      facts: trip.facts,
       url,
     }, lang);
     // The URL is already the text's last line; passing it twice duplicates it in most chat apps.

@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
-import { getAllTrails } from "@/lib/tripFiles";
+import { getAllTrips, getTripPhoto } from "@/lib/tripFiles";
 import { EN_TRIPS_AHEAD, absoluteUrl } from "@/lib/site";
 import { getTowns } from "@/lib/trips";
-import { bothLanguages } from "@/lib/sitemapEntries";
+import { bothLanguages, ownImages } from "@/lib/sitemapEntries";
 import { SITEMAP_GROUPS, type SitemapGroup } from "@/lib/sitemapGroups";
 
 // Built once per deploy (every push to main, including the weekly trip refresh), so new
@@ -22,10 +22,13 @@ export async function generateSitemaps() {
 export default async function sitemap(props: { id: Promise<string> }): Promise<MetadataRoute.Sitemap> {
   const id = (await props.id) as SitemapGroup;
   if (id === "trasy") {
-    const trails = await getAllTrails();
+    // Best known first. Next.js writes `images` as <image:image> (namespace included); only built once per
+    // deploy (force-static above), so the photo lookups cost the Worker nothing at run time.
+    const trips = [...(await getAllTrips())].sort((a, b) => b.rank - a.rank);
+    const photos = await Promise.all(trips.map((t) => getTripPhoto(t.slug, t.destination.osm)));
     return bothLanguages(
-      trails.map(({ trail }) => ({ url: absoluteUrl(`/trasa/${trail.slug}`), changeFrequency: "weekly" as const, priority: 0.8 })),
-      new Set(trails.slice(0, EN_TRIPS_AHEAD).map(({ trail }) => trail.slug))
+      trips.map((t, i) => ({ url: absoluteUrl(`/trasa/${t.slug}`), changeFrequency: "weekly" as const, priority: 0.8, images: ownImages(photos[i]?.url) })),
+      new Set(trips.slice(0, EN_TRIPS_AHEAD).map((t) => t.slug))
     );
   }
   if (id === "mesta") {

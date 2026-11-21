@@ -3,7 +3,7 @@ import { primaryTrailhead, routeWalk, sunLocation } from "@/lib/data";
 import { pickWalk, stopsByWalk } from "@/lib/walkFacts";
 import { gpxUrlFor } from "@/lib/gpx";
 import { GpxDownload } from "@/components/GpxDownload";
-import { getAllTrips, getCarWalks, getRouteWalks, getTownDrives, getTrip, getTripIndex, getTripPhoto, photoSource, withLoopRoutes } from "@/lib/tripFiles";
+import { getAllTrips, getCarWalks, getRouteWalks, getTerrainBanner, getTownDrives, getTrip, getTripIndex, getTripPhoto, photoSource, withLoopRoutes } from "@/lib/tripFiles";
 import type { PlacePhoto } from "@/lib/tripFiles";
 import { aboutTrip } from "@/lib/describeSk";
 import { buildProfile } from "@/lib/tripProfile";
@@ -47,6 +47,7 @@ import { describeTripEn } from "@/lib/tripJsonLdEn";
 import { markSigns } from "@/lib/markSigns";
 import { startLines, subtitle } from "@/lib/tripAnswers";
 import { photoFocus } from "@/lib/photoFocus";
+import { bannerScene } from "@/lib/terrainScene";
 
 /**
  * How many neighbours the "Ďalšie výlety v okolí" block holds in the HTML: the browser shows the first
@@ -167,6 +168,10 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
   const walks = routes.length > 1 ? await getRouteWalks(routes.map((r) => r.slug)) : {};
   // The place's photo from Wikimedia Commons, when there is one (Peter, 2026-10-22: photos on the planner).
   const photo = await getTripPhoto(trail.slug, trip.destination.osm);
+  // No photo: the real terrain around the place, drawn here at build time from data/terrain.json (C201), no extra request.
+  const terrainKey = trip.destination.osm ?? `trip/${trip.variant_of ?? trail.slug}`;
+  const terrain = photo ? null : await getTerrainBanner(terrainKey);
+  const terrainSvg = terrain ? bannerScene(terrainKey, terrain.kind, terrain.layers).svg : null;
   // The town page this trip belongs to: a link for people and search engines to more trips nearby.
   const town = nearestTown(trip.start.location);
   // "O výlete": a few sentences from this trip's own facts, Slovak pages only (lib/describeSk.ts).
@@ -276,6 +281,20 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                   {tr(lang, "Foto")}: {photo.author}, {photo.license}, {photoSource(photo)}
                 </a>
               </>
+            ) : terrainSvg ? (
+              <>
+                {/* Constant markup drawn by lib/terrainScene.ts from our own elevation data, no user data. */}
+                <span aria-hidden className="absolute inset-0" style={{ background: GOAL_COLOUR[goal] }} dangerouslySetInnerHTML={{ __html: terrainSvg }} />
+                <span aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.25)_0%,rgba(0,0,0,0)_35%,rgba(0,0,0,.45)_100%)]" />
+                <a
+                  href="https://registry.opendata.aws/terrain-tiles/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute right-2 bottom-1 z-10 max-w-[60%] truncate text-[10px] text-white/80 no-underline [text-shadow:0_1px_2px_rgba(0,0,0,.7)]"
+                >
+                  {tr(lang, "Výškové dáta")}: AWS Terrain Tiles (Mapzen)
+                </a>
+              </>
             ) : (
               <SeasonScene season={seasonOf(new Date())} width={460} height={220} seed={3} sunX={0.34} sunY={0.32} shade className="absolute inset-0 h-full w-full" />
             )}
@@ -311,6 +330,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
             name={trail.name}
             difficulty={trail.difficulty}
             familyFriendly={trail.family_friendly}
+            facts={{ distanceM: trail.distance_m, walkMin: trail.duration_min, ascentM: trail.ascent_m }}
             sun={sun}
             goal={{
               lat: trip.destination.location.lat,

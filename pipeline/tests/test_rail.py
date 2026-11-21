@@ -51,6 +51,72 @@ def test_days_stop_at_the_end_of_the_feed():
     assert data["days"] == ["20261210", "20261211", "20261212"]
 
 
+def next_year():
+    """Next year's file: starts on 13 Dec, one train that also exists this year and one new stop."""
+    files = dict(FILES)
+    files["feed_info.txt"] = "feed_start_date,feed_end_date,feed_version\n20261213,20271211,20261201\n"
+    files["calendar.txt"] = "service_id,monday,tuesday,wednesday,thursday,friday,saturday,sunday,start_date,end_date\n1,1,1,1,1,1,1,1,20261213,20271211\n"
+    files["calendar_dates.txt"] = "service_id,date,exception_type\n"
+    files["trips.txt"] = "trip_id,route_id,service_id\n10,1,1\n"
+    files["stops.txt"] = "stop_id,stop_name,stop_lat,stop_lon\nN,Trnava,48.37,17.585\nA,Bratislava hl.st.,48.158,17.106\n"
+    files["stop_times.txt"] = "trip_id,arrival_time,departure_time,stop_id,stop_sequence,pickup_type,drop_off_type\n10,07:00:00,07:00:00,A,1,,\n10,07:30:00,07:30:00,N,2,,\n"
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        for name, text in files.items():
+            z.writestr(name, text)
+    return buf.getvalue()
+
+
+def runs_on(data, label):
+    """label -> the days each train with that label runs on."""
+    return [[d for d, on in zip(data["days"], data["services"][t[3]]) if on == "1"] for t in data["trips"] if t[0] == label]
+
+
+def test_days_start_at_the_start_of_the_feed():
+    # Next year's file, read on 10 Dec: the days before 13 Dec are unknown to it, not "no trains".
+    data = rail.build(zipfile.ZipFile(io.BytesIO(next_year())), dt.date(2026, 12, 10), 5)
+    assert data["days"] == ["20261213", "20261214"]
+
+
+def test_next_years_file_keeps_this_years_last_days():
+    old = rail.build(gtfs(), dt.date(2026, 12, 3), 70)  # last week's run: 3 .. 12 Dec
+    new = rail.build(zipfile.ZipFile(io.BytesIO(next_year())), dt.date(2026, 12, 10), 5)
+    data = rail.keep_old_days(json.loads(json.dumps(old)), new, dt.date(2026, 12, 10))
+    assert data["days"] == ["20261210", "20261211", "20261212", "20261213", "20261214"]
+    # The train of both years is there twice, each on its own days; this year's weekday train only until Friday.
+    assert sorted(runs_on(data, "R 601")) == [["20261210", "20261211", "20261212"], ["20261213", "20261214"]]
+    assert runs_on(data, "Os 3409") == [["20261210", "20261211"]]
+    # Stations of both files, each once, and every train still points at its own.
+    names = [s[0] for s in data["stations"]]
+    assert sorted(names) == ["Bratislava hl.st.", "Strečno", "Trnava", "Žilina"]
+    ends = sorted([names[t[4][0]], names[t[4][-3]]] for t in data["trips"] if t[0] == "R 601")
+    assert ends == [["Bratislava hl.st.", "Trnava"], ["Bratislava hl.st.", "Žilina"]]
+    assert data["feed_version"] == "20261201" and data["feed_end"] == "20271211"
+
+
+def test_nothing_is_kept_once_the_new_file_has_started():
+    old = rail.build(gtfs(), dt.date(2026, 12, 3), 70)
+    new = rail.build(zipfile.ZipFile(io.BytesIO(next_year())), dt.date(2026, 12, 14), 5)
+    assert rail.keep_old_days(old, new, dt.date(2026, 12, 14)) is new
+    assert rail.keep_old_days(None, new, dt.date(2026, 12, 14)) is new
+    # A weekly re-run of the same file starts today: nothing to keep either.
+    same = rail.build(gtfs(), dt.date(2026, 12, 10), 70)
+    assert rail.keep_old_days(old, same, dt.date(2026, 12, 10)) is same
+
+
+def test_the_job_merges_with_the_file_of_the_last_run(tmp_path):
+    rail.write(tmp_path, rail.build(gtfs(), dt.date(2026, 12, 3), 70))
+    feed = tmp_path / "next.zip"
+    feed.write_bytes(next_year())
+    assert rail.main(["--gtfs", str(feed), "--root", str(tmp_path), "--today", "2026-12-10", "--days", "5"]) == 0
+    data = json.loads((tmp_path / "public" / "data" / "rail" / "timetable.json").read_text())
+    assert data["days"] == ["20261210", "20261211", "20261212", "20261213", "20261214"]
+    # The run after the change needs nothing from before.
+    assert rail.main(["--gtfs", str(feed), "--root", str(tmp_path), "--today", "2026-12-14", "--days", "3"]) == 0
+    data = json.loads((tmp_path / "public" / "data" / "rail" / "timetable.json").read_text())
+    assert data["days"] == ["20261214", "20261215", "20261216"] and len(data["trips"]) == 1
+
+
 def feed_zip(end, version):
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as z:

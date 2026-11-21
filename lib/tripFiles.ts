@@ -1,15 +1,18 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDb } from "@/lib/d1";
+import { slugOfPath, tripBody } from "@/lib/tripJson";
 import { driveDestination, routeWalk, trailDetailFrom, walkFromCar } from "@/lib/data";
 import { summaryFromList } from "@/lib/trips";
 import { EN_TRIPS_AHEAD } from "@/lib/site";
 import { LOOP_SUFFIX, loopPartner, loopTrip, orderRoutes } from "@/lib/loopRoute";
-import type { RouteBrief, TownDriveFile, TripDetail, TripIndex, TripList, TripSummary } from "@/lib/tripSchema";
+import type { DestinationKind, RouteBrief, TownDriveFile, TripDetail, TripIndex, TripList, TripSummary } from "@/lib/tripSchema";
 import type { TrailDetail } from "@/lib/types";
 import type { RouteWalk } from "@/lib/walkFacts";
 
 // The trip files the weekly pipeline writes to public/data (docs/TRIP-DATA.md),
 // read on the server. They are static assets, not part of the code bundle, so
 // the number of trips doesn't count against Cloudflare's Worker size limit.
+// (A trip's own file is pruned from the deploy's assets and read from D1 instead: lib/tripJson.ts.)
 // On Cloudflare they come from the ASSETS binding; in local dev, tests and the
 // build, from the disk. Server only.
 
@@ -30,6 +33,11 @@ async function readPublicJson<T>(path: string): Promise<T | null> {
     if (assets) {
       const res = await assets.fetch(new Request(`https://assets.local/${path}`));
       if (res.ok) return (await res.json()) as T;
+      // A trip's own file is not a static asset on the live site (C198): the Worker answers it from D1,
+      // but this fetch goes straight to the assets, so read the row itself.
+      const slug = slugOfPath(`/${path}`);
+      const body = slug ? await tripBody(await getDb(), slug) : null;
+      if (body) return JSON.parse(body) as T;
     }
   } catch {
     // Not on Cloudflare: read the disk below.
@@ -156,6 +164,8 @@ export interface PlacePhoto {
   page: string;
   /** Where it was found; "mapillary" = a street-level photo kept in public/photos/m/. */
   via?: string;
+  /** Set by scripts/fetch-photos.mjs in CI when `url` is a self-hosted copy: the Commons thumbnail it was made from. */
+  src?: string;
 }
 
 /** Width of the share image (og:image), one of Wikimedia's standard thumbnail steps (F15). */
@@ -166,10 +176,12 @@ const SHARE_W = 1280;
  * 500 px, too small for share previews). The original's width is not in photos.json (only the 500 px
  * thumb's), so no cap is possible: Commons serves JPEG/PNG requests wider than the file by scaling up
  * (checked: a 402 px original answers 200 at 1280px), and a 1280 px card is what share previews want.
- * Mapillary, self-hosted, and un-thumbnailed Commons URLs are returned as they are. The page's own
- * <img> keeps the 500 px file.
+ * A self-hosted copy (/photos/c/, 500 px only) uses its Commons original (`src`) for the 1280 px step.
+ * Mapillary and un-thumbnailed Commons URLs are returned as they are. The page's own <img> keeps the 500 px file.
  */
 export function shareImage(p: PlacePhoto): { url: string; width: number; height: number } {
+  // Only the 500 px copy is self-hosted (file limit, C196): the share size comes from the Commons original.
+  if (p.src && p.url.startsWith("/photos/c/")) p = { ...p, url: p.src };
   const m = /^(https:\/\/(?:thumb|upload)\.wikimedia\.org\/wikipedia\/commons\/thumb\/.+\/)\d+px-([^/]+)$/.exec(p.url);
   if (p.via === "mapillary" || !m || p.w <= 0 || p.w >= SHARE_W) return { url: p.url, width: p.w, height: p.h };
   return { url: `${m[1]}${SHARE_W}px-${m[2]}`, width: SHARE_W, height: Math.round((p.h * SHARE_W) / p.w) };
@@ -195,6 +207,36 @@ export async function getTripPhoto(slug: string, osm?: string | null): Promise<P
   photoKeys ??= readPublicJson<Record<string, string>>("data/photo-keys.json").then((f) => f ?? {});
   const all = await getPhotos();
   return all[osm ?? (await photoKeys)[slug] ?? `trip/${slug}`] ?? null;
+}
+
+/** A no-photo place's terrain for the trip page banner (data/terrain.json, pipeline/terrain.py). */
+export interface TerrainBanner {
+  kind: DestinationKind;
+  /** Three packed skyline layers of the banner window (lib/terrainScene.ts). */
+  layers: number[][];
+}
+
+type TerrainPlaces = Record<string, { k: DestinationKind; banner: number[][] }>;
+let terrain: Promise<TerrainPlaces> | null = null;
+
+/**
+ * The banner terrain of a place, by its photos.json key; null when it has none (it has a photo, the weekly terrain
+ * job has not seen it yet, or the page is drawn in the Worker). data/terrain.json is NOT a static asset (it would be
+ * one more file for the host and a second copy of data the page needs once): it is read from the disk while the pages
+ * are built ahead, and a page drawn later in the Worker simply keeps its season picture. Server only.
+ */
+export async function getTerrainBanner(placeKey: string): Promise<TerrainBanner | null> {
+  terrain ??= (async () => {
+    try {
+      const { readFile } = await import("node:fs/promises");
+      const { join } = await import("node:path");
+      return (JSON.parse(await readFile(join(process.cwd(), "data", "terrain.json"), "utf8")) as { places: TerrainPlaces }).places;
+    } catch {
+      return {};
+    }
+  })();
+  const p = (await terrain)[placeKey];
+  return p ? { kind: p.k, layers: p.banner } : null;
 }
 
 /** Car minutes from one precomputed town to every trip, by slug; empty for an unknown town. */

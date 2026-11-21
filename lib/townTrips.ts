@@ -1,7 +1,9 @@
 import { getAllTrips, getCarWalks, getPhotos, getTownDrives } from "@/lib/tripFiles";
 import type { PlacePhoto } from "@/lib/tripFiles";
 import { haversineM } from "@/lib/geo";
-import { monthDayOf } from "@/lib/closedToday";
+import { monthDayOf, todayMonthDay } from "@/lib/closedToday";
+import { HOLIDAY_MIN_TILES, HOLIDAY_TILES, fitsHoliday, holidayLeaveBy, holidayShown, holidaySunset, holidayYear } from "@/lib/holidayBlock";
+import { wallClock } from "@/lib/zoned";
 import { closureRulesFor, getTowns } from "@/lib/trips";
 import { seasonDateIn } from "@/lib/closures";
 import type { Lang } from "@/lib/lang";
@@ -44,6 +46,8 @@ export interface TownTile {
   closedSeason: string | null;
   /** The same yearly closure as "MM-DD" start and end, for the browser to compare with today's date. */
   closedRange: { from: string; to: string } | null;
+  /** Holiday block only: the latest time to leave the town, "13:40" (lib/holidayBlock.ts). */
+  leaveBy?: string;
 }
 
 export function closedSeason(trip: TripSummary, lang: Lang = "sk"): string | null {
@@ -63,10 +67,19 @@ export interface TownRow {
   tiles: TownTile[];
 }
 
+/** The Christmas-holiday block of a big town's page (lib/holidayBlock.ts). */
+export interface TownHoliday {
+  tiles: TownTile[];
+  /** Sunset in the town on the block's day, "16:01". */
+  sunset: string;
+}
+
 export interface TownTrips {
   town: Town;
   total: number;
   rows: TownRow[];
+  /** Null outside the season, for the smaller towns and when too few trips fit. */
+  holiday: TownHoliday | null;
 }
 
 export function getTown(id: string): Town | null {
@@ -117,7 +130,28 @@ export async function getTownTrips(id: string, lang: Lang = "sk"): Promise<TownT
   // Kids get their own row of trips not already shown above, so the page doesn't repeat itself.
   const kids = outside.filter((r) => r.trip.family_friendly && r.carMin <= 60);
   rows.push(row("S deťmi do hodiny", kids.filter((r) => !shown.has(r.trip.slug))));
-  return { town, total: reach.length, rows: rows.filter((r) => r.tiles.length > 0) };
+  return { town, total: reach.length, rows: rows.filter((r) => r.tiles.length > 0), holiday: holiday() };
+
+  /** Short trips with kids for the Christmas holidays, best known first, each with its "leave by" time. */
+  function holiday(): TownHoliday | null {
+    if (!BIG_TOWNS.includes(town!.id) || !holidayShown(todayMonthDay())) return null;
+    const year = holidayYear(wallClock(new Date()));
+    const sunset = holidaySunset(year, town!.location);
+    if (!sunset) return null;
+    const tiles: TownTile[] = [];
+    for (const r of reach) {
+      const t = tile(r);
+      if (!fitsHoliday({ kids: t.kids, kind: t.kind, carMin: t.carMin, walkMin: t.walkMin, maxEleM: r.trip.max_ele_m, hasClosure: r.trip.closure_rule_ids.length > 0 })) continue;
+      // One tile per place: a second route to the same goal adds nothing here.
+      if (tiles.some((x) => x.name === t.name)) continue;
+      const leaveBy = holidayLeaveBy(year, r.trip.start.location, t.carMin, t.walkMin);
+      if (!leaveBy) continue;
+      tiles.push({ ...t, leaveBy });
+      if (tiles.length === HOLIDAY_TILES) break;
+    }
+    if (tiles.length < HOLIDAY_MIN_TILES) return null;
+    return { tiles: tiles.sort((a, b) => Number(!a.photo) - Number(!b.photo)), sunset };
+  }
 }
 
 /** Towns with enough well-known trips close by to earn the home-page button. */

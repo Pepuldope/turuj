@@ -21,3 +21,11 @@ export function bothLanguages(entries: MetadataRoute.Sitemap, englishTrips?: Set
   });
 }
 
+
+/**
+ * The image sitemap entry (`images`) for a trip's photo: only our own copy (/photos/c/, made by
+ * scripts/fetch-photos.mjs), since a Commons URL is not ours to claim. Undefined when there is none.
+ */
+export function ownImages(photoUrl: string | null | undefined): string[] | undefined {
+  return photoUrl?.startsWith("/photos/c/") ? [absoluteUrl(photoUrl)] : undefined;
+}

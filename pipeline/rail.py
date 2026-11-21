@@ -96,11 +96,24 @@ def feed_end(z):
     return max(ends) if ends else None
 
 
+def feed_start(z):
+    """First day the feed has timetables for: feed_info's start date, else the first calendar day."""
+    names = z.namelist()
+    if "feed_info.txt" in names:
+        start = next(_rows(z, "feed_info.txt"), {}).get("feed_start_date")
+        if start:
+            return _date(start)
+    starts = [_date(r["start_date"]) for r in _rows(z, "calendar.txt")] if "calendar.txt" in names else []
+    starts += [_date(r["date"]) for r in _rows(z, "calendar_dates.txt") if r["exception_type"] == "1"] if "calendar_dates.txt" in names else []
+    return min(starts) if starts else None
+
+
 def build(z, today, n_days):
     # Days past the feed's end (the yearly timetable change in December) have no trains in it yet:
     # leave them out, so the site says "no timetable for this day yet" instead of "no train".
-    end = feed_end(z)
-    days = [d for d in (today + dt.timedelta(days=i) for i in range(n_days)) if end is None or d <= end]
+    # The same for days before its start: the next year's file is out before its first day.
+    start, end = feed_start(z), feed_end(z)
+    days = [d for d in (today + dt.timedelta(days=i) for i in range(n_days)) if (start is None or d >= start) and (end is None or d <= end)]
     runs = service_days(z, days)
 
     agencies, agency_ix = [], {}
@@ -162,13 +175,68 @@ def build(z, today, n_days):
         generated_at=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         feed_version=feed.get("feed_version"),
         feed_end=feed.get("feed_end_date"),
-        attribution="Cestovný poriadok: ŽSR, data.slovensko.sk (CC0)",
+        attribution="Cestovný poriadok: ŽSR, data.slovensko.sk (CC BY)",
         days=[d.strftime("%Y%m%d") for d in days],
         agencies=agencies,
         stations=stations,
         services=services,
         trips=out,
     )
+
+
+def keep_old_days(old, new, today):
+    """`new` with the days before its first day taken from `old`, the timetable file of the last run.
+
+    The next year's file replaces this year's in the catalogue days before it starts (the change is in
+    mid-December). Switching to it at once would leave the days until then without trains; the last
+    run's file still has them."""
+    if not old or old.get("version") != VERSION or not new["days"]:
+        return new
+    first, now = new["days"][0], today.strftime("%Y%m%d")
+    keep = [i for i, d in enumerate(old.get("days", [])) if now <= d < first]
+    if not keep:
+        return new
+    days = [old["days"][i] for i in keep] + new["days"]
+    agencies = list(new["agencies"])
+    stations = [list(s) for s in new["stations"]]
+    station_ix = {tuple(s): i for i, s in enumerate(stations)}
+    services, service_ix = [], {}
+
+    def service(mask):
+        if mask not in service_ix:
+            service_ix[mask] = len(services)
+            services.append(mask)
+        return service_ix[mask]
+
+    trips = [[label, name, agency, service("0" * len(keep) + new["services"][svc]), flat] for label, name, agency, svc, flat in new["trips"]]
+    kept = 0
+    for label, name, agency, svc, flat in old["trips"]:
+        mask = "".join(old["services"][svc][i] for i in keep)
+        if "1" not in mask:
+            continue
+        operator = old["agencies"][agency]
+        if operator not in agencies:
+            agencies.append(operator)
+        flat = list(flat)
+        for j in range(0, len(flat), 3):
+            station = tuple(old["stations"][flat[j]])
+            if station not in station_ix:
+                station_ix[station] = len(stations)
+                stations.append(list(station))
+            flat[j] = station_ix[station]
+        trips.append([label, name, agencies.index(operator), service(mask + "0" * len(new["days"])), flat])
+        kept += 1
+    trips.sort(key=lambda t: (t[4][2], t[0]))
+    log(f"the new file starts on {first}: kept {kept} trains for {days[0]}..{days[len(keep) - 1]} from the last run")
+    return {**new, "days": days, "agencies": agencies, "stations": stations, "services": services, "trips": trips}
+
+
+def read_last(root):
+    """The timetable file of the last run; None when there is none or it cannot be read."""
+    try:
+        return json.loads((Path(root) / "public" / "data" / "rail" / "timetable.json").read_text())
+    except (OSError, ValueError):
+        return None
 
 
 def write(root, data):
@@ -272,6 +340,7 @@ def main(argv=None):
     today = dt.date.fromisoformat(a.today) if a.today else dt.date.today()
     with zipfile.ZipFile(io.BytesIO(blob)) as z:
         data = build(z, today, a.days)
+    data = keep_old_days(read_last(a.root), data, today)
     if not data["trips"]:
         log("no trains in the feed for the coming days; keeping the old file")
         return 1

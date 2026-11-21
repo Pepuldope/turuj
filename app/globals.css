@@ -1082,3 +1082,22 @@ h2,
     transition: none;
   }
 }
+
+/* Home list: the cards "Ukázať ďalšie" adds slide in, one shortly after another (Peter, 20 Nov). `--in` is the card's
+   place among the new ones, capped in components/TripCard.tsx so the last of them doesn't wait long. */
+.card-in {
+  animation: card-in 340ms cubic-bezier(0.2, 0, 0, 1) both;
+  animation-delay: calc(var(--in, 0) * 45ms);
+}
+@keyframes card-in {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+/* Reduced motion: nothing moves, the cards only fade in, from a quarter (no blank frame; see reveal-fade). */
+@media (prefers-reduced-motion: reduce) {
+  .card-in {
+    animation: reveal-fade 150ms ease-out;
+  }
+}

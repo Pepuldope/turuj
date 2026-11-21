@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppScreens } from "@/components/AppScreens";
 import { InfoPage } from "@/components/InfoPage";
 import { pageMetadata } from "@/lib/seo";
 
@@ -16,6 +17,8 @@ export default function HowItWorksPage() {
       title="Ako Túruj funguje"
       intro="Túruj je plánovač jednodňových výletov do hôr a prírody na Slovensku. Za päť minút zistíte, kam ísť, ako sa tam dostanete a kedy najneskôr vyraziť."
     >
+      <AppScreens />
+
       <h2>1. Vyberte, odkiaľ vyrážate a kedy</h2>
       <p>
         Na úvodnej stránke zadajte mesto alebo miesto, odkiaľ pôjdete, a vyberte deň: dnes, zajtra alebo iný. Túruj

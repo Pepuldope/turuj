@@ -6,7 +6,8 @@ import { PhoneTripMap } from "@/components/PhoneTripMap";
 import { UiIcon } from "@/components/UiIcon";
 import { fitOnMap } from "@/lib/mapFocus";
 import { hasKeptMap, keptMapKey } from "@/lib/keptMap";
-import { pickedAnchor, rememberOpenSteps, stepsKeptFromRoutePick } from "@/lib/planUi";
+import { landAfterRoutePick, noteStepWhileRouteLoads, pickedAnchor, rememberOpenSteps, stepsKeptFromRoutePick } from "@/lib/planUi";
+import { markAutoScroll } from "@/lib/motion";
 import { setRouteStepOpen } from "@/lib/routeHover";
 import type { MapFit } from "@/lib/mapFocus";
 import { useT } from "@/lib/i18n";
@@ -58,15 +59,16 @@ const SCROLL_GAP = 12;
 const GLIDE_MS = 650;
 
 /**
- * Scrolls `el` to the top of the window, just under the phone's top bar. The bar's real height is read
- * from the page (its safe-area padding for the notch included) and counted as if it were shown: it comes
- * back whenever the page scrolls up, and a gap that is a little too big when it hides is harmless, one
- * too small would leave the card under the bar. Wide screens have no bar over the column.
+ * Scrolls `el` to the top of the window: just under the phone's top bar when the bar is showing (its real height read
+ * from the page, safe-area padding for the notch included), at the very top when it is hidden. The page's own glide
+ * leaves the bar as it was (lib/motion.ts), so it lines up either way; counted always, the hidden bar left an empty
+ * strip over the step (Peter, 18 Nov). Wide screens have no bar over the column.
  */
 function scrollUnderBar(el: Element | null | undefined) {
   if (!el) return;
   const behavior: ScrollBehavior = reduced() ? "auto" : "smooth";
   const { box, top } = underBar(el);
+  markAutoScroll(behavior === "smooth" ? 900 : 150);
   if (box) box.scrollTo({ top, behavior });
   else window.scrollTo({ top, behavior });
 }
@@ -78,7 +80,8 @@ function underBar(el: Element): { box: HTMLElement | null; top: number } {
   while (box && box !== document.body && !(/(auto|scroll)/.test(getComputedStyle(box).overflowY) && box.scrollHeight > box.clientHeight)) box = box.parentElement;
   if (box && box !== document.body) return { box, top: box.scrollTop + el.getBoundingClientRect().top - box.getBoundingClientRect().top - SCROLL_GAP };
   const phone = window.matchMedia("(max-width: 1023.98px)").matches;
-  const bar = phone ? document.querySelector<HTMLElement>("[data-topbar]") : null;
+  // TopBar sets data-dock: "out" while the bar is slid away.
+  const bar = phone && document.documentElement.dataset.dock !== "out" ? document.querySelector<HTMLElement>("[data-topbar]") : null;
   return { box: null, top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - (bar?.offsetHeight ?? 0) - SCROLL_GAP) };
 }
 
@@ -122,6 +125,7 @@ function glideUnderBar(el: Element, holdMs: number, folding: Element | null, onF
     // Slow at both ends: a hard start on top of the fold moving under it read as a jerk (Peter, 17 Nov).
     const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
     const at = top - dist0 * (1 - eased);
+    markAutoScroll();
     if (box) box.scrollTo({ top: at, behavior: "instant" });
     else window.scrollTo({ top: at, behavior: "instant" });
     const more = clock < ms || now - t0 < holdMs;
@@ -138,11 +142,14 @@ function glideUnderBar(el: Element, holdMs: number, folding: Element | null, onF
  * from the server) so "Ďalej" can fold one and open the next. Nothing is remembered across visits.
  */
 export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDef[]; resultId: string; children: ReactNode }) {
+  // A step the visitor headed to after picking a route, while the route's page was still on its way (lib/planUi.ts).
+  const [landing] = useState(landAfterRoutePick);
   // After picking a route (a new page, same plan) the steps stay as they were.
   const [open, setOpen] = useState<Record<string, boolean>>(() => {
     const kept = stepsKeptFromRoutePick();
     if (!kept) keptDone = {};
-    return kept ?? Object.fromEntries(steps.map((s) => [s.id, !!s.open]));
+    const o = kept ?? Object.fromEntries(steps.map((s) => [s.id, !!s.open]));
+    return landing ? { ...o, [landing.from]: landing.from === landing.to, [landing.to]: true } : o;
   });
   useEffect(() => rememberOpenSteps(open), [open]);
   // The big map lights up other routes only while step 1 is open (C186), however it was shut.
@@ -155,8 +162,9 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
   }, [done]);
   // The new route's page may be taller or shorter above the plan: put the route step back where it stood in the window,
   // so a pick doesn't move the visitor.
+  // Not when the visitor already went on to another step: the glide below takes them there instead.
   useLayoutEffect(() => {
-    const anchor = pickedAnchor();
+    const anchor = landing ? null : pickedAnchor();
     if (anchor === null) return;
     const hold = () => {
       const el = document.getElementById("plan-step-route")?.closest("section");
@@ -165,18 +173,24 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       if (Math.abs(by) < 1) return;
       let box: HTMLElement | null = el.parentElement;
       while (box && box !== document.body && !(/(auto|scroll)/.test(getComputedStyle(box).overflowY) && box.scrollHeight > box.clientHeight)) box = box.parentElement;
+      markAutoScroll();
       if (box && box !== document.body) box.scrollTop += by;
       else window.scrollBy(0, by);
     };
     hold();
     const later = setTimeout(hold, 400);
     return () => clearTimeout(later);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const pending = useRef<{ to: string; from: string; forward: boolean } | null>(null);
+  // Landing after a route pick, the first run of the effect below glides on to the step the visitor headed to.
+  const pending = useRef<{ to: string; from: string; forward: boolean } | null>(landing ? { to: landing.to, from: landing.to, forward: false } : null);
   // Steps that open or fold without their roll, because they do it off the screen (Peter, 17 Nov).
   const [still, setStill] = useState<Record<string, boolean>>({});
   // The step header to keep in place while a step off the screen changes size, until `until`.
   const anchor = useRef<{ el: Element; top: number; until: number } | null>(null);
+  const anchorEl = (el: Element | null | undefined) => {
+    if (el) anchor.current = { el, top: el.getBoundingClientRect().top, until: performance.now() + 600 };
+  };
   const anchorOn = (id: string) => {
     const el = document.getElementById(`plan-step-${id}`)?.closest("section");
     if (el) anchor.current = { el, top: el.getBoundingClientRect().top, until: performance.now() + 600 };
@@ -204,6 +218,7 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     const by = a.el.getBoundingClientRect().top - a.top;
     if (Math.abs(by) < 0.5) return;
     const { box } = underBar(a.el);
+    markAutoScroll();
     if (box) box.scrollTop += by;
     else window.scrollBy({ top: by, behavior: "instant" });
   };
@@ -227,6 +242,7 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
     // at once and with the scroll held (holdAnchor), so nothing moves in view but the glide itself.
     go: (from, to) => {
       const forward = steps.findIndex((s) => s.id === to) > steps.findIndex((s) => s.id === from);
+      noteStepWhileRouteLoads(from, to);
       pending.current = { to, from, forward };
       const fit = fitFor(to);
       if (fit) fitOnMap(fit);
@@ -252,6 +268,7 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       setOpen((o) => ({ ...o, [to]: true }));
     },
     openStep: (id) => {
+      noteStepWhileRouteLoads(id, id);
       pending.current = { to: id, from: id, forward: false };
       const fit = fitFor(id);
       if (fit) fitOnMap(fit);
@@ -259,13 +276,40 @@ export function PlanStepsProvider({ steps, resultId, children }: { steps: StepDe
       setStill((x) => ({ ...x, [id]: false }));
       setOpen((o) => ({ ...o, [id]: true }));
     },
-    // "Hotovo": the last step closes and is ticked like "Ďalej" does for the others (Peter, 17 Nov), then the view
-    // glides to the day, once the step has folded (FOLD_MS) so the target doesn't move under the scroll.
+    // "Hotovo": the last step is ticked like "Ďalej" does for the others (Peter, 17 Nov) and the view glides to the day.
+    // Like "Ďalej", the step folds only once it has left the screen above, at once and with the day held where it is.
+    // Folded first, it pulled everything under it (the day too) up past the top in a quarter second, and the scroll then
+    // came back up for it: "scrolls down rapidly and then back up" (Peter, 18 Nov).
     toResult: (from) => {
       setDone((d) => ({ ...d, [from]: true }));
-      setOpen((o) => ({ ...o, [from]: false }));
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      setTimeout(() => scrollUnderBar(document.getElementById(resultId)), reduce ? 0 : FOLD_MS + 40);
+      const result = document.getElementById(resultId);
+      const left = document.getElementById(`plan-step-${from}`)?.closest("section");
+      glide.current?.();
+      if (!result || !left) {
+        setOpen((o) => ({ ...o, [from]: false }));
+        return;
+      }
+      // Reduced motion: a jump to the day, then the fold with the day held. Folded first, the jump was measured with the
+      // step still open and the fold then pushed the day off the top (found 18 Nov).
+      if (reduced()) {
+        scrollUnderBar(result);
+        anchorEl(result);
+        setStill((x) => ({ ...x, [from]: true }));
+        setOpen((o) => ({ ...o, [from]: false }));
+        return;
+      }
+      let folded = false;
+      glide.current = glideUnderBar(result, 0, null, (end) => {
+        rebaseAnchor();
+        if (folded) return;
+        const { box } = underBar(left);
+        const off = left.getBoundingClientRect().bottom <= (box ? box.getBoundingClientRect().top : 0);
+        if (!off && !end) return;
+        folded = true;
+        anchorEl(result);
+        setStill((x) => ({ ...x, [from]: true }));
+        setOpen((o) => ({ ...o, [from]: false }));
+      });
     },
     isDone: (id) => !!done[id],
     isStill: (id) => !!still[id],
