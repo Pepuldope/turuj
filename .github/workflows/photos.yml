@@ -59,6 +59,7 @@ jobs:
           git config user.name "turuj-data-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           cp public/data/photos.json "$RUNNER_TEMP/photos.json"
+          cp data/photo-waiting.json "$RUNNER_TEMP/photo-waiting.json"
           mkdir -p public/photos/m && cp -r public/photos/m "$RUNNER_TEMP/mly"
           for attempt in 1 2 3; do
             git fetch origin "${GITHUB_REF_NAME}"
@@ -66,16 +67,20 @@ jobs:
             # A run that started before the photo code or the photo files changed on the branch
             # would put its older result over them (31 Oct: a run started before #189 wiped the
             # 132 photos #189 had brought back). Leave those to next week's run instead.
-            if ! git diff --quiet "$GITHUB_SHA" HEAD -- pipeline/photos.py data/photo-overrides.json public/data/photos.json public/photos/m; then
+            if ! git diff --quiet "$GITHUB_SHA" HEAD -- pipeline/photos.py data/photo-overrides.json data/photo-checked.json public/data/photos.json public/photos/m; then
               echo "Photo code or files changed on ${GITHUB_REF_NAME} during this run: not committing."; exit 0
             fi
             cp "$RUNNER_TEMP/photos.json" public/data/photos.json
+            cp "$RUNNER_TEMP/photo-waiting.json" data/photo-waiting.json
             rm -rf public/photos/m && mkdir -p public/photos && cp -r "$RUNNER_TEMP/mly" public/photos/m
-            git add public/data/photos.json public/photos/m
+            git add public/data/photos.json public/photos/m data/photo-waiting.json
             if git diff --cached --quiet; then echo "No changes."; exit 0; fi
+            # data/photo-waiting.json is the list of automatic matches held back for a look: the site
+            # doesn't read it, so a commit that changes only that list needs no deploy.
+            live=true; git diff --cached --quiet -- public/data/photos.json public/photos/m && live=false
             git commit -m "Place photos from Wikimedia Commons"
             if git push origin "HEAD:${GITHUB_REF_NAME}"; then
-              echo "committed=true" >> "$GITHUB_OUTPUT"; exit 0
+              echo "committed=$live" >> "$GITHUB_OUTPUT"; exit 0
             fi
             sleep $((attempt * 5))
           done

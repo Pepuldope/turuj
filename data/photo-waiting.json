@@ -1,0 +1,4 @@
+{
+ "_comment": "Automatic photo matches held back until looked at (pipeline/photos.py). Good ones go to data/photo-checked.json, bad ones to block or no_auto in data/photo-overrides.json.",
+ "waiting": {}
+}
