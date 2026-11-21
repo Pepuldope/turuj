@@ -48,8 +48,8 @@ export default function SourcesPage() {
         </li>
         <li>
           Trains: the <a href="https://www.zsr.sk">ŽSR</a> (Slovak railways) timetable in GTFS format from{" "}
-          <a href="https://data.slovensko.sk">data.slovensko.sk</a>, licence{" "}
-          <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>. Bus lines at stops: data © OpenStreetMap.
+          <a href="https://data.slovensko.sk/datasety/ebeeedf1-aca2-451a-bdc0-35d536714888">data.slovensko.sk</a>, licence CC BY (attribution),
+          converted to our own format. Bus lines at stops: data © OpenStreetMap.
         </li>
         <li>
           Photos of places: <a href="https://commons.wikimedia.org">Wikimedia Commons</a> via{" "}
