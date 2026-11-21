@@ -1,5 +1,6 @@
 import { InfoPage } from "@/components/InfoPage";
-import { SendPhotoButton, photoConsent } from "@/components/SendPhotoButton";
+import { SendPhotoButton } from "@/components/SendPhotoButton";
+import { photoConsent } from "@/lib/photoMail";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
