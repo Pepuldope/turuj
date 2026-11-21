@@ -106,8 +106,10 @@ picked another street). New matches wait in `data/photo-waiting.json`; the place
 
 Looking through the waiting list: view each `url`, then put good files in `photo-checked.json` (`ok`), bad
 ones in `data/photo-overrides.json` (`block`), and a place whose nearby photos never show it in `no_auto`
-(no automatic match at all). The bar: the picture shows the place or the view there. Not a signpost, info
-board, memorial, mast, street, building that isn't the goal, close-up, person or drawing.
+(no automatic match at all). The bar: the picture shows the place, the view there, or something that stands
+at the place and that a visitor would look forward to (Peter, 21 Nov: a summit signpost with the peak's name, a
+summit cross, a carved tree or figure, a footbridge on the route are fine). Not a random road sign, info board,
+mast, street, building that isn't the goal, close-up, person or drawing.
 
 ## Terrain pictures (places without a photo)
 
