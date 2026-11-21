@@ -96,6 +96,21 @@ are hashes of the slug, so they stay the same week to week) and writes only the 
 that changed. A full load (the first one, or after a schema change) writes about 65k rows
 (2026-10-16), so at most one full load fits in a day. `trip_json` (each trip's file, exact text, plus a hash) is outside that schema: it is never dropped and only changed rows are written; a body over one statement's limit is written in pieces.
 
+## Place photos (which ones go live)
+
+`pipeline/photos.py` (weekly, `photos.yml`) writes `public/data/photos.json`. A photo that a person chose
+(Wikidata, Wikipedia lead image, a hand pick) goes live by itself. A photo matched only by where it was taken
+or by its title (`near`, `category`, `area`) goes live **only when its file is listed in
+`data/photo-checked.json`** (Peter, 21 Nov 2026: Revín showed a street, and after blocking it the next run
+picked another street). New matches wait in `data/photo-waiting.json`; the place shows its terrain picture.
+
+Looking through the waiting list: view each `url`, then put good files in `photo-checked.json` (`ok`), bad
+ones in `data/photo-overrides.json` (`block`), and a place whose nearby photos never show it in `no_auto`
+(no automatic match at all). The bar: the picture shows the place, the view there, or something that stands
+at the place and that a visitor would look forward to (Peter, 21 Nov: a summit signpost with the peak's name, a
+summit cross, a carved tree or figure, a footbridge on the route are fine). Not a random road sign, info board,
+mast, street, building that isn't the goal, close-up, person or drawing.
+
 ## Terrain pictures (places without a photo)
 
 About 1,300 of the 2,100 places have no free photo. Instead of a generic hill scene their home-list card and the header

@@ -36,6 +36,10 @@ UA = "Turuj photos (https://github.com/Pepuldope/turuj)"
 INDEX = Path("public/data/trips/index.json")
 OUT = Path("public/data/photos.json")
 OVERRIDES = Path("data/photo-overrides.json")
+# Photos matched by position or title go live only after someone has looked at them (Peter, 2026-11-21:
+# Revín showed a street). CHECKED lists the files that passed; WAITING is what the last run found and held back.
+CHECKED = Path("data/photo-checked.json")
+WAITING = Path("data/photo-waiting.json")
 # One of Wikimedia's standard thumbnail steps (others are re-rounded up to 960 px).
 THUMB_W = 500
 # Licences that allow use on the site with a credit line.
@@ -162,7 +166,9 @@ GENERIC = set("hrad hradu zrucanina zrucaniny vrch vrchol kopec jaskyna jaskyne 
               "sedlo vrchy hora hore hory horou".split())
 # Photos at the place that aren't of it.
 NOT_A_VIEW = re.compile(r"rozcestn|smerovn|guidepost|signpost|\bsign|tabul|tabuľ|\bmap|mapa|plan |plán|informa|"
-                        r"\bdoska|plaque|\berb\b|coat of arms|logo|\binterior|toilet|parkovisk|parking|\.svg|\.pdf|\.tif", re.I)
+                        r"\bdoska|plaque|\berb\b|coat of arms|logo|\binterior|toilet|parkovisk|parking|\.svg|\.pdf|\.tif|"
+                        # 21 Nov photo re-check: masts, statues and memorials standing at the place.
+                        r"vysiela[čc]|transmitter|\bsoch[ay]\b|statue|pomn[íi]k|pam[äa]tn[íi]k|monument", re.I)
 
 
 def names_place(words, title):
@@ -214,6 +220,8 @@ NOT_THE_PLACE = re.compile(r"ulica|street|námestie|namestie|square|interi|cinto
 NOT_A_LANDSCAPE = re.compile(r"\bzoo\b|lynx|\brys\b|insect|hmyz|inaturalist|observation|beetle|butterfl|motýľ|\bbird|crystal|"
                              r"\bISS\d|view of earth|\bZSSK|\bfriends|turn[ée]|concert|koncert|portrét|\.png$", re.I)
 # Kinds out in nature, where a photo taken right there almost always shows the place or its view.
+# Sources that match a photo by where it was taken or what its title says, not by someone choosing it.
+AUTO = ("near", "category", "area")
 AREA_KINDS = {"vrchol", "vyhliadka", "vodopad", "roklina", "pleso", "jaskyna", "chata"}
 AREA_M = 300
 
@@ -409,6 +417,28 @@ def off_topic(info, src):
     return src in ("near", "category", "area") and bool(NOT_OUTDOORS.search(text))
 
 
+def file_of(photo):
+    """The Commons file name of a photos.json entry, as the hand lists spell it."""
+    return urllib.parse.unquote(photo.get("page", "").rsplit("File:", 1)[-1]).replace("_", " ")
+
+
+def choose(cands, info, checked):
+    """The first usable candidate of one place, and the automatic matches held back on the way.
+    cands: [(file, source)], best first. A match by position or title (AUTO) is used only when its
+    file is in `checked`; otherwise it waits for a look. Returns (photo or None, [(file, source)])."""
+    held = []
+    for f, src in cands:
+        name = f.replace("_", " ")
+        meta = info.get(name)
+        if not meta or (src != "picked" and off_topic(meta, src)):
+            continue
+        if src in AUTO and name not in checked:
+            held.append((name, src))
+            continue
+        return {k: v for k, v in meta.items() if k != "cats"} | {"via": src}, held
+    return None, held
+
+
 # Text some authors put in the Artist field instead of a name.
 NOT_A_NAME = re.compile(r"^(i would|please|this (image|file|photo)|when reusing|if you use|own work|unknown|anonym)", re.I)
 
@@ -477,16 +507,22 @@ def main():
     for i, f in fix.get("pick", {}).items():
         if i in cands:
             cands[i].insert(0, (f, "picked"))
+    # Places where a photo matched by position or name was looked at and never shows the place (a hill
+    # among city streets, a hill-climb road full of racing cars): only Wikidata, Wikipedia or a hand pick.
+    no_auto = set(fix.get("no_auto", []))
     for i in cands:
-        cands[i] = [(f, src) for f, src in cands[i] if f.replace("_", " ") not in blocked]
+        cands[i] = [(f, src) for f, src in cands[i]
+                    if f.replace("_", " ") not in blocked and not (i in no_auto and src in AUTO)]
     info = commons_info({f.replace("_", " ") for fs in cands.values() for f, _ in fs})
-    photos = {}
+    checked = {f.replace("_", " ") for f in (json.loads(CHECKED.read_text()).get("ok", []) if CHECKED.exists() else [])}
+    photos, waiting = {}, {}
     for i, fs in cands.items():
-        for f, src in fs:
-            meta = info.get(f.replace("_", " "))
-            if meta and (src == "picked" or not off_topic(meta, src)):
-                photos[i] = {k: v for k, v in meta.items() if k != "cats"} | {"via": src}
-                break
+        photo, held = choose(fs, info, checked)
+        if photo:
+            photos[i] = photo
+        elif held:
+            waiting[i] = dict(name=dest[i]["name"], kind=dest[i].get("kind", ""),
+                              files=[dict(file=f, via=src, url=info[f]["url"]) for f, src in held[:3]])
     # Last resort: a street-level photo from Mapillary (Peter, 2026-10-25).
     token = os.environ.get("MAPILLARY_TOKEN", "")
     if token:
@@ -509,7 +545,9 @@ def main():
         if p.get("via") == "mapillary":
             if i in fix.get("no_mapillary", []) or not (MLY_DIR / p["url"].rsplit("/", 1)[1]).exists():
                 continue
-        elif urllib.parse.unquote(p.get("page", "").rsplit("File:", 1)[-1]).replace("_", " ") in blocked:
+        elif file_of(p) in blocked:
+            continue
+        elif p.get("via") in AUTO and (i in no_auto or file_of(p) not in checked):
             continue
         photos[i] = p
         kept += 1
@@ -527,6 +565,13 @@ def main():
         source="Wikimedia Commons via Wikidata, Wikipedia and OpenStreetMap; Mapillary",
         photos=dict(sorted(photos.items())),
     ), ensure_ascii=False, separators=(",", ":")) + "\n")
+    # No date inside: the file changes only when the list does. A place that kept last week's photo isn't waiting.
+    waiting = {i: w for i, w in sorted(waiting.items()) if i not in photos}
+    WAITING.write_text(json.dumps(dict(
+        _comment="Automatic photo matches held back until looked at (pipeline/photos.py). Good ones go to "
+                 "data/photo-checked.json, bad ones to block or no_auto in data/photo-overrides.json.",
+        waiting=waiting), ensure_ascii=False, indent=1) + "\n")
+    log(f"{len(waiting)} places have an automatic match waiting for a look")
     counts = {s: sum(p["via"] == s for p in photos.values()) for s in ("picked", "wikidata", "wikipedia", "near", "category", "area", "mapillary")}
     log(f"tags {len(tags)}, wikidata {len(qid)}, articles {len(article)}, free photo {len(photos)} of {len(ids)} places {counts}")
     return 0
