@@ -121,6 +121,25 @@ function subscribe(cb: () => void) {
   };
 }
 
+/**
+ * Asks the browser to keep this site's storage (the saved list, the offline pages and map tiles) when the
+ * phone runs low on space; without it a browser may clear them by itself (C203). Chrome and Safari decide
+ * without asking; Firefox asks the visitor, so there it is only called from a tap (saving a trip).
+ */
+export function keepStorage() {
+  try {
+    void navigator.storage?.persist?.().catch(() => {});
+  } catch {
+    // Old browser: nothing to ask.
+  }
+}
+
+/** On page load: a device that already has saved trips (from before keepStorage existed, or refused once). */
+export function keepStorageIfSaved() {
+  if (read().length === 0 || /firefox|fxios/i.test(navigator.userAgent)) return;
+  keepStorage();
+}
+
 export const tripCacheName = (slug: string) => `turuj-trip-${slug}`;
 
 export function useSavedTrips() {
@@ -129,6 +148,7 @@ export function useSavedTrips() {
   /** One saved entry per trail: saving again replaces it. Newest first. */
   const save = useCallback((trip: SavedTrip) => {
     write([trip, ...read().filter((t) => t.slug !== trip.slug)]);
+    keepStorage();
   }, []);
 
   const patch = useCallback((slug: string, change: Partial<SavedTrip>) => {
