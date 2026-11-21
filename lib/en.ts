@@ -465,6 +465,7 @@ export const EN: Record<string, string> = {
   "náročnosť": "difficulty",
   "{level} obtiažnosť": "Difficulty: {level}",
   "{km}, +{up} m, {t} chôdze": "{km}, +{up} m, {t} walking",
+  "{km} · {t} chôdze · +{up} m": "{km} · {t} walking · +{up} m",
   "{t} chôdze, {level}": "{t} walking, {level}",
   "{walk}, túra kratšia o {km} km": "{walk}, hike {km} km shorter",
   "Odtiaľ {walk}.": "From there {walk}.",

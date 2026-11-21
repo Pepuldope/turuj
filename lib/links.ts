@@ -6,6 +6,7 @@
 import { tr } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 import { haversineM } from "@/lib/geo";
+import { formatDistance, formatDuration } from "@/lib/format";
 import type { LatLng } from "@/lib/types";
 import type { StartPoint } from "@/lib/userLocation";
 
@@ -82,6 +83,14 @@ export function readSharedPlan(search: string): SharedPlan | null {
   };
 }
 
+/** The walk in three numbers, as the trip page states them. */
+export interface WalkFacts {
+  distanceM: number;
+  /** Walking time of the whole walk, minutes, no breaks. */
+  walkMin: number;
+  ascentM: number;
+}
+
 export interface ShareTextInput {
   name: string;
   /** "sobota 17. 10." */
@@ -89,19 +98,27 @@ export interface ShareTextInput {
   withKids: boolean;
   /** The trail is closed on the shared day: the message says so right under the title (safety, kept on purpose). */
   closedOnDay?: boolean;
+  /** Length, walking time and climb: one line that is true for whoever reads it. */
+  facts?: WalkFacts;
   url: string;
 }
 
 /**
- * Chat-ready message: the title line and the trip's link, nothing else (Peter, 15 Nov 2026: the longer message with
- * the meeting place and walk facts was confusing; the trip page holds the plan). The one extra line is the closure
- * warning on a closed day, because closure data is safety data.
+ * Chat-ready message: the title line, one line of walk facts and the trip's link (Peter, 15 Nov 2026: the longer message
+ * with the meeting place and times was confusing; the trip page holds the plan. 21 Nov, C78 + C74: length, walking time
+ * and climb come back as one line, because they are true whoever receives it: a friend, family, or someone only told
+ * where the group is going). No times and nothing about the reader. The closure warning stays on a closed day, because
+ * closure data is safety data.
  */
 export function shareText(i: ShareTextInput, lang: Lang = "sk"): string {
   const t = (sk: string) => tr(lang, sk);
   return [
     `${i.name} · ${i.dayLabel}${i.withKids ? t(" (s deťmi)") : ""}`,
     ...(i.closedOnDay ? [t("Pozor, chodník je v tento deň uzavretý.")] : []),
+    // Plain spaces: chat apps show a non-breaking space as an odd gap or break the line at it anyway.
+    ...(i.facts
+      ? [tr(lang, "{km} · {t} chôdze · +{up} m", { km: formatDistance(i.facts.distanceM, lang), t: formatDuration(i.facts.walkMin), up: String(i.facts.ascentM) }).replaceAll("\u00a0", " ")]
+      : []),
     `${t("Výlet je na turuj.sk:")} ${i.url}`,
   ].join("\n");
 }
