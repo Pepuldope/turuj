@@ -152,6 +152,29 @@ export async function getAllTripSlugs(): Promise<string[]> {
     .sort();
 }
 
+/**
+ * The other routes of every place, as summaries, from data/trip-variants.json.
+ * Build only (the sitemap): the file is read from the disk and never imported, so its 4,000 routes
+ * stay out of the Worker's code bundle (lib/assetBudget.test.ts).
+ */
+export async function getTripVariants(): Promise<TripSummary[]> {
+  const { readFile } = await import("node:fs/promises");
+  const { join } = await import("node:path");
+  const file = JSON.parse(await readFile(join(process.cwd(), "data", "trip-variants.json"), "utf8")) as { trips: TripSummary[] };
+  return file.trips;
+}
+
+/**
+ * The day each trip's file last changed, `{slug: "YYYY-MM-DD"}`, from data/trip-lastmod.json
+ * (pipeline/lastmod.py). Build only, like getTripVariants: read from the disk, never imported.
+ */
+export async function getTripLastmod(): Promise<Record<string, string>> {
+  const { readFile } = await import("node:fs/promises");
+  const { join } = await import("node:path");
+  const file = JSON.parse(await readFile(join(process.cwd(), "data", "trip-lastmod.json"), "utf8")) as { dates: Record<string, string> };
+  return file.dates;
+}
+
 /** A free-licence photo of a trip's destination from Wikimedia Commons or Mapillary (pipeline/photos.py). */
 export interface PlacePhoto {
   url: string;

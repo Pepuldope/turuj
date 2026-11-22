@@ -5,6 +5,7 @@ import { trailDetailFrom } from "@/lib/data";
 import { getLoop, getTrip } from "@/lib/tripFiles";
 import { TripSheet } from "@/components/TripSheet";
 import { langPath, tr } from "@/lib/lang";
+import { redirectTarget } from "@/lib/slugRedirects";
 import type { Lang } from "@/lib/lang";
 
 const loadLoop = cache(async (slug: string) => {
@@ -25,6 +26,9 @@ export async function LoopTrip({ slug, lang }: { slug: string; lang: Lang }) {
   const loop = await loadLoop(slug);
   if (!loop) {
     if (await getTrip(slug)) permanentRedirect(langPath(lang, `/trasa/${slug}`));
+    // A retired trip (data/slug-redirects.json): its target's trip page, not a loop of it.
+    const moved = redirectTarget(slug);
+    if (moved && (await getTrip(moved))) permanentRedirect(langPath(lang, `/trasa/${moved}`));
     notFound();
   }
   return <TripSheet trip={loop.trip} detail={loop.detail} loopBack={loop.back} lang={lang} />;

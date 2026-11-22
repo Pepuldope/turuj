@@ -20,6 +20,8 @@ binding on Cloudflare, the disk elsewhere). Small bundled data: `lib/trips.ts`.
 | `public/gpx/<main slug>.gpx` | full-resolution GPX of every route to a place, main route first, each `<trk>` with its trip's slug in `<desc>`; a trip's `gpx_url` is `/gpx/<main slug>.gpx`, or `…#<slug>` for another route | pipeline |
 | `data/terrain.json` | The real skyline of every place without a photo, banner and card windows (build-time only, not a static asset; also the weekly job's cache) | `pipeline/terrain.py` |
 | `public/data/terrain-cards.json` | The card windows only, `{v, places: {id: [kind, near, mid, far]}, trips: {slug: id}}`, the one static file the terrain pictures add | `pipeline/terrain.py` |
+| `data/slug-redirects.json` | `{redirects: {old slug: new slug}}`: slugs that changed or routes that were retired; the trip page answers them with a permanent redirect to a trip that exists (`lib/slugRedirects.ts`, `pipeline/redirects.py`) | pipeline |
+| `data/trip-lastmod.json` | `{dates: {slug: "YYYY-MM-DD"}}`: the day each trip's file last changed (bytes differ from the week before, or the trip is new); the sitemap's `lastModified`, so it is not the build day (`pipeline/lastmod.py`) | pipeline |
 | `data/closure-rules.json` | `ClosureRules`: seasonal and one-off closures, each with an official source and check date | by hand |
 | `data/fee-rules.json` | `FeeRules`: entry fees OSM doesn't carry, each with a source | by hand |
 | `data/pipeline-report.md` | counts, regressions against the 10 hand-picked trips, unresolved rule names | pipeline |

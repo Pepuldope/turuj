@@ -6,6 +6,7 @@ import { getRouteWalks, getTrip, withLoopRoutes } from "@/lib/tripFiles";
 import { UiIcon } from "@/components/UiIcon";
 import { RouteCompare } from "@/components/RouteCompare";
 import { langPath, tr } from "@/lib/lang";
+import { redirectTarget } from "@/lib/slugRedirects";
 import type { Lang } from "@/lib/lang";
 
 const loadTrip = cache((slug: string) => getTrip(slug));
@@ -22,7 +23,12 @@ export async function compareMetadata(slug: string, lang: Lang): Promise<Metadat
 /** Every route to one place on one map, side by side, to pick from. */
 export async function RoutesCompareView({ slug, lang }: { slug: string; lang: Lang }) {
   const trip = await loadTrip(slug);
-  if (!trip) notFound();
+  if (!trip) {
+    // A retired trip (data/slug-redirects.json): its target's trip page, not a comparison.
+    const moved = redirectTarget(slug);
+    if (moved && (await loadTrip(moved))) permanentRedirect(langPath(lang, `/trasa/${moved}`));
+    notFound();
+  }
   const base = trip.routes ?? [];
   if (base.length < 2) permanentRedirect(langPath(lang, `/trasa/${slug}`));
   // Loops are compared with the rest, each as its own route (Peter, 2026-10-24).

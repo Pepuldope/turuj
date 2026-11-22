@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
-import { getAllTrips, getTripPhoto } from "@/lib/tripFiles";
+import { getAllTrips, getTripLastmod, getTripPhoto, getTripVariants } from "@/lib/tripFiles";
 import { EN_TRIPS_AHEAD, absoluteUrl } from "@/lib/site";
 import { getTowns } from "@/lib/trips";
 import { SATELLITE_TOWNS } from "@/lib/townTrips";
-import { bothLanguages, ownImages } from "@/lib/sitemapEntries";
+import { bothLanguages, tripEntries } from "@/lib/sitemapEntries";
 import { SITEMAP_GROUPS, type SitemapGroup } from "@/lib/sitemapGroups";
 
 // Built once per deploy (every push to main, including the weekly trip refresh), so new
@@ -23,26 +23,29 @@ export async function generateSitemaps() {
 export default async function sitemap(props: { id: Promise<string> }): Promise<MetadataRoute.Sitemap> {
   const id = (await props.id) as SitemapGroup;
   if (id === "trasy") {
-    // Best known first. Next.js writes `images` as <image:image> (namespace included); only built once per
-    // deploy (force-static above), so the photo lookups cost the Worker nothing at run time.
-    const trips = [...(await getAllTrips())].sort((a, b) => b.rank - a.rank);
-    const photos = await Promise.all(trips.map((t) => getTripPhoto(t.slug, t.destination.osm)));
+    // Best known first, each place's other routes right after it (only those of well-known places, lib/variantTitles.ts).
+    // Next.js writes `images` as <image:image> (namespace included); only built once per deploy (force-static
+    // above), so the photo lookups and the two data files (read from the disk, never bundled) cost the Worker nothing.
+    const mains = [...(await getAllTrips())].sort((a, b) => b.rank - a.rank);
+    const photos = await Promise.all(mains.map((t) => getTripPhoto(t.slug, t.destination.osm)));
+    const photoUrls = Object.fromEntries(mains.map((t, i) => [t.slug, photos[i]?.url]));
+    // The routes are Slovak only: only main trips are in this set, so they get no /en entry and no `en` alternate.
     return bothLanguages(
-      trips.map((t, i) => ({ url: absoluteUrl(`/trasa/${t.slug}`), changeFrequency: "weekly" as const, priority: 0.8, images: ownImages(photos[i]?.url) })),
-      new Set(trips.slice(0, EN_TRIPS_AHEAD).map((t) => t.slug))
+      tripEntries(mains, await getTripVariants(), await getTripLastmod(), photoUrls),
+      new Set(mains.slice(0, EN_TRIPS_AHEAD).map((t) => t.slug))
     );
   }
   if (id === "mesta") {
     return bothLanguages([
-      { url: absoluteUrl("/vylety-z"), changeFrequency: "weekly" as const, priority: 0.6 },
+      { url: absoluteUrl("/vylety-z") },
       // Satellite towns are noindex (lib/townTrips.ts SATELLITE_TOWNS), so they're not offered here either.
       ...getTowns()
         .filter((t) => !SATELLITE_TOWNS[t.id])
-        .map((t) => ({ url: absoluteUrl(`/vylety-z/${t.id}`), changeFrequency: "weekly" as const, priority: 0.6 })),
+        .map((t) => ({ url: absoluteUrl(`/vylety-z/${t.id}`) })),
     ]);
   }
   return bothLanguages([
-    { url: absoluteUrl("/"), changeFrequency: "daily", priority: 1 },
-    ...INFO_PAGES.map((path) => ({ url: absoluteUrl(path), changeFrequency: "yearly" as const, priority: 0.2 })),
+    { url: absoluteUrl("/") },
+    ...INFO_PAGES.map((path) => ({ url: absoluteUrl(path) })),
   ]);
 }
