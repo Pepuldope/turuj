@@ -7,7 +7,7 @@ from xml.sax.saxutils import escape
 
 import numpy as np
 
-from . import names, search
+from . import lastmod, names, search
 from .geo import LocalProjection, rdp_indices
 
 DETAIL_ONLY = ("path", "turnaround_index", "marking_runs", "parking_alternatives", "transit_alternatives", "pois", "routes")
@@ -28,6 +28,7 @@ def write(root, trips, dem, drive, slugs, report, osm_data_at, now=None):
     tdir.mkdir(parents=True, exist_ok=True)
     gdir.mkdir(parents=True, exist_ok=True)
     keep = {t["slug"] for t in trips}
+    files_before = lastmod.snapshot(root)  # before any trip file is deleted or rewritten
     for f in tdir.glob("*.json"):
         if f.name not in ("index.json", "list.json") and f.stem not in keep:
             f.unlink()
@@ -83,6 +84,8 @@ def write(root, trips, dem, drive, slugs, report, osm_data_at, now=None):
 
     (root / "pipeline" / "slugs.json").write_text(json.dumps(dict(sorted(slugs.items())), ensure_ascii=False, indent=1) + "\n")
     (root / "data" / "pipeline-report.md").write_text(_report(trips, report, now, osm_data_at, drive))
+    # The day each trip's file last changed, for the sitemap (data/trip-lastmod.json).
+    lastmod.write(root, lastmod.update(lastmod.load(root), files_before, lastmod.snapshot(root), now[:10]))
     # what the home search finds besides trip names: starts, car parks, stops, huts by every trip
     search.write(root, search.load_trips(tdir))
 

@@ -14,7 +14,7 @@ const TOP = 40;
 export async function GET() {
   const all = await getAllTrails();
   const trails = all.slice(0, TOP);
-  // F8: the sitemap lists the main routes only; the other routes of a place (variants, /okruh) are reached from their main page.
+  // F8: the sitemap lists the main routes, plus the other routes of the well-known places (C43); the rest (other variants, /okruh) are reached from their main page.
   const mainCount = all.length;
   const totalCount = (await getAllTripSlugs()).length;
   const round = (n: number) => Math.round(n / 10) * 10;

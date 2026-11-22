@@ -18,7 +18,7 @@ import yaml
 from . import drive as drive_mod
 from . import areas, border, maplines
 from . import osm as osm_mod
-from . import publish
+from . import publish, redirects
 from . import walks
 from .dem import Dem
 from .graph import Graph
@@ -110,6 +110,8 @@ def main(argv=None):
     overrides = yaml.safe_load((root / "pipeline" / "overrides.yaml").read_text()) or {}
     slugs_file = root / "pipeline" / "slugs.json"
     slugs = json.loads(slugs_file.read_text()) if slugs_file.exists() else {}
+    slugs_before = dict(slugs)
+    published = redirects.previous(root)
     probe_names = {n for r in closures + fees for n in (r.get("selector") or {}).get("probes", [])}
     boxes = [b for r in cfg["regions"] for b in r["bboxes"]]
 
@@ -195,6 +197,11 @@ def main(argv=None):
         walks.add(a.osrm_foot, trips, log)
 
     publish.write(root, trips, dem, drive, slugs, tb.report, a.osm_timestamp)
+    # Slugs this build changed (a key's slug differs from last week's), and the old addresses that still lead somewhere.
+    renames = {v: slugs[k] for k, v in slugs_before.items() if k in slugs and slugs[k] != v}
+    table = redirects.update(redirects.load(root), published, {t["slug"] for t in trips}, renames)
+    redirects.write(root, table)
+    log(f"slug redirects: {len(table)}")
     log("map lines: %d trips in %d cells" % maplines.write(root))
     if osm.border is not None:
         log("map border: %d points" % border.write(root, osm.border))
