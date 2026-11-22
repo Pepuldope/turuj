@@ -102,6 +102,8 @@ async function download(url: string, file: string, deadline: number): Promise<bo
   return false;
 }
 
+// Playwright is loaded by name at run time (it may be missing), so there are no types to lean on.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function loadPlaywright(): Promise<any | null> {
   for (const name of ["playwright", "playwright-core"]) {
     try {
@@ -210,6 +212,7 @@ async function main() {
     else {
       const tmp = mkdtempSync(join(tmpdir(), "share-pics-"));
       const deadline = Date.now() + TIME_CAP_MS;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let browser: any;
       try {
         browser = await (pw.chromium ?? pw.default?.chromium).launch();
