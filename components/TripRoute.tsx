@@ -4,7 +4,8 @@ import { cache } from "react";
 import { routeWalk, trailDetailFrom } from "@/lib/data";
 import { pickWalk } from "@/lib/walkFacts";
 import { getTripLive } from "@/lib/tripDb";
-import { englishTripsAhead, getTripPhoto, shareImage } from "@/lib/tripFiles";
+import { englishTripsAhead, getTerrainShare, getTripPhoto, shareImage } from "@/lib/tripFiles";
+import { terrainKeyOf } from "@/lib/terrainScene";
 import { formatDistance, formatDuration } from "@/lib/format";
 import { TripSheet } from "@/components/TripSheet";
 import { pageMetadata } from "@/lib/seo";
@@ -30,6 +31,8 @@ export async function tripMetadata(slug: string, lang: Lang): Promise<Metadata> 
   const { trail } = detail;
   const { trip } = loaded;
   const photo = await getTripPhoto(trail.slug, trip.destination.osm);
+  // No photo: the drawn terrain card, when the share-pics job made one for this place.
+  const terrainShare = photo ? null : await getTerrainShare(terrainKeyOf({ destination: trip.destination, variant_of: trip.variant_of, slug: trail.slug }));
   // The same walk as the page's facts (from the default parking), so search results don't show another number.
   const w = pickWalk(routeWalk(detail), false, detail.parkingLots.length > 0);
   // One distance for the title and the description: the walk the page shows, not the bare trail's.
@@ -61,7 +64,11 @@ export async function tripMetadata(slug: string, lang: Lang): Promise<Metadata> 
     lang,
     english: (await englishTripsAhead()).has(trail.slug),
     // Shared links and search results show the place itself when Commons has a photo of it.
-    ...(photo ? { image: { ...shareImage(photo), alt: trail.name } } : {}),
+    ...(photo
+      ? { image: { ...shareImage(photo), alt: trail.name } }
+      : terrainShare
+        ? { image: { url: terrainShare, width: 1200, height: 630, alt: trail.name } }
+        : {}),
   });
 }
 

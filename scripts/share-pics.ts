@@ -5,6 +5,8 @@
 // which lib/tripFiles.ts shareImage() prefers. The hash covers the template and everything drawn, so a
 // cached file is reused only when nothing about it changed. Never fails a deploy: a problem prints a
 // ::warning:: and the page keeps the raw photo as its og:image.
+// Places without a photo get the same card with their drawn terrain picture instead of the photo (lib/terrainScene.ts,
+// data/terrain.json): files in the same folder, recorded in data/share-terrain.json, read by getTerrainShare().
 // Usage: npx vite-node scripts/share-pics.ts [--plan] [--limit N] [--keys k1,k2] [--out DIR] [--photos FILE] [--no-write]
 // Local runs without playwright installed here: PLAYWRIGHT_PATH=<dir holding node_modules/playwright-core>.
 import { createHash } from "node:crypto";
@@ -14,6 +16,8 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { kindSvg } from "../lib/kindIcons";
 import { GOAL_COLOUR, POI_COLOUR } from "../lib/palette";
+import { bannerScene, terrainKeyOf, type PackedLayers } from "../lib/terrainScene";
+import type { DestinationKind } from "../lib/tripSchema";
 import type { PlacePhoto } from "../lib/tripFiles";
 
 /** Bump when the picture's look changes: every cached file is then made again. */
@@ -55,8 +59,35 @@ export function hashOf(key: string, source: string, name: string, kind: string, 
   return createHash("sha1").update(TEMPLATE_VERSION + key + source + name + kind + p.author + p.license).digest("hex").slice(0, 12);
 }
 
+/** Hash of a terrain card: the template, the place, and the picture drawn (its SVG covers the layers and the drawing code). */
+export function terrainHashOf(key: string, name: string, kind: string, svg: string): string {
+  const drawn = createHash("sha1").update(svg).digest("hex");
+  return createHash("sha1").update(`${TEMPLATE_VERSION}${key}${name}${kind}terrain${drawn}`).digest("hex").slice(0, 12);
+}
+
+export interface TerrainPlace { k: DestinationKind; banner: PackedLayers }
+
+/** The scene of a place as the trip page draws it (components/TripSheet.tsx): SVG markup. */
+export function terrainSvgOf(key: string, t: TerrainPlace): string {
+  return bannerScene(key, t.k, t.banner).svg;
+}
+
+/** Keys that get a terrain card: in terrain.json, no photo, and a known place. */
+export function terrainKeys(terrain: Record<string, TerrainPlace>, photos: Record<string, unknown>, places: Map<string, Place>): string[] {
+  return Object.keys(terrain).filter((k) => !photos[k] && places.has(k));
+}
+
 /** Each place's name and kind, by photo key as lib/tripFiles.ts getTripPhoto() finds it; the first trip wins. */
 function placesFromTrips(): Map<string, Place> {
+  return readTrips((t, d, keys) => d.osm ?? keys[t.slug] ?? `trip/${t.slug}`);
+}
+
+/** The same, by the key the trip page finds its terrain picture under (terrainKeyOf); a place's main trip wins over its variants. */
+function terrainPlacesFromTrips(): Map<string, Place> {
+  return readTrips((t, d) => terrainKeyOf({ destination: d, variant_of: t.variant_of, slug: t.slug }), true);
+}
+
+function readTrips(keyOf: (t: { slug: string; variant_of?: string | null }, d: { osm?: string | null }, keys: Record<string, string>) => string, mainFirst = false): Map<string, Place> {
   const dir = join(ROOT, "public", "data", "trips");
   let keys: Record<string, string> = {};
   try {
@@ -65,13 +96,18 @@ function placesFromTrips(): Map<string, Place> {
     // absent: every trip uses its own key
   }
   const out = new Map<string, Place>();
+  const fromVariant = new Set<string>();
   for (const f of readdirSync(dir).filter((x) => x.endsWith(".json") && x !== "index.json" && x !== "list.json").sort()) {
     try {
       const t = JSON.parse(readFileSync(join(dir, f), "utf8"));
       const d = t?.destination;
       if (!t?.slug || !d?.name || !d?.kind) continue;
-      const key: string = d.osm ?? keys[t.slug] ?? `trip/${t.slug}`;
-      if (!out.has(key)) out.set(key, { key, name: String(d.name), kind: String(d.kind) });
+      const key = keyOf(t, d, keys);
+      if (!out.has(key) || (mainFirst && fromVariant.has(key) && !t.variant_of)) {
+        out.set(key, { key, name: String(d.name), kind: String(d.kind) });
+        if (t.variant_of) fromVariant.add(key);
+        else fromVariant.delete(key);
+      }
     } catch {
       // unreadable trip file: skip it
     }
@@ -138,9 +174,8 @@ function colourOf(kind: string): string {
   return (GOAL_COLOUR as Record<string, string>)[kind] ?? (POI_COLOUR as Record<string, string>)[kind] ?? "#5b6455";
 }
 
-function pageHtml(place: Place, p: PlacePhoto, photoFile: string): string {
-  const author = p.author.length > 40 ? `${p.author.slice(0, 39)}…` : p.author;
-  const archive = p.via === "mapillary" ? "Mapillary" : "Wikimedia Commons";
+/** The card around a background: dark gradient, logo pill, kind tile and name, credit line top-right. */
+function shellHtml(place: Place, background: string, credit: string): string {
   const glyph = (kindSvg as (k: string, s: number) => string)(place.kind, Math.round(TILE * 0.62 * 100) / 100);
   return `<!DOCTYPE html><html lang="sk"><head><meta charset="utf-8"><style>${fontFace("Bric", "800", "bricolage-grotesque-latin-800.woff2")}
 ${fontFace("Bric", "800", "bricolage-grotesque-latin-ext-800.woff2", "unicode-range:U+0100-02BA;")}
@@ -149,18 +184,32 @@ ${fontFace("Fig", "400 800", "figtree-latin-ext.woff2", "unicode-range:U+0100-02
 *{box-sizing:border-box;margin:0;padding:0}body{width:${W}px;height:${H}px;overflow:hidden;position:relative;font-family:Fig,system-ui,sans-serif;color:#14233b;background:#f5f9fc}
 .ph{position:absolute;object-fit:cover;display:block}.d{font-family:Bric,Fig,sans-serif;font-weight:800;letter-spacing:-.02em;line-height:1}
 .cr{position:absolute;font-size:15px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)}
-#nm{width:${NAME_W}px;font-size:84px;white-space:nowrap;overflow:hidden}</style></head><body><img class="ph" id="ph" src="file://${photoFile}" style="inset:0;width:${W}px;height:${H}px;object-position:50% 45%">
+#nm{width:${NAME_W}px;font-size:84px;white-space:nowrap;overflow:hidden}</style></head><body>${background}
 <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25) 0,transparent 35%,rgba(0,0,0,.72) 100%)"></div>
 <div style="position:absolute;left:44px;top:40px;background:#fff;border-radius:999px;padding:14px 26px 12px">${LOGO}</div>
 <div style="position:absolute;left:44px;right:44px;bottom:44px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.5);display:flex;align-items:center;gap:${GAP}px"><span style="display:grid;place-items:center;width:${TILE}px;height:${TILE}px;border-radius:19.2px;background:color-mix(in srgb,${colourOf(place.kind)} 88%,#000);flex:none;color:#fff">${glyph}</span><div class="d" id="nm">${esc(place.name)}</div></div>
-<span class="cr" style="right:20px;top:20px">${esc(`Foto: ${author}, ${p.license}, ${archive}`)}</span></body></html>`;
+<span class="cr" style="right:20px;top:20px">${esc(credit)}</span></body></html>`;
+}
+
+function pageHtml(place: Place, p: PlacePhoto, photoFile: string): string {
+  const author = p.author.length > 40 ? `${p.author.slice(0, 39)}…` : p.author;
+  const archive = p.via === "mapillary" ? "Mapillary" : "Wikimedia Commons";
+  const bg = `<img class="ph" id="ph" src="file://${photoFile}" style="inset:0;width:${W}px;height:${H}px;object-position:50% 45%">`;
+  return shellHtml(place, bg, `Foto: ${author}, ${p.license}, ${archive}`);
+}
+
+/** The terrain card: the drawn picture (cover, anchored at the bottom) on the kind's colour, as on the trip page. */
+export function terrainPageHtml(place: Place, svg: string): string {
+  const colour = (GOAL_COLOUR as Record<string, string>)[place.kind] ?? GOAL_COLOUR.ine;
+  const bg = `<div style="position:absolute;inset:0;background:${colour}">${svg}</div>`;
+  return shellHtml(place, bg, "Výškové dáta: AWS Terrain Tiles (Mapzen)");
 }
 
 /** Sizes the name in the page: one line from 84 px down to 64, else two lines from 72 down to 52, else 44 px clipped. */
 const FIT = `(async () => {
   await document.fonts.ready;
   const img = document.getElementById("ph");
-  await img.decode();
+  if (img) await img.decode();
   const el = document.getElementById("nm");
   const oneLine = () => el.scrollWidth <= el.clientWidth + 0.5;
   const twoLines = (s) => el.scrollWidth <= el.clientWidth + 0.5 && el.getBoundingClientRect().height <= s * 1.05 * 2 + 1;
@@ -183,8 +232,10 @@ async function main() {
 
   const json = JSON.parse(readFileSync(photosFile, "utf8")) as { photos: Record<string, PlacePhoto & { share?: string }> };
   const places = placesFromTrips();
+  const terrainFile = resolve(join(ROOT, "data", "share-terrain.json"));
 
   interface Job { place: Place; photo: PlacePhoto; src: { url?: string; file?: string }; hash: string; file: string }
+  interface TJob { place: Place; svg: string; hash: string; file: string }
   const jobs: Job[] = [];
   for (const [key, photo] of Object.entries(json.photos)) {
     const place = places.get(key);
@@ -197,16 +248,36 @@ async function main() {
   const scoped = jobs.filter((j) => !only || only.has(j.place.key)).slice(0, limit);
   const missing = scoped.filter((j) => !has(j.file));
 
+  // Terrain cards: places in data/terrain.json with no photo.
+  const tJobs: TJob[] = [];
+  try {
+    const terrain = (JSON.parse(readFileSync(join(ROOT, "data", "terrain.json"), "utf8")) as { places: Record<string, TerrainPlace> }).places;
+    const tPlaces = terrainPlacesFromTrips();
+    for (const key of terrainKeys(terrain, json.photos, tPlaces)) {
+      const place = tPlaces.get(key)!;
+      const svg = terrainSvgOf(key, terrain[key]);
+      const hash = terrainHashOf(key, place.name, place.kind, svg);
+      tJobs.push({ place, svg, hash, file: join(outDir, `${hash}.jpg`) });
+    }
+  } catch (e) {
+    warn(`no terrain cards (${(e as Error).message})`);
+  }
+  const tScoped = tJobs.filter((j) => !only || only.has(j.place.key)).slice(0, limit);
+  const tMissing = tScoped.filter((j) => !has(j.file));
+  const queue: (Job | TJob)[] = [...missing, ...tMissing];
+
   if (flag("--plan")) {
-    console.log(`share pictures: ${missing.length} missing of ${scoped.length}`);
-    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `missing=${missing.length}\n`);
+    console.log(`share pictures: ${queue.length} missing of ${scoped.length + tScoped.length} (photos ${missing.length} of ${scoped.length}, terrain ${tMissing.length} of ${tScoped.length})`);
+    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `missing=${queue.length}\n`);
     return;
   }
 
   mkdirSync(outDir, { recursive: true });
   let made = 0;
   let failed = 0;
-  if (missing.length) {
+  let tMade = 0;
+  let tFailed = 0;
+  if (queue.length) {
     const pw = await loadPlaywright();
     if (!pw) warn("playwright is not installed; nothing rendered");
     else {
@@ -220,27 +291,36 @@ async function main() {
         const worker = async (n: number) => {
           const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
           const page = await ctx.newPage();
-          while (next < missing.length) {
-            const j = missing[next++];
-            if (Date.now() > deadline) { failed++; continue; }
+          while (next < queue.length) {
+            const j = queue[next++];
+            const terrain = "svg" in j;
+            if (Date.now() > deadline) { if (terrain) tFailed++; else failed++; continue; }
             try {
-              let photoFile = j.src.file;
-              if (!photoFile) {
-                photoFile = join(tmp, `${j.hash}.src`);
-                if (!(await download(j.src.url!, photoFile, deadline))) throw new Error(`download failed: ${j.src.url}`);
-              }
-              if (!has(photoFile)) throw new Error(`photo file missing: ${photoFile}`);
               const html = join(tmp, `${n}.html`);
-              writeFileSync(html, pageHtml(j.place, j.photo, photoFile));
+              let photoFile: string | undefined;
+              if (terrain) writeFileSync(html, terrainPageHtml(j.place, j.svg));
+              else {
+                photoFile = j.src.file;
+                if (!photoFile) {
+                  photoFile = join(tmp, `${j.hash}.src`);
+                  if (!(await download(j.src.url!, photoFile, deadline))) throw new Error(`download failed: ${j.src.url}`);
+                }
+                if (!has(photoFile)) throw new Error(`photo file missing: ${photoFile}`);
+                writeFileSync(html, pageHtml(j.place, j.photo, photoFile));
+              }
               await page.goto(`file://${html}`, { waitUntil: "load" });
               await page.evaluate(FIT);
               const buf: Buffer = await page.screenshot({ type: "jpeg", quality: 72 });
               writeFileSync(`${j.file}.part`, buf);
               renameSync(`${j.file}.part`, j.file);
-              made++;
-              if (j.src.url) rmSync(photoFile, { force: true });
+              if (terrain) tMade++;
+              else {
+                made++;
+                if (j.src.url) rmSync(photoFile!, { force: true });
+              }
             } catch (e) {
-              failed++;
+              if (terrain) tFailed++;
+              else failed++;
               warn(`${j.place.key}: ${(e as Error).message}`);
             }
           }
@@ -250,6 +330,7 @@ async function main() {
       } catch (e) {
         warn(`rendering stopped: ${(e as Error).message}`);
         failed = missing.filter((j) => !has(j.file)).length;
+        tFailed = tMissing.filter((j) => !has(j.file)).length;
       } finally {
         await browser?.close().catch(() => {});
         rmSync(tmp, { recursive: true, force: true });
@@ -267,14 +348,28 @@ async function main() {
       } else delete json.photos[j.place.key].share;
     }
     writeFileSync(photosFile, `${JSON.stringify(json)}\n`);
+    const pictures: Record<string, string> = {};
+    for (const j of tJobs) {
+      if (has(j.file)) {
+        pictures[j.place.key] = publicPath(j.hash);
+        wanted.add(`${j.hash}.jpg`);
+      }
+    }
+    writeFileSync(terrainFile, `${JSON.stringify({ version: 1, pictures })}\n`);
     for (const f of readdirSync(outDir)) if (!wanted.has(f)) rmSync(join(outDir, f), { force: true });
   }
-  console.log(`share pictures: ${scoped.length} total, ${scoped.length - missing.length} reused, ${made} made, ${failed} failed`);
+  console.log(
+    `share pictures: photos: ${scoped.length} total, ${scoped.length - missing.length} reused, ${made} made, ${failed} failed; ` +
+      `terrain: ${tScoped.length} total, ${tScoped.length - tMissing.length} reused, ${tMade} made, ${tFailed} failed`,
+  );
 }
 
-try {
-  await main();
-} catch (e) {
-  warn(`skipped (${(e as Error).message})`);
+// Not under vitest, which imports the pure functions above.
+if (!process.env.VITEST) {
+  try {
+    await main();
+  } catch (e) {
+    warn(`skipped (${(e as Error).message})`);
+  }
+  process.exit(0);
 }
-process.exit(0);

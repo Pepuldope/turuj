@@ -43,14 +43,16 @@ jobs:
           key: commons-photos-${{ hashFiles('public/data/photos.json') }}
           restore-keys: commons-photos-
       # Link-preview pictures (C207): photo + logo + kind icon + name as a 1200x630 JPEG per place, made here
-      # (not in git) and cached. The cache sits before fetch-photos so its key is the photos.json as checked
+      # (not in git) and cached. A place without a photo gets its drawn terrain picture instead (data/terrain.json,
+      # lib/terrainScene.ts, both in the key; data/share-terrain.json, written here, lists them for the build).
+      # The cache sits before fetch-photos so its key is the photos.json as checked
       # out. Browser is installed only when something is missing. Never fails the deploy: a problem only
       # means that page shares the raw photo.
       - if: env.CF_READY == 'true'
         uses: actions/cache@v6
         with:
           path: public/og/p
-          key: share-pics-v1-${{ hashFiles('public/data/photos.json', 'public/data/trips/**', 'scripts/share-pics.ts') }}
+          key: share-pics-v1-${{ hashFiles('public/data/photos.json', 'public/data/trips/**', 'data/terrain.json', 'lib/terrainScene.ts', 'scripts/share-pics.ts') }}
           restore-keys: share-pics-v1-
       - if: env.CF_READY == 'true'
         run: node scripts/fetch-photos.mjs

@@ -47,7 +47,7 @@ import { describeTripEn } from "@/lib/tripJsonLdEn";
 import { markSigns } from "@/lib/markSigns";
 import { startLines, subtitle } from "@/lib/tripAnswers";
 import { photoFocus } from "@/lib/photoFocus";
-import { bannerScene } from "@/lib/terrainScene";
+import { bannerScene, terrainKeyOf } from "@/lib/terrainScene";
 
 /**
  * How many neighbours the "Ďalšie výlety v okolí" block holds in the HTML: the browser shows the first
@@ -169,7 +169,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
   // The place's photo from Wikimedia Commons, when there is one (Peter, 2026-10-22: photos on the planner).
   const photo = await getTripPhoto(trail.slug, trip.destination.osm);
   // No photo: the real terrain around the place, drawn here at build time from data/terrain.json (C201), no extra request.
-  const terrainKey = trip.destination.osm ?? `trip/${trip.variant_of ?? trail.slug}`;
+  const terrainKey = terrainKeyOf({ destination: trip.destination, variant_of: trip.variant_of, slug: trail.slug });
   const terrain = photo ? null : await getTerrainBanner(terrainKey);
   const terrainSvg = terrain ? bannerScene(terrainKey, terrain.kind, terrain.layers).svg : null;
   // The town page this trip belongs to: a link for people and search engines to more trips nearby.

@@ -72,3 +72,5 @@ public/photos/c/
 
 # Generated share pictures (scripts/share-pics.ts, CI only)
 public/og/p/
+# Which share picture each no-photo place has (scripts/share-pics.ts, CI only)
+data/share-terrain.json

@@ -78,6 +78,11 @@ Local runtime secrets go in `.dev.vars` (git-ignored), e.g. `ORS_API_KEY=...`.
   `actions/cache` (file names carry a hash of everything drawn, so only changed places are redrawn;
   bump `TEMPLATE_VERSION` to redraw all). It adds ~850 static files. Chromium is installed only when
   `--plan` finds something missing. A failure never stops a deploy: the place just keeps sharing the raw photo.
+  Places without a photo (about 1,340 with terrain in `data/terrain.json`) get the same card with their drawn
+  terrain picture (`lib/terrainScene.ts`, on the kind's colour, credit "Výškové dáta: AWS Terrain Tiles (Mapzen)")
+  instead of the photo; the files share the folder and are listed in `data/share-terrain.json` (generated, not in
+  git), which `getTerrainShare()` reads for `tripMetadata`. The key rule for a place is `terrainKeyOf()`, one
+  for the trip page and the card; a failure just leaves the generic brand picture.
 - KV's free plan writes 1,000 entries a day. A deploy starts the cache fresh; past the limit, those
   pages are drawn per visit again until the next day.
 - `@opennextjs/cloudflare` requires Next.js ≥ 16.3.8, so `next` is pinned there.
