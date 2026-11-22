@@ -74,8 +74,27 @@ jobs:
           path: public/photos/c
           key: commons-photos-${{ hashFiles('public/data/photos.json') }}
           restore-keys: commons-photos-
+      # Link-preview pictures (C207): photo + logo + kind icon + name as a 1200x630 JPEG per place, made here
+      # (not in git) and cached. The cache sits before fetch-photos so its key is the photos.json as checked
+      # out. Browser is installed only when something is missing. Never fails the deploy: a problem only
+      # means that page shares the raw photo.
+      - if: env.CF_READY == 'true'
+        uses: actions/cache@v6
+        with:
+          path: public/og/p
+          key: share-pics-v1-${{ hashFiles('public/data/photos.json', 'public/data/trips/**', 'scripts/share-pics.ts') }}
+          restore-keys: share-pics-v1-
       - if: env.CF_READY == 'true'
         run: node scripts/fetch-photos.mjs
+      - if: env.CF_READY == 'true'
+        id: sharepics
+        run: npx vite-node scripts/share-pics.ts --plan || echo "::warning::share-pics plan failed"
+      - if: env.CF_READY == 'true' && steps.sharepics.outputs.missing != '0'
+        run: |
+          npm i --no-save playwright
+          npx playwright install --with-deps chromium
+      - if: env.CF_READY == 'true'
+        run: npx vite-node scripts/share-pics.ts || echo "::warning::share-pics failed; trip pages share the raw photo"
       # Same commands as Workers Builds. WORKERS_CI_COMMIT_SHA gives the build its
       # deployment id (next.config.ts), so open tabs reload after a deploy.
       - if: env.CF_READY == 'true'
