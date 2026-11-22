@@ -2,8 +2,10 @@
  * Titles and the H1 of a route variant's page (C39): "Kriváň z Troch Studničiek" instead of "Kriváň zo
  * štartu Tri Studničky", and when the Slovak case of the start is not certain, "Kriváň – štart: Tri
  * Studničky". Only the variants that are indexed get this (A02 = C, settled 6 Nov): the variants under
- * the places with rank >= INDEXED_VARIANT_RANK; the rest keep the old wording and are meant to canonical
- * to the main page (C43, not built yet: this file only decides who gets the new heading).
+ * the places with rank >= INDEXED_VARIANT_RANK, which are also the ones listed in the sitemap
+ * (lib/sitemapEntries.ts). The rest keep the old wording and stay out of the sitemap, but each is still
+ * its own canonical page (C43, Peter 2026-11-22: Google indexes them without calling them duplicates and
+ * they bring a fifth of the clicks; look again in January 2027 before pointing them at the main page).
  */
 import { fromStart } from "@/lib/slovakCase";
 import type { TripSummary } from "@/lib/tripSchema";
