@@ -303,7 +303,8 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
               <TripBackLink />
             </nav>
             {/* pt-4: a two-line name grows the header and the pill used to touch the back button (Peter, 15 Nov, C166). */}
-            <div className="relative flex flex-col gap-1.5 px-4 pt-4 pb-3.5 text-white">
+            {/* pb-6 under a terrain picture: its credit line gets a strip of its own below the "send a photo" link. */}
+            <div className={`relative flex flex-col gap-1.5 px-4 pt-4 ${terrainSvg ? "pb-6" : "pb-3.5"} text-white`}>
               <div className="flex flex-wrap gap-1.5">
                 <Badge colour={GOAL_COLOUR[goal]} icon={kindSvg(goal, 16)}>
                   {tr(lang, GOAL_LABEL[goal])}
@@ -321,6 +322,17 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
               <p className="text-[13.5px] font-semibold [text-shadow:0_1px_2px_rgba(0,0,0,.6),0_0_10px_rgba(0,0,0,.45)]">
                 {[trail.region_name ? regionIn(lang, trail.region_name) : null, trip ? tr(lang, "štart {name}", { name: trip.start.name }) : null].filter(Boolean).join(" · ")}
               </p>
+              {/* No photo of this place yet (C192, Peter 21 Nov): ask for one; the photo page puts this trip into the e-mail. */}
+              {!photo && (
+                <a
+                  href={`${langPath(lang, "/poslat-fotku")}?vylet=${encodeURIComponent(trail.slug)}`}
+                  data-umami-event="photo_ask_open"
+                  className="inline-flex w-fit items-center gap-1.5 text-[12.5px] font-semibold text-white underline decoration-white/60 underline-offset-2 [text-shadow:0_1px_2px_rgba(0,0,0,.6),0_0_10px_rgba(0,0,0,.45)]"
+                >
+                  <UiIcon name="camera" size={14} />
+                  {tr(lang, "Máte odtiaľto fotku? Pošlite nám ju.")}
+                </a>
+              )}
             </div>
           </header>
 

@@ -5,7 +5,7 @@ import { HomeExplorer } from "@/components/HomeExplorer";
 import { JsonLd } from "@/components/JsonLd";
 import { webApplicationLd } from "@/lib/appScreens";
 import { pageMetadata } from "@/lib/seo";
-import { CONTACT_EMAIL, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL, absoluteUrl } from "@/lib/site";
+import { CONTACT_EMAIL, FACEBOOK_URL, INSTAGRAM_URL, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL, absoluteUrl } from "@/lib/site";
 
 // Built once per deploy and served as a stored file (open-next.config.ts): new trip
 // data deploys with every push to main, so the page never re-renders per visit.
@@ -49,7 +49,8 @@ export default async function Home() {
               url: absoluteUrl("/"),
               logo: absoluteUrl("/icons/icon-512.png"),
               description: SITE_DESCRIPTION,
-              // G9: names as on /o-nas; no sameAs, the site links no social profiles.
+              // G9: names as on /o-nas. sameAs = the profiles the footer links (C192).
+              sameAs: [FACEBOOK_URL, INSTAGRAM_URL].filter(Boolean),
               founder: [
                 { "@type": "Person", name: "Peter Nemčok" },
                 { "@type": "Person", name: "Radoslav Nemec" },
