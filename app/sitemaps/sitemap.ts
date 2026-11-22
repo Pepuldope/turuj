@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { getAllTrips, getTripPhoto } from "@/lib/tripFiles";
 import { EN_TRIPS_AHEAD, absoluteUrl } from "@/lib/site";
 import { getTowns } from "@/lib/trips";
+import { SATELLITE_TOWNS } from "@/lib/townTrips";
 import { bothLanguages, ownImages } from "@/lib/sitemapEntries";
 import { SITEMAP_GROUPS, type SitemapGroup } from "@/lib/sitemapGroups";
 
@@ -34,7 +35,10 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
   if (id === "mesta") {
     return bothLanguages([
       { url: absoluteUrl("/vylety-z"), changeFrequency: "weekly" as const, priority: 0.6 },
-      ...getTowns().map((t) => ({ url: absoluteUrl(`/vylety-z/${t.id}`), changeFrequency: "weekly" as const, priority: 0.6 })),
+      // Satellite towns are noindex (lib/townTrips.ts SATELLITE_TOWNS), so they're not offered here either.
+      ...getTowns()
+        .filter((t) => !SATELLITE_TOWNS[t.id])
+        .map((t) => ({ url: absoluteUrl(`/vylety-z/${t.id}`), changeFrequency: "weekly" as const, priority: 0.6 })),
     ]);
   }
   return bothLanguages([

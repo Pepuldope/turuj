@@ -61,3 +61,26 @@ def test_place_matched_photos_skip_wells_sketches_maps_and_crowds():
                   "Uhrovec, Jankov vŕšok, hotel Partizán.jpg"]:
         assert photos.NOT_OUTDOORS.search(title), title
     assert not photos.NOT_OUTDOORS.search("Šariš Castle Keep 2024.jpg")
+
+
+def test_automatic_matches_wait_until_checked():
+    # Peter, 2026-11-21: Revín's blocked street photo was replaced by the next street photo by itself.
+    info = {
+        "Bellova 09.jpg": {"url": "u1", "page": "https://commons.wikimedia.org/wiki/File:Bellova_09.jpg", "cats": ""},
+        "Revín vrchol.jpg": {"url": "u2", "page": "https://commons.wikimedia.org/wiki/File:Rev%C3%ADn_vrchol.jpg", "cats": ""},
+    }
+    cands = [("Bellova_09.jpg", "area"), ("Revín vrchol.jpg", "near")]
+    photo, held = photos.choose(cands, info, checked=set())
+    assert photo is None and held == [("Bellova 09.jpg", "area"), ("Revín vrchol.jpg", "near")]
+    photo, held = photos.choose(cands, info, checked={"Revín vrchol.jpg"})
+    assert photo["url"] == "u2" and photo["via"] == "near" and held == [("Bellova 09.jpg", "area")]
+    # A photo someone chose (Wikidata, Wikipedia, a hand pick) needs no look.
+    photo, held = photos.choose([("Bellova 09.jpg", "wikidata")], info, checked=set())
+    assert photo["via"] == "wikidata" and held == []
+    assert photos.file_of(info["Revín vrchol.jpg"]) == "Revín vrchol.jpg"
+
+
+def test_masts_statues_and_memorials_are_not_a_view():
+    for title in ("Vidlica vysielač - panoramio.jpg", "Socha, kopec Ryboňov.jpg", "Pamätník padlým.jpg"):
+        assert photos.NOT_A_VIEW.search(title), title
+    assert not photos.NOT_A_VIEW.search("Sochová dolina.jpg")
