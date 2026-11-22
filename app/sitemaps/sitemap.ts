@@ -10,7 +10,7 @@ import { SITEMAP_GROUPS, type SitemapGroup } from "@/lib/sitemapGroups";
 // trips appear without touching this file and the Worker never re-reads the index for it.
 export const dynamic = "force-static";
 
-const INFO_PAGES = ["/ako-to-funguje", "/aplikacia", "/o-nas", "/napiste-nam", "/nahlasit-chybu", "/zdroje", "/sukromie", "/pristupnost", "/podmienky", "/upozornenie", "/uzavery", "/uzavery/tanap"];
+const INFO_PAGES = ["/ako-to-funguje", "/aplikacia", "/o-nas", "/napiste-nam", "/poslat-fotku", "/nahlasit-chybu", "/zdroje", "/sukromie", "/pristupnost", "/podmienky", "/upozornenie", "/uzavery", "/uzavery/tanap"];
 
 /**
  * One sitemap per page type (/sitemaps/sitemap/trasy.xml, …/mesta.xml, …/info.xml), listed by the

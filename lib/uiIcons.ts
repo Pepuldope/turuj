@@ -50,6 +50,9 @@ export const UI_ICON = {
   // The Kedy step's sunrise and sunset marks (Peter picked option 1, 2026-11-12): the sun's half disc is a fill in --sun.
   sunrise: '<path d="M3 18h18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 18a5 5 0 0 1 10 0z" style="fill:var(--sun)" stroke="none"/><path d="M7 18a5 5 0 0 1 10 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 6v2M5.6 9.6l1.4 1.4M18.4 9.6 17 11M2.5 14h1.6M20 14h1.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
   sunset: '<path d="M3 18h18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 18a3.5 3.5 0 0 1 7 0z" style="fill:var(--sun)" stroke="none"/><path d="M8.5 18a3.5 3.5 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 21h12" opacity=".5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  camera: '<path d="M4 8h3l1.5-2.5h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="2"/>',
+  facebook: '<path d="M14 21v-8h2.8l.5-3.2H14V7.9c0-.9.4-1.6 1.7-1.6h1.7V3.5A20 20 0 0 0 15 3.3c-2.5 0-4.1 1.5-4.1 4.2v2.3H8.2V13h2.7v8z" fill="currentColor"/>',
+  instagram: '<rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3.8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="7" r="1.1" fill="currentColor"/>',
 } as const;
 
 export type UiIconName = keyof typeof UI_ICON;

@@ -189,6 +189,8 @@ export interface PlacePhoto {
   via?: string;
   /** Set by scripts/fetch-photos.mjs in CI when `url` is a self-hosted copy: the Commons thumbnail it was made from. */
   src?: string;
+  /** Set by scripts/share-pics.ts in CI (C207): the generated 1200x630 link-preview picture (photo, logo, kind icon and name), /og/p/<hash>.jpg. */
+  share?: string;
 }
 
 /** Width of the share image (og:image), one of Wikimedia's standard thumbnail steps (F15). */
@@ -203,6 +205,8 @@ const SHARE_W = 1280;
  * Mapillary and un-thumbnailed Commons URLs are returned as they are. The page's own <img> keeps the 500 px file.
  */
 export function shareImage(p: PlacePhoto): { url: string; width: number; height: number } {
+  // The generated card (C207) beats the raw photo when CI made one.
+  if (p.share) return { url: p.share, width: 1200, height: 630 };
   // Only the 500 px copy is self-hosted (file limit, C196): the share size comes from the Commons original.
   if (p.src && p.url.startsWith("/photos/c/")) p = { ...p, url: p.src };
   const m = /^(https:\/\/(?:thumb|upload)\.wikimedia\.org\/wikipedia\/commons\/thumb\/.+\/)\d+px-([^/]+)$/.exec(p.url);

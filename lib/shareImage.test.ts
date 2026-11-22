@@ -13,6 +13,10 @@ describe("shareImage", () => {
     const src = "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/F.jpg/500px-F.jpg";
     expect(shareImage(photo("/photos/c/0123456789-F.jpg-500px.jpg", { src }))).toEqual({ url: "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/F.jpg/1280px-F.jpg", width: 1280, height: 960 });
   });
+  it("prefers the generated 1200x630 share picture when there is one", () => {
+    const src = "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/F.jpg/500px-F.jpg";
+    expect(shareImage(photo(src, { share: "/og/p/0123456789ab.jpg" }))).toEqual({ url: "/og/p/0123456789ab.jpg", width: 1200, height: 630 });
+  });
   it("leaves Mapillary photos alone", () => {
     expect(shareImage(photo("/photos/m/a.jpg", { via: "mapillary" })).url).toBe("/photos/m/a.jpg");
   });
