@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
-  <metadata><name>Hlboký vrch (Nevidzany)</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
-  <trk><name>Hlboký vrch (Nevidzany)</name><desc>hlboky-vrch</desc><trkseg>
+  <metadata><name>Hlboký vrch</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
+  <trk><name>Hlboký vrch</name><desc>hlboky-vrch</desc><trkseg>
     <trkpt lat="48.894310" lon="18.534821"><ele>574</ele></trkpt>
     <trkpt lat="48.893573" lon="18.534434"><ele>579</ele></trkpt>
     <trkpt lat="48.893345" lon="18.534386"><ele>587</ele></trkpt>
@@ -226,7 +226,7 @@
     <trkpt lat="48.893573" lon="18.534434"><ele>579</ele></trkpt>
     <trkpt lat="48.894310" lon="18.534821"><ele>574</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Hlboký vrch (Nevidzany)</name><desc>hlboky-vrch-kanianka-horny-koniec</desc><trkseg>
+  <trk><name>Hlboký vrch</name><desc>hlboky-vrch-kanianka-horny-koniec</desc><trkseg>
     <trkpt lat="48.819641" lon="18.583751"><ele>395</ele></trkpt>
     <trkpt lat="48.819502" lon="18.583134"><ele>401</ele></trkpt>
     <trkpt lat="48.819277" lon="18.582580"><ele>406</ele></trkpt>
@@ -507,7 +507,7 @@
     <trkpt lat="48.819502" lon="18.583134"><ele>401</ele></trkpt>
     <trkpt lat="48.819641" lon="18.583751"><ele>395</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Hlboký vrch (Nevidzany)</name><desc>hlboky-vrch-malinova</desc><trkseg>
+  <trk><name>Hlboký vrch</name><desc>hlboky-vrch-malinova</desc><trkseg>
     <trkpt lat="48.853820" lon="18.615465"><ele>344</ele></trkpt>
     <trkpt lat="48.853889" lon="18.615170"><ele>344</ele></trkpt>
     <trkpt lat="48.853915" lon="18.614706"><ele>345</ele></trkpt>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
-  <metadata><name>Panská hoľa (Jarabá)</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
-  <trk><name>Panská hoľa (Jarabá)</name><desc>panska-hola-kumstova-dolina</desc><trkseg>
+  <metadata><name>Panská hoľa</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
+  <trk><name>Panská hoľa</name><desc>panska-hola-kumstova-dolina</desc><trkseg>
     <trkpt lat="48.905159" lon="19.736222"><ele>1235</ele></trkpt>
     <trkpt lat="48.905245" lon="19.736195"><ele>1235</ele></trkpt>
     <trkpt lat="48.905294" lon="19.736019"><ele>1235</ele></trkpt>
@@ -246,7 +246,7 @@
     <trkpt lat="48.905245" lon="19.736195"><ele>1235</ele></trkpt>
     <trkpt lat="48.905159" lon="19.736222"><ele>1235</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Panská hoľa (Jarabá)</name><desc>panska-hola-kumstova-dolina-nizna-boca</desc><trkseg>
+  <trk><name>Panská hoľa</name><desc>panska-hola-kumstova-dolina-nizna-boca</desc><trkseg>
     <trkpt lat="48.949554" lon="19.768972"><ele>850</ele></trkpt>
     <trkpt lat="48.949486" lon="19.768554"><ele>851</ele></trkpt>
     <trkpt lat="48.949543" lon="19.768221"><ele>855</ele></trkpt>
@@ -797,7 +797,7 @@
     <trkpt lat="48.949486" lon="19.768554"><ele>851</ele></trkpt>
     <trkpt lat="48.949554" lon="19.768972"><ele>850</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Panská hoľa (Jarabá)</name><desc>panska-hola-kumstova-dolina-trangoska</desc><trkseg>
+  <trk><name>Panská hoľa</name><desc>panska-hola-kumstova-dolina-trangoska</desc><trkseg>
     <trkpt lat="48.925129" lon="19.610605"><ele>1130</ele></trkpt>
     <trkpt lat="48.925272" lon="19.611459"><ele>1135</ele></trkpt>
     <trkpt lat="48.925301" lon="19.612646"><ele>1141</ele></trkpt>
@@ -1158,7 +1158,7 @@
     <trkpt lat="48.925272" lon="19.611459"><ele>1135</ele></trkpt>
     <trkpt lat="48.925129" lon="19.610605"><ele>1130</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Panská hoľa (Jarabá)</name><desc>panska-hola-kumstova-dolina-trangoska-ina-cesta</desc><trkseg>
+  <trk><name>Panská hoľa</name><desc>panska-hola-kumstova-dolina-trangoska-ina-cesta</desc><trkseg>
     <trkpt lat="48.925129" lon="19.610605"><ele>1130</ele></trkpt>
     <trkpt lat="48.925162" lon="19.610803"><ele>1133</ele></trkpt>
     <trkpt lat="48.925029" lon="19.610864"><ele>1131</ele></trkpt>
