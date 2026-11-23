@@ -287,8 +287,9 @@
     <trkpt lat="48.855275" lon="20.407395"><ele>754</ele></trkpt>
   </trkseg></trk>
   <trk><name>Vyhliadková veža Suchý vrch</name><desc>vyhliadkova-veza-suchy-vrch-sykavka</desc><trkseg>
-    <trkpt lat="48.845839" lon="20.467325"><ele>699</ele></trkpt>
-    <trkpt lat="48.845882" lon="20.466881"><ele>698</ele></trkpt>
+    <trkpt lat="48.845827" lon="20.467264"><ele>700</ele></trkpt>
+    <trkpt lat="48.845888" lon="20.466944"><ele>698</ele></trkpt>
+    <trkpt lat="48.845873" lon="20.466831"><ele>698</ele></trkpt>
     <trkpt lat="48.845767" lon="20.466575"><ele>699</ele></trkpt>
     <trkpt lat="48.845760" lon="20.466396"><ele>699</ele></trkpt>
     <trkpt lat="48.846003" lon="20.465501"><ele>697</ele></trkpt>
@@ -500,8 +501,9 @@
     <trkpt lat="48.846003" lon="20.465501"><ele>697</ele></trkpt>
     <trkpt lat="48.845760" lon="20.466396"><ele>699</ele></trkpt>
     <trkpt lat="48.845767" lon="20.466575"><ele>699</ele></trkpt>
-    <trkpt lat="48.845882" lon="20.466881"><ele>698</ele></trkpt>
-    <trkpt lat="48.845839" lon="20.467325"><ele>699</ele></trkpt>
+    <trkpt lat="48.845873" lon="20.466831"><ele>698</ele></trkpt>
+    <trkpt lat="48.845888" lon="20.466944"><ele>698</ele></trkpt>
+    <trkpt lat="48.845827" lon="20.467264"><ele>700</ele></trkpt>
   </trkseg></trk>
   <trk><name>Vyhliadková veža Suchý vrch</name><desc>vyhliadkova-veza-suchy-vrch-vlachovo</desc><trkseg>
     <trkpt lat="48.773895" lon="20.410937"><ele>403</ele></trkpt>

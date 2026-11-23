@@ -716,7 +716,7 @@
     <trkpt lat="48.657453" lon="18.638284"><ele>668</ele></trkpt>
   </trkseg></trk>
   <trk><name>Holý vrch (Prochot)</name><desc>holy-vrch-prochot-borovina-klak</desc><trkseg>
-    <trkpt lat="48.582548" lon="18.643605"><ele>613</ele></trkpt>
+    <trkpt lat="48.582667" lon="18.643644"><ele>614</ele></trkpt>
     <trkpt lat="48.583838" lon="18.644277"><ele>610</ele></trkpt>
     <trkpt lat="48.583962" lon="18.644289"><ele>608</ele></trkpt>
     <trkpt lat="48.584328" lon="18.644148"><ele>605</ele></trkpt>
@@ -1246,6 +1246,6 @@
     <trkpt lat="48.584328" lon="18.644148"><ele>605</ele></trkpt>
     <trkpt lat="48.583962" lon="18.644289"><ele>608</ele></trkpt>
     <trkpt lat="48.583838" lon="18.644277"><ele>610</ele></trkpt>
-    <trkpt lat="48.582548" lon="18.643605"><ele>613</ele></trkpt>
+    <trkpt lat="48.582667" lon="18.643644"><ele>614</ele></trkpt>
   </trkseg></trk>
 </gpx>

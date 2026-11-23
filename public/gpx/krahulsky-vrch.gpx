@@ -2,9 +2,9 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Krahuľský vrch</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Krahuľský vrch</name><desc>krahulsky-vrch</desc><trkseg>
+    <trkpt lat="48.731338" lon="18.937027"><ele>923</ele></trkpt>
     <trkpt lat="48.731319" lon="18.936795"><ele>922</ele></trkpt>
-    <trkpt lat="48.729957" lon="18.937012"><ele>912</ele></trkpt>
-    <trkpt lat="48.729761" lon="18.937089"><ele>911</ele></trkpt>
+    <trkpt lat="48.729858" lon="18.937043"><ele>911</ele></trkpt>
     <trkpt lat="48.728951" lon="18.937658"><ele>901</ele></trkpt>
     <trkpt lat="48.728365" lon="18.938206"><ele>897</ele></trkpt>
     <trkpt lat="48.728140" lon="18.937686"><ele>900</ele></trkpt>
@@ -90,9 +90,9 @@
     <trkpt lat="48.728140" lon="18.937686"><ele>900</ele></trkpt>
     <trkpt lat="48.728365" lon="18.938206"><ele>897</ele></trkpt>
     <trkpt lat="48.728951" lon="18.937658"><ele>901</ele></trkpt>
-    <trkpt lat="48.729761" lon="18.937089"><ele>911</ele></trkpt>
-    <trkpt lat="48.729957" lon="18.937012"><ele>912</ele></trkpt>
+    <trkpt lat="48.729858" lon="18.937043"><ele>911</ele></trkpt>
     <trkpt lat="48.731319" lon="18.936795"><ele>922</ele></trkpt>
+    <trkpt lat="48.731338" lon="18.937027"><ele>923</ele></trkpt>
   </trkseg></trk>
   <trk><name>Krahuľský vrch</name><desc>krahulsky-vrch-kremnica</desc><trkseg>
     <trkpt lat="48.703125" lon="18.917858"><ele>547</ele></trkpt>

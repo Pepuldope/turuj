@@ -56,14 +56,12 @@
     <trkpt lat="48.468956" lon="18.882468"><ele>791</ele></trkpt>
     <trkpt lat="48.468779" lon="18.882270"><ele>795</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Starý zámok</name><desc>stary-zamok-banska-stiavnica</desc><trkseg>
-    <trkpt lat="48.449328" lon="18.906843"><ele>520</ele></trkpt>
-    <trkpt lat="48.449526" lon="18.906747"><ele>520</ele></trkpt>
-    <trkpt lat="48.449537" lon="18.906617"><ele>522</ele></trkpt>
-    <trkpt lat="48.450165" lon="18.906492"><ele>523</ele></trkpt>
+  <trk><name>Starý zámok</name><desc>stary-zamok-banska-stiavnica-juh</desc><trkseg>
+    <trkpt lat="48.450304" lon="18.906608"><ele>521</ele></trkpt>
+    <trkpt lat="48.450199" lon="18.906667"><ele>520</ele></trkpt>
     <trkpt lat="48.450180" lon="18.906575"><ele>522</ele></trkpt>
     <trkpt lat="48.450386" lon="18.906439"><ele>523</ele></trkpt>
-    <trkpt lat="48.450629" lon="18.906117"><ele>525</ele></trkpt>
+    <trkpt lat="48.450601" lon="18.906162"><ele>525</ele></trkpt>
     <trkpt lat="48.450895" lon="18.905438"><ele>528</ele></trkpt>
     <trkpt lat="48.451524" lon="18.904822"><ele>531</ele></trkpt>
     <trkpt lat="48.452456" lon="18.904289"><ele>538</ele></trkpt>
@@ -139,13 +137,11 @@
     <trkpt lat="48.452456" lon="18.904289"><ele>538</ele></trkpt>
     <trkpt lat="48.451524" lon="18.904822"><ele>531</ele></trkpt>
     <trkpt lat="48.450895" lon="18.905438"><ele>528</ele></trkpt>
-    <trkpt lat="48.450629" lon="18.906117"><ele>525</ele></trkpt>
+    <trkpt lat="48.450601" lon="18.906162"><ele>525</ele></trkpt>
     <trkpt lat="48.450386" lon="18.906439"><ele>523</ele></trkpt>
     <trkpt lat="48.450180" lon="18.906575"><ele>522</ele></trkpt>
-    <trkpt lat="48.450165" lon="18.906492"><ele>523</ele></trkpt>
-    <trkpt lat="48.449537" lon="18.906617"><ele>522</ele></trkpt>
-    <trkpt lat="48.449526" lon="18.906747"><ele>520</ele></trkpt>
-    <trkpt lat="48.449328" lon="18.906843"><ele>520</ele></trkpt>
+    <trkpt lat="48.450199" lon="18.906667"><ele>520</ele></trkpt>
+    <trkpt lat="48.450304" lon="18.906608"><ele>521</ele></trkpt>
   </trkseg></trk>
   <trk><name>Starý zámok</name><desc>stary-zamok-cervena-studna-ina-cesta</desc><trkseg>
     <trkpt lat="48.468779" lon="18.882270"><ele>795</ele></trkpt>
