@@ -108,11 +108,37 @@ function TanapDaylight({ lang }: { lang: Lang }) {
   );
 }
 
+/** When the Slovenský raj gorge rules below were last read in the decree. */
+const RAJ_GORGES_CHECKED = "2026-11-23";
+
+/**
+ * Slovenský raj gorges (C107, Peter 23 Nov): the visitor rules set no seasonal dates for them, only that gorges with
+ * ladders are walked uphill and that the park closes one for a while after floods or damage, with a board at its entrance.
+ * A yellow advice line with the source; the trip keeps "Stav chodníka neoverený" when no rule covers it, never "open".
+ */
+function RajGorgeNote({ lang }: { lang: Lang }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="flex items-start gap-1.5 rounded-xl bg-[var(--warn-bg)] p-3 font-semibold text-[var(--warn)]">
+        <UiIcon name="warn" size={16} className="mt-0.5 shrink-0" />
+        <span>{tr(lang, "Rokliny s rebríkmi a reťazami sa smú prechádzať len zdola nahor. Po prívalových vodách, pri poškodení zariadení alebo veľkej návštevnosti ich správa národného parku môže dočasne zavrieť; oznam je na tabuli pri vstupe do rokliny.")}</span>
+      </p>
+      <p className="text-xs">
+        <a href="https://www.npslovenskyraj.sk/navstevny-poriadok/" target="_blank" rel="noopener noreferrer" className="underline">
+          {tr(lang, "vyhláška č. 2/2018, príloha č. 2, časť A")}
+        </a>{" "}
+        · {tr(lang, "Overené: {date}", { date: formatDateSk(RAJ_GORGES_CHECKED, lang) })}
+      </p>
+    </div>
+  );
+}
+
 /** "Uzávery a poplatky" body: the closure rule with its source and date, and the fees. No rule is "Stav chodníka neoverený". */
-function ClosuresBody({ lang, closures, fees, region }: { lang: Lang; closures: Closure[]; fees: Fee[]; region: string | null }) {
+function ClosuresBody({ lang, closures, fees, region, gorge = false }: { lang: Lang; closures: Closure[]; fees: Fee[]; region: string | null; gorge?: boolean }) {
   return (
     <>
       {region === "Tatry" && <TanapDaylight lang={lang} />}
+      {gorge && <RajGorgeNote lang={lang} />}
       {closures.length === 0 ? <p>{closureSentence(lang, closures)}</p> : <ClosureRules closures={closures} lang={lang} />}
       {closures.length > 0 && <p>{tr(lang, "Mimo týchto dátumov stav chodníka neručíme, pred výletom ho overte u správcu územia.")}</p>}
       {fees.length > 0 ? (
@@ -134,6 +160,11 @@ function ClosuresBody({ lang, closures, fees, region }: { lang: Lang; closures: 
       )}
     </>
   );
+}
+
+/** A gorge trip in Slovenský raj: the goal is a gorge, or the walk is a loop (the pipeline makes a loop only where a path is one-way, i.e. a gorge). */
+function rajGorge(region: string | null | undefined, kind: string, loop: boolean): boolean {
+  return region === "Slovenský raj" && (kind === "roklina" || loop);
 }
 
 /** Regions whose trip pages get the mountain-rescue row (research report 05 #6). */
@@ -381,7 +412,7 @@ export function TripAnswers({ lang, name, kind, startName, lines, loop, parking,
       </>
 
       <Row title={tr(lang, "Uzávery a poplatky")} teaser={closureTeaser(lang, closures)}>
-        <ClosuresBody lang={lang} closures={closures} fees={fees} region={region ?? null} />
+        <ClosuresBody lang={lang} closures={closures} fees={fees} region={region ?? null} gorge={rajGorge(region, kind, loop)} />
       </Row>
 
       {months.length > 0 && (
