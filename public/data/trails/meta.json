@@ -1,7 +1,7 @@
 {
  "version": 1,
- "generated_at": "2026-11-16T13:15:01+00:00",
- "osm_data_at": "2026-11-15T21:22:28Z",
+ "generated_at": "2026-11-23T15:32:17+00:00",
+ "osm_data_at": "2026-11-22T21:20:48Z",
  "attribution": "© OpenStreetMap contributors (ODbL); popularity from Wikipedia page views (Wikimedia, CC0)",
  "grid": {
   "lon0": 16.75,
@@ -80,20 +80,20 @@
   "9_7"
  ],
  "levels": 5,
- "km": 19923,
- "pieces": 72759,
+ "km": 19925,
+ "pieces": 72800,
  "level_km": [
-  7969,
+  7970,
   4981,
   3586,
-  2191,
-  1195
+  2192,
+  1196
  ],
  "cuts": [
-  439,
-  1342,
-  3292,
-  11627
+  431,
+  1328,
+  3249,
+  10592
  ],
  "top_goals": [
   {
@@ -130,11 +130,6 @@
    "name": "Čachtický hrad",
    "kind": "hrad",
    "views": 101616
-  },
-  {
-   "name": "Bratislavský hrad",
-   "kind": "hrad",
-   "views": 94585
   },
   {
    "name": "Kasprov vrch",
@@ -220,6 +215,11 @@
    "name": "Sokolica",
    "kind": "vrchol",
    "views": 25813
+  },
+  {
+   "name": "Popradské pleso",
+   "kind": "pleso",
+   "views": 24080
   }
  ]
 }
