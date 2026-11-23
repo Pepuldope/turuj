@@ -266,6 +266,25 @@ export async function getTerrainBanner(placeKey: string): Promise<TerrainBanner 
   return p ? { kind: p.k, layers: p.banner } : null;
 }
 
+let terrainShare: Promise<Record<string, string>> | null = null;
+
+/**
+ * The generated 1200x630 share picture of a no-photo place (scripts/share-pics.ts, data/share-terrain.json, CI only),
+ * by the same key as getTerrainBanner; null when there is none. Read from the disk like data/terrain.json. Server only.
+ */
+export async function getTerrainShare(placeKey: string): Promise<string | null> {
+  terrainShare ??= (async () => {
+    try {
+      const { readFile } = await import("node:fs/promises");
+      const { join } = await import("node:path");
+      return (JSON.parse(await readFile(join(process.cwd(), "data", "share-terrain.json"), "utf8")) as { pictures: Record<string, string> }).pictures ?? {};
+    } catch {
+      return {};
+    }
+  })();
+  return (await terrainShare)[placeKey] ?? null;
+}
+
 /** Car minutes from one precomputed town to every trip, by slug; empty for an unknown town. */
 export async function getTownDrives(townId: string): Promise<TownDriveFile["minutes"]> {
   if (!SLUG.test(townId)) return {};

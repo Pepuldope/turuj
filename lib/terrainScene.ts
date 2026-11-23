@@ -11,7 +11,7 @@
 //  2. Card: the summit / sign / feature sits at x = 0.75 of the 96 wide strip.
 //  3. No flag. The banner's waterfall is 1.4 x the card's scale.
 //  4. The same place always gives the same picture (seeded by the place id, never by slug or time).
-import { GOAL_COLOUR } from "@/lib/palette";
+import { GOAL_COLOUR } from "./palette"; // relative: scripts/share-pics.ts runs under vite-node without the @ alias
 import type { DestinationKind } from "@/lib/tripSchema";
 
 /** Order of the kind index stored in terrain-cards.json (same list in pipeline/terrain.py). */
@@ -27,6 +27,14 @@ export type WindowName = keyof typeof WINDOW;
 
 /** Three packed layers, nearest first: each [a0, dx1, da1, dx2, da2, ...] (pipeline/terrain.py pack_layer). */
 export type PackedLayers = number[][];
+
+/**
+ * The key a trip's place has in data/terrain.json and for the share picture: its OSM id, else "trip/<slug>" of the
+ * main route (a variant shares its place's picture). One rule for the trip page, its metadata and scripts/share-pics.ts.
+ */
+export function terrainKeyOf(trip: { destination: { osm?: string | null }; variant_of?: string | null; slug: string }): string {
+  return trip.destination.osm ?? `trip/${trip.variant_of ?? trip.slug}`;
+}
 
 /** The geometry a picture was drawn from, for the tests of the ground rule. */
 export interface SceneGeometry {
