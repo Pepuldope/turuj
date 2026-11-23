@@ -226,7 +226,7 @@
     <trkpt lat="48.924975" lon="21.047239"><ele>612</ele></trkpt>
     <trkpt lat="48.925179" lon="21.047015"><ele>614</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Ostrý hrb</name><desc>ostry-hrb-bajerov-razcestie</desc><trkseg>
+  <trk><name>Ostrý hrb</name><desc>ostry-hrb-bajerov</desc><trkseg>
     <trkpt lat="48.959348" lon="21.117423"><ele>339</ele></trkpt>
     <trkpt lat="48.959108" lon="21.117586"><ele>335</ele></trkpt>
     <trkpt lat="48.957990" lon="21.117960"><ele>336</ele></trkpt>

@@ -98,7 +98,9 @@ def round_up_15(minutes):
     return int(math.ceil(minutes / 15 - 1e-9) * 15)
 
 
-_SK = str.maketrans({"ä": "a", "ô": "o", "ľ": "l", "ĺ": "l", "ŕ": "r"})
+# Letters NFKD does not decompose: Slovak ones, and the Polish ł that border peaks carry ("Wołowiec" -> "wolowiec").
+_SK = str.maketrans({"ä": "a", "ô": "o", "ľ": "l", "ĺ": "l", "ŕ": "r", "ł": "l", "đ": "d", "ø": "o", "ß": "ss",
+                     "æ": "ae", "œ": "oe"})
 
 
 def slugify(text, max_len=48):

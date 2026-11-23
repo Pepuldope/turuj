@@ -2,26 +2,9 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Hrad Revište</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Hrad Revište</name><desc>reviste</desc><trkseg>
-    <trkpt lat="48.511101" lon="18.733042"><ele>222</ele></trkpt>
-    <trkpt lat="48.511342" lon="18.733112"><ele>224</ele></trkpt>
-    <trkpt lat="48.511429" lon="18.732994"><ele>224</ele></trkpt>
-    <trkpt lat="48.511392" lon="18.732096"><ele>223</ele></trkpt>
-    <trkpt lat="48.511431" lon="18.731956"><ele>224</ele></trkpt>
-    <trkpt lat="48.514786" lon="18.732164"><ele>220</ele></trkpt>
-    <trkpt lat="48.515211" lon="18.732130"><ele>220</ele></trkpt>
-    <trkpt lat="48.516548" lon="18.731600"><ele>220</ele></trkpt>
-    <trkpt lat="48.518209" lon="18.730824"><ele>220</ele></trkpt>
-    <trkpt lat="48.518887" lon="18.730673"><ele>220</ele></trkpt>
-    <trkpt lat="48.519177" lon="18.730454"><ele>220</ele></trkpt>
-    <trkpt lat="48.519401" lon="18.730109"><ele>220</ele></trkpt>
-    <trkpt lat="48.519623" lon="18.729582"><ele>221</ele></trkpt>
-    <trkpt lat="48.520129" lon="18.729004"><ele>221</ele></trkpt>
-    <trkpt lat="48.520777" lon="18.727376"><ele>222</ele></trkpt>
-    <trkpt lat="48.520885" lon="18.727028"><ele>223</ele></trkpt>
-    <trkpt lat="48.520918" lon="18.726668"><ele>225</ele></trkpt>
-    <trkpt lat="48.520878" lon="18.726454"><ele>226</ele></trkpt>
+    <trkpt lat="48.520518" lon="18.726321"><ele>229</ele></trkpt>
     <trkpt lat="48.520688" lon="18.726209"><ele>227</ele></trkpt>
-    <trkpt lat="48.520560" lon="18.725967"><ele>228</ele></trkpt>
+    <trkpt lat="48.520536" lon="18.725889"><ele>229</ele></trkpt>
     <trkpt lat="48.520377" lon="18.725155"><ele>235</ele></trkpt>
     <trkpt lat="48.520136" lon="18.724445"><ele>241</ele></trkpt>
     <trkpt lat="48.520262" lon="18.724515"><ele>241</ele></trkpt>
@@ -47,26 +30,9 @@
     <trkpt lat="48.520262" lon="18.724515"><ele>241</ele></trkpt>
     <trkpt lat="48.520136" lon="18.724445"><ele>241</ele></trkpt>
     <trkpt lat="48.520377" lon="18.725155"><ele>235</ele></trkpt>
-    <trkpt lat="48.520560" lon="18.725967"><ele>228</ele></trkpt>
+    <trkpt lat="48.520536" lon="18.725889"><ele>229</ele></trkpt>
     <trkpt lat="48.520688" lon="18.726209"><ele>227</ele></trkpt>
-    <trkpt lat="48.520878" lon="18.726454"><ele>226</ele></trkpt>
-    <trkpt lat="48.520918" lon="18.726668"><ele>225</ele></trkpt>
-    <trkpt lat="48.520885" lon="18.727028"><ele>223</ele></trkpt>
-    <trkpt lat="48.520777" lon="18.727376"><ele>222</ele></trkpt>
-    <trkpt lat="48.520129" lon="18.729004"><ele>221</ele></trkpt>
-    <trkpt lat="48.519623" lon="18.729582"><ele>221</ele></trkpt>
-    <trkpt lat="48.519401" lon="18.730109"><ele>220</ele></trkpt>
-    <trkpt lat="48.519177" lon="18.730454"><ele>220</ele></trkpt>
-    <trkpt lat="48.518887" lon="18.730673"><ele>220</ele></trkpt>
-    <trkpt lat="48.518209" lon="18.730824"><ele>220</ele></trkpt>
-    <trkpt lat="48.516548" lon="18.731600"><ele>220</ele></trkpt>
-    <trkpt lat="48.515211" lon="18.732130"><ele>220</ele></trkpt>
-    <trkpt lat="48.514786" lon="18.732164"><ele>220</ele></trkpt>
-    <trkpt lat="48.511431" lon="18.731956"><ele>224</ele></trkpt>
-    <trkpt lat="48.511392" lon="18.732096"><ele>223</ele></trkpt>
-    <trkpt lat="48.511429" lon="18.732994"><ele>224</ele></trkpt>
-    <trkpt lat="48.511342" lon="18.733112"><ele>224</ele></trkpt>
-    <trkpt lat="48.511101" lon="18.733042"><ele>222</ele></trkpt>
+    <trkpt lat="48.520518" lon="18.726321"><ele>229</ele></trkpt>
   </trkseg></trk>
   <trk><name>Hrad Revište</name><desc>reviste-hronske-luky</desc><trkseg>
     <trkpt lat="48.531785" lon="18.730649"><ele>235</ele></trkpt>
@@ -157,10 +123,27 @@
     <trkpt lat="48.531423" lon="18.730332"><ele>245</ele></trkpt>
     <trkpt lat="48.531785" lon="18.730649"><ele>235</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Hrad Revište</name><desc>reviste-od-auta</desc><trkseg>
-    <trkpt lat="48.520518" lon="18.726321"><ele>229</ele></trkpt>
+  <trk><name>Hrad Revište</name><desc>reviste-revistske-podzamcie</desc><trkseg>
+    <trkpt lat="48.511101" lon="18.733042"><ele>222</ele></trkpt>
+    <trkpt lat="48.511342" lon="18.733112"><ele>224</ele></trkpt>
+    <trkpt lat="48.511429" lon="18.732994"><ele>224</ele></trkpt>
+    <trkpt lat="48.511392" lon="18.732096"><ele>223</ele></trkpt>
+    <trkpt lat="48.511431" lon="18.731956"><ele>224</ele></trkpt>
+    <trkpt lat="48.514786" lon="18.732164"><ele>220</ele></trkpt>
+    <trkpt lat="48.515211" lon="18.732130"><ele>220</ele></trkpt>
+    <trkpt lat="48.516548" lon="18.731600"><ele>220</ele></trkpt>
+    <trkpt lat="48.518209" lon="18.730824"><ele>220</ele></trkpt>
+    <trkpt lat="48.518887" lon="18.730673"><ele>220</ele></trkpt>
+    <trkpt lat="48.519177" lon="18.730454"><ele>220</ele></trkpt>
+    <trkpt lat="48.519401" lon="18.730109"><ele>220</ele></trkpt>
+    <trkpt lat="48.519623" lon="18.729582"><ele>221</ele></trkpt>
+    <trkpt lat="48.520129" lon="18.729004"><ele>221</ele></trkpt>
+    <trkpt lat="48.520777" lon="18.727376"><ele>222</ele></trkpt>
+    <trkpt lat="48.520885" lon="18.727028"><ele>223</ele></trkpt>
+    <trkpt lat="48.520918" lon="18.726668"><ele>225</ele></trkpt>
+    <trkpt lat="48.520878" lon="18.726454"><ele>226</ele></trkpt>
     <trkpt lat="48.520688" lon="18.726209"><ele>227</ele></trkpt>
-    <trkpt lat="48.520536" lon="18.725889"><ele>229</ele></trkpt>
+    <trkpt lat="48.520560" lon="18.725967"><ele>228</ele></trkpt>
     <trkpt lat="48.520377" lon="18.725155"><ele>235</ele></trkpt>
     <trkpt lat="48.520136" lon="18.724445"><ele>241</ele></trkpt>
     <trkpt lat="48.520262" lon="18.724515"><ele>241</ele></trkpt>
@@ -186,8 +169,25 @@
     <trkpt lat="48.520262" lon="18.724515"><ele>241</ele></trkpt>
     <trkpt lat="48.520136" lon="18.724445"><ele>241</ele></trkpt>
     <trkpt lat="48.520377" lon="18.725155"><ele>235</ele></trkpt>
-    <trkpt lat="48.520536" lon="18.725889"><ele>229</ele></trkpt>
+    <trkpt lat="48.520560" lon="18.725967"><ele>228</ele></trkpt>
     <trkpt lat="48.520688" lon="18.726209"><ele>227</ele></trkpt>
-    <trkpt lat="48.520518" lon="18.726321"><ele>229</ele></trkpt>
+    <trkpt lat="48.520878" lon="18.726454"><ele>226</ele></trkpt>
+    <trkpt lat="48.520918" lon="18.726668"><ele>225</ele></trkpt>
+    <trkpt lat="48.520885" lon="18.727028"><ele>223</ele></trkpt>
+    <trkpt lat="48.520777" lon="18.727376"><ele>222</ele></trkpt>
+    <trkpt lat="48.520129" lon="18.729004"><ele>221</ele></trkpt>
+    <trkpt lat="48.519623" lon="18.729582"><ele>221</ele></trkpt>
+    <trkpt lat="48.519401" lon="18.730109"><ele>220</ele></trkpt>
+    <trkpt lat="48.519177" lon="18.730454"><ele>220</ele></trkpt>
+    <trkpt lat="48.518887" lon="18.730673"><ele>220</ele></trkpt>
+    <trkpt lat="48.518209" lon="18.730824"><ele>220</ele></trkpt>
+    <trkpt lat="48.516548" lon="18.731600"><ele>220</ele></trkpt>
+    <trkpt lat="48.515211" lon="18.732130"><ele>220</ele></trkpt>
+    <trkpt lat="48.514786" lon="18.732164"><ele>220</ele></trkpt>
+    <trkpt lat="48.511431" lon="18.731956"><ele>224</ele></trkpt>
+    <trkpt lat="48.511392" lon="18.732096"><ele>223</ele></trkpt>
+    <trkpt lat="48.511429" lon="18.732994"><ele>224</ele></trkpt>
+    <trkpt lat="48.511342" lon="18.733112"><ele>224</ele></trkpt>
+    <trkpt lat="48.511101" lon="18.733042"><ele>222</ele></trkpt>
   </trkseg></trk>
 </gpx>

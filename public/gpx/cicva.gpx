@@ -2,6 +2,51 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Hrad Čičva</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Hrad Čičva</name><desc>cicva</desc><trkseg>
+    <trkpt lat="48.914080" lon="21.739925"><ele>142</ele></trkpt>
+    <trkpt lat="48.913908" lon="21.740343"><ele>131</ele></trkpt>
+    <trkpt lat="48.914238" lon="21.740522"><ele>132</ele></trkpt>
+    <trkpt lat="48.914815" lon="21.740604"><ele>134</ele></trkpt>
+    <trkpt lat="48.915126" lon="21.740482"><ele>138</ele></trkpt>
+    <trkpt lat="48.914871" lon="21.740170"><ele>149</ele></trkpt>
+    <trkpt lat="48.914847" lon="21.740109"><ele>152</ele></trkpt>
+    <trkpt lat="48.914919" lon="21.739906"><ele>158</ele></trkpt>
+    <trkpt lat="48.914921" lon="21.739756"><ele>164</ele></trkpt>
+    <trkpt lat="48.914890" lon="21.739689"><ele>167</ele></trkpt>
+    <trkpt lat="48.914787" lon="21.739653"><ele>170</ele></trkpt>
+    <trkpt lat="48.914895" lon="21.739391"><ele>180</ele></trkpt>
+    <trkpt lat="48.915034" lon="21.739196"><ele>185</ele></trkpt>
+    <trkpt lat="48.915097" lon="21.739046"><ele>189</ele></trkpt>
+    <trkpt lat="48.915133" lon="21.738812"><ele>195</ele></trkpt>
+    <trkpt lat="48.915385" lon="21.738512"><ele>205</ele></trkpt>
+    <trkpt lat="48.915398" lon="21.738366"><ele>207</ele></trkpt>
+    <trkpt lat="48.915165" lon="21.738444"><ele>203</ele></trkpt>
+    <trkpt lat="48.914948" lon="21.738391"><ele>201</ele></trkpt>
+    <trkpt lat="48.914658" lon="21.738695"><ele>200</ele></trkpt>
+    <trkpt lat="48.914471" lon="21.738813"><ele>200</ele></trkpt>
+    <trkpt lat="48.914263" lon="21.738745"><ele>199</ele></trkpt>
+    <trkpt lat="48.914471" lon="21.738813"><ele>200</ele></trkpt>
+    <trkpt lat="48.914658" lon="21.738695"><ele>200</ele></trkpt>
+    <trkpt lat="48.914948" lon="21.738391"><ele>201</ele></trkpt>
+    <trkpt lat="48.915165" lon="21.738444"><ele>203</ele></trkpt>
+    <trkpt lat="48.915398" lon="21.738366"><ele>207</ele></trkpt>
+    <trkpt lat="48.915385" lon="21.738512"><ele>205</ele></trkpt>
+    <trkpt lat="48.915133" lon="21.738812"><ele>195</ele></trkpt>
+    <trkpt lat="48.915097" lon="21.739046"><ele>189</ele></trkpt>
+    <trkpt lat="48.915034" lon="21.739196"><ele>185</ele></trkpt>
+    <trkpt lat="48.914895" lon="21.739391"><ele>180</ele></trkpt>
+    <trkpt lat="48.914787" lon="21.739653"><ele>170</ele></trkpt>
+    <trkpt lat="48.914890" lon="21.739689"><ele>167</ele></trkpt>
+    <trkpt lat="48.914921" lon="21.739756"><ele>164</ele></trkpt>
+    <trkpt lat="48.914919" lon="21.739906"><ele>158</ele></trkpt>
+    <trkpt lat="48.914847" lon="21.740109"><ele>152</ele></trkpt>
+    <trkpt lat="48.914871" lon="21.740170"><ele>149</ele></trkpt>
+    <trkpt lat="48.915126" lon="21.740482"><ele>138</ele></trkpt>
+    <trkpt lat="48.914815" lon="21.740604"><ele>134</ele></trkpt>
+    <trkpt lat="48.914238" lon="21.740522"><ele>132</ele></trkpt>
+    <trkpt lat="48.913908" lon="21.740343"><ele>131</ele></trkpt>
+    <trkpt lat="48.914080" lon="21.739925"><ele>142</ele></trkpt>
+  </trkseg></trk>
+  <trk><name>Hrad Čičva</name><desc>cicva-vranov-nad-toplou</desc><trkseg>
     <trkpt lat="48.883572" lon="21.697608"><ele>132</ele></trkpt>
     <trkpt lat="48.883725" lon="21.697760"><ele>136</ele></trkpt>
     <trkpt lat="48.883922" lon="21.697765"><ele>143</ele></trkpt>
@@ -401,50 +446,5 @@
     <trkpt lat="48.883922" lon="21.697765"><ele>143</ele></trkpt>
     <trkpt lat="48.883725" lon="21.697760"><ele>136</ele></trkpt>
     <trkpt lat="48.883572" lon="21.697608"><ele>132</ele></trkpt>
-  </trkseg></trk>
-  <trk><name>Hrad Čičva</name><desc>cicva-od-auta</desc><trkseg>
-    <trkpt lat="48.914080" lon="21.739925"><ele>142</ele></trkpt>
-    <trkpt lat="48.913908" lon="21.740343"><ele>131</ele></trkpt>
-    <trkpt lat="48.914238" lon="21.740522"><ele>132</ele></trkpt>
-    <trkpt lat="48.914815" lon="21.740604"><ele>134</ele></trkpt>
-    <trkpt lat="48.915126" lon="21.740482"><ele>138</ele></trkpt>
-    <trkpt lat="48.914871" lon="21.740170"><ele>149</ele></trkpt>
-    <trkpt lat="48.914847" lon="21.740109"><ele>152</ele></trkpt>
-    <trkpt lat="48.914919" lon="21.739906"><ele>158</ele></trkpt>
-    <trkpt lat="48.914921" lon="21.739756"><ele>164</ele></trkpt>
-    <trkpt lat="48.914890" lon="21.739689"><ele>167</ele></trkpt>
-    <trkpt lat="48.914787" lon="21.739653"><ele>170</ele></trkpt>
-    <trkpt lat="48.914895" lon="21.739391"><ele>180</ele></trkpt>
-    <trkpt lat="48.915034" lon="21.739196"><ele>185</ele></trkpt>
-    <trkpt lat="48.915097" lon="21.739046"><ele>189</ele></trkpt>
-    <trkpt lat="48.915133" lon="21.738812"><ele>195</ele></trkpt>
-    <trkpt lat="48.915385" lon="21.738512"><ele>205</ele></trkpt>
-    <trkpt lat="48.915398" lon="21.738366"><ele>207</ele></trkpt>
-    <trkpt lat="48.915165" lon="21.738444"><ele>203</ele></trkpt>
-    <trkpt lat="48.914948" lon="21.738391"><ele>201</ele></trkpt>
-    <trkpt lat="48.914658" lon="21.738695"><ele>200</ele></trkpt>
-    <trkpt lat="48.914471" lon="21.738813"><ele>200</ele></trkpt>
-    <trkpt lat="48.914263" lon="21.738745"><ele>199</ele></trkpt>
-    <trkpt lat="48.914471" lon="21.738813"><ele>200</ele></trkpt>
-    <trkpt lat="48.914658" lon="21.738695"><ele>200</ele></trkpt>
-    <trkpt lat="48.914948" lon="21.738391"><ele>201</ele></trkpt>
-    <trkpt lat="48.915165" lon="21.738444"><ele>203</ele></trkpt>
-    <trkpt lat="48.915398" lon="21.738366"><ele>207</ele></trkpt>
-    <trkpt lat="48.915385" lon="21.738512"><ele>205</ele></trkpt>
-    <trkpt lat="48.915133" lon="21.738812"><ele>195</ele></trkpt>
-    <trkpt lat="48.915097" lon="21.739046"><ele>189</ele></trkpt>
-    <trkpt lat="48.915034" lon="21.739196"><ele>185</ele></trkpt>
-    <trkpt lat="48.914895" lon="21.739391"><ele>180</ele></trkpt>
-    <trkpt lat="48.914787" lon="21.739653"><ele>170</ele></trkpt>
-    <trkpt lat="48.914890" lon="21.739689"><ele>167</ele></trkpt>
-    <trkpt lat="48.914921" lon="21.739756"><ele>164</ele></trkpt>
-    <trkpt lat="48.914919" lon="21.739906"><ele>158</ele></trkpt>
-    <trkpt lat="48.914847" lon="21.740109"><ele>152</ele></trkpt>
-    <trkpt lat="48.914871" lon="21.740170"><ele>149</ele></trkpt>
-    <trkpt lat="48.915126" lon="21.740482"><ele>138</ele></trkpt>
-    <trkpt lat="48.914815" lon="21.740604"><ele>134</ele></trkpt>
-    <trkpt lat="48.914238" lon="21.740522"><ele>132</ele></trkpt>
-    <trkpt lat="48.913908" lon="21.740343"><ele>131</ele></trkpt>
-    <trkpt lat="48.914080" lon="21.739925"><ele>142</ele></trkpt>
   </trkseg></trk>
 </gpx>

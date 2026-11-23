@@ -2,6 +2,31 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Oravský hrad</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Oravský hrad</name><desc>oravsky-hrad</desc><trkseg>
+    <trkpt lat="49.262629" lon="19.356551"><ele>518</ele></trkpt>
+    <trkpt lat="49.262382" lon="19.356606"><ele>522</ele></trkpt>
+    <trkpt lat="49.262351" lon="19.356451"><ele>524</ele></trkpt>
+    <trkpt lat="49.261814" lon="19.356666"><ele>519</ele></trkpt>
+    <trkpt lat="49.261323" lon="19.356769"><ele>517</ele></trkpt>
+    <trkpt lat="49.261168" lon="19.356850"><ele>516</ele></trkpt>
+    <trkpt lat="49.261131" lon="19.356825"><ele>517</ele></trkpt>
+    <trkpt lat="49.260899" lon="19.357163"><ele>515</ele></trkpt>
+    <trkpt lat="49.261124" lon="19.357586"><ele>513</ele></trkpt>
+    <trkpt lat="49.261194" lon="19.357784"><ele>513</ele></trkpt>
+    <trkpt lat="49.261206" lon="19.358003"><ele>515</ele></trkpt>
+    <trkpt lat="49.261146" lon="19.358236"><ele>519</ele></trkpt>
+    <trkpt lat="49.261206" lon="19.358003"><ele>515</ele></trkpt>
+    <trkpt lat="49.261194" lon="19.357784"><ele>513</ele></trkpt>
+    <trkpt lat="49.261124" lon="19.357586"><ele>513</ele></trkpt>
+    <trkpt lat="49.260899" lon="19.357163"><ele>515</ele></trkpt>
+    <trkpt lat="49.261131" lon="19.356825"><ele>517</ele></trkpt>
+    <trkpt lat="49.261168" lon="19.356850"><ele>516</ele></trkpt>
+    <trkpt lat="49.261323" lon="19.356769"><ele>517</ele></trkpt>
+    <trkpt lat="49.261814" lon="19.356666"><ele>519</ele></trkpt>
+    <trkpt lat="49.262351" lon="19.356451"><ele>524</ele></trkpt>
+    <trkpt lat="49.262382" lon="19.356606"><ele>522</ele></trkpt>
+    <trkpt lat="49.262629" lon="19.356551"><ele>518</ele></trkpt>
+  </trkseg></trk>
+  <trk><name>Oravský hrad</name><desc>oravsky-hrad-prislop</desc><trkseg>
     <trkpt lat="49.303397" lon="19.353850"><ele>809</ele></trkpt>
     <trkpt lat="49.303412" lon="19.354547"><ele>808</ele></trkpt>
     <trkpt lat="49.303357" lon="19.354867"><ele>808</ele></trkpt>
@@ -341,30 +366,5 @@
     <trkpt lat="49.303357" lon="19.354867"><ele>808</ele></trkpt>
     <trkpt lat="49.303412" lon="19.354547"><ele>808</ele></trkpt>
     <trkpt lat="49.303397" lon="19.353850"><ele>809</ele></trkpt>
-  </trkseg></trk>
-  <trk><name>Oravský hrad</name><desc>oravsky-hrad-od-auta</desc><trkseg>
-    <trkpt lat="49.262629" lon="19.356551"><ele>518</ele></trkpt>
-    <trkpt lat="49.262382" lon="19.356606"><ele>522</ele></trkpt>
-    <trkpt lat="49.262351" lon="19.356451"><ele>524</ele></trkpt>
-    <trkpt lat="49.261814" lon="19.356666"><ele>519</ele></trkpt>
-    <trkpt lat="49.261323" lon="19.356769"><ele>517</ele></trkpt>
-    <trkpt lat="49.261168" lon="19.356850"><ele>516</ele></trkpt>
-    <trkpt lat="49.261131" lon="19.356825"><ele>517</ele></trkpt>
-    <trkpt lat="49.260899" lon="19.357163"><ele>515</ele></trkpt>
-    <trkpt lat="49.261124" lon="19.357586"><ele>513</ele></trkpt>
-    <trkpt lat="49.261194" lon="19.357784"><ele>513</ele></trkpt>
-    <trkpt lat="49.261206" lon="19.358003"><ele>515</ele></trkpt>
-    <trkpt lat="49.261146" lon="19.358236"><ele>519</ele></trkpt>
-    <trkpt lat="49.261206" lon="19.358003"><ele>515</ele></trkpt>
-    <trkpt lat="49.261194" lon="19.357784"><ele>513</ele></trkpt>
-    <trkpt lat="49.261124" lon="19.357586"><ele>513</ele></trkpt>
-    <trkpt lat="49.260899" lon="19.357163"><ele>515</ele></trkpt>
-    <trkpt lat="49.261131" lon="19.356825"><ele>517</ele></trkpt>
-    <trkpt lat="49.261168" lon="19.356850"><ele>516</ele></trkpt>
-    <trkpt lat="49.261323" lon="19.356769"><ele>517</ele></trkpt>
-    <trkpt lat="49.261814" lon="19.356666"><ele>519</ele></trkpt>
-    <trkpt lat="49.262351" lon="19.356451"><ele>524</ele></trkpt>
-    <trkpt lat="49.262382" lon="19.356606"><ele>522</ele></trkpt>
-    <trkpt lat="49.262629" lon="19.356551"><ele>518</ele></trkpt>
   </trkseg></trk>
 </gpx>

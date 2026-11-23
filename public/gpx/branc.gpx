@@ -2,6 +2,29 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Hrad Branč</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Hrad Branč</name><desc>branc</desc><trkseg>
+    <trkpt lat="48.732786" lon="17.462147"><ele>384</ele></trkpt>
+    <trkpt lat="48.732960" lon="17.462146"><ele>383</ele></trkpt>
+    <trkpt lat="48.733046" lon="17.462438"><ele>385</ele></trkpt>
+    <trkpt lat="48.733357" lon="17.462791"><ele>388</ele></trkpt>
+    <trkpt lat="48.733455" lon="17.462999"><ele>388</ele></trkpt>
+    <trkpt lat="48.733621" lon="17.463557"><ele>391</ele></trkpt>
+    <trkpt lat="48.733746" lon="17.463838"><ele>394</ele></trkpt>
+    <trkpt lat="48.734557" lon="17.465077"><ele>404</ele></trkpt>
+    <trkpt lat="48.734635" lon="17.465259"><ele>404</ele></trkpt>
+    <trkpt lat="48.734944" lon="17.466327"><ele>410</ele></trkpt>
+    <trkpt lat="48.734950" lon="17.467410"><ele>415</ele></trkpt>
+    <trkpt lat="48.734944" lon="17.466327"><ele>410</ele></trkpt>
+    <trkpt lat="48.734635" lon="17.465259"><ele>404</ele></trkpt>
+    <trkpt lat="48.734557" lon="17.465077"><ele>404</ele></trkpt>
+    <trkpt lat="48.733746" lon="17.463838"><ele>394</ele></trkpt>
+    <trkpt lat="48.733621" lon="17.463557"><ele>391</ele></trkpt>
+    <trkpt lat="48.733455" lon="17.462999"><ele>388</ele></trkpt>
+    <trkpt lat="48.733357" lon="17.462791"><ele>388</ele></trkpt>
+    <trkpt lat="48.733046" lon="17.462438"><ele>385</ele></trkpt>
+    <trkpt lat="48.732960" lon="17.462146"><ele>383</ele></trkpt>
+    <trkpt lat="48.732786" lon="17.462147"><ele>384</ele></trkpt>
+  </trkseg></trk>
+  <trk><name>Hrad Branč</name><desc>branc-podbranc-martisovci</desc><trkseg>
     <trkpt lat="48.729284" lon="17.460180"><ele>284</ele></trkpt>
     <trkpt lat="48.729730" lon="17.459729"><ele>295</ele></trkpt>
     <trkpt lat="48.729851" lon="17.459537"><ele>297</ele></trkpt>
@@ -61,144 +84,6 @@
     <trkpt lat="48.729851" lon="17.459537"><ele>297</ele></trkpt>
     <trkpt lat="48.729730" lon="17.459729"><ele>295</ele></trkpt>
     <trkpt lat="48.729284" lon="17.460180"><ele>284</ele></trkpt>
-  </trkseg></trk>
-  <trk><name>Hrad Branč</name><desc>branc-horna-dolina</desc><trkseg>
-    <trkpt lat="48.743847" lon="17.449875"><ele>260</ele></trkpt>
-    <trkpt lat="48.743581" lon="17.449904"><ele>260</ele></trkpt>
-    <trkpt lat="48.743147" lon="17.450202"><ele>262</ele></trkpt>
-    <trkpt lat="48.742750" lon="17.450411"><ele>266</ele></trkpt>
-    <trkpt lat="48.742696" lon="17.450477"><ele>267</ele></trkpt>
-    <trkpt lat="48.742556" lon="17.450978"><ele>272</ele></trkpt>
-    <trkpt lat="48.742599" lon="17.451506"><ele>272</ele></trkpt>
-    <trkpt lat="48.742580" lon="17.451622"><ele>274</ele></trkpt>
-    <trkpt lat="48.742397" lon="17.452246"><ele>280</ele></trkpt>
-    <trkpt lat="48.742005" lon="17.454259"><ele>304</ele></trkpt>
-    <trkpt lat="48.741934" lon="17.454373"><ele>307</ele></trkpt>
-    <trkpt lat="48.741523" lon="17.454138"><ele>313</ele></trkpt>
-    <trkpt lat="48.741204" lon="17.453598"><ele>316</ele></trkpt>
-    <trkpt lat="48.741057" lon="17.453436"><ele>318</ele></trkpt>
-    <trkpt lat="48.740810" lon="17.452478"><ele>323</ele></trkpt>
-    <trkpt lat="48.740758" lon="17.451911"><ele>324</ele></trkpt>
-    <trkpt lat="48.740625" lon="17.451297"><ele>326</ele></trkpt>
-    <trkpt lat="48.740544" lon="17.451131"><ele>328</ele></trkpt>
-    <trkpt lat="48.740429" lon="17.450996"><ele>330</ele></trkpt>
-    <trkpt lat="48.740344" lon="17.450590"><ele>330</ele></trkpt>
-    <trkpt lat="48.740160" lon="17.450359"><ele>332</ele></trkpt>
-    <trkpt lat="48.739940" lon="17.449923"><ele>334</ele></trkpt>
-    <trkpt lat="48.739712" lon="17.449703"><ele>337</ele></trkpt>
-    <trkpt lat="48.739451" lon="17.449655"><ele>341</ele></trkpt>
-    <trkpt lat="48.738548" lon="17.449916"><ele>347</ele></trkpt>
-    <trkpt lat="48.737511" lon="17.450295"><ele>350</ele></trkpt>
-    <trkpt lat="48.737155" lon="17.450538"><ele>349</ele></trkpt>
-    <trkpt lat="48.736986" lon="17.450726"><ele>349</ele></trkpt>
-    <trkpt lat="48.736811" lon="17.451020"><ele>348</ele></trkpt>
-    <trkpt lat="48.736618" lon="17.451513"><ele>348</ele></trkpt>
-    <trkpt lat="48.736522" lon="17.451853"><ele>348</ele></trkpt>
-    <trkpt lat="48.736317" lon="17.452863"><ele>347</ele></trkpt>
-    <trkpt lat="48.736333" lon="17.453947"><ele>350</ele></trkpt>
-    <trkpt lat="48.736471" lon="17.454726"><ele>351</ele></trkpt>
-    <trkpt lat="48.736473" lon="17.455037"><ele>350</ele></trkpt>
-    <trkpt lat="48.736527" lon="17.455473"><ele>351</ele></trkpt>
-    <trkpt lat="48.736536" lon="17.455976"><ele>351</ele></trkpt>
-    <trkpt lat="48.736504" lon="17.456361"><ele>352</ele></trkpt>
-    <trkpt lat="48.736229" lon="17.458162"><ele>361</ele></trkpt>
-    <trkpt lat="48.736004" lon="17.458841"><ele>363</ele></trkpt>
-    <trkpt lat="48.735718" lon="17.460069"><ele>368</ele></trkpt>
-    <trkpt lat="48.735487" lon="17.460528"><ele>369</ele></trkpt>
-    <trkpt lat="48.735215" lon="17.460791"><ele>371</ele></trkpt>
-    <trkpt lat="48.734849" lon="17.460928"><ele>373</ele></trkpt>
-    <trkpt lat="48.733735" lon="17.461531"><ele>378</ele></trkpt>
-    <trkpt lat="48.733267" lon="17.461613"><ele>380</ele></trkpt>
-    <trkpt lat="48.733064" lon="17.461765"><ele>381</ele></trkpt>
-    <trkpt lat="48.732996" lon="17.461864"><ele>382</ele></trkpt>
-    <trkpt lat="48.732960" lon="17.462005"><ele>382</ele></trkpt>
-    <trkpt lat="48.732960" lon="17.462146"><ele>383</ele></trkpt>
-    <trkpt lat="48.733010" lon="17.462373"><ele>384</ele></trkpt>
-    <trkpt lat="48.733409" lon="17.462881"><ele>388</ele></trkpt>
-    <trkpt lat="48.733685" lon="17.463721"><ele>393</ele></trkpt>
-    <trkpt lat="48.734557" lon="17.465077"><ele>404</ele></trkpt>
-    <trkpt lat="48.734635" lon="17.465259"><ele>404</ele></trkpt>
-    <trkpt lat="48.734944" lon="17.466327"><ele>410</ele></trkpt>
-    <trkpt lat="48.734950" lon="17.467410"><ele>415</ele></trkpt>
-    <trkpt lat="48.734944" lon="17.466327"><ele>410</ele></trkpt>
-    <trkpt lat="48.734635" lon="17.465259"><ele>404</ele></trkpt>
-    <trkpt lat="48.734557" lon="17.465077"><ele>404</ele></trkpt>
-    <trkpt lat="48.733685" lon="17.463721"><ele>393</ele></trkpt>
-    <trkpt lat="48.733409" lon="17.462881"><ele>388</ele></trkpt>
-    <trkpt lat="48.733010" lon="17.462373"><ele>384</ele></trkpt>
-    <trkpt lat="48.732960" lon="17.462146"><ele>383</ele></trkpt>
-    <trkpt lat="48.732960" lon="17.462005"><ele>382</ele></trkpt>
-    <trkpt lat="48.732996" lon="17.461864"><ele>382</ele></trkpt>
-    <trkpt lat="48.733064" lon="17.461765"><ele>381</ele></trkpt>
-    <trkpt lat="48.733267" lon="17.461613"><ele>380</ele></trkpt>
-    <trkpt lat="48.733735" lon="17.461531"><ele>378</ele></trkpt>
-    <trkpt lat="48.734849" lon="17.460928"><ele>373</ele></trkpt>
-    <trkpt lat="48.735215" lon="17.460791"><ele>371</ele></trkpt>
-    <trkpt lat="48.735487" lon="17.460528"><ele>369</ele></trkpt>
-    <trkpt lat="48.735718" lon="17.460069"><ele>368</ele></trkpt>
-    <trkpt lat="48.736004" lon="17.458841"><ele>363</ele></trkpt>
-    <trkpt lat="48.736229" lon="17.458162"><ele>361</ele></trkpt>
-    <trkpt lat="48.736504" lon="17.456361"><ele>352</ele></trkpt>
-    <trkpt lat="48.736536" lon="17.455976"><ele>351</ele></trkpt>
-    <trkpt lat="48.736527" lon="17.455473"><ele>351</ele></trkpt>
-    <trkpt lat="48.736473" lon="17.455037"><ele>350</ele></trkpt>
-    <trkpt lat="48.736471" lon="17.454726"><ele>351</ele></trkpt>
-    <trkpt lat="48.736333" lon="17.453947"><ele>350</ele></trkpt>
-    <trkpt lat="48.736317" lon="17.452863"><ele>347</ele></trkpt>
-    <trkpt lat="48.736522" lon="17.451853"><ele>348</ele></trkpt>
-    <trkpt lat="48.736618" lon="17.451513"><ele>348</ele></trkpt>
-    <trkpt lat="48.736811" lon="17.451020"><ele>348</ele></trkpt>
-    <trkpt lat="48.736986" lon="17.450726"><ele>349</ele></trkpt>
-    <trkpt lat="48.737155" lon="17.450538"><ele>349</ele></trkpt>
-    <trkpt lat="48.737511" lon="17.450295"><ele>350</ele></trkpt>
-    <trkpt lat="48.738548" lon="17.449916"><ele>347</ele></trkpt>
-    <trkpt lat="48.739451" lon="17.449655"><ele>341</ele></trkpt>
-    <trkpt lat="48.739712" lon="17.449703"><ele>337</ele></trkpt>
-    <trkpt lat="48.739940" lon="17.449923"><ele>334</ele></trkpt>
-    <trkpt lat="48.740160" lon="17.450359"><ele>332</ele></trkpt>
-    <trkpt lat="48.740344" lon="17.450590"><ele>330</ele></trkpt>
-    <trkpt lat="48.740429" lon="17.450996"><ele>330</ele></trkpt>
-    <trkpt lat="48.740544" lon="17.451131"><ele>328</ele></trkpt>
-    <trkpt lat="48.740625" lon="17.451297"><ele>326</ele></trkpt>
-    <trkpt lat="48.740758" lon="17.451911"><ele>324</ele></trkpt>
-    <trkpt lat="48.740810" lon="17.452478"><ele>323</ele></trkpt>
-    <trkpt lat="48.741057" lon="17.453436"><ele>318</ele></trkpt>
-    <trkpt lat="48.741204" lon="17.453598"><ele>316</ele></trkpt>
-    <trkpt lat="48.741523" lon="17.454138"><ele>313</ele></trkpt>
-    <trkpt lat="48.741934" lon="17.454373"><ele>307</ele></trkpt>
-    <trkpt lat="48.742005" lon="17.454259"><ele>304</ele></trkpt>
-    <trkpt lat="48.742397" lon="17.452246"><ele>280</ele></trkpt>
-    <trkpt lat="48.742580" lon="17.451622"><ele>274</ele></trkpt>
-    <trkpt lat="48.742599" lon="17.451506"><ele>272</ele></trkpt>
-    <trkpt lat="48.742556" lon="17.450978"><ele>272</ele></trkpt>
-    <trkpt lat="48.742696" lon="17.450477"><ele>267</ele></trkpt>
-    <trkpt lat="48.742750" lon="17.450411"><ele>266</ele></trkpt>
-    <trkpt lat="48.743147" lon="17.450202"><ele>262</ele></trkpt>
-    <trkpt lat="48.743581" lon="17.449904"><ele>260</ele></trkpt>
-    <trkpt lat="48.743847" lon="17.449875"><ele>260</ele></trkpt>
-  </trkseg></trk>
-  <trk><name>Hrad Branč</name><desc>branc-od-auta</desc><trkseg>
-    <trkpt lat="48.732786" lon="17.462147"><ele>384</ele></trkpt>
-    <trkpt lat="48.732960" lon="17.462146"><ele>383</ele></trkpt>
-    <trkpt lat="48.733046" lon="17.462438"><ele>385</ele></trkpt>
-    <trkpt lat="48.733357" lon="17.462791"><ele>388</ele></trkpt>
-    <trkpt lat="48.733455" lon="17.462999"><ele>388</ele></trkpt>
-    <trkpt lat="48.733621" lon="17.463557"><ele>391</ele></trkpt>
-    <trkpt lat="48.733746" lon="17.463838"><ele>394</ele></trkpt>
-    <trkpt lat="48.734557" lon="17.465077"><ele>404</ele></trkpt>
-    <trkpt lat="48.734635" lon="17.465259"><ele>404</ele></trkpt>
-    <trkpt lat="48.734944" lon="17.466327"><ele>410</ele></trkpt>
-    <trkpt lat="48.734950" lon="17.467410"><ele>415</ele></trkpt>
-    <trkpt lat="48.734944" lon="17.466327"><ele>410</ele></trkpt>
-    <trkpt lat="48.734635" lon="17.465259"><ele>404</ele></trkpt>
-    <trkpt lat="48.734557" lon="17.465077"><ele>404</ele></trkpt>
-    <trkpt lat="48.733746" lon="17.463838"><ele>394</ele></trkpt>
-    <trkpt lat="48.733621" lon="17.463557"><ele>391</ele></trkpt>
-    <trkpt lat="48.733455" lon="17.462999"><ele>388</ele></trkpt>
-    <trkpt lat="48.733357" lon="17.462791"><ele>388</ele></trkpt>
-    <trkpt lat="48.733046" lon="17.462438"><ele>385</ele></trkpt>
-    <trkpt lat="48.732960" lon="17.462146"><ele>383</ele></trkpt>
-    <trkpt lat="48.732786" lon="17.462147"><ele>384</ele></trkpt>
   </trkseg></trk>
   <trk><name>Hrad Branč</name><desc>branc-tura-luka</desc><trkseg>
     <trkpt lat="48.745418" lon="17.533999"><ele>301</ele></trkpt>
