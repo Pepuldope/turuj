@@ -263,7 +263,9 @@ class TripBuilder:
             st = self.make_start(f.name, f.lat, f.lon, _num(f.tags.get("ele")), f.osm, node)
             if is_junction_name(f.name):
                 st.guidepost = f.name
-                st.name = self.start_label(st)
+                # hand-kept name first (config `start_names:`): the nearest village in a straight line
+                # can lie in the next valley, with no road to this start
+                st.name = (self.cfg.get("start_names") or {}).get(f.osm) or self.start_label(st)
                 self.report.setdefault("start_labels", {})[f.osm] = (f.name, st.name)
             near_stop = any(d <= self.t["trailhead_needs_stop_max_m"] for d, _ in st.stops)
             if st.parking or near_stop:

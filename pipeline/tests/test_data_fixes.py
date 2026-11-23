@@ -114,3 +114,15 @@ def test_generic_car_park_names_name_no_start():
     places = [(600.0, type("F", (), {"name": "Zverovka", "tags": {}})())]
     gen = type("F", (), {"name": "TANAP parking", "tags": {}})()
     assert start_label([(90.0, gen)], [], places) == "Zverovka"
+
+
+def test_hand_kept_start_names_are_real_names():
+    import pathlib
+    import re
+
+    import yaml
+
+    cfg = yaml.safe_load((pathlib.Path(__file__).parents[1] / "config.yaml").read_text())
+    for osm, name in cfg["start_names"].items():
+        assert re.fullmatch(r"node/\d+", osm), osm
+        assert name.strip() and not is_junction_name(name), name
