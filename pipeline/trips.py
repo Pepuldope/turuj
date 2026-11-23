@@ -620,6 +620,15 @@ class TripBuilder:
             self.report.setdefault("town", []).append((dest["name"], c.kind, "in town", "", 0))
             return self._reject("sight in a town")
         routes, why = self.routes_to(c.node, dest, c.region, ths, th_nodes, limits=c.limits)
+        visit_only = False
+        if not routes and c.kind in SHORT_MAIN_KINDS and self.capped_routes:
+            # Every hike is over the 9-hour cap, but the visit from the car park by the castle or cave is a
+            # trip of its own (Brazovica, Čonkavár, C106): keep that, without the hike.
+            base = min(self.capped_routes, key=lambda r: r["duration_min"])
+            short = self.short_visit(base, self.capped_routes, c.node, dest, c.region)
+            if short:
+                short["_known"] = base["_known"]
+                routes, visit_only = [short], True
         if not routes:
             return self._reject(why)
         main = self._pick_main(routes, self.main_start.get(dest["osm"]))
@@ -637,8 +646,8 @@ class TripBuilder:
                                         self._collision_tag(dest, c.region)))
         main["_score"] = c.score
         others = [r for r in routes if r is not main]
-        main["_others"] = others + self._alternatives_for(hike, [r for r in others if r is not hike], c.node, dest,
-                                                          c.region, routes, c.limits)
+        main["_others"] = [] if visit_only else others + self._alternatives_for(
+            hike, [r for r in others if r is not hike], c.node, dest, c.region, routes, c.limits)
         return main
 
     def routes_to(self, target, dest, region, ths, th_nodes, known=(), limits=None):
@@ -650,6 +659,9 @@ class TripBuilder:
         lower min_round_trip_m and min_ascent_m for one place (a short stroll from a car park
         that everyone takes, like Kamzík)."""
         lim = {**self.t, **(limits or {})}
+        # Routes turned down only by the 9-hour cap with the walk from the car park or stop (fit_walk_cap):
+        # a castle or show cave keeps its car-park visit even when every hike to it is that long.
+        self.capped_routes = []
         dist, succ = self.g.costs_to(target, ROUTE_LIMIT)
         costs = dist[th_nodes]
         if not np.isfinite(costs).any():
@@ -683,6 +695,10 @@ class TripBuilder:
                     bad = "city walk"
                     self.report.setdefault("town", []).append((dest["name"], dest["kind"], "city walk", st.name, round(town)))
             if bad:
+                if bad.startswith("too long with the walk"):
+                    trip["_known"] = self.known_score(st)
+                    trip["_edges"] = edges
+                    self.capped_routes.append(trip)
                 why = bad
                 continue
             trip["_known"] = self.known_score(st)
