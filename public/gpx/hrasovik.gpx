@@ -179,11 +179,12 @@
     <trkpt lat="49.194116" lon="21.089948"><ele>542</ele></trkpt>
   </trkseg></trk>
   <trk><name>Hrašovík (Livov)</name><desc>hrasovik-hanigovce</desc><trkseg>
-    <trkpt lat="49.172112" lon="21.018441"><ele>513</ele></trkpt>
+    <trkpt lat="49.172100" lon="21.018425"><ele>513</ele></trkpt>
     <trkpt lat="49.172889" lon="21.017778"><ele>516</ele></trkpt>
     <trkpt lat="49.172858" lon="21.017376"><ele>518</ele></trkpt>
-    <trkpt lat="49.173074" lon="21.016627"><ele>526</ele></trkpt>
-    <trkpt lat="49.173062" lon="21.016471"><ele>527</ele></trkpt>
+    <trkpt lat="49.172961" lon="21.016980"><ele>522</ele></trkpt>
+    <trkpt lat="49.173079" lon="21.016739"><ele>525</ele></trkpt>
+    <trkpt lat="49.173093" lon="21.016616"><ele>526</ele></trkpt>
     <trkpt lat="49.172834" lon="21.015549"><ele>538</ele></trkpt>
     <trkpt lat="49.172803" lon="21.015211"><ele>541</ele></trkpt>
     <trkpt lat="49.172844" lon="21.014427"><ele>547</ele></trkpt>
@@ -197,11 +198,13 @@
     <trkpt lat="49.175023" lon="21.014090"><ele>559</ele></trkpt>
     <trkpt lat="49.175175" lon="21.014275"><ele>559</ele></trkpt>
     <trkpt lat="49.175241" lon="21.014411"><ele>559</ele></trkpt>
-    <trkpt lat="49.175337" lon="21.014277"><ele>560</ele></trkpt>
-    <trkpt lat="49.175437" lon="21.014230"><ele>561</ele></trkpt>
-    <trkpt lat="49.175920" lon="21.014317"><ele>563</ele></trkpt>
-    <trkpt lat="49.176842" lon="21.014771"><ele>567</ele></trkpt>
-    <trkpt lat="49.177570" lon="21.015375"><ele>569</ele></trkpt>
+    <trkpt lat="49.175299" lon="21.014313"><ele>560</ele></trkpt>
+    <trkpt lat="49.175447" lon="21.014239"><ele>561</ele></trkpt>
+    <trkpt lat="49.175761" lon="21.014326"><ele>562</ele></trkpt>
+    <trkpt lat="49.175921" lon="21.014290"><ele>563</ele></trkpt>
+    <trkpt lat="49.176265" lon="21.014413"><ele>564</ele></trkpt>
+    <trkpt lat="49.177494" lon="21.015276"><ele>570</ele></trkpt>
+    <trkpt lat="49.177747" lon="21.015382"><ele>571</ele></trkpt>
     <trkpt lat="49.178404" lon="21.015467"><ele>576</ele></trkpt>
     <trkpt lat="49.179690" lon="21.015933"><ele>590</ele></trkpt>
     <trkpt lat="49.180719" lon="21.016421"><ele>606</ele></trkpt>
@@ -621,11 +624,13 @@
     <trkpt lat="49.180719" lon="21.016421"><ele>606</ele></trkpt>
     <trkpt lat="49.179690" lon="21.015933"><ele>590</ele></trkpt>
     <trkpt lat="49.178404" lon="21.015467"><ele>576</ele></trkpt>
-    <trkpt lat="49.177570" lon="21.015375"><ele>569</ele></trkpt>
-    <trkpt lat="49.176842" lon="21.014771"><ele>567</ele></trkpt>
-    <trkpt lat="49.175920" lon="21.014317"><ele>563</ele></trkpt>
-    <trkpt lat="49.175437" lon="21.014230"><ele>561</ele></trkpt>
-    <trkpt lat="49.175337" lon="21.014277"><ele>560</ele></trkpt>
+    <trkpt lat="49.177747" lon="21.015382"><ele>571</ele></trkpt>
+    <trkpt lat="49.177494" lon="21.015276"><ele>570</ele></trkpt>
+    <trkpt lat="49.176265" lon="21.014413"><ele>564</ele></trkpt>
+    <trkpt lat="49.175921" lon="21.014290"><ele>563</ele></trkpt>
+    <trkpt lat="49.175761" lon="21.014326"><ele>562</ele></trkpt>
+    <trkpt lat="49.175447" lon="21.014239"><ele>561</ele></trkpt>
+    <trkpt lat="49.175299" lon="21.014313"><ele>560</ele></trkpt>
     <trkpt lat="49.175241" lon="21.014411"><ele>559</ele></trkpt>
     <trkpt lat="49.175175" lon="21.014275"><ele>559</ele></trkpt>
     <trkpt lat="49.175023" lon="21.014090"><ele>559</ele></trkpt>
@@ -639,11 +644,12 @@
     <trkpt lat="49.172844" lon="21.014427"><ele>547</ele></trkpt>
     <trkpt lat="49.172803" lon="21.015211"><ele>541</ele></trkpt>
     <trkpt lat="49.172834" lon="21.015549"><ele>538</ele></trkpt>
-    <trkpt lat="49.173062" lon="21.016471"><ele>527</ele></trkpt>
-    <trkpt lat="49.173074" lon="21.016627"><ele>526</ele></trkpt>
+    <trkpt lat="49.173093" lon="21.016616"><ele>526</ele></trkpt>
+    <trkpt lat="49.173079" lon="21.016739"><ele>525</ele></trkpt>
+    <trkpt lat="49.172961" lon="21.016980"><ele>522</ele></trkpt>
     <trkpt lat="49.172858" lon="21.017376"><ele>518</ele></trkpt>
     <trkpt lat="49.172889" lon="21.017778"><ele>516</ele></trkpt>
-    <trkpt lat="49.172112" lon="21.018441"><ele>513</ele></trkpt>
+    <trkpt lat="49.172100" lon="21.018425"><ele>513</ele></trkpt>
   </trkseg></trk>
   <trk><name>Hrašovík (Livov)</name><desc>hrasovik-potoky</desc><trkseg>
     <trkpt lat="49.199260" lon="20.985592"><ele>575</ele></trkpt>

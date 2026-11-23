@@ -144,28 +144,26 @@
     <trkpt lat="48.450708" lon="18.883910"><ele>702</ele></trkpt>
     <trkpt lat="48.450773" lon="18.884176"><ele>695</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Malý Paradajs</name><desc>maly-paradajs-banska-stiavnica</desc><trkseg>
-    <trkpt lat="48.449328" lon="18.906843"><ele>520</ele></trkpt>
-    <trkpt lat="48.449526" lon="18.906747"><ele>520</ele></trkpt>
-    <trkpt lat="48.449537" lon="18.906617"><ele>522</ele></trkpt>
-    <trkpt lat="48.450165" lon="18.906492"><ele>523</ele></trkpt>
+  <trk><name>Malý Paradajs</name><desc>maly-paradajs-banska-stiavnica-juh</desc><trkseg>
+    <trkpt lat="48.450304" lon="18.906608"><ele>521</ele></trkpt>
+    <trkpt lat="48.450199" lon="18.906667"><ele>520</ele></trkpt>
     <trkpt lat="48.450180" lon="18.906575"><ele>522</ele></trkpt>
     <trkpt lat="48.450386" lon="18.906439"><ele>523</ele></trkpt>
-    <trkpt lat="48.450629" lon="18.906117"><ele>525</ele></trkpt>
+    <trkpt lat="48.450601" lon="18.906162"><ele>525</ele></trkpt>
     <trkpt lat="48.450895" lon="18.905438"><ele>528</ele></trkpt>
-    <trkpt lat="48.451524" lon="18.904822"><ele>531</ele></trkpt>
+    <trkpt lat="48.451463" lon="18.904870"><ele>530</ele></trkpt>
     <trkpt lat="48.452456" lon="18.904289"><ele>538</ele></trkpt>
     <trkpt lat="48.453809" lon="18.903671"><ele>538</ele></trkpt>
     <trkpt lat="48.454900" lon="18.903083"><ele>545</ele></trkpt>
     <trkpt lat="48.455528" lon="18.902691"><ele>545</ele></trkpt>
     <trkpt lat="48.455985" lon="18.902547"><ele>547</ele></trkpt>
-    <trkpt lat="48.456361" lon="18.902189"><ele>551</ele></trkpt>
-    <trkpt lat="48.456660" lon="18.901689"><ele>553</ele></trkpt>
-    <trkpt lat="48.457039" lon="18.900901"><ele>558</ele></trkpt>
-    <trkpt lat="48.457534" lon="18.899418"><ele>565</ele></trkpt>
-    <trkpt lat="48.457596" lon="18.899116"><ele>565</ele></trkpt>
+    <trkpt lat="48.456253" lon="18.902316"><ele>549</ele></trkpt>
+    <trkpt lat="48.456430" lon="18.902092"><ele>552</ele></trkpt>
+    <trkpt lat="48.456945" lon="18.901114"><ele>554</ele></trkpt>
+    <trkpt lat="48.457282" lon="18.900227"><ele>561</ele></trkpt>
+    <trkpt lat="48.457579" lon="18.899225"><ele>565</ele></trkpt>
     <trkpt lat="48.457670" lon="18.897853"><ele>572</ele></trkpt>
-    <trkpt lat="48.457844" lon="18.896772"><ele>577</ele></trkpt>
+    <trkpt lat="48.457874" lon="18.896636"><ele>579</ele></trkpt>
     <trkpt lat="48.458072" lon="18.895960"><ele>586</ele></trkpt>
     <trkpt lat="48.458511" lon="18.894754"><ele>594</ele></trkpt>
     <trkpt lat="48.458626" lon="18.894310"><ele>597</ele></trkpt>
@@ -289,37 +287,35 @@
     <trkpt lat="48.458626" lon="18.894310"><ele>597</ele></trkpt>
     <trkpt lat="48.458511" lon="18.894754"><ele>594</ele></trkpt>
     <trkpt lat="48.458072" lon="18.895960"><ele>586</ele></trkpt>
-    <trkpt lat="48.457844" lon="18.896772"><ele>577</ele></trkpt>
+    <trkpt lat="48.457874" lon="18.896636"><ele>579</ele></trkpt>
     <trkpt lat="48.457670" lon="18.897853"><ele>572</ele></trkpt>
-    <trkpt lat="48.457596" lon="18.899116"><ele>565</ele></trkpt>
-    <trkpt lat="48.457534" lon="18.899418"><ele>565</ele></trkpt>
-    <trkpt lat="48.457039" lon="18.900901"><ele>558</ele></trkpt>
-    <trkpt lat="48.456660" lon="18.901689"><ele>553</ele></trkpt>
-    <trkpt lat="48.456361" lon="18.902189"><ele>551</ele></trkpt>
+    <trkpt lat="48.457579" lon="18.899225"><ele>565</ele></trkpt>
+    <trkpt lat="48.457282" lon="18.900227"><ele>561</ele></trkpt>
+    <trkpt lat="48.456945" lon="18.901114"><ele>554</ele></trkpt>
+    <trkpt lat="48.456430" lon="18.902092"><ele>552</ele></trkpt>
+    <trkpt lat="48.456253" lon="18.902316"><ele>549</ele></trkpt>
     <trkpt lat="48.455985" lon="18.902547"><ele>547</ele></trkpt>
     <trkpt lat="48.455528" lon="18.902691"><ele>545</ele></trkpt>
     <trkpt lat="48.454900" lon="18.903083"><ele>545</ele></trkpt>
     <trkpt lat="48.453809" lon="18.903671"><ele>538</ele></trkpt>
     <trkpt lat="48.452456" lon="18.904289"><ele>538</ele></trkpt>
-    <trkpt lat="48.451524" lon="18.904822"><ele>531</ele></trkpt>
+    <trkpt lat="48.451463" lon="18.904870"><ele>530</ele></trkpt>
     <trkpt lat="48.450895" lon="18.905438"><ele>528</ele></trkpt>
-    <trkpt lat="48.450629" lon="18.906117"><ele>525</ele></trkpt>
+    <trkpt lat="48.450601" lon="18.906162"><ele>525</ele></trkpt>
     <trkpt lat="48.450386" lon="18.906439"><ele>523</ele></trkpt>
     <trkpt lat="48.450180" lon="18.906575"><ele>522</ele></trkpt>
-    <trkpt lat="48.450165" lon="18.906492"><ele>523</ele></trkpt>
-    <trkpt lat="48.449537" lon="18.906617"><ele>522</ele></trkpt>
-    <trkpt lat="48.449526" lon="18.906747"><ele>520</ele></trkpt>
-    <trkpt lat="48.449328" lon="18.906843"><ele>520</ele></trkpt>
+    <trkpt lat="48.450199" lon="18.906667"><ele>520</ele></trkpt>
+    <trkpt lat="48.450304" lon="18.906608"><ele>521</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Malý Paradajs</name><desc>maly-paradajs-banska-stiavnica-ina-cesta</desc><trkseg>
-    <trkpt lat="48.449328" lon="18.906843"><ele>520</ele></trkpt>
-    <trkpt lat="48.449340" lon="18.906882"><ele>519</ele></trkpt>
-    <trkpt lat="48.449770" lon="18.906798"><ele>520</ele></trkpt>
-    <trkpt lat="48.450325" lon="18.906485"><ele>523</ele></trkpt>
+  <trk><name>Malý Paradajs</name><desc>maly-paradajs-banska-stiavnica-juh-ina-cesta</desc><trkseg>
+    <trkpt lat="48.450304" lon="18.906608"><ele>521</ele></trkpt>
+    <trkpt lat="48.450357" lon="18.906688"><ele>521</ele></trkpt>
+    <trkpt lat="48.450328" lon="18.906836"><ele>521</ele></trkpt>
+    <trkpt lat="48.450373" lon="18.906880"><ele>521</ele></trkpt>
+    <trkpt lat="48.450418" lon="18.906759"><ele>522</ele></trkpt>
     <trkpt lat="48.450409" lon="18.906597"><ele>522</ele></trkpt>
-    <trkpt lat="48.450511" lon="18.906627"><ele>522</ele></trkpt>
-    <trkpt lat="48.450576" lon="18.906594"><ele>522</ele></trkpt>
-    <trkpt lat="48.450633" lon="18.906500"><ele>522</ele></trkpt>
+    <trkpt lat="48.450544" lon="18.906620"><ele>522</ele></trkpt>
+    <trkpt lat="48.450611" lon="18.906554"><ele>522</ele></trkpt>
     <trkpt lat="48.450643" lon="18.906398"><ele>522</ele></trkpt>
     <trkpt lat="48.450560" lon="18.906225"><ele>524</ele></trkpt>
     <trkpt lat="48.450629" lon="18.906117"><ele>525</ele></trkpt>
@@ -561,14 +557,14 @@
     <trkpt lat="48.450629" lon="18.906117"><ele>525</ele></trkpt>
     <trkpt lat="48.450560" lon="18.906225"><ele>524</ele></trkpt>
     <trkpt lat="48.450643" lon="18.906398"><ele>522</ele></trkpt>
-    <trkpt lat="48.450633" lon="18.906500"><ele>522</ele></trkpt>
-    <trkpt lat="48.450576" lon="18.906594"><ele>522</ele></trkpt>
-    <trkpt lat="48.450511" lon="18.906627"><ele>522</ele></trkpt>
+    <trkpt lat="48.450611" lon="18.906554"><ele>522</ele></trkpt>
+    <trkpt lat="48.450544" lon="18.906620"><ele>522</ele></trkpt>
     <trkpt lat="48.450409" lon="18.906597"><ele>522</ele></trkpt>
-    <trkpt lat="48.450325" lon="18.906485"><ele>523</ele></trkpt>
-    <trkpt lat="48.449770" lon="18.906798"><ele>520</ele></trkpt>
-    <trkpt lat="48.449340" lon="18.906882"><ele>519</ele></trkpt>
-    <trkpt lat="48.449328" lon="18.906843"><ele>520</ele></trkpt>
+    <trkpt lat="48.450418" lon="18.906759"><ele>522</ele></trkpt>
+    <trkpt lat="48.450373" lon="18.906880"><ele>521</ele></trkpt>
+    <trkpt lat="48.450328" lon="18.906836"><ele>521</ele></trkpt>
+    <trkpt lat="48.450357" lon="18.906688"><ele>521</ele></trkpt>
+    <trkpt lat="48.450304" lon="18.906608"><ele>521</ele></trkpt>
   </trkseg></trk>
   <trk><name>Malý Paradajs</name><desc>maly-paradajs-horna-roven</desc><trkseg>
     <trkpt lat="48.447909" lon="18.874893"><ele>821</ele></trkpt>

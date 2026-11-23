@@ -2,20 +2,21 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Veľká skala (Hričovské Podhradie)</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Veľká skala (Hričovské Podhradie)</name><desc>velka-skala-hricovske-podhradie</desc><trkseg>
-    <trkpt lat="49.221376" lon="18.622832"><ele>325</ele></trkpt>
-    <trkpt lat="49.221424" lon="18.622926"><ele>327</ele></trkpt>
+    <trkpt lat="49.221322" lon="18.622903"><ele>326</ele></trkpt>
+    <trkpt lat="49.221270" lon="18.623009"><ele>327</ele></trkpt>
     <trkpt lat="49.221269" lon="18.623081"><ele>328</ele></trkpt>
     <trkpt lat="49.220725" lon="18.623282"><ele>327</ele></trkpt>
-    <trkpt lat="49.220413" lon="18.623548"><ele>330</ele></trkpt>
+    <trkpt lat="49.220350" lon="18.623564"><ele>330</ele></trkpt>
+    <trkpt lat="49.220397" lon="18.623634"><ele>331</ele></trkpt>
     <trkpt lat="49.220385" lon="18.623672"><ele>332</ele></trkpt>
     <trkpt lat="49.220113" lon="18.623689"><ele>334</ele></trkpt>
-    <trkpt lat="49.219916" lon="18.623798"><ele>338</ele></trkpt>
-    <trkpt lat="49.219562" lon="18.624123"><ele>346</ele></trkpt>
-    <trkpt lat="49.219175" lon="18.624897"><ele>358</ele></trkpt>
+    <trkpt lat="49.219646" lon="18.623985"><ele>343</ele></trkpt>
+    <trkpt lat="49.219464" lon="18.624242"><ele>348</ele></trkpt>
+    <trkpt lat="49.219169" lon="18.624879"><ele>357</ele></trkpt>
     <trkpt lat="49.219186" lon="18.625283"><ele>366</ele></trkpt>
     <trkpt lat="49.219123" lon="18.625573"><ele>371</ele></trkpt>
-    <trkpt lat="49.219194" lon="18.625686"><ele>372</ele></trkpt>
-    <trkpt lat="49.219348" lon="18.626305"><ele>385</ele></trkpt>
+    <trkpt lat="49.219222" lon="18.625784"><ele>374</ele></trkpt>
+    <trkpt lat="49.219374" lon="18.626385"><ele>386</ele></trkpt>
     <trkpt lat="49.219879" lon="18.627324"><ele>393</ele></trkpt>
     <trkpt lat="49.220235" lon="18.627790"><ele>398</ele></trkpt>
     <trkpt lat="49.220804" lon="18.628731"><ele>415</ele></trkpt>
@@ -45,20 +46,21 @@
     <trkpt lat="49.220804" lon="18.628731"><ele>415</ele></trkpt>
     <trkpt lat="49.220235" lon="18.627790"><ele>398</ele></trkpt>
     <trkpt lat="49.219879" lon="18.627324"><ele>393</ele></trkpt>
-    <trkpt lat="49.219348" lon="18.626305"><ele>385</ele></trkpt>
-    <trkpt lat="49.219194" lon="18.625686"><ele>372</ele></trkpt>
+    <trkpt lat="49.219374" lon="18.626385"><ele>386</ele></trkpt>
+    <trkpt lat="49.219222" lon="18.625784"><ele>374</ele></trkpt>
     <trkpt lat="49.219123" lon="18.625573"><ele>371</ele></trkpt>
     <trkpt lat="49.219186" lon="18.625283"><ele>366</ele></trkpt>
-    <trkpt lat="49.219175" lon="18.624897"><ele>358</ele></trkpt>
-    <trkpt lat="49.219562" lon="18.624123"><ele>346</ele></trkpt>
-    <trkpt lat="49.219916" lon="18.623798"><ele>338</ele></trkpt>
+    <trkpt lat="49.219169" lon="18.624879"><ele>357</ele></trkpt>
+    <trkpt lat="49.219464" lon="18.624242"><ele>348</ele></trkpt>
+    <trkpt lat="49.219646" lon="18.623985"><ele>343</ele></trkpt>
     <trkpt lat="49.220113" lon="18.623689"><ele>334</ele></trkpt>
     <trkpt lat="49.220385" lon="18.623672"><ele>332</ele></trkpt>
-    <trkpt lat="49.220413" lon="18.623548"><ele>330</ele></trkpt>
+    <trkpt lat="49.220397" lon="18.623634"><ele>331</ele></trkpt>
+    <trkpt lat="49.220350" lon="18.623564"><ele>330</ele></trkpt>
     <trkpt lat="49.220725" lon="18.623282"><ele>327</ele></trkpt>
     <trkpt lat="49.221269" lon="18.623081"><ele>328</ele></trkpt>
-    <trkpt lat="49.221424" lon="18.622926"><ele>327</ele></trkpt>
-    <trkpt lat="49.221376" lon="18.622832"><ele>325</ele></trkpt>
+    <trkpt lat="49.221270" lon="18.623009"><ele>327</ele></trkpt>
+    <trkpt lat="49.221322" lon="18.622903"><ele>326</ele></trkpt>
   </trkseg></trk>
   <trk><name>Veľká skala (Hričovské Podhradie)</name><desc>velka-skala-hricovske-podhradie-ovciarsko</desc><trkseg>
     <trkpt lat="49.223506" lon="18.661932"><ele>427</ele></trkpt>

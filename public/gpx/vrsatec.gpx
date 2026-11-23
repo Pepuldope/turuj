@@ -2,84 +2,13 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Hrad Vršatec</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Hrad Vršatec</name><desc>vrsatec</desc><trkseg>
-    <trkpt lat="49.071973" lon="18.169464"><ele>619</ele></trkpt>
-    <trkpt lat="49.071426" lon="18.168710"><ele>629</ele></trkpt>
-    <trkpt lat="49.071286" lon="18.168077"><ele>630</ele></trkpt>
-    <trkpt lat="49.071163" lon="18.167803"><ele>633</ele></trkpt>
-    <trkpt lat="49.070536" lon="18.167006"><ele>636</ele></trkpt>
-    <trkpt lat="49.070187" lon="18.166443"><ele>634</ele></trkpt>
-    <trkpt lat="49.070068" lon="18.166151"><ele>632</ele></trkpt>
-    <trkpt lat="49.070038" lon="18.165982"><ele>632</ele></trkpt>
-    <trkpt lat="49.070048" lon="18.165772"><ele>632</ele></trkpt>
-    <trkpt lat="49.070214" lon="18.164473"><ele>626</ele></trkpt>
-    <trkpt lat="49.070180" lon="18.164083"><ele>625</ele></trkpt>
-    <trkpt lat="49.069222" lon="18.162861"><ele>629</ele></trkpt>
-    <trkpt lat="49.068541" lon="18.162364"><ele>630</ele></trkpt>
-    <trkpt lat="49.067967" lon="18.162031"><ele>633</ele></trkpt>
-    <trkpt lat="49.067864" lon="18.161931"><ele>634</ele></trkpt>
-    <trkpt lat="49.067692" lon="18.161652"><ele>633</ele></trkpt>
-    <trkpt lat="49.067643" lon="18.161536"><ele>633</ele></trkpt>
-    <trkpt lat="49.067599" lon="18.161282"><ele>633</ele></trkpt>
-    <trkpt lat="49.067640" lon="18.160653"><ele>633</ele></trkpt>
-    <trkpt lat="49.067634" lon="18.159901"><ele>635</ele></trkpt>
-    <trkpt lat="49.067427" lon="18.158735"><ele>638</ele></trkpt>
-    <trkpt lat="49.067374" lon="18.158618"><ele>639</ele></trkpt>
-    <trkpt lat="49.067001" lon="18.158223"><ele>639</ele></trkpt>
-    <trkpt lat="49.066830" lon="18.157976"><ele>639</ele></trkpt>
-    <trkpt lat="49.066631" lon="18.157532"><ele>641</ele></trkpt>
-    <trkpt lat="49.066352" lon="18.155995"><ele>651</ele></trkpt>
-    <trkpt lat="49.066286" lon="18.155735"><ele>652</ele></trkpt>
-    <trkpt lat="49.065950" lon="18.154818"><ele>653</ele></trkpt>
-    <trkpt lat="49.065883" lon="18.154716"><ele>653</ele></trkpt>
-    <trkpt lat="49.064321" lon="18.153444"><ele>662</ele></trkpt>
-    <trkpt lat="49.064372" lon="18.153323"><ele>664</ele></trkpt>
-    <trkpt lat="49.064434" lon="18.152994"><ele>668</ele></trkpt>
-    <trkpt lat="49.064422" lon="18.152759"><ele>670</ele></trkpt>
-    <trkpt lat="49.064262" lon="18.152101"><ele>676</ele></trkpt>
-    <trkpt lat="49.064259" lon="18.152014"><ele>676</ele></trkpt>
-    <trkpt lat="49.064310" lon="18.151911"><ele>677</ele></trkpt>
-    <trkpt lat="49.064382" lon="18.151916"><ele>679</ele></trkpt>
-    <trkpt lat="49.064628" lon="18.152187"><ele>683</ele></trkpt>
-    <trkpt lat="49.064791" lon="18.152294"><ele>685</ele></trkpt>
+    <trkpt lat="49.067230" lon="18.153023"><ele>726</ele></trkpt>
+    <trkpt lat="49.066628" lon="18.152804"><ele>715</ele></trkpt>
+    <trkpt lat="49.066311" lon="18.152629"><ele>714</ele></trkpt>
     <trkpt lat="49.065704" lon="18.152477"><ele>703</ele></trkpt>
-    <trkpt lat="49.064791" lon="18.152294"><ele>685</ele></trkpt>
-    <trkpt lat="49.064628" lon="18.152187"><ele>683</ele></trkpt>
-    <trkpt lat="49.064382" lon="18.151916"><ele>679</ele></trkpt>
-    <trkpt lat="49.064310" lon="18.151911"><ele>677</ele></trkpt>
-    <trkpt lat="49.064259" lon="18.152014"><ele>676</ele></trkpt>
-    <trkpt lat="49.064262" lon="18.152101"><ele>676</ele></trkpt>
-    <trkpt lat="49.064422" lon="18.152759"><ele>670</ele></trkpt>
-    <trkpt lat="49.064434" lon="18.152994"><ele>668</ele></trkpt>
-    <trkpt lat="49.064372" lon="18.153323"><ele>664</ele></trkpt>
-    <trkpt lat="49.064321" lon="18.153444"><ele>662</ele></trkpt>
-    <trkpt lat="49.065883" lon="18.154716"><ele>653</ele></trkpt>
-    <trkpt lat="49.065950" lon="18.154818"><ele>653</ele></trkpt>
-    <trkpt lat="49.066286" lon="18.155735"><ele>652</ele></trkpt>
-    <trkpt lat="49.066352" lon="18.155995"><ele>651</ele></trkpt>
-    <trkpt lat="49.066631" lon="18.157532"><ele>641</ele></trkpt>
-    <trkpt lat="49.066830" lon="18.157976"><ele>639</ele></trkpt>
-    <trkpt lat="49.067001" lon="18.158223"><ele>639</ele></trkpt>
-    <trkpt lat="49.067374" lon="18.158618"><ele>639</ele></trkpt>
-    <trkpt lat="49.067427" lon="18.158735"><ele>638</ele></trkpt>
-    <trkpt lat="49.067634" lon="18.159901"><ele>635</ele></trkpt>
-    <trkpt lat="49.067640" lon="18.160653"><ele>633</ele></trkpt>
-    <trkpt lat="49.067597" lon="18.161186"><ele>633</ele></trkpt>
-    <trkpt lat="49.067643" lon="18.161536"><ele>633</ele></trkpt>
-    <trkpt lat="49.067758" lon="18.161773"><ele>634</ele></trkpt>
-    <trkpt lat="49.067967" lon="18.162031"><ele>633</ele></trkpt>
-    <trkpt lat="49.068541" lon="18.162364"><ele>630</ele></trkpt>
-    <trkpt lat="49.069222" lon="18.162861"><ele>629</ele></trkpt>
-    <trkpt lat="49.070180" lon="18.164083"><ele>625</ele></trkpt>
-    <trkpt lat="49.070214" lon="18.164473"><ele>626</ele></trkpt>
-    <trkpt lat="49.070048" lon="18.165772"><ele>632</ele></trkpt>
-    <trkpt lat="49.070038" lon="18.165982"><ele>632</ele></trkpt>
-    <trkpt lat="49.070068" lon="18.166151"><ele>632</ele></trkpt>
-    <trkpt lat="49.070187" lon="18.166443"><ele>634</ele></trkpt>
-    <trkpt lat="49.070536" lon="18.167006"><ele>636</ele></trkpt>
-    <trkpt lat="49.071163" lon="18.167803"><ele>633</ele></trkpt>
-    <trkpt lat="49.071286" lon="18.168077"><ele>630</ele></trkpt>
-    <trkpt lat="49.071426" lon="18.168710"><ele>629</ele></trkpt>
-    <trkpt lat="49.071973" lon="18.169464"><ele>619</ele></trkpt>
+    <trkpt lat="49.066311" lon="18.152629"><ele>714</ele></trkpt>
+    <trkpt lat="49.066628" lon="18.152804"><ele>715</ele></trkpt>
+    <trkpt lat="49.067230" lon="18.153023"><ele>726</ele></trkpt>
   </trkseg></trk>
   <trk><name>Hrad Vršatec</name><desc>vrsatec-cerveny-kamen</desc><trkseg>
     <trkpt lat="49.086395" lon="18.185500"><ele>358</ele></trkpt>
@@ -732,14 +661,5 @@
     <trkpt lat="49.029371" lon="18.058338"><ele>274</ele></trkpt>
     <trkpt lat="49.028560" lon="18.058048"><ele>272</ele></trkpt>
     <trkpt lat="49.028509" lon="18.057970"><ele>272</ele></trkpt>
-  </trkseg></trk>
-  <trk><name>Hrad Vršatec</name><desc>vrsatec-od-auta</desc><trkseg>
-    <trkpt lat="49.067230" lon="18.153023"><ele>726</ele></trkpt>
-    <trkpt lat="49.066628" lon="18.152804"><ele>715</ele></trkpt>
-    <trkpt lat="49.066311" lon="18.152629"><ele>714</ele></trkpt>
-    <trkpt lat="49.065704" lon="18.152477"><ele>703</ele></trkpt>
-    <trkpt lat="49.066311" lon="18.152629"><ele>714</ele></trkpt>
-    <trkpt lat="49.066628" lon="18.152804"><ele>715</ele></trkpt>
-    <trkpt lat="49.067230" lon="18.153023"><ele>726</ele></trkpt>
   </trkseg></trk>
 </gpx>

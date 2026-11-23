@@ -2,15 +2,7 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Grúň (Ľubochňa)</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Grúň (Ľubochňa)</name><desc>grun-lubochna-obec</desc><trkseg>
-    <trkpt lat="49.123503" lon="19.170646"><ele>445</ele></trkpt>
-    <trkpt lat="49.123334" lon="19.170806"><ele>444</ele></trkpt>
-    <trkpt lat="49.123271" lon="19.170693"><ele>444</ele></trkpt>
-    <trkpt lat="49.123257" lon="19.170535"><ele>444</ele></trkpt>
-    <trkpt lat="49.123199" lon="19.170457"><ele>443</ele></trkpt>
-    <trkpt lat="49.122692" lon="19.169998"><ele>443</ele></trkpt>
-    <trkpt lat="49.122610" lon="19.169962"><ele>444</ele></trkpt>
-    <trkpt lat="49.122502" lon="19.170029"><ele>444</ele></trkpt>
-    <trkpt lat="49.122330" lon="19.169719"><ele>446</ele></trkpt>
+    <trkpt lat="49.122293" lon="19.169667"><ele>446</ele></trkpt>
     <trkpt lat="49.120598" lon="19.167618"><ele>453</ele></trkpt>
     <trkpt lat="49.120638" lon="19.167539"><ele>452</ele></trkpt>
     <trkpt lat="49.120396" lon="19.167134"><ele>454</ele></trkpt>
@@ -36,13 +28,13 @@
     <trkpt lat="49.128310" lon="19.168288"><ele>483</ele></trkpt>
     <trkpt lat="49.128538" lon="19.168539"><ele>474</ele></trkpt>
     <trkpt lat="49.128809" lon="19.168728"><ele>473</ele></trkpt>
-    <trkpt lat="49.129700" lon="19.168873"><ele>484</ele></trkpt>
-    <trkpt lat="49.129866" lon="19.168817"><ele>488</ele></trkpt>
+    <trkpt lat="49.129607" lon="19.168863"><ele>482</ele></trkpt>
+    <trkpt lat="49.129810" lon="19.168854"><ele>486</ele></trkpt>
     <trkpt lat="49.130191" lon="19.168560"><ele>491</ele></trkpt>
     <trkpt lat="49.130592" lon="19.168122"><ele>493</ele></trkpt>
-    <trkpt lat="49.130977" lon="19.167524"><ele>495</ele></trkpt>
+    <trkpt lat="49.130794" lon="19.167840"><ele>493</ele></trkpt>
     <trkpt lat="49.131098" lon="19.167262"><ele>490</ele></trkpt>
-    <trkpt lat="49.131136" lon="19.167106"><ele>490</ele></trkpt>
+    <trkpt lat="49.131226" lon="19.166514"><ele>495</ele></trkpt>
     <trkpt lat="49.131289" lon="19.165955"><ele>502</ele></trkpt>
     <trkpt lat="49.131481" lon="19.165070"><ele>518</ele></trkpt>
     <trkpt lat="49.131564" lon="19.164497"><ele>526</ele></trkpt>
@@ -95,10 +87,9 @@
     <trkpt lat="49.130066" lon="19.143918"><ele>897</ele></trkpt>
     <trkpt lat="49.130085" lon="19.143296"><ele>904</ele></trkpt>
     <trkpt lat="49.130040" lon="19.142867"><ele>908</ele></trkpt>
-    <trkpt lat="49.129843" lon="19.142459"><ele>915</ele></trkpt>
+    <trkpt lat="49.129671" lon="19.142159"><ele>926</ele></trkpt>
     <trkpt lat="49.129531" lon="19.141960"><ele>933</ele></trkpt>
     <trkpt lat="49.129190" lon="19.141608"><ele>927</ele></trkpt>
-    <trkpt lat="49.129105" lon="19.141561"><ele>927</ele></trkpt>
     <trkpt lat="49.128969" lon="19.141544"><ele>928</ele></trkpt>
     <trkpt lat="49.128537" lon="19.141609"><ele>939</ele></trkpt>
     <trkpt lat="49.128225" lon="19.142148"><ele>960</ele></trkpt>
@@ -187,13 +178,13 @@
     <trkpt lat="49.131564" lon="19.164497"><ele>526</ele></trkpt>
     <trkpt lat="49.131481" lon="19.165070"><ele>518</ele></trkpt>
     <trkpt lat="49.131289" lon="19.165955"><ele>502</ele></trkpt>
-    <trkpt lat="49.131136" lon="19.167106"><ele>490</ele></trkpt>
+    <trkpt lat="49.131226" lon="19.166514"><ele>495</ele></trkpt>
     <trkpt lat="49.131098" lon="19.167262"><ele>490</ele></trkpt>
-    <trkpt lat="49.130977" lon="19.167524"><ele>495</ele></trkpt>
+    <trkpt lat="49.130794" lon="19.167840"><ele>493</ele></trkpt>
     <trkpt lat="49.130592" lon="19.168122"><ele>493</ele></trkpt>
     <trkpt lat="49.130191" lon="19.168560"><ele>491</ele></trkpt>
-    <trkpt lat="49.129866" lon="19.168817"><ele>488</ele></trkpt>
-    <trkpt lat="49.129700" lon="19.168873"><ele>484</ele></trkpt>
+    <trkpt lat="49.129810" lon="19.168854"><ele>486</ele></trkpt>
+    <trkpt lat="49.129607" lon="19.168863"><ele>482</ele></trkpt>
     <trkpt lat="49.128809" lon="19.168728"><ele>473</ele></trkpt>
     <trkpt lat="49.128538" lon="19.168539"><ele>474</ele></trkpt>
     <trkpt lat="49.128310" lon="19.168288"><ele>483</ele></trkpt>
@@ -219,36 +210,27 @@
     <trkpt lat="49.120396" lon="19.167134"><ele>454</ele></trkpt>
     <trkpt lat="49.120638" lon="19.167539"><ele>452</ele></trkpt>
     <trkpt lat="49.120598" lon="19.167618"><ele>453</ele></trkpt>
-    <trkpt lat="49.122330" lon="19.169719"><ele>446</ele></trkpt>
-    <trkpt lat="49.122502" lon="19.170029"><ele>444</ele></trkpt>
-    <trkpt lat="49.122610" lon="19.169962"><ele>444</ele></trkpt>
-    <trkpt lat="49.122692" lon="19.169998"><ele>443</ele></trkpt>
-    <trkpt lat="49.123199" lon="19.170457"><ele>443</ele></trkpt>
-    <trkpt lat="49.123257" lon="19.170535"><ele>444</ele></trkpt>
-    <trkpt lat="49.123271" lon="19.170693"><ele>444</ele></trkpt>
-    <trkpt lat="49.123334" lon="19.170806"><ele>444</ele></trkpt>
-    <trkpt lat="49.123503" lon="19.170646"><ele>445</ele></trkpt>
+    <trkpt lat="49.122293" lon="19.169667"><ele>446</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Grúň (Ľubochňa)</name><desc>grun-lubochna-obec-lubochna-drevosklad-ina-cesta</desc><trkseg>
-    <trkpt lat="49.123503" lon="19.170646"><ele>445</ele></trkpt>
-    <trkpt lat="49.123731" lon="19.170535"><ele>444</ele></trkpt>
-    <trkpt lat="49.123717" lon="19.170482"><ele>444</ele></trkpt>
-    <trkpt lat="49.123513" lon="19.170556"><ele>445</ele></trkpt>
-    <trkpt lat="49.123340" lon="19.170517"><ele>445</ele></trkpt>
-    <trkpt lat="49.122554" lon="19.169832"><ele>445</ele></trkpt>
+  <trk><name>Grúň (Ľubochňa)</name><desc>grun-lubochna-obec-lubochna-ina-cesta</desc><trkseg>
+    <trkpt lat="49.122293" lon="19.169667"><ele>446</ele></trkpt>
+    <trkpt lat="49.122413" lon="19.169875"><ele>445</ele></trkpt>
+    <trkpt lat="49.122524" lon="19.169688"><ele>445</ele></trkpt>
+    <trkpt lat="49.122568" lon="19.169673"><ele>445</ele></trkpt>
     <trkpt lat="49.122591" lon="19.169566"><ele>445</ele></trkpt>
     <trkpt lat="49.122738" lon="19.169276"><ele>446</ele></trkpt>
-    <trkpt lat="49.122756" lon="19.169041"><ele>447</ele></trkpt>
+    <trkpt lat="49.122757" lon="19.169062"><ele>447</ele></trkpt>
     <trkpt lat="49.121157" lon="19.166645"><ele>452</ele></trkpt>
-    <trkpt lat="49.121339" lon="19.166384"><ele>459</ele></trkpt>
+    <trkpt lat="49.121341" lon="19.166381"><ele>459</ele></trkpt>
     <trkpt lat="49.119979" lon="19.164808"><ele>456</ele></trkpt>
-    <trkpt lat="49.119627" lon="19.164263"><ele>451</ele></trkpt>
+    <trkpt lat="49.119736" lon="19.164445"><ele>451</ele></trkpt>
+    <trkpt lat="49.119481" lon="19.163924"><ele>450</ele></trkpt>
     <trkpt lat="49.119155" lon="19.163003"><ele>466</ele></trkpt>
     <trkpt lat="49.119009" lon="19.162677"><ele>473</ele></trkpt>
     <trkpt lat="49.118883" lon="19.162482"><ele>475</ele></trkpt>
     <trkpt lat="49.118396" lon="19.161969"><ele>478</ele></trkpt>
     <trkpt lat="49.117762" lon="19.161408"><ele>467</ele></trkpt>
-    <trkpt lat="49.116446" lon="19.160014"><ele>456</ele></trkpt>
+    <trkpt lat="49.116458" lon="19.160019"><ele>456</ele></trkpt>
     <trkpt lat="49.115694" lon="19.158954"><ele>465</ele></trkpt>
     <trkpt lat="49.115671" lon="19.158785"><ele>472</ele></trkpt>
     <trkpt lat="49.115512" lon="19.158385"><ele>487</ele></trkpt>
@@ -276,10 +258,10 @@
     <trkpt lat="49.113431" lon="19.147413"><ele>469</ele></trkpt>
     <trkpt lat="49.112385" lon="19.145919"><ele>469</ele></trkpt>
     <trkpt lat="49.112306" lon="19.145882"><ele>469</ele></trkpt>
-    <trkpt lat="49.112187" lon="19.145914"><ele>469</ele></trkpt>
-    <trkpt lat="49.112197" lon="19.145407"><ele>469</ele></trkpt>
-    <trkpt lat="49.112148" lon="19.145114"><ele>470</ele></trkpt>
-    <trkpt lat="49.112041" lon="19.144599"><ele>470</ele></trkpt>
+    <trkpt lat="49.112195" lon="19.145902"><ele>469</ele></trkpt>
+    <trkpt lat="49.112207" lon="19.145492"><ele>469</ele></trkpt>
+    <trkpt lat="49.112169" lon="19.145170"><ele>469</ele></trkpt>
+    <trkpt lat="49.111998" lon="19.144454"><ele>470</ele></trkpt>
     <trkpt lat="49.111640" lon="19.143212"><ele>471</ele></trkpt>
     <trkpt lat="49.111444" lon="19.141967"><ele>474</ele></trkpt>
     <trkpt lat="49.111163" lon="19.141258"><ele>475</ele></trkpt>
@@ -514,10 +496,10 @@
     <trkpt lat="49.111163" lon="19.141258"><ele>475</ele></trkpt>
     <trkpt lat="49.111444" lon="19.141967"><ele>474</ele></trkpt>
     <trkpt lat="49.111640" lon="19.143212"><ele>471</ele></trkpt>
-    <trkpt lat="49.112041" lon="19.144599"><ele>470</ele></trkpt>
-    <trkpt lat="49.112148" lon="19.145114"><ele>470</ele></trkpt>
-    <trkpt lat="49.112197" lon="19.145407"><ele>469</ele></trkpt>
-    <trkpt lat="49.112187" lon="19.145914"><ele>469</ele></trkpt>
+    <trkpt lat="49.111998" lon="19.144454"><ele>470</ele></trkpt>
+    <trkpt lat="49.112169" lon="19.145170"><ele>469</ele></trkpt>
+    <trkpt lat="49.112207" lon="19.145492"><ele>469</ele></trkpt>
+    <trkpt lat="49.112195" lon="19.145902"><ele>469</ele></trkpt>
     <trkpt lat="49.112306" lon="19.145882"><ele>469</ele></trkpt>
     <trkpt lat="49.112385" lon="19.145919"><ele>469</ele></trkpt>
     <trkpt lat="49.113431" lon="19.147413"><ele>469</ele></trkpt>
@@ -536,32 +518,33 @@
     <trkpt lat="49.115189" lon="19.154360"><ele>476</ele></trkpt>
     <trkpt lat="49.114905" lon="19.155994"><ele>476</ele></trkpt>
     <trkpt lat="49.114957" lon="19.156014"><ele>480</ele></trkpt>
-    <trkpt lat="49.114833" lon="19.156739"><ele>475</ele></trkpt>
+    <trkpt lat="49.114821" lon="19.156899"><ele>474</ele></trkpt>
     <trkpt lat="49.114842" lon="19.157241"><ele>473</ele></trkpt>
     <trkpt lat="49.114979" lon="19.157659"><ele>476</ele></trkpt>
     <trkpt lat="49.115069" lon="19.157839"><ele>479</ele></trkpt>
     <trkpt lat="49.115153" lon="19.157803"><ele>487</ele></trkpt>
     <trkpt lat="49.115234" lon="19.157990"><ele>487</ele></trkpt>
-    <trkpt lat="49.115573" lon="19.158505"><ele>483</ele></trkpt>
+    <trkpt lat="49.115512" lon="19.158385"><ele>487</ele></trkpt>
     <trkpt lat="49.115671" lon="19.158785"><ele>472</ele></trkpt>
     <trkpt lat="49.115694" lon="19.158954"><ele>465</ele></trkpt>
-    <trkpt lat="49.116446" lon="19.160014"><ele>456</ele></trkpt>
+    <trkpt lat="49.116458" lon="19.160019"><ele>456</ele></trkpt>
     <trkpt lat="49.117762" lon="19.161408"><ele>467</ele></trkpt>
-    <trkpt lat="49.118707" lon="19.162277"><ele>476</ele></trkpt>
+    <trkpt lat="49.118396" lon="19.161969"><ele>478</ele></trkpt>
+    <trkpt lat="49.118883" lon="19.162482"><ele>475</ele></trkpt>
     <trkpt lat="49.119009" lon="19.162677"><ele>473</ele></trkpt>
-    <trkpt lat="49.119627" lon="19.164263"><ele>451</ele></trkpt>
+    <trkpt lat="49.119155" lon="19.163003"><ele>466</ele></trkpt>
+    <trkpt lat="49.119481" lon="19.163924"><ele>450</ele></trkpt>
+    <trkpt lat="49.119736" lon="19.164445"><ele>451</ele></trkpt>
     <trkpt lat="49.119979" lon="19.164808"><ele>456</ele></trkpt>
-    <trkpt lat="49.121339" lon="19.166384"><ele>459</ele></trkpt>
+    <trkpt lat="49.121341" lon="19.166381"><ele>459</ele></trkpt>
     <trkpt lat="49.121157" lon="19.166645"><ele>452</ele></trkpt>
-    <trkpt lat="49.122756" lon="19.169041"><ele>447</ele></trkpt>
+    <trkpt lat="49.122757" lon="19.169062"><ele>447</ele></trkpt>
     <trkpt lat="49.122738" lon="19.169276"><ele>446</ele></trkpt>
     <trkpt lat="49.122591" lon="19.169566"><ele>445</ele></trkpt>
-    <trkpt lat="49.122554" lon="19.169832"><ele>445</ele></trkpt>
-    <trkpt lat="49.123340" lon="19.170517"><ele>445</ele></trkpt>
-    <trkpt lat="49.123513" lon="19.170556"><ele>445</ele></trkpt>
-    <trkpt lat="49.123717" lon="19.170482"><ele>444</ele></trkpt>
-    <trkpt lat="49.123731" lon="19.170535"><ele>444</ele></trkpt>
-    <trkpt lat="49.123503" lon="19.170646"><ele>445</ele></trkpt>
+    <trkpt lat="49.122568" lon="19.169673"><ele>445</ele></trkpt>
+    <trkpt lat="49.122524" lon="19.169688"><ele>445</ele></trkpt>
+    <trkpt lat="49.122413" lon="19.169875"><ele>445</ele></trkpt>
+    <trkpt lat="49.122293" lon="19.169667"><ele>446</ele></trkpt>
   </trkseg></trk>
   <trk><name>Grúň (Ľubochňa)</name><desc>grun-lubochna-obec-nad-nolcovom-pristresok</desc><trkseg>
     <trkpt lat="49.102297" lon="19.084398"><ele>450</ele></trkpt>

@@ -346,15 +346,13 @@
     <trkpt lat="49.360462" lon="18.819271"><ele>376</ele></trkpt>
     <trkpt lat="49.360547" lon="18.819495"><ele>377</ele></trkpt>
     <trkpt lat="49.360959" lon="18.821227"><ele>376</ele></trkpt>
-    <trkpt lat="49.360997" lon="18.822165"><ele>377</ele></trkpt>
-    <trkpt lat="49.361333" lon="18.822975"><ele>378</ele></trkpt>
-    <trkpt lat="49.361604" lon="18.823557"><ele>379</ele></trkpt>
+    <trkpt lat="49.360999" lon="18.822171"><ele>377</ele></trkpt>
+    <trkpt lat="49.361444" lon="18.823250"><ele>379</ele></trkpt>
+    <trkpt lat="49.361721" lon="18.823722"><ele>380</ele></trkpt>
     <trkpt lat="49.362059" lon="18.824064"><ele>384</ele></trkpt>
-    <trkpt lat="49.362396" lon="18.824691"><ele>383</ele></trkpt>
     <trkpt lat="49.362967" lon="18.825841"><ele>382</ele></trkpt>
     <trkpt lat="49.363375" lon="18.826780"><ele>383</ele></trkpt>
     <trkpt lat="49.363551" lon="18.827069"><ele>384</ele></trkpt>
-    <trkpt lat="49.363788" lon="18.827353"><ele>383</ele></trkpt>
     <trkpt lat="49.364104" lon="18.827681"><ele>383</ele></trkpt>
     <trkpt lat="49.364210" lon="18.827738"><ele>383</ele></trkpt>
     <trkpt lat="49.364419" lon="18.828660"><ele>381</ele></trkpt>
@@ -640,15 +638,13 @@
     <trkpt lat="49.364419" lon="18.828660"><ele>381</ele></trkpt>
     <trkpt lat="49.364210" lon="18.827738"><ele>383</ele></trkpt>
     <trkpt lat="49.364104" lon="18.827681"><ele>383</ele></trkpt>
-    <trkpt lat="49.363788" lon="18.827353"><ele>383</ele></trkpt>
     <trkpt lat="49.363551" lon="18.827069"><ele>384</ele></trkpt>
     <trkpt lat="49.363375" lon="18.826780"><ele>383</ele></trkpt>
     <trkpt lat="49.362967" lon="18.825841"><ele>382</ele></trkpt>
-    <trkpt lat="49.362396" lon="18.824691"><ele>383</ele></trkpt>
     <trkpt lat="49.362059" lon="18.824064"><ele>384</ele></trkpt>
-    <trkpt lat="49.361604" lon="18.823557"><ele>379</ele></trkpt>
-    <trkpt lat="49.361333" lon="18.822975"><ele>378</ele></trkpt>
-    <trkpt lat="49.360997" lon="18.822165"><ele>377</ele></trkpt>
+    <trkpt lat="49.361721" lon="18.823722"><ele>380</ele></trkpt>
+    <trkpt lat="49.361444" lon="18.823250"><ele>379</ele></trkpt>
+    <trkpt lat="49.360999" lon="18.822171"><ele>377</ele></trkpt>
     <trkpt lat="49.360959" lon="18.821227"><ele>376</ele></trkpt>
     <trkpt lat="49.360547" lon="18.819495"><ele>377</ele></trkpt>
     <trkpt lat="49.360462" lon="18.819271"><ele>376</ele></trkpt>

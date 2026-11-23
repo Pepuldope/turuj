@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
-  <metadata><name>Židov vŕštek</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
-  <trk><name>Židov vŕštek</name><desc>zidov-vrstek</desc><trkseg>
+  <metadata><name>Kremenište</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
+  <trk><name>Kremenište</name><desc>zidov-vrstek</desc><trkseg>
     <trkpt lat="48.905279" lon="18.326663"><ele>770</ele></trkpt>
     <trkpt lat="48.904912" lon="18.326755"><ele>770</ele></trkpt>
     <trkpt lat="48.904926" lon="18.327002"><ele>769</ele></trkpt>
@@ -64,7 +64,7 @@
     <trkpt lat="48.904912" lon="18.326755"><ele>770</ele></trkpt>
     <trkpt lat="48.905279" lon="18.326663"><ele>770</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Židov vŕštek</name><desc>zidov-vrstek-slatinka-nad-bebravou</desc><trkseg>
+  <trk><name>Kremenište</name><desc>zidov-vrstek-slatinka-nad-bebravou</desc><trkseg>
     <trkpt lat="48.842007" lon="18.241617"><ele>271</ele></trkpt>
     <trkpt lat="48.843241" lon="18.241396"><ele>278</ele></trkpt>
     <trkpt lat="48.843713" lon="18.241421"><ele>279</ele></trkpt>
@@ -481,7 +481,7 @@
     <trkpt lat="48.843241" lon="18.241396"><ele>278</ele></trkpt>
     <trkpt lat="48.842007" lon="18.241617"><ele>271</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Židov vŕštek</name><desc>zidov-vrstek-valaska-bela</desc><trkseg>
+  <trk><name>Kremenište</name><desc>zidov-vrstek-valaska-bela</desc><trkseg>
     <trkpt lat="48.886859" lon="18.396711"><ele>454</ele></trkpt>
     <trkpt lat="48.886639" lon="18.396836"><ele>457</ele></trkpt>
     <trkpt lat="48.886440" lon="18.396776"><ele>460</ele></trkpt>

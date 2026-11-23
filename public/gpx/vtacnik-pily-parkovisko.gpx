@@ -2,7 +2,7 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Vtáčnik</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Vtáčnik</name><desc>vtacnik-pily-parkovisko</desc><trkseg>
-    <trkpt lat="48.582548" lon="18.643605"><ele>613</ele></trkpt>
+    <trkpt lat="48.582667" lon="18.643644"><ele>614</ele></trkpt>
     <trkpt lat="48.583838" lon="18.644277"><ele>610</ele></trkpt>
     <trkpt lat="48.583962" lon="18.644289"><ele>608</ele></trkpt>
     <trkpt lat="48.584328" lon="18.644148"><ele>605</ele></trkpt>
@@ -190,7 +190,7 @@
     <trkpt lat="48.584328" lon="18.644148"><ele>605</ele></trkpt>
     <trkpt lat="48.583962" lon="18.644289"><ele>608</ele></trkpt>
     <trkpt lat="48.583838" lon="18.644277"><ele>610</ele></trkpt>
-    <trkpt lat="48.582548" lon="18.643605"><ele>613</ele></trkpt>
+    <trkpt lat="48.582667" lon="18.643644"><ele>614</ele></trkpt>
   </trkseg></trk>
   <trk><name>Vtáčnik</name><desc>vtacnik-pily-parkovisko-pily-parkovisko</desc><trkseg>
     <trkpt lat="48.649788" lon="18.583199"><ele>462</ele></trkpt>
