@@ -111,12 +111,13 @@ def main(argv=None):
     slugs_file = root / "pipeline" / "slugs.json"
     slugs = json.loads(slugs_file.read_text()) if slugs_file.exists() else {}
     slugs_before = dict(slugs)
+    redirects.apply_renames(slugs, cfg.get("slug_renames") or {})
     published = redirects.previous(root)
     probe_names = {n for r in closures + fees for n in (r.get("selector") or {}).get("probes", [])}
     boxes = [b for r in cfg["regions"] for b in r["bboxes"]]
 
     log("reading OSM")
-    osm = osm_mod.load(a.pbf, boxes, probe_names, name_keys=section_keys(closures + fees))
+    osm = osm_mod.load(a.pbf, boxes, probe_names, name_keys=section_keys(closures + fees), include=cfg.get("include") or [])
     log(f"routes {len(osm.routes)}, ways {len(osm.ways)}, guideposts {len(osm.guideposts)}, parking {len(osm.parking)}, "
         f"stops {len(osm.stops)}, destinations {len(osm.destinations)}, towns {len(osm.towns)}, border {'yes' if osm.border is not None else 'no'}")
     if osm.border is None and (last := border.read(root)) is not None:
