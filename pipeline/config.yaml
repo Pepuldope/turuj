@@ -166,6 +166,11 @@ include:
   - {osm: way/65383743, kind: chata, name: Sliezsky dom}   # tourism=hotel above Tatranská Polianka
   - {osm: way/73167805, kind: ine, name: Kláštorisko}      # amenity=monastery, ruins=yes
 
+# Per-place trip limits for places found automatically (keyed by the goal's OSM id); `include:` entries use their own `limits:`.
+# The whole walk the page shows (trail + 2 x the walk from the car park or stop) must fit max_duration_min.
+place_limits:
+  node/1862536196: {max_duration_min: 555}  # Rysy: the well-known day trip shows 9 h 05 with the walk from the car park; Peter 23 Nov (C106)
+
 # The main route of a place starts at this guidepost (when the place has a route from it); the other routes stay
 # as they are. dest = the goal's OSM id, start = the guidepost's OSM id.
 main_start:
@@ -185,6 +190,9 @@ start_names:
   node/37971989: Vysoká, okolie          # Vysoká, rázc. Pod Haviarskym vrchom; was "Kopanice - Dômky, okolie"
   node/293204074: Horský hotel Poľana    # Pod hotelom, rázc.; was "Kyslinky, okolie" (other side of Poľana)
   node/293567036: Horský hotel Poľana    # Vrchdetva, rázc. (same car park); was "Zánemecká, okolie"
+  node/1984751977: Suchý vrch, parkovisko  # Suchý vrch, odb. na vyhliadku (above B. Bystrica-Radvaň); was "Malachov, okolie"; Peter 23 Nov
+  node/14200746857: Sidorovo, pod vrcholom  # Sidorovo 10 min. (car park at Hotel Skalka); was "Vlkolínec, okolie"; Peter 23 Nov
+  node/12515219770: Novoť – Glinka, hranica  # Bacówka Krawcowy Wierch 30 min (in Poland, car park at the old customs); was "Novoť, okolie"; Peter 23 Nov
 
 # Slugs to re-point (old: new). Every pinned slug of the place and of its other routes (`<old>-<start>`) changes, and the
 # old addresses redirect to the new ones (data/slug-redirects.json, pipeline/redirects.py).

@@ -40,7 +40,7 @@ Key fields of `TripSummary` (see `lib/tripSchema.ts` for all):
   `name` is unique among main trips and says what the place is (pipeline/names.py): "Hrad Likava", "Vyhliadka na Choč"; when several places share a name, the best known keeps it and the others get the nearest village, "Kriváň (Ludrová)". `destination.name` stays the plain OpenStreetMap name.
 - `region` (one of the regions in `pipeline/config.yaml`: the national parks first, then the rest of Slovakia), `region_name`, `protected_area`.
 - `destination` (`kind`, `ele_m`, `location`), `start`, `parking` (drive destination, `fee`), `transit` (nearest stop).
-- `distance_m`, `ascent_m`, `duration_min` are for the **whole walk**. Time is DIN 33466 without breaks, rounded up to 15 min.
+- `distance_m`, `ascent_m`, `duration_min` are for the **whole walk**. Time is DIN 33466 without breaks, rounded up to 15 min. The whole walk the page shows (trail plus the walk from the first car park or the stop, both ways) stays within `max_duration_min` (540); `place_limits` in `pipeline/config.yaml` sets a different cap for one place (Rysy 555). Over the cap by car: the route is not kept; by bus only: those stops are left out.
 - `difficulty`: `lahka` ≤ 3 h and ≤ 400 m up and nothing harder than T2; `tazka` ≥ 6 h or ≥ 1,000 m up or any T4+; else `stredna`.
 - `family_friendly`: `lahka`, ≤ 2.5 h, nothing harder than T2.
 - `marking`: KST colours walked (`red`, `blue`, `green`, `yellow`, `black`), most-used first; `marked_share` 0..1.

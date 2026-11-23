@@ -16,6 +16,36 @@ COLOUR_ORDER = ["red", "blue", "green", "yellow", "black"]
 COLOUR_SK = {"red": "červenej", "blue": "modrej", "green": "zelenej", "yellow": "žltej", "black": "čiernej"}
 KIND_BONUS = {"hrad": 30, "pleso": 30, "vodopad": 25, "jaskyna": 25, "roklina": 28, "chata": 20, "vyhliadka": 18, "vrchol": 12, "ine": 15}
 GENERIC_NAMES = {"jazero", "vyhliadka", "výhľad", "rozhľadňa", "altánok", "vyhliadkové miesto", "chata", "hrad", "pleso"}
+APPROACH_M_PER_MIN = 4000 / 60 / 1.25  # lib/dayPlan.ts: the walk to the trail at the page's pace
+
+
+def approach_min(walk_m):
+    """lib/dayPlan.ts approachMin: minutes the page adds for the walk from the car park or stop (one way)."""
+    if walk_m < 150:
+        return 0
+    return math.ceil(walk_m / APPROACH_M_PER_MIN / 5) * 5
+
+
+def fit_walk_cap(trip, cap, metres=lambda p: p["walk_m"]):
+    """The page shows trail time plus the walk from the first car park or the stop, both ways: keep that
+    within `cap` minutes. Returns why the trip fails by car (it is not kept), or None. Stops that make
+    it too long are dropped from `transit` / `transit_alternatives` (in place); a trip with no car park
+    and no stop that fits returns a reason too. `metres` gives a spot's walk (straight line at build time,
+    along paths once walks.add has run)."""
+    def total(p):
+        return trip["duration_min"] + 2 * approach_min(metres(p))
+    if trip.get("parking") and total(trip["parking"]) > cap:
+        return "too long with the walk from the car park"
+    stops = sorted((s for s in [trip.get("transit"), *(trip.get("transit_alternatives") or [])] if s),
+                   key=metres)
+    fit = [s for s in stops if total(s) <= cap]
+    trip["transit"] = fit[0] if fit else None
+    trip["transit_alternatives"] = fit[1:]
+    if stops and not fit and not trip.get("parking"):
+        return "too long with the walk from the stop"
+    return None
+
+
 ROUTE_LIMIT = 18000  # weighted metres one way, generous; time limits are applied afterwards
 PENDING = "__pending__"  # slug of a route until it is known whether it is the main one
 TOWN_STREETS = {"residential", "living_street", "pedestrian"}  # their density marks a built-up area
@@ -315,7 +345,8 @@ class TripBuilder:
             if node is None:
                 self._note(f.name, f"no marked trail within {snap_m} m")
                 continue
-            out.append(Candidate(kind, f, region, node, self.score(kind, f), (e or {}).get("limits"), e is not None))
+            lims = {**(self.cfg.get("place_limits") or {}).get(f.osm, {}), **((e or {}).get("limits") or {})}
+            out.append(Candidate(kind, f, region, node, self.score(kind, f), lims or None, e is not None))
         out.sort(key=lambda c: -c.score)
         self._famous_first(out)
         self.log(f"destination candidates near marked trails: {len(out)}")
@@ -678,9 +709,19 @@ class TripBuilder:
                     self.report.setdefault("town", []).append((dest["name"], instead, "streets, start out of town used", name, town))
         return out, why
 
+    def max_minutes(self, osm):
+        """The trail-plus-walk cap for a place: its `include:` limits, else `place_limits`, else the default."""
+        for e in self.cfg.get("include") or []:
+            if str(e.get("osm")) == str(osm) and "max_duration_min" in (e.get("limits") or {}):
+                return e["limits"]["max_duration_min"]
+        return ((self.cfg.get("place_limits") or {}).get(osm) or {}).get("max_duration_min", self.t["max_duration_min"])
+
     def _quality(self, trip, kind, lim):
         if trip["duration_min"] > lim["max_duration_min"]:
             return "too long"
+        walk = fit_walk_cap(trip, lim["max_duration_min"])
+        if walk:
+            return walk
         if trip["distance_m"] < lim["min_round_trip_m"]:
             return "too short"
         if trip["marked_share"] < lim["min_marked_share"]:

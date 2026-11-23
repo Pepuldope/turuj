@@ -13,6 +13,7 @@
     "count-unlinked": "vite-node --config vitest.config.ts scripts/count-unlinked.ts",
     "kpi:testers": "node scripts/kpi-testers.mjs",
     "list-joins": "vite-node --config vitest.config.ts scripts/list-joins.ts",
+    "long-walks": "vite-node --config vitest.config.ts scripts/long-walks.ts",
     "cf:build": "opennextjs-cloudflare build && node scripts/fast-pages.mjs",
     "cf:preview": "npm run cf:build && opennextjs-cloudflare preview",
     "cf:deploy": "npm run cf:build && opennextjs-cloudflare deploy"

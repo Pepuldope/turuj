@@ -138,3 +138,71 @@ def test_a_walk_starting_on_the_trail_keeps_two_points():
     walk = {"line": [[19.0001, 48.010], [19.002, 48.011], [19.0, 48.012]], "m": 300, "min": 5}
     cut = walks.to_first_touch(walk, PATH)
     assert len(cut["line"]) == 2 and cut["m"] > 0
+
+
+# ---- 9-hour cap on the whole walk the page shows (C106)
+def _trip(slug, dur, park_m, stops, variant_of=None):
+    t = dict(slug=slug, duration_min=dur, destination={"osm": "node/1"},
+             parking={"walk_m": park_m} if park_m is not None else None,
+             transit=None, transit_alternatives=[])
+    if stops:
+        ss = [{"walk_m": m} for m in stops]
+        t["transit"], t["transit_alternatives"] = ss[0], ss[1:]
+    if variant_of:
+        t["variant_of"] = variant_of
+    return t
+
+
+def test_approach_min_matches_the_page():
+    from pipeline.trips import approach_min
+    assert approach_min(149) == 0
+    assert approach_min(150) == 5
+    assert approach_min(267) == 10  # 267 / 53.33 = 5.007 min -> 10
+    assert approach_min(1600) == 30
+
+
+def test_fit_walk_cap_filters_stops_and_checks_car():
+    from pipeline.trips import fit_walk_cap
+    t = _trip("a", 500, 100, [1600, 100, 3000])  # 500 + 2*30 = 560 over 540; 3000 m -> 60 min
+    assert fit_walk_cap(t, 540) is None
+    assert t["transit"]["walk_m"] == 100 and t["transit_alternatives"] == []
+    t = _trip("b", 500, 1600, [100])
+    assert fit_walk_cap(t, 540) == "too long with the walk from the car park"
+    t = _trip("c", 500, None, [1600])
+    assert fit_walk_cap(t, 540) == "too long with the walk from the stop"
+    assert t["transit"] is None and t["transit_alternatives"] == []
+    t = _trip("d", 500, 100, [1600])
+    assert fit_walk_cap(t, 540) is None and t["transit"] is None
+    t = _trip("e", 500, None, [1600])
+    assert fit_walk_cap(t, 560) is None  # per-place limit
+
+
+def test_cap_removes_a_variant_and_fixes_the_main():
+    main = _trip("m", 400, 100, [], None)
+    main.update(route_count=2, route_label="Hlavná cesta")
+    var = _trip("m-v", 520, 100, [], "m")
+    var["parking"]["walk"] = {"m": 1600}  # along paths: 520 + 60 > 540
+    trips = [main, var]
+    report = {}
+    walks.cap(trips, lambda osm: 540, report)
+    assert trips == [main] and "route_count" not in main and "route_label" not in main
+    assert report["walk_cap"][0][:2] == ("m-v", "route over cap by car, removed")
+
+
+def test_cap_keeps_a_main_over_by_car_and_reports_it():
+    main = _trip("m", 520, 1600, [])
+    trips = [main]
+    report = {}
+    walks.cap(trips, lambda osm: 540, report)
+    assert trips == [main] and report["walk_cap"] == [("m", "main over cap by car", 580)]
+
+
+def test_place_limits_merge_with_include_winning():
+    from pipeline.trips import TripBuilder
+    tb = TripBuilder.__new__(TripBuilder)
+    tb.t = {"max_duration_min": 540}
+    tb.cfg = {"place_limits": {"node/1": {"max_duration_min": 555}},
+              "include": [{"osm": "node/2", "limits": {"max_duration_min": 600}}]}
+    assert tb.max_minutes("node/1") == 555
+    assert tb.max_minutes("node/2") == 600
+    assert tb.max_minutes("node/3") == 540
