@@ -36,8 +36,9 @@ def fit_walk_cap(trip, cap, metres=lambda p: p["walk_m"]):
         return trip["duration_min"] + 2 * approach_min(metres(p))
     if trip.get("parking") and total(trip["parking"]) > cap:
         return "too long with the walk from the car park"
-    stops = sorted((s for s in [trip.get("transit"), *(trip.get("transit_alternatives") or [])] if s),
-                   key=metres)
+    # Keep the stops' order: the home list and the trip page pick the stop by where its walk meets the trail
+    # (scripts/list-joins.ts, lib/data.ts nearestStop), which a re-sort by walk length would contradict.
+    stops = [s for s in [trip.get("transit"), *(trip.get("transit_alternatives") or [])] if s]
     fit = [s for s in stops if total(s) <= cap]
     trip["transit"] = fit[0] if fit else None
     trip["transit_alternatives"] = fit[1:]
