@@ -1,4 +1,79 @@
 {
  "_comment": "Automatic photo matches held back until looked at (pipeline/photos.py). Good ones go to data/photo-checked.json, bad ones to block or no_auto in data/photo-overrides.json.",
- "waiting": {}
+ "waiting": {
+  "node/409758850": {
+   "name": "Zobor",
+   "kind": "vrchol",
+   "files": [
+    {
+     "file": "Panoramatický výhľad z vrchu Zobor v Nitre (ID SKUEV0130).jpg",
+     "via": "near",
+     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/08/Panoramatick%C3%BD_v%C3%BDh%C4%BEad_z_vrchu_Zobor_v_Nitre_%28ID_SKUEV0130%29.jpg/500px-Panoramatick%C3%BD_v%C3%BDh%C4%BEad_z_vrchu_Zobor_v_Nitre_%28ID_SKUEV0130%29.jpg"
+    },
+    {
+     "file": "Zobor pohľad dolu - panoramio.jpg",
+     "via": "near",
+     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/Zobor_poh%C4%BEad_dolu_-_panoramio.jpg/500px-Zobor_poh%C4%BEad_dolu_-_panoramio.jpg"
+    },
+    {
+     "file": "Calamogrostis Epigejos.jpg",
+     "via": "category",
+     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fb/Calamogrostis_Epigejos.jpg/500px-Calamogrostis_Epigejos.jpg"
+    }
+   ]
+  },
+  "node/4400008530": {
+   "name": "Prameň Hlbokô",
+   "kind": "vyhliadka",
+   "files": [
+    {
+     "file": "Jánská dolina, Nízké Tatry, Liptovský Ján, Slovensko 05.jpg",
+     "via": "area",
+     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f6/J%C3%A1nsk%C3%A1_dolina%2C_N%C3%ADzk%C3%A9_Tatry%2C_Liptovsk%C3%BD_J%C3%A1n%2C_Slovensko_05.jpg/500px-J%C3%A1nsk%C3%A1_dolina%2C_N%C3%ADzk%C3%A9_Tatry%2C_Liptovsk%C3%BD_J%C3%A1n%2C_Slovensko_05.jpg"
+    }
+   ]
+  },
+  "node/519265048": {
+   "name": "Skalka",
+   "kind": "vrchol",
+   "files": [
+    {
+     "file": "Skalka v pohybe - panoramio.jpg",
+     "via": "near",
+     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4f/Skalka_v_pohybe_-_panoramio.jpg/500px-Skalka_v_pohybe_-_panoramio.jpg"
+    },
+    {
+     "file": "Perina krahulských jedlí - panoramio.jpg",
+     "via": "category",
+     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/76/Perina_krahulsk%C3%BDch_jedl%C3%AD_-_panoramio.jpg/500px-Perina_krahulsk%C3%BDch_jedl%C3%AD_-_panoramio.jpg"
+    },
+    {
+     "file": "Skalka arena.JPG",
+     "via": "category",
+     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/Skalka_arena.JPG/500px-Skalka_arena.JPG"
+    }
+   ]
+  },
+  "node/8357625695": {
+   "name": "Veľká Javorina",
+   "kind": "vrchol",
+   "files": [
+    {
+     "file": "Veľká Javorina - panoramio.jpg",
+     "via": "near",
+     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/41/Ve%C4%BEk%C3%A1_Javorina_-_panoramio.jpg/500px-Ve%C4%BEk%C3%A1_Javorina_-_panoramio.jpg"
+    },
+    {
+     "file": "Javorina winter 07 - panoramio - Jiri Novak.jpg",
+     "via": "near",
+     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/69/Javorina_winter_07_-_panoramio_-_Jiri_Novak.jpg/500px-Javorina_winter_07_-_panoramio_-_Jiri_Novak.jpg"
+    },
+    {
+     "file": "Biele Karpaty z Poriadia.jpg",
+     "via": "category",
+     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/eb/Biele_Karpaty_z_Poriadia.jpg/500px-Biele_Karpaty_z_Poriadia.jpg"
+    }
+   ]
+  }
+ }
 }
