@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Malužinská jaskyňa</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
+  <trk><name>Malužinská jaskyňa</name><desc>maluzinska-jaskyna</desc><trkseg>
+    <trkpt lat="48.981415" lon="19.767765"><ele>725</ele></trkpt>
+    <trkpt lat="48.981377" lon="19.767722"><ele>725</ele></trkpt>
+    <trkpt lat="48.981062" lon="19.768313"><ele>728</ele></trkpt>
+    <trkpt lat="48.980468" lon="19.769307"><ele>731</ele></trkpt>
+    <trkpt lat="48.980271" lon="19.769414"><ele>732</ele></trkpt>
+    <trkpt lat="48.980228" lon="19.769493"><ele>733</ele></trkpt>
+    <trkpt lat="48.980097" lon="19.769584"><ele>733</ele></trkpt>
+    <trkpt lat="48.979657" lon="19.770208"><ele>732</ele></trkpt>
+    <trkpt lat="48.979489" lon="19.770598"><ele>734</ele></trkpt>
+    <trkpt lat="48.979475" lon="19.770818"><ele>737</ele></trkpt>
+    <trkpt lat="48.979368" lon="19.771033"><ele>738</ele></trkpt>
+    <trkpt lat="48.978921" lon="19.771679"><ele>732</ele></trkpt>
+    <trkpt lat="48.978870" lon="19.771793"><ele>732</ele></trkpt>
+    <trkpt lat="48.978810" lon="19.772119"><ele>734</ele></trkpt>
+    <trkpt lat="48.978799" lon="19.773018"><ele>734</ele></trkpt>
+    <trkpt lat="48.978810" lon="19.772119"><ele>734</ele></trkpt>
+    <trkpt lat="48.978870" lon="19.771793"><ele>732</ele></trkpt>
+    <trkpt lat="48.978921" lon="19.771679"><ele>732</ele></trkpt>
+    <trkpt lat="48.979368" lon="19.771033"><ele>738</ele></trkpt>
+    <trkpt lat="48.979475" lon="19.770818"><ele>737</ele></trkpt>
+    <trkpt lat="48.979489" lon="19.770598"><ele>734</ele></trkpt>
+    <trkpt lat="48.979657" lon="19.770208"><ele>732</ele></trkpt>
+    <trkpt lat="48.980097" lon="19.769584"><ele>733</ele></trkpt>
+    <trkpt lat="48.980228" lon="19.769493"><ele>733</ele></trkpt>
+    <trkpt lat="48.980271" lon="19.769414"><ele>732</ele></trkpt>
+    <trkpt lat="48.980468" lon="19.769307"><ele>731</ele></trkpt>
+    <trkpt lat="48.981062" lon="19.768313"><ele>728</ele></trkpt>
+    <trkpt lat="48.981377" lon="19.767722"><ele>725</ele></trkpt>
+    <trkpt lat="48.981415" lon="19.767765"><ele>725</ele></trkpt>
+  </trkseg></trk>
+</gpx>

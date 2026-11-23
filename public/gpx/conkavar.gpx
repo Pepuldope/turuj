@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Čonkavár</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
+  <trk><name>Čonkavár</name><desc>conkavar</desc><trkseg>
+    <trkpt lat="48.423430" lon="21.978160"><ele>114</ele></trkpt>
+    <trkpt lat="48.424212" lon="21.977012"><ele>121</ele></trkpt>
+    <trkpt lat="48.424066" lon="21.976917"><ele>120</ele></trkpt>
+    <trkpt lat="48.423664" lon="21.975973"><ele>127</ele></trkpt>
+    <trkpt lat="48.423745" lon="21.975482"><ele>132</ele></trkpt>
+    <trkpt lat="48.423857" lon="21.975271"><ele>137</ele></trkpt>
+    <trkpt lat="48.423953" lon="21.975176"><ele>138</ele></trkpt>
+    <trkpt lat="48.423983" lon="21.975085"><ele>139</ele></trkpt>
+    <trkpt lat="48.423973" lon="21.974893"><ele>141</ele></trkpt>
+    <trkpt lat="48.423983" lon="21.975085"><ele>139</ele></trkpt>
+    <trkpt lat="48.423953" lon="21.975176"><ele>138</ele></trkpt>
+    <trkpt lat="48.423857" lon="21.975271"><ele>137</ele></trkpt>
+    <trkpt lat="48.423745" lon="21.975482"><ele>132</ele></trkpt>
+    <trkpt lat="48.423664" lon="21.975973"><ele>127</ele></trkpt>
+    <trkpt lat="48.424066" lon="21.976917"><ele>120</ele></trkpt>
+    <trkpt lat="48.424212" lon="21.977012"><ele>121</ele></trkpt>
+    <trkpt lat="48.423430" lon="21.978160"><ele>114</ele></trkpt>
+  </trkseg></trk>
+</gpx>

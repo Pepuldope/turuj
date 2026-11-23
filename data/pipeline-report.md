@@ -1,8 +1,8 @@
 # Trip pipeline report
 
-Run: 2026-11-23T21:42:40+00:00 · OSM data: 2026-11-22T21:20:48Z
+Run: 2026-11-23T23:01:06+00:00 · OSM data: 2026-11-22T21:20:48Z
 
-**6428 trips**
+**6432 trips**
 
 | Region | Trips | Family | Candidates |
 |---|---|---|---|
@@ -11,7 +11,7 @@ Run: 2026-11-23T21:42:40+00:00 · OSM data: 2026-11-22T21:20:48Z
 | mala-fatra | 220 | 30 | 94 |
 | male-karpaty | 552 | 220 | 205 |
 | velka-fatra | 491 | 119 | 216 |
-| nizke-tatry | 326 | 43 | 150 |
+| nizke-tatry | 328 | 45 | 150 |
 | chocske-vrchy-orava | 175 | 35 | 92 |
 | pieniny | 37 | 8 | 11 |
 | kysuce-javorniky | 406 | 98 | 166 |
@@ -21,11 +21,11 @@ Run: 2026-11-23T21:42:40+00:00 · OSM data: 2026-11-22T21:20:48Z
 | stiavnicke-kremnicke-vrchy | 497 | 225 | 211 |
 | polana-muran | 306 | 58 | 117 |
 | slovensky-kras | 337 | 77 | 153 |
-| levocske-cergov | 571 | 128 | 215 |
+| levocske-cergov | 572 | 129 | 215 |
 | vychod | 320 | 84 | 149 |
 | zahorie-podunajsko | 15 | 4 | 18 |
 | krupina-cerova | 189 | 46 | 97 |
-| kosice-juh | 30 | 7 | 20 |
+| kosice-juh | 31 | 8 | 20 |
 | dalsie | 292 | 75 | 129 |
 
 ## Regression: the 10 hand-picked trips vs. the 2026-10-07 build
@@ -47,7 +47,7 @@ Flag ⚠ when off by more than 15 %.
 
 ## Places with more than one route
 
-1911 of 2152 places have other routes; 4307 other routes in all, 1103 of them another way from a start the place already has.
+1911 of 2156 places have other routes; 4307 other routes in all, 1103 of them another way from a start the place already has.
 
 | Place | Main route (start, time) | Other routes |
 |---|---|---|
@@ -494,7 +494,7 @@ Flag ⚠ when off by more than 15 %.
 
 ## Name check
 
-157 names now say what the place is, 13 places mapped twice merged, 290 shared names told apart by the nearest village, 128 foreign names left out. Still wrong: 1.
+158 names now say what the place is, 13 places mapped twice merged, 290 shared names told apart by the nearest village, 128 foreign names left out. Still wrong: 1.
 
 - warn: siklava-skala-markusovce-razcestie: long name: 'Vodopád Šikľavá skala (Matejovce nad Hornádom)'
 
@@ -623,6 +623,7 @@ Flag ⚠ when off by more than 15 %.
 | Zborov | Hrad Zborov | zborov |
 | Kamenica | Hrad Kamenica | kamenica |
 | Lipovce | Hrad Lipovce | lipovce |
+| Brazovica | Hrad Brazovica | brazovica |
 | výver z Diablovej diery | Výver z Diablovej diery | vyver-z-diablovej-diery |
 | Sikľavá skala | Vodopád Sikľavá skala | siklava-skala |
 | ponor do Diablovej diery | Ponor do Diablovej diery | ponor-do-diablovej-diery |
@@ -1377,8 +1378,8 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 | Rázcestie Šindľovec | Zverovka | node/1888793050 |
 | Odbočka na Hradisko | Záturčie, okolie | node/312934226 |
 | Štefanov, rázc. | Štefanov nad Oravou | node/7913906566 |
-| Rázcestie pred Heliosom | Štrbské Pleso | node/281108101 |
 | Odbočka pri Heliose | Štrbské Pleso | node/306246045 |
+| Rázcestie pred Heliosom | Štrbské Pleso | node/281108101 |
 | Odbočka na Baranec a Plačlivé | Žiar, okolie | node/496004526 |
 
 ## Rejected candidates
@@ -1391,8 +1392,8 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 - sight in a town: 7
 - start already has enough trips: 46
 - too flat (city walk): 9
-- too long: 52
-- too long with the walk from the car park: 2
+- too long: 48
+- too long with the walk from the car park: 1
 - trailheads too close: 1
 
 ## Closure rules
@@ -2779,6 +2780,7 @@ Stretches of malafatra-jarna-uzavera:
 | velky-kamenec-streda-nad-bodrogom | kosice-juh | Streda nad Bodrogom | 10.9 | 332 | 3:45 | stredna |  |
 | kazimir | kosice-juh | Parkovisko pod hradom | 0.6 | 0 | 0:15 | lahka |  |
 | kazimir-pod-izrou | kosice-juh | Pod Izrou | 17.5 | 243 | 5:15 | stredna |  |
+| conkavar | kosice-juh | Parkovisko pod hradom | 0.6 | 23 | 0:15 | lahka |  |
 | tarbucka | kosice-juh | Veľký Kamenec | 3.8 | 168 | 1:30 | lahka |  |
 | tarbucka-streda-nad-bodrogom | kosice-juh | Streda nad Bodrogom | 7.4 | 169 | 2:30 | lahka |  |
 | tarbucka-streda-nad-bodrogom-ina-cesta | kosice-juh | Streda nad Bodrogom | 13.5 | 172 | 4:00 | stredna |  |
@@ -3488,6 +3490,7 @@ Stretches of malafatra-jarna-uzavera:
 | stebnicka-magura-bardejov-vinbarg | levocske-cergov | Bardejov, Vinbarg | 17.5 | 673 | 6:15 | tazka |  |
 | stebnicka-magura-bardejovske-kupele-ina-cesta | levocske-cergov | Bardejovské kúpele, ihriská | 11.6 | 658 | 5:00 | stredna |  |
 | stebnicka-magura-cigelka | levocske-cergov | Cigeľka | 21.4 | 912 | 8:00 | tazka |  |
+| brazovica | levocske-cergov | Parkovisko pod hradom | 0.3 | 0 | 0:15 | lahka |  |
 | ihla | levocske-cergov | Ihľany | 11.0 | 579 | 4:30 | stredna |  |
 | jarabinsky-prielom | levocske-cergov | Jarabina | 5.1 | 128 | 1:45 | lahka |  |
 | jarabinsky-prielom-odbocka-na-horu-zvir | levocske-cergov | Litmanová, okolie | 12.9 | 413 | 4:30 | stredna |  |
@@ -4971,6 +4974,8 @@ Stretches of malafatra-jarna-uzavera:
 | kralov-stol-kumstova-dolina | nizke-tatry | Kumštová dolina | 15.5 | 935 | 7:00 | tazka |  |
 | kralov-stol-maluzina-ina-cesta | nizke-tatry | Malužiná | 17.1 | 1115 | 8:15 | tazka |  |
 | kralov-stol-nizna-boca | nizke-tatry | Nižná Boca | 12.7 | 1006 | 7:00 | tazka |  |
+| maluzinska-jaskyna | nizke-tatry | Parkovisko pri jaskyni | 1.0 | 10 | 0:30 | lahka |  |
+| modra-jaskyna | nizke-tatry | Parkovisko pri jaskyni | 1.1 | 17 | 0:30 | lahka |  |
 | predajnianske-vodopady | nizke-tatry | Lopej, bus | 10.5 | 449 | 4:00 | stredna |  |
 | predajnianske-vodopady-vcelinec | nizke-tatry | Včelinec | 16.2 | 652 | 6:00 | tazka |  |
 | rovienky | nizke-tatry | Sedlo Čertovica | 3.6 | 347 | 2:30 | lahka |  |
@@ -7915,4 +7920,4 @@ Stretches of malafatra-jarna-uzavera:
 | vystrkov-podhajska-belek | zahorie-podunajsko | Podhájska, Belek | 10.3 | 196 | 3:15 | stredna |  |
 | vystrkov-podhajska-belek-ina-cesta | zahorie-podunajsko | Podhájska, Belek | 15.5 | 270 | 4:45 | stredna |  |
 
-Drive table: 141 towns x 2152 main trips, 0 pairs without a route.
+Drive table: 141 towns x 2156 main trips, 0 pairs without a route.

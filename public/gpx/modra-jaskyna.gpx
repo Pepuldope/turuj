@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Modrá jaskyňa</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
+  <trk><name>Modrá jaskyňa</name><desc>modra-jaskyna</desc><trkseg>
+    <trkpt lat="48.976758" lon="19.778145"><ele>757</ele></trkpt>
+    <trkpt lat="48.976587" lon="19.778453"><ele>756</ele></trkpt>
+    <trkpt lat="48.976742" lon="19.778566"><ele>754</ele></trkpt>
+    <trkpt lat="48.976951" lon="19.778491"><ele>754</ele></trkpt>
+    <trkpt lat="48.977076" lon="19.778804"><ele>754</ele></trkpt>
+    <trkpt lat="48.977164" lon="19.778924"><ele>755</ele></trkpt>
+    <trkpt lat="48.977845" lon="19.778996"><ele>753</ele></trkpt>
+    <trkpt lat="48.977902" lon="19.779055"><ele>750</ele></trkpt>
+    <trkpt lat="48.977992" lon="19.779358"><ele>744</ele></trkpt>
+    <trkpt lat="48.978137" lon="19.779099"><ele>744</ele></trkpt>
+    <trkpt lat="48.978243" lon="19.778631"><ele>742</ele></trkpt>
+    <trkpt lat="48.978386" lon="19.776625"><ele>738</ele></trkpt>
+    <trkpt lat="48.978398" lon="19.775894"><ele>738</ele></trkpt>
+    <trkpt lat="48.978660" lon="19.775879"><ele>738</ele></trkpt>
+    <trkpt lat="48.978658" lon="19.775511"><ele>741</ele></trkpt>
+    <trkpt lat="48.978660" lon="19.775879"><ele>738</ele></trkpt>
+    <trkpt lat="48.978398" lon="19.775894"><ele>738</ele></trkpt>
+    <trkpt lat="48.978386" lon="19.776625"><ele>738</ele></trkpt>
+    <trkpt lat="48.978243" lon="19.778631"><ele>742</ele></trkpt>
+    <trkpt lat="48.978137" lon="19.779099"><ele>744</ele></trkpt>
+    <trkpt lat="48.977992" lon="19.779358"><ele>744</ele></trkpt>
+    <trkpt lat="48.977902" lon="19.779055"><ele>750</ele></trkpt>
+    <trkpt lat="48.977845" lon="19.778996"><ele>753</ele></trkpt>
+    <trkpt lat="48.977164" lon="19.778924"><ele>755</ele></trkpt>
+    <trkpt lat="48.977076" lon="19.778804"><ele>754</ele></trkpt>
+    <trkpt lat="48.976951" lon="19.778491"><ele>754</ele></trkpt>
+    <trkpt lat="48.976742" lon="19.778566"><ele>754</ele></trkpt>
+    <trkpt lat="48.976587" lon="19.778453"><ele>756</ele></trkpt>
+    <trkpt lat="48.976758" lon="19.778145"><ele>757</ele></trkpt>
+  </trkseg></trk>
+</gpx>

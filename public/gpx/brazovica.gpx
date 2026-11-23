@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Hrad Brazovica</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
+  <trk><name>Hrad Brazovica</name><desc>brazovica</desc><trkseg>
+    <trkpt lat="49.145209" lon="20.847219"><ele>458</ele></trkpt>
+    <trkpt lat="49.145198" lon="20.848918"><ele>456</ele></trkpt>
+    <trkpt lat="49.145173" lon="20.849146"><ele>456</ele></trkpt>
+    <trkpt lat="49.145198" lon="20.848918"><ele>456</ele></trkpt>
+    <trkpt lat="49.145209" lon="20.847219"><ele>458</ele></trkpt>
+  </trkseg></trk>
+</gpx>
