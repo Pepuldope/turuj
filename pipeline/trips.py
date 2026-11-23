@@ -695,7 +695,7 @@ class TripBuilder:
                     bad = "city walk"
                     self.report.setdefault("town", []).append((dest["name"], dest["kind"], "city walk", st.name, round(town)))
             if bad:
-                if bad.startswith("too long with the walk"):
+                if bad.startswith("too long with the walk") and not self.city_walk(path, dest, lim)[1]:
                     trip["_known"] = self.known_score(st)
                     trip["_edges"] = edges
                     self.capped_routes.append(trip)
@@ -736,16 +736,14 @@ class TripBuilder:
     def _quality(self, trip, kind, lim):
         if trip["duration_min"] > lim["max_duration_min"]:
             return "too long"
-        walk = fit_walk_cap(trip, lim["max_duration_min"])
-        if walk:
-            return walk
         if trip["distance_m"] < lim["min_round_trip_m"]:
             return "too short"
         if trip["marked_share"] < lim["min_marked_share"]:
             return "mostly unmarked"
         if trip["ascent_m"] < lim["min_ascent_m"] and kind not in ("pleso", "vodopad", "jaskyna"):
             return "too flat (city walk)"
-        return None
+        # Last, so "too long with the walk ..." means the route is fine but for the cap (capped_routes).
+        return fit_walk_cap(trip, lim["max_duration_min"])
 
     def _edge_set(self, path):
         g = self.g
