@@ -57,6 +57,21 @@ describe("use day and list_empty", () => {
     expect(beacons.filter((u) => u.includes("used=1"))).toEqual(["/api/visit?used=1"]);
   });
 
+  it("adds trip pages opened and started trips to our own totals, without the trail", async () => {
+    const kept: string[] = [];
+    vi.stubGlobal("window", { umami: { track: () => {} }, location: { host: "turuj.sk", pathname: "/" } });
+    vi.stubGlobal("navigator", { webdriver: false, sendBeacon: (url: string, body?: string) => (url === "/api/event" && kept.push(body ?? ""), true) });
+    vi.stubGlobal("localStorage", { getItem: () => null });
+    const { track } = await import("./analytics");
+    track("trip_open", { trail: "krivan" });
+    track("on_trail", { trail: "krivan" });
+    track("trip_search_town");
+    expect(kept.map((b) => JSON.parse(b))).toEqual([
+      { name: "trip_open", detail: "" },
+      { name: "on_trail", detail: "" },
+    ]);
+  });
+
   it("sends list_empty once for the same filters in a row", async () => {
     const { sent } = await setup();
     const { trackListEmpty } = await import("./analytics");

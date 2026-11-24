@@ -26,7 +26,7 @@ and link previews follow.
 
 Umami Cloud's free Hobby plan (100k events/month, 1 website, 6 months of history) gives the
 dashboard: visitors, where they came from, which trips they opened, saves, shares and navigation
-opens. It has **no API on the free plan**, so a script cannot read its numbers (a CSV export is in Settings → Data → Export, to verify). The proposal KPI
+opens. It has **no API on the free plan**, so a script cannot read its numbers (a CSV export by hand is in Settings → Data → Export: one website at a time, the files arrive as an e-mailed link; checked against Umami's pricing page and docs on 24 Nov 2026). The proposal KPI
 "people who used Túruj on 4+ different days in a month" is therefore counted by our own small
 Cloudflare D1 database (free, bound as `VISITS_DB` in `wrangler.jsonc`; the first deploy creates
 it, no account, key or secret needed), with the same method Umami uses: a one-way hash of
@@ -46,15 +46,15 @@ Databases** → **D1** → **Create** → name `mountour-visits`, then in the Wo
 ## Events sent to Umami
 
 The list lives in `lib/analytics.ts` (`AnalyticsEvent`). Events marked D1 are also added to
-the site's own totals, per month (`event_month`) and per day (`event_day`, the last 14 days are in
-`/api/statistiky` as `days`) through `/api/event` and `lib/eventCounts.ts`, which /statistiky and
+the site's own totals, per month (`event_month`) and per day (`event_day`; the last 14 days are in
+`/api/statistiky` as `days` and in the "Posledných 14 dní" table on /statistiky) through `/api/event` and `lib/eventCounts.ts`, which /statistiky and
 `scripts/monthly_report.py` read; they must go through `track()`, not a `data-umami-event`
 attribute, or the D1 total stays 0.
 
 | Event | When | Data | D1 |
 |---|---|---|---|
-| `start_set` | a start is known: GPS, a typed place, or one remembered | `how` | yes |
-| `trip_open` | a trip page is opened (also marks the day a "use day", see below) | `trail` (slug) | |
+| `start_set` | a start is known, once per visit (browser session) since 8 Nov 2026 | `how`: gps, typed, suggestion (a town from the list), map_pick, town_page, remembered (older rows: manual; town_button is allowed but nothing sends it now) | yes (`how`) |
+| `trip_open` | a trip page is opened (also marks the day a "use day", see below) | `trail` (slug) | yes, count only, from late Nov 2026; a reload counts again |
 | `trip_saved` | "Uložiť výlet" tapped (also marks a use day) | `trail` | yes |
 | `share` | "Poslať partii" tapped | `trail`, `took` | |
 | `share_sent` | the share sheet sent it, or the text was copied | `trail`, `how`, `took` | yes |
@@ -62,14 +62,20 @@ attribute, or the D1 total stays 0.
 | `plan_commit` | **North Star**: the first save, send, navigation or GPX for a trail in a page load | `via`: save, share, nav, gpx; `trail`; `took` | yes (`via`; the `took` bucket is kept as `plan_took`) |
 | `gpx_download` | "Stiahnuť GPX trasu" tapped | `trail` | yes |
 | `nav_open` | "Na parkovisko" / "Po trase" hand-off tapped | `app`: google, mapy, google-walk, mapy-walk | yes |
-| `on_trail` | "Kde som na trase?" tapped on a trip page | `trail` | yes |
+| `on_trail` | "Začať výlet" tapped on a saved trip in Moje výlety (trail mode opens) | `trail` | yes |
 | `transit_open` | a timetable or transit-map link tapped (`data-umami-event`, Umami only) | `app` | |
 | `heard_from` | one-tap "Ako ste sa o nás dozvedeli?" after the first saved trip | `ch`: google, ai, facebook, instagram, tiktok, kamarat, skola, klub, ine | yes |
 | `app_link` | "Získať appku" tapped (home bar or after saving) | `from` | |
 | `app_installed` | Android install dialog accepted on `/aplikacia` | none | |
 | `plus_want` / `plus_no` | "Chcel by som to" / "Za túto cenu nie" on `/plus` (Túruj+ price test) | none | yes |
 | `list_empty` | the home trip list is empty for the chosen filters (`trackListEmpty`); Umami keeps the filter choices | filters | yes (count only) |
+| `day_pick` | a day chosen in the day picker (home chips or step 4 "Kedy") | `day`: dnes, zajtra, iny (so, ne are allowed but nothing sends them now) | yes (`day`) |
+| `trip_search` | a search on the home page was run, once per typed text | `result`: hit, miss | yes (`result`) |
+| `trip_search_town` | a known town was typed into the trip search (the "Vyrážam z …" row showed) | none | |
 | `tester_signup_open` | "Chcem testovať" footer link tapped (`data-umami-event`, Umami only) | none | |
+
+/statistiky shows all the D1 counts: the "Plány" table, "Výlety a hľadanie" (trips opened, GPX, started
+trips, empty lists, search hit/miss), the start split, the day picks and the last 14 days.
 
 `plan_took` is a D1-only counter (never sent to Umami): the time bucket of every `plan_commit`,
 for the two-minute goal over all planned trips.

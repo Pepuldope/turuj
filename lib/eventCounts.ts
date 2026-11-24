@@ -3,12 +3,15 @@ import { getDb } from "@/lib/d1";
 // Monthly totals of the few actions behind the goals in /statistiky and the
 // monthly report (activation, two-minute share, growth loop): one counter row
 // per month, action and detail. Nothing about who did it. Umami counts the same
-// events, but its free plan has no export, so these are the numbers we keep.
+// events, but its free plan has no API a script could read (only a CSV export
+// by hand), so these are the numbers we keep.
 
 /** The counted actions and the details each may carry ("" = none). */
 export const COUNTED: Record<string, readonly string[]> = {
   // "manual" is the old name for a typed or picked start (before 8 Nov 2026); kept so older rows still read.
   start_set: ["gps", "manual", "remembered", "suggestion", "typed", "town_button", "map_pick", "town_page"],
+  // A trip page viewed (counted from late Nov 2026; a reload counts again).
+  trip_open: [""],
   trip_saved: ["0-2 min", "2-5 min", "5-15 min", "15+ min"],
   share_sent: ["0-2 min", "2-5 min", "5-15 min", "15+ min"],
   shared_open: [""],
@@ -98,6 +101,10 @@ export interface MonthEvents {
   month: string;
   /** Visits where the start was known. */
   starts: number;
+  /** The same starts by how they came about (gps, typed, suggestion, …; "manual" = typed or picked before 8 Nov 2026). */
+  startHow: Record<string, number>;
+  /** Trip pages viewed (counted from late Nov 2026; a reload counts again). */
+  opened: number;
   saved: number;
   sent: number;
   /** Plans sent within two minutes of landing. */
@@ -116,29 +123,46 @@ export interface MonthEvents {
   gpx: number;
   onTrail: number;
   listEmpty: number;
+  /** Day-picker choices: dnes, zajtra, so, ne, iny. */
+  dayPick: Record<string, number>;
+  /** Home trip searches that found something, and those that found nothing. */
+  searchHit: number;
+  searchMiss: number;
   /** "Ako ste sa o nás dozvedeli?" answers by channel. */
   heardFrom: Record<string, number>;
+}
+
+interface CountRow {
+  month: string;
+  name: string;
+  detail: string;
+  n: number;
 }
 
 /** Totals per month, newest first; null without the database. */
 export async function monthlyEvents(): Promise<MonthEvents[] | null> {
   const db = await getDb();
   if (!db) return null;
-  let rows: { month: string; name: string; detail: string; n: number }[];
   try {
-    ({ results: rows } = await db
-      .prepare(`SELECT month, name, detail, n FROM event_month ORDER BY month DESC`)
-      .all<{ month: string; name: string; detail: string; n: number }>());
+    const { results } = await db.prepare(`SELECT month, name, detail, n FROM event_month ORDER BY month DESC`).all<CountRow>();
+    return monthTotals(results);
   } catch {
     return []; // No action counted yet: the table doesn't exist.
   }
+}
+
+/** The counter rows summed into one record per month, in the order the months first appear. */
+export function monthTotals(rows: readonly CountRow[]): MonthEvents[] {
   const months = new Map<string, MonthEvents>();
   for (const r of rows) {
     const m =
       months.get(r.month) ??
-      { month: r.month, starts: 0, saved: 0, sent: 0, sentFast: 0, friendOpens: 0, navigations: 0, plusWant: 0, plusNo: 0, planned: 0, plannedTimed: 0, plannedFast: 0, gpx: 0, onTrail: 0, listEmpty: 0, heardFrom: {} };
+      { month: r.month, starts: 0, startHow: {}, opened: 0, saved: 0, sent: 0, sentFast: 0, friendOpens: 0, navigations: 0, plusWant: 0, plusNo: 0, planned: 0, plannedTimed: 0, plannedFast: 0, gpx: 0, onTrail: 0, listEmpty: 0, dayPick: {}, searchHit: 0, searchMiss: 0, heardFrom: {} };
     months.set(r.month, m);
-    if (r.name === "start_set") m.starts += r.n;
+    if (r.name === "start_set") {
+      m.starts += r.n;
+      m.startHow[r.detail] = (m.startHow[r.detail] ?? 0) + r.n;
+    } else if (r.name === "trip_open") m.opened += r.n;
     else if (r.name === "trip_saved") m.saved += r.n;
     else if (r.name === "share_sent") {
       m.sent += r.n;
@@ -154,7 +178,11 @@ export async function monthlyEvents(): Promise<MonthEvents[] | null> {
     } else if (r.name === "gpx_download") m.gpx += r.n;
     else if (r.name === "on_trail") m.onTrail += r.n;
     else if (r.name === "list_empty") m.listEmpty += r.n;
-    else if (r.name === "heard_from") m.heardFrom[r.detail] = (m.heardFrom[r.detail] ?? 0) + r.n;
+    else if (r.name === "day_pick") m.dayPick[r.detail] = (m.dayPick[r.detail] ?? 0) + r.n;
+    else if (r.name === "trip_search") {
+      if (r.detail === "hit") m.searchHit += r.n;
+      else m.searchMiss += r.n;
+    } else if (r.name === "heard_from") m.heardFrom[r.detail] = (m.heardFrom[r.detail] ?? 0) + r.n;
   }
   return [...months.values()];
 }
