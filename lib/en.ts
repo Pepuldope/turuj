@@ -454,6 +454,8 @@ export const EN: Record<string, string> = {
   "Kratšia cesta k tomu istému cieľu, na stránke výletu": "A shorter route to the same place, on the trip page",
   "Dá sa aj kratšie: {t}": "Shorter option: {t}",
   "kratšia cesta {t}": "shorter way {t}",
+  "aj dlhšia cesta {t}": "longer way too, {t}",
+  "Dlhšia cesta k tomu istému cieľu, na stránke výletu": "A longer route to the same place, on the trip page",
   "Späť na túto cestu": "Back to this route",
   "Vybrať túto cestu": "Pick this route",
   "Cieľ": "Destination",

@@ -4,7 +4,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { easierRoute, routeWalk, shorterRoutes, trailDetailFrom } from "@/lib/data";
+import { easierRoute, longerWalks, routeWalk, shorterRoutes, trailDetailFrom } from "@/lib/data";
 import { summaryFromList } from "@/lib/trips";
 import type { TripDetail, TripList } from "@/lib/tripSchema";
 
@@ -23,7 +23,7 @@ describe("home list walks", () => {
     expect(off.slice(0, 10), `${off.length} trips`).toEqual([]);
   });
 
-  it("offer the shorter and easier routes its own trip page counts (run npm run list-joins after a pipeline build)", () => {
+  it("offer the shorter, longer and easier routes its own trip page counts (run npm run list-joins after a pipeline build)", () => {
     const list = JSON.parse(readFileSync(join(DIR, "list.json"), "utf8")) as TripList;
     const read = (slug: string) => JSON.parse(readFileSync(join(DIR, `${slug}.json`), "utf8")) as TripDetail;
     const off: string[] = [];
@@ -31,6 +31,7 @@ describe("home list walks", () => {
       const trip = read(item.slug);
       const others = (trip.routes ?? []).filter((r) => r.slug !== item.slug).map((r) => trailDetailFrom(read(r.slug)));
       if (JSON.stringify(item.shorter) !== JSON.stringify(shorterRoutes(trailDetailFrom(trip), others))) off.push(item.slug);
+      if (JSON.stringify(item.longer) !== JSON.stringify(longerWalks(trailDetailFrom(trip), others))) off.push(`${item.slug} (longer)`);
       if (JSON.stringify(item.easier) !== JSON.stringify(easierRoute(trailDetailFrom(trip), others))) off.push(`${item.slug} (easier)`);
     }
     expect(off.slice(0, 10), `${off.length} trips`).toEqual([]);
