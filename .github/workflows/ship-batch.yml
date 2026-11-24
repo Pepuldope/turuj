@@ -1,0 +1,188 @@
+name: Ship batch
+
+# Ships ONE prepared pull request to main early in the morning, with nobody awake: merges it, starts
+# the deploy and the trip-database load, waits for both, checks the live site and writes the result on
+# the pull request. Made for batches whose data reload has to be the day's first (a full reload writes
+# about 89,000 of D1's 100,000 free rows a day, reset 00:00 UTC), but works for any batch.
+#
+# How to use: put the label "ship-next-morning" on the open pull request to main. Nothing else.
+# No labelled pull request = the run ends in a few seconds and changes nothing.
+#
+# A merge made with GITHUB_TOKEN starts no push event, so "Deploy" and "Trip database" are started
+# here by hand (workflow_dispatch), the same two a normal merge would start.
+
+on:
+  schedule:
+    - cron: "30 5 * * *" # 06:30 CET (07:30 in summer)
+    - cron: "30 6 * * *" # second try, in case GitHub dropped the first; finds nothing if it ran
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only run the checks and say what would happen; merge nothing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: ship-batch
+  cancel-in-progress: false
+
+jobs:
+  ship:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+      LABEL: ship-next-morning
+      SITE: https://turuj.sk
+    steps:
+      - name: Find the pull request
+        id: pr
+        run: |
+          prs=$(gh pr list --base main --state open --label "$LABEL" --json number --jq '.[].number')
+          n=$(printf '%s\n' "$prs" | grep -c . || true)
+          if [ "$n" = 0 ]; then
+            echo "::notice::No open pull request to main has the label $LABEL: nothing to ship."
+            exit 0
+          fi
+          if [ "$n" != 1 ]; then
+            echo "::error::$n pull requests carry the label $LABEL; only one may."
+            exit 1
+          fi
+          echo "number=$prs" >> "$GITHUB_OUTPUT"
+          echo "Pull request #$prs: $(gh pr view "$prs" --json title --jq .title)"
+
+      - name: Checks before the merge
+        if: steps.pr.outputs.number != ''
+        env:
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          bad=0
+          ok() { echo "ok:   $1"; }
+          fail() { echo "::error::$1"; bad=1; }
+
+          # GitHub works out "mergeable" lazily: ask until it knows.
+          for i in 1 2 3 4 5 6; do
+            j=$(gh pr view "$PR" --json isDraft,mergeable,statusCheckRollup)
+            m=$(echo "$j" | jq -r .mergeable)
+            [ "$m" != UNKNOWN ] && break
+            sleep 10
+          done
+          if [ "$(echo "$j" | jq -r .isDraft)" = false ]; then ok "not a draft"; else fail "pull request #$PR is a draft"; fi
+          if [ "$m" = MERGEABLE ]; then ok "no conflicts with main"; else fail "pull request #$PR cannot be merged ($m)"; fi
+          red=$(echo "$j" | jq -r '[.statusCheckRollup[] | select(((.conclusion // .state // "") | IN("SUCCESS", "SKIPPED", "NEUTRAL")) | not) | (.name // .context)] | join(", ")')
+          if [ -z "$red" ]; then ok "all checks on the pull request passed"; else fail "checks not passed: $red"; fi
+
+          busy=$(for w in deploy.yml db.yml; do gh run list -w "$w" --limit 20 --json status,databaseId --jq '.[] | select(.status != "completed") | .databaseId'; done)
+          if [ -z "$busy" ]; then ok "no deploy or database load is running"; else fail "a deploy or database load is still running: $(echo $busy)"; fi
+
+          day=$(date -u +%Y-%m-%d)
+          deploys=$(gh run list -w deploy.yml --limit 30 --json createdAt --jq "[.[] | select(.createdAt >= \"${day}T00:00:00Z\")] | length")
+          if [ "$deploys" -lt 4 ]; then ok "$deploys deploys so far today (the limit is 5)"; else fail "$deploys deploys already today (the limit is 5)"; fi
+
+          # The day's database writes so far, from the loads' own logs (the site's own writes are small).
+          written=0
+          for id in $(gh run list -w db.yml --limit 30 --json createdAt,databaseId --jq ".[] | select(.createdAt >= \"${day}T00:00:00Z\") | .databaseId"); do
+            w=$(gh run view "$id" --log 2>/dev/null | grep -o '"rows_written": [0-9]*' | awk '{s += $2} END {print s + 0}')
+            written=$((written + w))
+          done
+          if [ "$written" -le 5000 ]; then
+            ok "today's database loads wrote $written rows so far"
+          else
+            fail "today's database loads already wrote $written rows; a full reload needs about 89,000 of the day's 100,000"
+          fi
+
+          if [ "$bad" != 0 ]; then
+            if [ "$DRY_RUN" = true ]; then
+              echo "::notice::Dry run: pull request #$PR would NOT be shipped now (see the errors above)."
+            else
+              gh pr comment "$PR" --body "Ship batch did not merge this: a check before the merge failed. Details: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+              exit 1
+            fi
+          elif [ "$DRY_RUN" = true ]; then
+            echo "::notice::Dry run: pull request #$PR would be merged and shipped now."
+          fi
+
+      - name: Merge
+        id: merge
+        if: steps.pr.outputs.number != '' && env.DRY_RUN != 'true'
+        env:
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          gh pr merge "$PR" --squash
+          sha=$(gh pr view "$PR" --json mergeCommit --jq .mergeCommit.oid)
+          echo "merged as $sha"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "since=$(date -u -d '1 minute ago' +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
+      - name: Start the deploy and the database load
+        if: steps.merge.outputs.sha != ''
+        run: |
+          gh workflow run deploy.yml --ref main
+          gh workflow run db.yml --ref main
+
+      - name: Wait for both
+        id: wait
+        if: steps.merge.outputs.sha != ''
+        env:
+          SINCE: ${{ steps.merge.outputs.since }}
+        run: |
+          status=0
+          for w in deploy.yml db.yml; do
+            id=""
+            for i in $(seq 1 18); do
+              id=$(gh run list -w "$w" --event workflow_dispatch --limit 5 --json databaseId,createdAt --jq "[.[] | select(.createdAt >= \"$SINCE\")][0].databaseId // empty")
+              [ -n "$id" ] && break
+              sleep 10
+            done
+            if [ -z "$id" ]; then echo "::error::$w did not start"; status=1; continue; fi
+            echo "${w%.yml}=$id" >> "$GITHUB_OUTPUT"
+            end=timeout
+            for i in $(seq 1 170); do
+              s=$(gh run view "$id" --json status,conclusion --jq '.status + " " + (.conclusion // "")' 2>/dev/null || true)
+              case "$s" in "completed "*) end=${s#completed }; break ;; esac
+              sleep 30
+            done
+            echo "$w run $id: $end"
+            echo "${w%.yml}_end=$end" >> "$GITHUB_OUTPUT"
+            [ "$end" = success ] || { echo "::error::$w run $id ended with: $end"; status=1; }
+          done
+          exit $status
+
+      - name: Check the live site and report
+        if: always() && steps.merge.outputs.sha != ''
+        env:
+          PR: ${{ steps.pr.outputs.number }}
+          SHA: ${{ steps.merge.outputs.sha }}
+          DEPLOY: ${{ steps.wait.outputs.deploy }}
+          DEPLOY_END: ${{ steps.wait.outputs.deploy_end }}
+          DB: ${{ steps.wait.outputs.db }}
+          DB_END: ${{ steps.wait.outputs.db_end }}
+        run: |
+          runs="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs"
+          written="?"; mode="?"
+          if [ -n "$DB" ]; then
+            log=$(gh run view "$DB" --log 2>/dev/null || true)
+            written=$(echo "$log" | grep -o '"rows_written": [0-9]*' | awk '{s += $2} END {print s + 0}')
+            mode=$(echo "$log" | grep -o -E '(full load|incremental load), about [0-9]+ rows written|already holds this data' | tail -1)
+          fi
+          site=""
+          for p in / /trasa/krivan /statistiky; do
+            site="$site$p $(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$SITE$p" || echo error); "
+          done
+          {
+            echo "Shipped by the Ship batch workflow ($runs/$GITHUB_RUN_ID)."
+            echo
+            echo "- Merged into main as $SHA"
+            echo "- Deploy: ${DEPLOY_END:-did not start} ${DEPLOY:+($runs/$DEPLOY)}"
+            echo "- Trip database: ${DB_END:-did not start} ${DB:+($runs/$DB)}: ${mode:-no load line found}, $written rows written"
+            echo "- Live site answers: $site"
+          } > report.md
+          cat report.md | tee -a "$GITHUB_STEP_SUMMARY"
+          gh pr comment "$PR" --body-file report.md
