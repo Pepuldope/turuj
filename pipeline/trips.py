@@ -10,7 +10,7 @@ from scipy.spatial import cKDTree
 
 from . import names
 from . import osm as osm_mod
-from .geo import LocalProjection, ascent_descent, din33466_minutes, haversine, rdp_indices, resample, round_up_15, slugify
+from .geo import LocalProjection, ascent_descent, colour_runs, din33466_minutes, haversine, rdp_indices, resample, round_up_15, slugify
 
 COLOUR_ORDER = ["red", "blue", "green", "yellow", "black"]
 COLOUR_SK = {"red": "červenej", "blue": "modrej", "green": "zelenej", "yellow": "žltej", "black": "čiernej"}
@@ -1149,19 +1149,11 @@ class TripBuilder:
         # path for the JSON: simplified, with elevation and colour runs
         xy = self.proj.xy(lat, lon)
         keep = rdp_indices(xy, 5.0)
-        path_pts = keep if back_path else [i for i in keep if i <= turn]
-        if turn not in path_pts:
-            path_pts = sorted(set(path_pts) | {turn})
+        # The goal and every change of marking stay on the line, so each stored piece has one colour.
+        path_pts, runs = colour_runs(list(keep) + [turn], e_colour, len(full) - 1 if back_path else turn)
         pe = self.dem.sample(lat[path_pts], lon[path_pts]) if (self.dem and have_dem) else np.full(len(path_pts), np.nan)
         path = [[round(float(lon[i]), 6), round(float(lat[i]), 6), None if not np.isfinite(e) else int(round(e))]
                 for i, e in zip(path_pts, pe)]
-        runs = []
-        for j in range(len(path_pts) - 1):
-            c = e_colour[path_pts[j]]
-            if runs and runs[-1]["colour"] == c:
-                runs[-1]["to"] = j + 1
-            else:
-                runs.append(dict(**{"from": j, "to": j + 1}, colour=c))
 
         # POIs along the walk
         pois = []

@@ -27,6 +27,31 @@ class LocalProjection:
         return np.column_stack([np.asarray(lon, float) * self.kx, np.asarray(lat, float) * self.ky])
 
 
+def colour_runs(keep, colours, last):
+    """The path points to store and the trail-marking runs over them.
+
+    `colours[i]` is the marking of the step from point i to point i + 1 (None = no marking), `keep`
+    the points left after simplifying the line, `last` the final point of the stored path. A
+    simplified piece spans many steps and used to take the colour of its first one: a 300 m straight
+    piece that began with a 10 m unmarked crossing was stored as 300 m without marking, and a marked
+    stretch inside one piece was lost (Peter, 2026-11-24: red, blue, red on the trail, one sign change
+    on the page, to "no marking"). Every point where the marking changes is kept, so a piece has one colour.
+
+    Returns (points, runs): the kept point indices, sorted, and [{from, to, colour}] over positions in them.
+    """
+    last = int(last)
+    breaks = {i for i in range(1, min(last, len(colours))) if colours[i] != colours[i - 1]}
+    pts = sorted({int(i) for i in keep if i <= last} | breaks | {0, last})
+    runs = []
+    for j in range(len(pts) - 1):
+        c = colours[pts[j]]
+        if runs and runs[-1]["colour"] == c:
+            runs[-1]["to"] = j + 1
+        else:
+            runs.append({"from": j, "to": j + 1, "colour": c})
+    return pts, runs
+
+
 def rdp_indices(xy, tol):
     """Ramer-Douglas-Peucker on an (n, 2) array of metres; returns kept indices, sorted."""
     n = len(xy)
