@@ -49,6 +49,8 @@ export interface TripCardItem {
   hikeMin: number;
   /** The walk of a clearly shorter route to the same place (kids pace applied); null when there is none. */
   shortMin: number | null;
+  /** Listed through a clearly longer route to the same place (a walking-time filter): that route's walk, kids pace applied. */
+  longMin?: number | null;
   /** Listed through an easier route to the same place (a difficulty filter): that route's difficulty. */
   easierRoute?: Difficulty | null;
   /** ...its length and climb. */
@@ -395,6 +397,13 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
         {item.shortMin !== null && (
           <span className="text-[12.5px] leading-tight text-[var(--muted)]" title={t("Kratšia cesta k tomu istému cieľu, na stránke výletu")}>
             {t("kratšia cesta {t}", { t: formatDurationShort(item.shortMin) })}
+          </span>
+        )}
+        {/* On the list through a longer route (a walking-time filter, Peter 2026-11-24): the same small line, so the
+            card's own shorter walk does not read as a mistake under "nad 6 h". */}
+        {item.longMin != null && (
+          <span className="text-[12.5px] leading-tight text-[var(--muted)]" title={t("Dlhšia cesta k tomu istému cieľu, na stránke výletu")}>
+            {t("aj dlhšia cesta {t}", { t: formatDurationShort(item.longMin) })}
           </span>
         )}
         </span>

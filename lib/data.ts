@@ -70,6 +70,7 @@ function toTrail(t: TripSummary): Trail {
     goal_name: t.destination.name,
     rank: t.rank,
     ...(t.shorter ? { shorter: t.shorter } : {}),
+    ...(t.longer ? { longer: t.longer } : {}),
     ...(t.easier ? { easier: t.easier } : {}),
     bbox: { sw: { lat: s, lon: w }, ne: { lat: n, lon: e } },
     created_at: "",
@@ -216,6 +217,38 @@ export function shorterRoutes(main: TrailDetail, others: TrailDetail[]): TripSum
   const car = pick(false);
   const bus = pick(true);
   return car || bus ? { ...(car ? { car } : {}), ...(bus ? { bus } : {}) } : undefined;
+}
+
+/**
+ * The walks of the other routes to the same place that are clearly longer than this one's, in minutes, shortest
+ * first, by car (routes with parking) and by bus, as the trip pages count them (home list: scripts/list-joins.ts).
+ * "Clearly" is the same gap as for a shorter route, seen from the other side.
+ */
+export function longerWalks(main: TrailDetail, others: TrailDetail[]): TripSummary["longer"] {
+  const pick = (bus: boolean): number[] => {
+    const mine = pickWalk(routeWalk(main), bus, main.parkingLots.length > 0)?.min;
+    if (mine === undefined) return [];
+    const mins = others.flatMap((o) => {
+      const w = routeWalk(o);
+      const f = bus ? w.bus : o.parkingLots.length > 0 ? w.car : null;
+      return f && isClearlyShorter(mine, f.min) ? [f.min] : [];
+    });
+    return [...new Set(mins)].sort((a, b) => a - b);
+  };
+  const car = pick(false);
+  const bus = pick(true);
+  return car.length || bus.length ? { ...(car.length ? { car } : {}), ...(bus.length ? { bus } : {}) } : undefined;
+}
+
+/**
+ * The walk of a longer route that puts the place on the list: the shortest one that fits the picked walking-time
+ * filter, at the group's pace. Null when the place is listed anyway (its own walk or its shorter route fits),
+ * when no time filter is picked, or when no longer route fits.
+ */
+export function longerFit(longer: readonly number[] | undefined, listedAnyway: boolean, pace: (min: number) => number, fits: (min: number) => boolean): number | null {
+  if (listedAnyway || !longer) return null;
+  for (const m of longer) if (fits(pace(m))) return pace(m);
+  return null;
 }
 
 const DIFFICULTY_RANK: Record<TrailDetail["trail"]["difficulty"], number> = { lahka: 0, stredna: 1, tazka: 2 };

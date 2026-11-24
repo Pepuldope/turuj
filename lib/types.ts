@@ -55,6 +55,8 @@ export interface Trail {
   gpx_path: string | null;
   /** A clearly shorter route to the same place (home list only, lib/tripSchema.ts). */
   shorter?: { car?: { slug: string; min: number }; bus?: { slug: string; min: number } };
+  /** The walks, in minutes, of the clearly longer routes to the same place (home list only, lib/tripSchema.ts). */
+  longer?: { car?: number[]; bus?: number[] };
   /** An easier route to the same place (home list only, lib/tripSchema.ts). */
   easier?: { slug: string; difficulty: Difficulty };
   bbox: BBox | null;

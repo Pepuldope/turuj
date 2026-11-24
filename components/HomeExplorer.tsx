@@ -2,7 +2,7 @@
 
 import { startTransition, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { Difficulty, LatLng, TrailDetail } from "@/lib/types";
-import { driveDestination, nearestStop, primaryTrailhead, routeWalk, sunLocation, trailDetailFrom } from "@/lib/data";
+import { driveDestination, longerFit, nearestStop, primaryTrailhead, routeWalk, sunLocation, trailDetailFrom } from "@/lib/data";
 import { formatKm, pickWalk, walkMinutes } from "@/lib/walkFacts";
 import { activeClosures } from "@/lib/closures";
 import { hikeMinutes } from "@/lib/dayPlan";
@@ -384,7 +384,11 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
       const short = detail.trail.shorter?.[byBus ? "bus" : "car"];
       const shortMin = short ? hikeMinutes(short.min, withKids) : null;
       const fitsTime = (m: number | null) => m !== null && TIME_FILTERS.some((f) => timeFilter.includes(f.key) && m >= f.min && m <= f.max);
-      if (timeFilter.length > 0 && !fitsTime(hikeMin) && !fitsTime(shortMin)) return [];
+      // A clearly longer route counts the same way: "nad 6 h" finds a place whose main route is a short one, and the
+      // card names that route's walk. Only when the place is on the list through it (Peter, 2026-11-24).
+      const longMin =
+        timeFilter.length > 0 ? longerFit(detail.trail.longer?.[byBus ? "bus" : "car"], fitsTime(hikeMin) || fitsTime(shortMin), (m) => hikeMinutes(m, withKids), fitsTime) : null;
+      if (timeFilter.length > 0 && !fitsTime(hikeMin) && !fitsTime(shortMin) && longMin === null) return [];
       if (farFilter !== null && start && driveMin !== null && driveMin > farFilter) return [];
       const th = primaryTrailhead(detail);
       const sun = sunLocation(detail);
@@ -393,6 +397,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
           detail,
           hikeMin,
           shortMin,
+          longMin,
           easierRoute: viaEasier ? detail.trail.easier!.difficulty : null,
           walkM: walk?.m ?? detail.trail.distance_m,
           ascentM: walk?.ascentM ?? detail.trail.ascent_m,
