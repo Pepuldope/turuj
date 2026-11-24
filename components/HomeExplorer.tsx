@@ -2,7 +2,7 @@
 
 import { startTransition, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { Difficulty, LatLng, TrailDetail } from "@/lib/types";
-import { driveDestination, longerFit, nearestStop, primaryTrailhead, routeWalk, sunLocation, trailDetailFrom } from "@/lib/data";
+import { driveDestination, longerFit, nearestStop, realMatchesFirst, primaryTrailhead, routeWalk, sunLocation, trailDetailFrom } from "@/lib/data";
 import { formatKm, pickWalk, walkMinutes } from "@/lib/walkFacts";
 import { activeClosures } from "@/lib/closures";
 import { hikeMinutes } from "@/lib/dayPlan";
@@ -425,7 +425,8 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
     // the list, washed out, after the ones that fit; so a search for Rysy in winter still finds it.
     const late = open.filter((i) => !fitsDay(i));
     const noneFit = fitting.length === 0 && open.length > 0;
-    return { listedAll: [...fitting, ...late, ...all.filter(out)], noneFit };
+    // Places on the list only through a longer route come after every real match, late ones included.
+    return { listedAll: [...realMatchesFirst([...fitting, ...late]), ...all.filter(out)], noneFit };
   }, [trails, destinations, drives, startDrives, driveStatus, withKids, easier, goalFilter, diffFilter, timeFilter, farFilter, date, today, start, transit]);
 
   const bySlug = useMemo(() => new Map(listedAll.map((i) => [i.detail.trail.slug, i])), [listedAll]);
@@ -506,8 +507,8 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
       return at ? haversineM({ lat, lon }, at) / 1000 - KM_PER_RANK * (i.detail.trail.rank ?? 0) : Infinity;
     };
     // Best first; trips the day is too short for stay after the ones that fit, as on the rest of the list.
-    const ranked = listedAll.map((i) => ({ i, s: score(i), late: !fitsDay(i) }));
-    ranked.sort((a, b) => Number(a.late) - Number(b.late) || a.s - b.s);
+    const ranked = listedAll.map((i) => ({ i, s: score(i), late: !fitsDay(i), via: i.longMin != null }));
+    ranked.sort((a, b) => Number(a.via) - Number(b.via) || Number(a.late) - Number(b.late) || a.s - b.s);
     return ranked.filter((r) => r.s < Infinity).map((r) => r.i);
   }, [listedAll, words, matches, nameMatches, mapView, start]);
 

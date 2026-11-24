@@ -251,6 +251,14 @@ export function longerFit(longer: readonly number[] | undefined, listedAnyway: b
   return null;
 }
 
+/**
+ * Places listed only through a longer route go after the ones whose own walk fits the filter, each group in the
+ * order it had (Peter, 2026-11-24: under "nad 6 h" the list opened with 15-minute castle walks).
+ */
+export function realMatchesFirst<T extends { longMin?: number | null }>(items: readonly T[]): T[] {
+  return [...items.filter((i) => i.longMin == null), ...items.filter((i) => i.longMin != null)];
+}
+
 const DIFFICULTY_RANK: Record<TrailDetail["trail"]["difficulty"], number> = { lahka: 0, stredna: 1, tazka: 2 };
 
 /** The easiest other route to the place, when it is easier than the main one (home list: scripts/list-joins.ts). */
