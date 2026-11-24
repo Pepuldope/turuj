@@ -30,13 +30,14 @@
     <trkpt lat="49.133056" lon="19.198541"><ele>665</ele></trkpt>
     <trkpt lat="49.133034" lon="19.198622"><ele>666</ele></trkpt>
     <trkpt lat="49.132597" lon="19.199042"><ele>682</ele></trkpt>
-    <trkpt lat="49.133711" lon="19.199566"><ele>712</ele></trkpt>
-    <trkpt lat="49.134241" lon="19.199577"><ele>725</ele></trkpt>
+    <trkpt lat="49.133291" lon="19.199343"><ele>700</ele></trkpt>
+    <trkpt lat="49.133708" lon="19.199633"><ele>716</ele></trkpt>
+    <trkpt lat="49.134201" lon="19.199550"><ele>723</ele></trkpt>
     <trkpt lat="49.134674" lon="19.199767"><ele>742</ele></trkpt>
     <trkpt lat="49.135013" lon="19.200006"><ele>749</ele></trkpt>
-    <trkpt lat="49.135345" lon="19.200561"><ele>766</ele></trkpt>
+    <trkpt lat="49.135092" lon="19.200107"><ele>752</ele></trkpt>
+    <trkpt lat="49.135205" lon="19.200366"><ele>759</ele></trkpt>
     <trkpt lat="49.135545" lon="19.200816"><ele>769</ele></trkpt>
-    <trkpt lat="49.135730" lon="19.201268"><ele>779</ele></trkpt>
     <trkpt lat="49.135783" lon="19.201616"><ele>785</ele></trkpt>
     <trkpt lat="49.136224" lon="19.202337"><ele>807</ele></trkpt>
     <trkpt lat="49.136321" lon="19.202383"><ele>810</ele></trkpt>
@@ -128,13 +129,14 @@
     <trkpt lat="49.136321" lon="19.202383"><ele>810</ele></trkpt>
     <trkpt lat="49.136224" lon="19.202337"><ele>807</ele></trkpt>
     <trkpt lat="49.135783" lon="19.201616"><ele>785</ele></trkpt>
-    <trkpt lat="49.135730" lon="19.201268"><ele>779</ele></trkpt>
     <trkpt lat="49.135545" lon="19.200816"><ele>769</ele></trkpt>
-    <trkpt lat="49.135345" lon="19.200561"><ele>766</ele></trkpt>
+    <trkpt lat="49.135205" lon="19.200366"><ele>759</ele></trkpt>
+    <trkpt lat="49.135092" lon="19.200107"><ele>752</ele></trkpt>
     <trkpt lat="49.135013" lon="19.200006"><ele>749</ele></trkpt>
     <trkpt lat="49.134674" lon="19.199767"><ele>742</ele></trkpt>
-    <trkpt lat="49.134241" lon="19.199577"><ele>725</ele></trkpt>
-    <trkpt lat="49.133711" lon="19.199566"><ele>712</ele></trkpt>
+    <trkpt lat="49.134201" lon="19.199550"><ele>723</ele></trkpt>
+    <trkpt lat="49.133708" lon="19.199633"><ele>716</ele></trkpt>
+    <trkpt lat="49.133291" lon="19.199343"><ele>700</ele></trkpt>
     <trkpt lat="49.132597" lon="19.199042"><ele>682</ele></trkpt>
     <trkpt lat="49.133034" lon="19.198622"><ele>666</ele></trkpt>
     <trkpt lat="49.133056" lon="19.198541"><ele>665</ele></trkpt>

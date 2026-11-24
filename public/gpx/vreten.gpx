@@ -2,9 +2,11 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Vreteň</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Vreteň</name><desc>vreten</desc><trkseg>
-    <trkpt lat="49.305187" lon="18.784274"><ele>359</ele></trkpt>
-    <trkpt lat="49.304415" lon="18.783535"><ele>357</ele></trkpt>
-    <trkpt lat="49.303934" lon="18.783005"><ele>358</ele></trkpt>
+    <trkpt lat="49.305178" lon="18.784090"><ele>358</ele></trkpt>
+    <trkpt lat="49.305048" lon="18.783957"><ele>357</ele></trkpt>
+    <trkpt lat="49.304989" lon="18.784092"><ele>358</ele></trkpt>
+    <trkpt lat="49.304043" lon="18.783142"><ele>357</ele></trkpt>
+    <trkpt lat="49.303808" lon="18.782807"><ele>358</ele></trkpt>
     <trkpt lat="49.303280" lon="18.781840"><ele>357</ele></trkpt>
     <trkpt lat="49.302963" lon="18.781432"><ele>358</ele></trkpt>
     <trkpt lat="49.302778" lon="18.781237"><ele>358</ele></trkpt>
@@ -201,9 +203,11 @@
     <trkpt lat="49.302778" lon="18.781237"><ele>358</ele></trkpt>
     <trkpt lat="49.302963" lon="18.781432"><ele>358</ele></trkpt>
     <trkpt lat="49.303280" lon="18.781840"><ele>357</ele></trkpt>
-    <trkpt lat="49.303934" lon="18.783005"><ele>358</ele></trkpt>
-    <trkpt lat="49.304415" lon="18.783535"><ele>357</ele></trkpt>
-    <trkpt lat="49.305187" lon="18.784274"><ele>359</ele></trkpt>
+    <trkpt lat="49.303808" lon="18.782807"><ele>358</ele></trkpt>
+    <trkpt lat="49.304043" lon="18.783142"><ele>357</ele></trkpt>
+    <trkpt lat="49.304989" lon="18.784092"><ele>358</ele></trkpt>
+    <trkpt lat="49.305048" lon="18.783957"><ele>357</ele></trkpt>
+    <trkpt lat="49.305178" lon="18.784090"><ele>358</ele></trkpt>
   </trkseg></trk>
   <trk><name>Vreteň</name><desc>vreten-zastranie-kostolna</desc><trkseg>
     <trkpt lat="49.241973" lon="18.819870"><ele>578</ele></trkpt>

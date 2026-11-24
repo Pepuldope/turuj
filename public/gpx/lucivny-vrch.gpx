@@ -3,18 +3,17 @@
   <metadata><name>Lučivný vrch</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Lučivný vrch</name><desc>lucivny-vrch</desc><trkseg>
     <trkpt lat="49.309086" lon="19.526718"><ele>563</ele></trkpt>
-    <trkpt lat="49.309121" lon="19.526561"><ele>563</ele></trkpt>
-    <trkpt lat="49.309212" lon="19.526484"><ele>563</ele></trkpt>
-    <trkpt lat="49.309298" lon="19.526496"><ele>563</ele></trkpt>
-    <trkpt lat="49.309477" lon="19.526360"><ele>563</ele></trkpt>
-    <trkpt lat="49.309562" lon="19.526275"><ele>563</ele></trkpt>
+    <trkpt lat="49.309102" lon="19.526695"><ele>563</ele></trkpt>
+    <trkpt lat="49.309127" lon="19.526759"><ele>563</ele></trkpt>
+    <trkpt lat="49.309543" lon="19.526384"><ele>563</ele></trkpt>
+    <trkpt lat="49.309521" lon="19.526316"><ele>563</ele></trkpt>
     <trkpt lat="49.309653" lon="19.526091"><ele>562</ele></trkpt>
     <trkpt lat="49.310148" lon="19.524022"><ele>562</ele></trkpt>
     <trkpt lat="49.310231" lon="19.524069"><ele>562</ele></trkpt>
     <trkpt lat="49.310904" lon="19.521228"><ele>562</ele></trkpt>
     <trkpt lat="49.311086" lon="19.520888"><ele>564</ele></trkpt>
     <trkpt lat="49.311211" lon="19.520735"><ele>563</ele></trkpt>
-    <trkpt lat="49.311995" lon="19.520229"><ele>562</ele></trkpt>
+    <trkpt lat="49.311935" lon="19.520278"><ele>561</ele></trkpt>
     <trkpt lat="49.312042" lon="19.520133"><ele>562</ele></trkpt>
     <trkpt lat="49.313852" lon="19.514241"><ele>564</ele></trkpt>
     <trkpt lat="49.313822" lon="19.514220"><ele>564</ele></trkpt>
@@ -128,18 +127,17 @@
     <trkpt lat="49.313822" lon="19.514220"><ele>564</ele></trkpt>
     <trkpt lat="49.313852" lon="19.514241"><ele>564</ele></trkpt>
     <trkpt lat="49.312042" lon="19.520133"><ele>562</ele></trkpt>
-    <trkpt lat="49.311995" lon="19.520229"><ele>562</ele></trkpt>
+    <trkpt lat="49.311935" lon="19.520278"><ele>561</ele></trkpt>
     <trkpt lat="49.311211" lon="19.520735"><ele>563</ele></trkpt>
     <trkpt lat="49.311086" lon="19.520888"><ele>564</ele></trkpt>
     <trkpt lat="49.310904" lon="19.521228"><ele>562</ele></trkpt>
     <trkpt lat="49.310231" lon="19.524069"><ele>562</ele></trkpt>
     <trkpt lat="49.310148" lon="19.524022"><ele>562</ele></trkpt>
     <trkpt lat="49.309653" lon="19.526091"><ele>562</ele></trkpt>
-    <trkpt lat="49.309562" lon="19.526275"><ele>563</ele></trkpt>
-    <trkpt lat="49.309477" lon="19.526360"><ele>563</ele></trkpt>
-    <trkpt lat="49.309298" lon="19.526496"><ele>563</ele></trkpt>
-    <trkpt lat="49.309212" lon="19.526484"><ele>563</ele></trkpt>
-    <trkpt lat="49.309121" lon="19.526561"><ele>563</ele></trkpt>
+    <trkpt lat="49.309521" lon="19.526316"><ele>563</ele></trkpt>
+    <trkpt lat="49.309543" lon="19.526384"><ele>563</ele></trkpt>
+    <trkpt lat="49.309127" lon="19.526759"><ele>563</ele></trkpt>
+    <trkpt lat="49.309102" lon="19.526695"><ele>563</ele></trkpt>
     <trkpt lat="49.309086" lon="19.526718"><ele>563</ele></trkpt>
   </trkseg></trk>
   <trk><name>Lučivný vrch</name><desc>lucivny-vrch-lokca-bus</desc><trkseg>
