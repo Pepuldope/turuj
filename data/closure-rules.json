@@ -617,33 +617,6 @@
           }
         ]
       }
-    },
-    {
-      "id": "slovenskyraj-ferrata-kysel",
-      "reason": "Ferrata HZS Kyseľ v NP Slovenský raj je otvorená len od 15. júna do 31. októbra. Ide sa po nej jednosmerne zdola nahor, s ferratovým setom a vstupenkou.",
-      "kind": "rocna",
-      "starts_on": "2026-11-01",
-      "ends_on": "2027-06-14",
-      "source_url": "https://www.npslovenskyraj.sk/ferrata-hzs-kysel-zakladne-informacie-pre-navstevnikov/",
-      "verified_on": "2026-11-23",
-      "applies_to": "Zaistený úsek ferraty v tiesňave Kyseľ od rázcestia Kyseľ, ústie po Obrovský vodopád (v OpenStreetMap cesta s via_ferrata_scale). Voľne prístupná časť náučného chodníka Kyseľ (Obrovský vodopád – V Kyseli – Kyseľ, rázcestie) podľa správy NP uzavretá nie je. Pri vysokom stave vody správa rokliny zatvára aj počas sezóny.",
-      "selector": {
-        "bbox": [
-          20.4,
-          48.92,
-          20.44,
-          48.95
-        ],
-        "way_tags": [
-          "via_ferrata_scale=0",
-          "via_ferrata_scale=1",
-          "via_ferrata_scale=2",
-          "via_ferrata_scale=3",
-          "via_ferrata_scale=4",
-          "via_ferrata_scale=5",
-          "via_ferrata_scale=6"
-        ]
-      }
     }
   ]
 }

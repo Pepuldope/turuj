@@ -28,6 +28,9 @@ NO_ACCESS = {"no", "private"}
 FOOT_OK = {"yes", "designated", "permissive"}
 # way tags kept for rule selectors (way_tags in fee-rules.json and closure-rules.json)
 WATCH_TAGS = {"highway", "ladder", "oneway", "oneway:foot", "via_ferrata_scale"}
+# A path graded as a via ferrata (any grade but 0, "protected path, no gear") needs a ferrata set:
+# no trip walks it (Peter, 2026-11-24). highway=via_ferrata is not in WALK_HIGHWAYS at all.
+NO_GEAR_FERRATA = {None, "0"}
 
 
 @dataclass
@@ -323,7 +326,8 @@ def load(path, boxes, probe_names=(), border_relation=14296, name_keys=(), inclu
             continue
         if walk and len(lats) >= 2 and way_box.overlaps(lats.min(), lons.min(), lats.max(), lons.max()):
             access_blocked = t.get("access") in NO_ACCESS and t.get("foot") not in FOOT_OK
-            if not access_blocked and t.get("foot") != "no" and t.get("area") != "yes":
+            ferrata = t.get("via_ferrata_scale") not in NO_GEAR_FERRATA
+            if not access_blocked and not ferrata and t.get("foot") != "no" and t.get("area") != "yes":
                 ow_tag = t.get("oneway:foot") or (t.get("oneway") if hw in FOOTPATHS else None)
                 oneway = 1 if ow_tag in ("yes", "1", "true") else -1 if ow_tag == "-1" else 0
                 data.ways.append(Way(

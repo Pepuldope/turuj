@@ -42,12 +42,20 @@ function tracksOf(gpxText: string): FileTracks {
   return lastTracks;
 }
 
+/** A named point added to a downloaded route: where the walk from the car park or the stop starts, and where it meets the trail. */
+export interface GpxPoint {
+  lat: number;
+  lon: number;
+  name: string;
+}
+
 /**
  * The place's GPX cut down to one route: the track whose <desc> is `track`, else the first (the
  * main route). Null when the file can't be read. Every track in the file carries the place's name,
  * so `name` (the route as the page calls it) replaces it, and a maps app or watch shows which one it is.
+ * `points` become waypoints (C109, Peter 2026-11-24: the track stays the trail, the car park and the join are marked).
  */
-export function routeGpx(gpxText: string, track?: string, name?: string): string | null {
+export function routeGpx(gpxText: string, track?: string, name?: string, points: readonly GpxPoint[] = []): string | null {
   const doc = new DOMParser().parseFromString(gpxText, "application/xml");
   if (doc.getElementsByTagName("parsererror").length) return null;
   const tracks = Array.from(doc.getElementsByTagName("trk"));
@@ -59,6 +67,17 @@ export function routeGpx(gpxText: string, track?: string, name?: string): string
     const meta = doc.getElementsByTagName("metadata")[0]?.getElementsByTagName("name")[0];
     if (trkName) trkName.textContent = name;
     if (meta) meta.textContent = name;
+  }
+  // Waypoints go before the tracks (GPX 1.1 order: metadata, wpt, rte, trk), in the file's own namespace.
+  const ns = doc.documentElement.namespaceURI;
+  for (const p of points) {
+    const wpt = doc.createElementNS(ns, "wpt");
+    wpt.setAttribute("lat", p.lat.toFixed(6));
+    wpt.setAttribute("lon", p.lon.toFixed(6));
+    const label = doc.createElementNS(ns, "name");
+    label.textContent = p.name;
+    wpt.appendChild(label);
+    keep.parentNode?.insertBefore(wpt, keep);
   }
   return new XMLSerializer().serializeToString(doc);
 }

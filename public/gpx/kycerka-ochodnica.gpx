@@ -178,9 +178,9 @@
     <trkpt lat="49.310204" lon="18.750380"><ele>437</ele></trkpt>
     <trkpt lat="49.309716" lon="18.748479"><ele>421</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Kýčerka (Ochodnica)</name><desc>kycerka-ochodnica-kysucke-nove-mesto</desc><trkseg>
-    <trkpt lat="49.305280" lon="18.784457"><ele>359</ele></trkpt>
-    <trkpt lat="49.305230" lon="18.784457"><ele>359</ele></trkpt>
+  <trk><name>Kýčerka (Ochodnica)</name><desc>kycerka-ochodnica-kysucke-nove-mesto-2</desc><trkseg>
+    <trkpt lat="49.305178" lon="18.784090"><ele>358</ele></trkpt>
+    <trkpt lat="49.305318" lon="18.784232"><ele>359</ele></trkpt>
     <trkpt lat="49.305481" lon="18.783741"><ele>358</ele></trkpt>
     <trkpt lat="49.306106" lon="18.784381"><ele>361</ele></trkpt>
     <trkpt lat="49.306157" lon="18.784252"><ele>361</ele></trkpt>
@@ -444,8 +444,8 @@
     <trkpt lat="49.306157" lon="18.784252"><ele>361</ele></trkpt>
     <trkpt lat="49.306106" lon="18.784381"><ele>361</ele></trkpt>
     <trkpt lat="49.305481" lon="18.783741"><ele>358</ele></trkpt>
-    <trkpt lat="49.305230" lon="18.784457"><ele>359</ele></trkpt>
-    <trkpt lat="49.305280" lon="18.784457"><ele>359</ele></trkpt>
+    <trkpt lat="49.305318" lon="18.784232"><ele>359</ele></trkpt>
+    <trkpt lat="49.305178" lon="18.784090"><ele>358</ele></trkpt>
   </trkseg></trk>
   <trk><name>Kýčerka (Ochodnica)</name><desc>kycerka-ochodnica-ochodnica</desc><trkseg>
     <trkpt lat="49.348191" lon="18.792133"><ele>400</ele></trkpt>
