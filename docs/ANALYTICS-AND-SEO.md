@@ -62,6 +62,8 @@ attribute, or the D1 total stays 0.
 | `plan_commit` | **North Star**: the first save, send, navigation or GPX for a trail in a page load | `via`: save, share, nav, gpx; `trail`; `took` | yes (`via`; the `took` bucket is kept as `plan_took`) |
 | `gpx_download` | "Stiahnuť GPX trasu" tapped | `trail` | yes |
 | `nav_open` | "Na parkovisko" / "Po trase" hand-off tapped | `app`: google, mapy, google-walk, mapy-walk | yes |
+| `trip_done` | a saved trip marked as done: "Už sme tu boli" in Moje výlety or "Áno" to "Boli ste na výlete?" on the trip page ("Ešte nie" afterwards does not take the count back) | `trail`, `how`: list, ask | yes (`how`), from late Nov 2026 |
+| `review_sent` | the quick review was accepted by the server | `trail` | yes (count only), from late Nov 2026 |
 | `on_trail` | "Začať výlet" tapped on a saved trip in Moje výlety (trail mode opens) | `trail` | yes |
 | `transit_open` | a timetable or transit-map link tapped (`data-umami-event`, Umami only) | `app` | |
 | `heard_from` | one-tap "Ako ste sa o nás dozvedeli?" after the first saved trip | `ch`: google, ai, facebook, instagram, tiktok, kamarat, skola, klub, ine | yes |

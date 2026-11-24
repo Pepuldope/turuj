@@ -21,6 +21,9 @@ export const COUNTED: Record<string, readonly string[]> = {
   plan_commit: ["save", "share", "nav", "gpx"],
   gpx_download: [""],
   on_trail: [""],
+  // Where the trip was marked as done: the Moje výlety list, or the question on the trip page.
+  trip_done: ["list", "ask"],
+  review_sent: [""],
   list_empty: [""],
   day_pick: ["dnes", "zajtra", "so", "ne", "iny"],
   trip_search: ["hit", "miss"],
@@ -123,6 +126,10 @@ export interface MonthEvents {
   gpx: number;
   onTrail: number;
   listEmpty: number;
+  /** Saved trips marked as done (from late Nov 2026), split by where, and quick reviews sent. */
+  done: number;
+  doneHow: Record<string, number>;
+  reviews: number;
   /** Day-picker choices: dnes, zajtra, so, ne, iny. */
   dayPick: Record<string, number>;
   /** Home trip searches that found something, and those that found nothing. */
@@ -157,7 +164,7 @@ export function monthTotals(rows: readonly CountRow[]): MonthEvents[] {
   for (const r of rows) {
     const m =
       months.get(r.month) ??
-      { month: r.month, starts: 0, startHow: {}, opened: 0, saved: 0, sent: 0, sentFast: 0, friendOpens: 0, navigations: 0, plusWant: 0, plusNo: 0, planned: 0, plannedTimed: 0, plannedFast: 0, gpx: 0, onTrail: 0, listEmpty: 0, dayPick: {}, searchHit: 0, searchMiss: 0, heardFrom: {} };
+      { month: r.month, starts: 0, startHow: {}, opened: 0, saved: 0, sent: 0, sentFast: 0, friendOpens: 0, navigations: 0, plusWant: 0, plusNo: 0, planned: 0, plannedTimed: 0, plannedFast: 0, gpx: 0, onTrail: 0, listEmpty: 0, done: 0, doneHow: {}, reviews: 0, dayPick: {}, searchHit: 0, searchMiss: 0, heardFrom: {} };
     months.set(r.month, m);
     if (r.name === "start_set") {
       m.starts += r.n;
@@ -178,6 +185,10 @@ export function monthTotals(rows: readonly CountRow[]): MonthEvents[] {
     } else if (r.name === "gpx_download") m.gpx += r.n;
     else if (r.name === "on_trail") m.onTrail += r.n;
     else if (r.name === "list_empty") m.listEmpty += r.n;
+    else if (r.name === "trip_done") {
+      m.done += r.n;
+      m.doneHow[r.detail] = (m.doneHow[r.detail] ?? 0) + r.n;
+    } else if (r.name === "review_sent") m.reviews += r.n;
     else if (r.name === "day_pick") m.dayPick[r.detail] = (m.dayPick[r.detail] ?? 0) + r.n;
     else if (r.name === "trip_search") {
       if (r.detail === "hit") m.searchHit += r.n;

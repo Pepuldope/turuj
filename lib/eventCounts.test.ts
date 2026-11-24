@@ -12,6 +12,10 @@ describe("countedDetail", () => {
     expect(countedDetail("gpx_download", "")).toBe("");
     expect(countedDetail("on_trail", undefined)).toBe("");
     expect(countedDetail("list_empty", "")).toBe("");
+    expect(countedDetail("trip_done", "list")).toBe("list");
+    expect(countedDetail("trip_done", "ask")).toBe("ask");
+    expect(countedDetail("trip_done", "")).toBeNull();
+    expect(countedDetail("review_sent", undefined)).toBe("");
     expect(countedDetail("plan_took", "0-2 min")).toBe("0-2 min");
     expect(countedDetail("plan_took", "an hour")).toBeNull();
   });
@@ -51,12 +55,15 @@ describe("monthTotals", () => {
       row("2026-11", "trip_search", "miss", 2),
       row("2026-11", "gpx_download", "", 1),
       row("2026-11", "on_trail", "", 2),
+      row("2026-11", "trip_done", "list", 3),
+      row("2026-11", "trip_done", "ask", 1),
+      row("2026-11", "review_sent", "", 2),
       row("2026-11", "plan_commit", "save", 3),
       row("2026-11", "plan_took", "0-2 min", 2),
       row("2026-11", "plan_took", "5-15 min", 1),
       row("2026-10", "start_set", "manual", 9),
     ]);
-    expect(nov).toMatchObject({ month: "2026-11", starts: 8, startHow: { gps: 5, typed: 3 }, opened: 40, dayPick: { zajtra: 4, iny: 2 }, searchHit: 7, searchMiss: 2, gpx: 1, onTrail: 2, planned: 3, plannedTimed: 3, plannedFast: 2 });
-    expect(oct).toMatchObject({ month: "2026-10", starts: 9, startHow: { manual: 9 }, opened: 0, dayPick: {}, searchHit: 0, searchMiss: 0 });
+    expect(nov).toMatchObject({ month: "2026-11", starts: 8, startHow: { gps: 5, typed: 3 }, opened: 40, dayPick: { zajtra: 4, iny: 2 }, searchHit: 7, searchMiss: 2, gpx: 1, onTrail: 2, done: 4, doneHow: { list: 3, ask: 1 }, reviews: 2, planned: 3, plannedTimed: 3, plannedFast: 2 });
+    expect(oct).toMatchObject({ month: "2026-10", starts: 9, startHow: { manual: 9 }, opened: 0, done: 0, doneHow: {}, reviews: 0, dayPick: {}, searchHit: 0, searchMiss: 0 });
   });
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/analytics";
 import { UiIcon } from "@/components/UiIcon";
 import { useState } from "react";
 import type { Fit, Timing } from "@/lib/reviewLimits";
@@ -64,6 +65,7 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
       });
       if (r.status === 403 && (await r.json().catch(() => null))?.error === "preview") return setState("preview");
       if (!r.ok) throw new Error(String(r.status));
+      track("review_sent", { trail: slug });
       leave(() => onDone(true));
     } catch {
       setState("error");

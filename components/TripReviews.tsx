@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/analytics";
 import { useEffect, useState } from "react";
 import { formatDateSk } from "@/lib/format";
 import { isoDate } from "@/lib/days";
@@ -78,6 +79,7 @@ export function TripReviews({ slug, name }: { slug: string; name: string }) {
             type="button"
             onClick={() => {
               patch(slug, { doneAt: new Date().toISOString() });
+              track("trip_done", { trail: slug, how: "ask" });
               if (!saved.reviewed) setReviewing(true);
             }}
             className="rounded-full bg-[var(--ok)] px-4 py-2 text-sm font-bold text-white"
