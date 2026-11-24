@@ -33,6 +33,9 @@ const DAY_PICK: [string, string][] = [
   ["iny", "Iný deň"],
 ];
 
+/** Tables with many columns: inside a sideways-scrolling box on a phone, with a gap between columns. */
+const WIDE_TABLE = "w-full text-left text-sm [&_td]:pr-3 [&_th]:pr-3 [&_th]:align-bottom";
+
 /** "2026-11-23" -> "23. 11." (the site's date format; the space doesn't break). */
 function shortDay(day: string): string {
   return `${Number(day.slice(8, 10))}.\u00a0${Number(day.slice(5, 7))}.`;
@@ -100,38 +103,40 @@ export function StatsTables() {
             <b>{t("Naplánované")}</b>{" "}
             {t("(hlavné číslo): výlety, ktoré niekto uložil, poslal, spustil k nim navigáciu alebo stiahol GPX, každý výlet raz za otvorenie stránky (zbiera sa od novembra 2026). Ďalej koľkokrát v mesiaci bol zadaný štart, výlet uložený, plán poslaný (z toho do 2 minút od príchodu), plán otvorený kamarátom a spustená navigácia. Túruj+: kliknutia „Chcel by som to“ / „Za túto cenu nie“ na stránke /plus.")}
           </p>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-[var(--border)]">
-                <th className="py-2">{t("Mesiac")}</th>
-                <th>{t("Naplánované")}</th>
-                <th>{t("Štart")}</th>
-                <th>{t("Uložené")}</th>
-                <th>{t("Poslané")}</th>
-                <th>{t("Do 2 min")}</th>
-                <th>{t("Otvorené")}</th>
-                <th>{t("Navigácia")}</th>
-                <th>{t("Túruj+")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {events.map((e) => (
-                <tr key={e.month} className="border-b border-[var(--border)]">
-                  <td className="py-2">{e.month}</td>
-                  <td className="font-semibold">{e.planned}</td>
-                  <td>{e.starts}</td>
-                  <td>{e.saved}</td>
-                  <td className="font-semibold">{e.sent}</td>
-                  <td>{e.sentFast}</td>
-                  <td>{e.friendOpens}</td>
-                  <td>{e.navigations}</td>
-                  <td>
-                    {e.plusWant} / {e.plusNo}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className={WIDE_TABLE}>
+              <thead>
+                <tr className="border-b border-[var(--border)]">
+                  <th className="py-2">{t("Mesiac")}</th>
+                  <th>{t("Naplánované")}</th>
+                  <th>{t("Štart")}</th>
+                  <th>{t("Uložené")}</th>
+                  <th>{t("Poslané")}</th>
+                  <th>{t("Do 2 min")}</th>
+                  <th>{t("Otvorené")}</th>
+                  <th>{t("Navigácia")}</th>
+                  <th>{t("Túruj+")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {events.map((e) => (
+                  <tr key={e.month} className="border-b border-[var(--border)]">
+                    <td className="py-2">{e.month}</td>
+                    <td className="font-semibold">{e.planned}</td>
+                    <td>{e.starts}</td>
+                    <td>{e.saved}</td>
+                    <td className="font-semibold">{e.sent}</td>
+                    <td>{e.sentFast}</td>
+                    <td>{e.friendOpens}</td>
+                    <td>{e.navigations}</td>
+                    <td>
+                      {e.plusWant} / {e.plusNo}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           {events.some((e) => Object.keys(e.heardFrom ?? {}).length > 0) && (
             <>
               <h3 className="font-semibold">{t("Odkiaľ o nás vedia")}</h3>
@@ -160,7 +165,7 @@ export function StatsTables() {
             {t("Koľkokrát v mesiaci niekto otvoril stránku výletu (počíta sa od konca novembra 2026, obnovenie stránky sa počíta znova), stiahol GPX, začal výlet v Mojich výletoch, koľkokrát vyšiel zoznam výletov prázdny a koľko hľadaní na úvodnej stránke niečo našlo alebo nenašlo.")}
           </p>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className={WIDE_TABLE}>
               <thead>
                 <tr className="border-b border-[var(--border)]">
                   <th className="py-2">{t("Mesiac")}</th>
@@ -217,7 +222,7 @@ export function StatsTables() {
           <h2>{t("Posledných 14 dní")}</h2>
           <p className="text-sm">{t("Počty po dňoch, na porovnanie pred zmenou stránky a po nej. Dni bez jedinej akcie chýbajú.")}</p>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className={WIDE_TABLE}>
               <thead>
                 <tr className="border-b border-[var(--border)]">
                   <th className="py-2">{t("Deň")}</th>
