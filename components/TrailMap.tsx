@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FilterSpecification, GeoJSONSource, Map as MlMap, Marker, Popup, StyleSpecification } from "maplibre-gl";
 import type { BBox, LatLng } from "@/lib/types";
 import { MAP_STYLE_URL, mapPixelRatio } from "@/lib/mapLayers";
+import { keepMapSharp } from "@/lib/mapSharp";
 import { onMapFocus, recentFocus } from "@/lib/mapFocus";
 import type { MapFocus } from "@/lib/mapFocus";
 import type { MapFit } from "@/lib/mapFocus";
@@ -472,6 +473,7 @@ export function TrailMap({
         maxPitch: 0,
         pixelRatio: mapPixelRatio(),
       });
+      keepMapSharp(map);
       let detachNetwork: (() => void) | null = null;
       let detachLimit: (() => void) | null = null;
       const live: KeptLive = { select: () => {}, hover: () => {}, hoverOn: () => false, hovered: null, markers: [], markerIds: [], userMarkers: [] };

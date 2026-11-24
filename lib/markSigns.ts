@@ -17,6 +17,81 @@ export interface MarkSign {
   before: MarkColour | null;
 }
 
+/** A sign placed on the drawn line: in its piece `at` (from point `at` to the next one), `f` of the way along it (0 to 1). */
+export interface SignOnLine {
+  at: number;
+  f?: number;
+  location: LatLng;
+  colour: MarkColour | null;
+}
+
+/**
+ * The marking at one spot of the drawn line, on the way there. `pos` counts along the line's points: 3.5 is
+ * halfway between points 3 and 4. It is what the last sign before that spot says, or the start's marking when
+ * no sign came yet. A "no marking" sign (colour null) counts like any other: it was read as "no sign here", so
+ * the unmarked stretch after it kept the colour of the start (Peter, 24 Nov 2026, C215: on Burianka the whole
+ * line was blue).
+ */
+export function markingAt(signs: Pick<SignOnLine, "at" | "f" | "colour">[], start: MarkColour | null, pos: number): MarkColour | null {
+  let colour = start;
+  for (const s of signs) if (s.at + (s.f ?? 0) <= pos) colour = s.colour;
+  return colour;
+}
+
+/** One stretch of the drawn line in one marking. `faint`: before or after the part really walked (parked up the trail). */
+export interface LineRun {
+  points: [number, number][];
+  colour: MarkColour | null;
+  faint: boolean;
+}
+
+/**
+ * The drawn line ([lat, lon] points, in walking order) cut into stretches of one marking. The colour changes
+ * exactly at each sign, not at the line's nearest bend: on a long straight piece the bend can be a few hundred
+ * metres from the sign, and the grey "no marking" stretch then started well before its sign (C215).
+ * Not a loop: the second half of the line is the way back over the same ground, so it mirrors the first.
+ * `walked`: only the part between these two spots of the line is walked (`from` and `to` count like `pos`
+ * above, `a` and `b` are the spots themselves); the rest comes back faint, and first, so it is drawn underneath.
+ */
+export function markingRuns(
+  points: [number, number][],
+  signs: SignOnLine[],
+  start: MarkColour | null,
+  loop: boolean,
+  walked?: { from: number; to: number; a: [number, number]; b: [number, number] } | null
+): LineRun[] {
+  const last = points.length - 1;
+  if (last < 1) return [];
+  const up = loop ? last : Math.floor(last / 2);
+  const cuts: { t: number; p: [number, number] }[] = [];
+  for (const s of signs) {
+    const t = s.at + (s.f ?? 0);
+    const p: [number, number] = [s.location.lat, s.location.lon];
+    cuts.push({ t, p });
+    if (!loop) cuts.push({ t: last - t, p });
+  }
+  if (walked) cuts.push({ t: walked.from, p: walked.a }, { t: walked.to, p: walked.b });
+  const spots = [
+    ...points.map((p, t) => ({ t, p })),
+    // A cut right on one of the line's own points needs no point of its own.
+    ...cuts.filter((c) => c.t > 0 && c.t < last && Math.abs(c.t - Math.round(c.t)) > 1e-9),
+  ].sort((x, y) => x.t - y.t);
+  const runs: LineRun[] = [];
+  let run: LineRun | null = null;
+  for (let k = 0; k + 1 < spots.length; k++) {
+    // Judged in the middle of the piece, so a piece that starts at a sign is clearly past it.
+    const mid = (spots[k].t + spots[k + 1].t) / 2;
+    const colour = markingAt(signs, start, loop || mid <= up ? mid : last - mid);
+    const faint = !!walked && (mid < walked.from || mid > walked.to);
+    if (!run || run.colour !== colour || run.faint !== faint) {
+      run = { points: [spots[k].p], colour, faint };
+      runs.push(run);
+    }
+    run.points.push(spots[k + 1].p);
+  }
+  return [...runs.filter((r) => r.faint), ...runs.filter((r) => !r.faint)];
+}
+
 type Pt = TripDetail["path"][number];
 
 function metres(a: Pt, b: Pt): number {

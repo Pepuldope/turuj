@@ -5,6 +5,7 @@ import type { Map as MlMap } from "maplibre-gl";
 import { pageLang } from "@/lib/lang";
 import { mapLocale } from "@/lib/mapLocale";
 import { MAP_STYLE_URL, mapPixelRatio } from "@/lib/mapLayers";
+import { keepMapSharp } from "@/lib/mapSharp";
 import { keepInSlovakia } from "@/lib/slovakia";
 import { useUserLocation } from "@/lib/userLocation";
 import { useT } from "@/lib/i18n";
@@ -51,6 +52,7 @@ export function PickStartMap({ onClose }: { onClose: (picked: boolean) => void }
         locale: mapLocale(pageLang()),
         ...(s ? { center: [s.lon, s.lat] as [number, number], zoom: 11 } : { bounds: SLOVAKIA }),
       });
+      keepMapSharp(m);
       detach = keepInSlovakia(m);
       setMap(m);
     })();
