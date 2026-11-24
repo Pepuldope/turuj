@@ -1,8 +1,8 @@
 # Trip pipeline report
 
-Run: 2026-11-23T23:01:06+00:00 · OSM data: 2026-11-22T21:20:48Z
+Run: 2026-11-24T00:17:07+00:00 · OSM data: 2026-11-22T21:20:48Z
 
-**6432 trips**
+**6430 trips**
 
 | Region | Trips | Family | Candidates |
 |---|---|---|---|
@@ -11,7 +11,7 @@ Run: 2026-11-23T23:01:06+00:00 · OSM data: 2026-11-22T21:20:48Z
 | mala-fatra | 220 | 30 | 94 |
 | male-karpaty | 552 | 220 | 205 |
 | velka-fatra | 491 | 119 | 216 |
-| nizke-tatry | 328 | 45 | 150 |
+| nizke-tatry | 326 | 43 | 150 |
 | chocske-vrchy-orava | 175 | 35 | 92 |
 | pieniny | 37 | 8 | 11 |
 | kysuce-javorniky | 406 | 98 | 166 |
@@ -47,7 +47,7 @@ Flag ⚠ when off by more than 15 %.
 
 ## Places with more than one route
 
-1911 of 2156 places have other routes; 4307 other routes in all, 1103 of them another way from a start the place already has.
+1911 of 2154 places have other routes; 4307 other routes in all, 1103 of them another way from a start the place already has.
 
 | Place | Main route (start, time) | Other routes |
 |---|---|---|
@@ -1295,8 +1295,8 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 | Buková, rázcestie | Buková | node/33101054 |
 | Cigeľka, rázcestie | Cigeľka,,osada | node/1493609325 |
 | Krajné, rázcestie | Dobrá Mera | node/672812261 |
-| Mariáš, rázc. pod hradom | Dobrá Voda, okolie | node/303826857 |
 | Odbočka k Dobrovodskému hradu | Dobrá Voda, okolie | node/269311174 |
+| Mariáš, rázc. pod hradom | Dobrá Voda, okolie | node/303826857 |
 | Domaša, odbočka k hrádzi | Domaša,,priehrada | node/12070301067 |
 | Doľany, rázcestie | Doľany | node/13068135866 |
 | Rázc. Gola | Drienica, okolie | node/11052516888 |
@@ -1374,12 +1374,12 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 | Rázcestie pod Jahodnou | Vyšný Klátov, okolie | node/173407586 |
 | Zaježová, rázcestie | Zaježová | node/4440896334 |
 | Rázcestie Prte | Zuberec, okolie | node/243453531 |
-| Rázcestie Zverovka | Zverovka | node/244881275 |
 | Rázcestie Šindľovec | Zverovka | node/1888793050 |
+| Rázcestie Zverovka | Zverovka | node/244881275 |
 | Odbočka na Hradisko | Záturčie, okolie | node/312934226 |
 | Štefanov, rázc. | Štefanov nad Oravou | node/7913906566 |
-| Odbočka pri Heliose | Štrbské Pleso | node/306246045 |
 | Rázcestie pred Heliosom | Štrbské Pleso | node/281108101 |
+| Odbočka pri Heliose | Štrbské Pleso | node/306246045 |
 | Odbočka na Baranec a Plačlivé | Žiar, okolie | node/496004526 |
 
 ## Rejected candidates
@@ -1391,9 +1391,8 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 - sight in a city centre: 9
 - sight in a town: 7
 - start already has enough trips: 46
-- too flat (city walk): 9
-- too long: 48
-- too long with the walk from the car park: 1
+- too flat (city walk): 10
+- too long: 51
 - trailheads too close: 1
 
 ## Closure rules
@@ -4974,8 +4973,6 @@ Stretches of malafatra-jarna-uzavera:
 | kralov-stol-kumstova-dolina | nizke-tatry | Kumštová dolina | 15.5 | 935 | 7:00 | tazka |  |
 | kralov-stol-maluzina-ina-cesta | nizke-tatry | Malužiná | 17.1 | 1115 | 8:15 | tazka |  |
 | kralov-stol-nizna-boca | nizke-tatry | Nižná Boca | 12.7 | 1006 | 7:00 | tazka |  |
-| maluzinska-jaskyna | nizke-tatry | Parkovisko pri jaskyni | 1.0 | 10 | 0:30 | lahka |  |
-| modra-jaskyna | nizke-tatry | Parkovisko pri jaskyni | 1.1 | 17 | 0:30 | lahka |  |
 | predajnianske-vodopady | nizke-tatry | Lopej, bus | 10.5 | 449 | 4:00 | stredna |  |
 | predajnianske-vodopady-vcelinec | nizke-tatry | Včelinec | 16.2 | 652 | 6:00 | tazka |  |
 | rovienky | nizke-tatry | Sedlo Čertovica | 3.6 | 347 | 2:30 | lahka |  |
@@ -7920,4 +7917,4 @@ Stretches of malafatra-jarna-uzavera:
 | vystrkov-podhajska-belek | zahorie-podunajsko | Podhájska, Belek | 10.3 | 196 | 3:15 | stredna |  |
 | vystrkov-podhajska-belek-ina-cesta | zahorie-podunajsko | Podhájska, Belek | 15.5 | 270 | 4:45 | stredna |  |
 
-Drive table: 141 towns x 2156 main trips, 0 pairs without a route.
+Drive table: 141 towns x 2154 main trips, 0 pairs without a route.
