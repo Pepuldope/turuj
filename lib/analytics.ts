@@ -21,7 +21,7 @@ export type AnalyticsEvent =
   | "plus_no" // "Za túto cenu nie" on /plus
   | "app_link" // "Získať appku" tapped: home bottom bar or after saving a trip
   | "app_installed" // Android install dialog accepted on /aplikacia
-  | "on_trail" // "Kde som na trase?" tapped on a trip page
+  | "on_trail" // "Začať výlet" tapped on a saved trip in Moje výlety (trail mode opens)
   | "plan_commit" // North Star: the first save, send, navigation or GPX for a trail in this page load (sent by track())
   | "list_empty" // the home trip list came back empty for the chosen filters (trackListEmpty)
   | "heard_from" // one-tap "Ako ste sa o nás dozvedeli?" after the first saved trip on this device
@@ -34,8 +34,8 @@ export type AnalyticsEvent =
 
 type EventData = Record<string, string | number | boolean>;
 
-/** Also added to our own monthly totals (app/api/event, lib/eventCounts.ts; per month in event_month and per day in event_day), since Umami's free plan has no export. */
-const KEPT: ReadonlySet<AnalyticsEvent> = new Set(["start_set", "trip_saved", "share_sent", "shared_open", "nav_open", "plus_want", "plus_no", "plan_commit", "heard_from", "gpx_download", "on_trail", "list_empty", "day_pick", "trip_search"]);
+/** Also added to our own monthly totals (app/api/event, lib/eventCounts.ts; per month in event_month and per day in event_day), since Umami's free plan has no API a script could read (only a CSV export by hand). */
+const KEPT: ReadonlySet<AnalyticsEvent> = new Set(["start_set", "trip_open", "trip_saved", "share_sent", "shared_open", "nav_open", "plus_want", "plus_no", "plan_commit", "heard_from", "gpx_download", "on_trail", "list_empty", "day_pick", "trip_search"]);
 
 /**
  * The actions that mean "this trip is planned", and the name each gives in plan_commit's `via`.

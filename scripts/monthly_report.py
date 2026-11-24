@@ -8,7 +8,8 @@ up from the run's log.
 Two counters (both shown on /statistiky): people and visit days
 (lib/visitStore.ts) and monthly totals of the actions behind the goals
 (lib/eventCounts.ts). Umami has the same events plus sources, but its free
-plan has no API, so those stay on its dashboard.
+plan has no API, so those stay on its dashboard (a CSV export by hand is in
+its Settings → Data → Export).
 
 This is also the backup of the only data in D1 that can't be rebuilt from this
 repository: these totals. Trips and trails are rebuilt by the "Trip database"
@@ -47,6 +48,10 @@ def event_totals(rows: list, month: str) -> dict:
     t = {
         "starts": 0, "saved": 0, "sent": 0, "sent_fast": 0, "friend_opens": 0, "navigations": 0, "plus_want": 0, "plus_no": 0,
         "planned": 0, "planned_timed": 0, "planned_fast": 0, "gpx": 0, "on_trail": 0, "list_empty": 0,
+        # Trip pages viewed (counted from late Nov 2026) and home searches that found something or nothing.
+        "opened": 0, "search_hit": 0, "search_miss": 0,
+        # How the start came about (gps, typed, suggestion, ...) and which day was picked (dnes, zajtra, iny).
+        "start_how": {}, "day_pick": {},
     }
     for r in rows:
         if r.get("month") != month:
@@ -54,6 +59,15 @@ def event_totals(rows: list, month: str) -> dict:
         name, n = r.get("name"), int(r.get("n", 0))
         if name == "start_set":
             t["starts"] += n
+            how = r.get("detail") or "?"
+            t["start_how"][how] = t["start_how"].get(how, 0) + n
+        elif name == "trip_open":
+            t["opened"] += n
+        elif name == "day_pick":
+            day = r.get("detail") or "?"
+            t["day_pick"][day] = t["day_pick"].get(day, 0) + n
+        elif name == "trip_search":
+            t["search_hit" if r.get("detail") == "hit" else "search_miss"] += n
         elif name == "trip_saved":
             t["saved"] += n
         elif name == "share_sent":
@@ -91,9 +105,9 @@ def kpis(events: dict, visit: dict | None) -> dict:
         # downloaded, once per trail per page load). Not a sum of saved + sent + navigations: one plan
         # often brings several of those. Months before plan_commit existed show 0.
         "planned": events["planned"],
-        # Goal 50 %. start_set is sent once per page load and visit days count a person once a
-        # day, so this runs high when people reload; read it as a trend. (A visit with a start is
-        # not separable from reloads without per-visit data; kept as starts / visit days.)
+        # Goal 50 %. start_set is sent once per visit (browser session) since 8 Nov 2026, before that
+        # once per page load; visit days count a person once a day. So two visits on one day count
+        # twice here, and October runs high from reloads: read it as a trend.
         "activation": ratio(events["starts"], visit_days),
         # Goal 50 %: planned trips within two minutes of landing, over all plan_commits that have a
         # time (plan_took). Months before plan_took was stored fall back to the old sent-plans share.
@@ -125,7 +139,11 @@ def markdown(report: dict) -> str:
         "| Action | Count |",
         "| --- | --- |",
     ]
-    lines += [f"| {name} | {n} |" for name, n in e.items()]
+    lines += [f"| {name} | {n} |" for name, n in e.items() if not isinstance(n, dict)]
+    for title, key in (("Start set by", "start_how"), ("Day picked", "day_pick")):
+        split = e.get(key) or {}
+        if split:
+            lines += ["", f"{title}: " + ", ".join(f"{k} {n}" for k, n in sorted(split.items(), key=lambda kv: -kv[1]))]
     lines += ["", "## People (/statistiky)", "", "| Month | People | 2+ days | 4+ days | 4+ use days (trip opened or saved) | Avg days |", "| --- | --- | --- | --- | --- | --- |"]
     for r in report["visits"]:
         lines.append(
@@ -134,7 +152,7 @@ def markdown(report: dict) -> str:
     for key in ("visits_error", "events_error"):
         if report.get(key):
             lines.append(f"\n{key.split('_')[0].title()} not read: {report[key]}")
-    lines += ["", "Sources, pages and devices: Umami dashboard (no API on the free plan; CSV export is in Settings → Data → Export, to verify)."]
+    lines += ["", "Sources, pages and devices: Umami dashboard (no API on the free plan; a CSV export by hand is in Settings → Data → Export)."]
     return "\n".join(lines) + "\n"
 
 
