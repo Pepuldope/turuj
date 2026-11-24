@@ -33,6 +33,11 @@ const DAY_PICK: [string, string][] = [
   ["iny", "Iný deň"],
 ];
 
+/** "2026-11-23" -> "23. 11." (the site's date format; the space doesn't break). */
+function shortDay(day: string): string {
+  return `${Number(day.slice(8, 10))}.\u00a0${Number(day.slice(5, 7))}.`;
+}
+
 /** "poloha 12, napísané miesto 5": the counted choices in the listed order, zeros left out. */
 function split(counts: Record<string, number> | undefined, labels: [string, string][], t: (s: string) => string): string {
   return labels
@@ -154,32 +159,34 @@ export function StatsTables() {
           <p className="text-sm">
             {t("Koľkokrát v mesiaci niekto otvoril stránku výletu (počíta sa od konca novembra 2026, obnovenie stránky sa počíta znova), stiahol GPX, začal výlet v Mojich výletoch, koľkokrát vyšiel zoznam výletov prázdny a koľko hľadaní na úvodnej stránke niečo našlo alebo nenašlo.")}
           </p>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-[var(--border)]">
-                <th className="py-2">{t("Mesiac")}</th>
-                <th>{t("Otvorené výlety")}</th>
-                <th>{t("GPX")}</th>
-                <th>{t("Začaté výlety")}</th>
-                <th>{t("Prázdny zoznam")}</th>
-                <th>{t("Hľadanie našlo")}</th>
-                <th>{t("Hľadanie nenašlo")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {events.map((e) => (
-                <tr key={e.month} className="border-b border-[var(--border)]">
-                  <td className="py-2">{e.month}</td>
-                  <td className="font-semibold">{e.opened ?? 0}</td>
-                  <td>{e.gpx}</td>
-                  <td>{e.onTrail}</td>
-                  <td>{e.listEmpty}</td>
-                  <td>{e.searchHit ?? 0}</td>
-                  <td>{e.searchMiss ?? 0}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-[var(--border)]">
+                  <th className="py-2">{t("Mesiac")}</th>
+                  <th>{t("Otvorené výlety")}</th>
+                  <th>{t("GPX")}</th>
+                  <th>{t("Začaté výlety")}</th>
+                  <th>{t("Prázdny zoznam")}</th>
+                  <th>{t("Hľadanie: našlo / nenašlo")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {events.map((e) => (
+                  <tr key={e.month} className="border-b border-[var(--border)]">
+                    <td className="py-2">{e.month}</td>
+                    <td className="font-semibold">{e.opened ?? 0}</td>
+                    <td>{e.gpx}</td>
+                    <td>{e.onTrail}</td>
+                    <td>{e.listEmpty}</td>
+                    <td>
+                      {e.searchHit ?? 0} / {e.searchMiss ?? 0}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <h3 className="font-semibold">{t("Ako ľudia zadali štart")}</h3>
           <p className="text-sm">{t("Každá návšteva sa počíta raz (do 8. 11. 2026 sa počítalo každé načítanie stránky).")}</p>
           <ul className="text-sm">
@@ -209,34 +216,36 @@ export function StatsTables() {
         <>
           <h2>{t("Posledných 14 dní")}</h2>
           <p className="text-sm">{t("Počty po dňoch, na porovnanie pred zmenou stránky a po nej. Dni bez jedinej akcie chýbajú.")}</p>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-[var(--border)]">
-                <th className="py-2">{t("Deň")}</th>
-                <th>{t("Štart")}</th>
-                <th>{t("Otvorené výlety")}</th>
-                <th>{t("Naplánované")}</th>
-                <th>{t("Uložené")}</th>
-                <th>{t("Poslané")}</th>
-                <th>{t("GPX")}</th>
-                <th>{t("Hľadanie")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {days.map((d) => (
-                <tr key={d.day} className="border-b border-[var(--border)]">
-                  <td className="py-2 whitespace-nowrap">{d.day}</td>
-                  <td>{d.counts.start_set ?? 0}</td>
-                  <td>{d.counts.trip_open ?? 0}</td>
-                  <td className="font-semibold">{d.counts.plan_commit ?? 0}</td>
-                  <td>{d.counts.trip_saved ?? 0}</td>
-                  <td>{d.counts.share_sent ?? 0}</td>
-                  <td>{d.counts.gpx_download ?? 0}</td>
-                  <td>{d.counts.trip_search ?? 0}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-[var(--border)]">
+                  <th className="py-2">{t("Deň")}</th>
+                  <th>{t("Štart")}</th>
+                  <th>{t("Otvorené výlety")}</th>
+                  <th>{t("Naplánované")}</th>
+                  <th>{t("Uložené")}</th>
+                  <th>{t("Poslané")}</th>
+                  <th>{t("GPX")}</th>
+                  <th>{t("Hľadanie")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {days.map((d) => (
+                  <tr key={d.day} className="border-b border-[var(--border)]">
+                    <td className="py-2 whitespace-nowrap">{shortDay(d.day)}</td>
+                    <td>{d.counts.start_set ?? 0}</td>
+                    <td>{d.counts.trip_open ?? 0}</td>
+                    <td className="font-semibold">{d.counts.plan_commit ?? 0}</td>
+                    <td>{d.counts.trip_saved ?? 0}</td>
+                    <td>{d.counts.share_sent ?? 0}</td>
+                    <td>{d.counts.gpx_download ?? 0}</td>
+                    <td>{d.counts.trip_search ?? 0}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
       {accounts && (
