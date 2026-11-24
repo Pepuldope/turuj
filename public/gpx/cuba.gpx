@@ -331,12 +331,12 @@
     <trkpt lat="49.258085" lon="20.535001"><ele>570</ele></trkpt>
     <trkpt lat="49.257511" lon="20.534237"><ele>570</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Čuba</name><desc>cuba-velky-lipnik</desc><trkseg>
-    <trkpt lat="49.374106" lon="20.500973"><ele>574</ele></trkpt>
-    <trkpt lat="49.374076" lon="20.500944"><ele>574</ele></trkpt>
-    <trkpt lat="49.373781" lon="20.501719"><ele>575</ele></trkpt>
-    <trkpt lat="49.373614" lon="20.502560"><ele>577</ele></trkpt>
-    <trkpt lat="49.373578" lon="20.502930"><ele>575</ele></trkpt>
+  <trk><name>Čuba</name><desc>cuba-velky-lipnik-2</desc><trkseg>
+    <trkpt lat="49.374703" lon="20.499830"><ele>570</ele></trkpt>
+    <trkpt lat="49.374259" lon="20.500719"><ele>573</ele></trkpt>
+    <trkpt lat="49.373859" lon="20.501741"><ele>575</ele></trkpt>
+    <trkpt lat="49.373683" lon="20.502589"><ele>577</ele></trkpt>
+    <trkpt lat="49.373664" lon="20.502990"><ele>576</ele></trkpt>
     <trkpt lat="49.373620" lon="20.502944"><ele>576</ele></trkpt>
     <trkpt lat="49.373097" lon="20.504104"><ele>577</ele></trkpt>
     <trkpt lat="49.372289" lon="20.504398"><ele>584</ele></trkpt>
@@ -874,11 +874,11 @@
     <trkpt lat="49.372289" lon="20.504398"><ele>584</ele></trkpt>
     <trkpt lat="49.373097" lon="20.504104"><ele>577</ele></trkpt>
     <trkpt lat="49.373620" lon="20.502944"><ele>576</ele></trkpt>
-    <trkpt lat="49.373578" lon="20.502930"><ele>575</ele></trkpt>
-    <trkpt lat="49.373614" lon="20.502560"><ele>577</ele></trkpt>
-    <trkpt lat="49.373781" lon="20.501719"><ele>575</ele></trkpt>
-    <trkpt lat="49.374076" lon="20.500944"><ele>574</ele></trkpt>
-    <trkpt lat="49.374106" lon="20.500973"><ele>574</ele></trkpt>
+    <trkpt lat="49.373664" lon="20.502990"><ele>576</ele></trkpt>
+    <trkpt lat="49.373683" lon="20.502589"><ele>577</ele></trkpt>
+    <trkpt lat="49.373859" lon="20.501741"><ele>575</ele></trkpt>
+    <trkpt lat="49.374259" lon="20.500719"><ele>573</ele></trkpt>
+    <trkpt lat="49.374703" lon="20.499830"><ele>570</ele></trkpt>
   </trkseg></trk>
   <trk><name>Čuba</name><desc>cuba-vysne-ruzbachy-kupele-ina-cesta</desc><trkseg>
     <trkpt lat="49.304940" lon="20.555240"><ele>639</ele></trkpt>

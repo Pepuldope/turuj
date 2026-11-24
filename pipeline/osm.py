@@ -26,8 +26,8 @@ SAC = {
 KST_COLOURS = {"red": "red", "blue": "blue", "green": "green", "yellow": "yellow", "black": "black"}
 NO_ACCESS = {"no", "private"}
 FOOT_OK = {"yes", "designated", "permissive"}
-# way tags kept for rule selectors (fee-rules.json way_tags)
-WATCH_TAGS = {"highway", "ladder", "oneway", "oneway:foot"}
+# way tags kept for rule selectors (way_tags in fee-rules.json and closure-rules.json)
+WATCH_TAGS = {"highway", "ladder", "oneway", "oneway:foot", "via_ferrata_scale"}
 
 
 @dataclass

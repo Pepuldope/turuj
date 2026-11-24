@@ -211,6 +211,12 @@ def _report(trips, rep, now, osm_at, drive):
     L += [f"| {n} | {k} | {w} | {st} | {m} |" for n, k, w, st, m in town if not w.startswith("streets")]
     L += [f"| {n} | instead: {k} | streets, start out of town used | {st} | {m} |"
           for n, k, w, st, m in [x for x in town if x[2].startswith("streets")]]
+    wc = rep.get("walk_cap", [])
+    L += ["", "## Walk cap (9 h with the walk from the car park or stop)", "",
+          f"{len(wc)} changes: {sum('removed' in x[1] for x in wc)} routes removed, "
+          f"{sum('left out' in x[1] for x in wc)} routes lost stops, "
+          f"{sum(x[1].startswith('main over') for x in wc)} main routes still over the cap by car.", ""]
+    L += ["| Trip | What | Minutes |", "|---|---|---|"] + [f"| {s} | {w} | {m} |" for s, w, m in wc]
     nm = rep.get("names") or {}
     found = names.problems(trips)
     L += ["", "## Name check", "",

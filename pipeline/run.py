@@ -196,6 +196,8 @@ def main(argv=None):
 
     if a.osrm_foot:
         walks.add(a.osrm_foot, trips, log)
+        walks.cap(trips, tb.max_minutes, tb.report)
+        log(f"walk cap: {len(tb.report['walk_cap'])} changes")
 
     publish.write(root, trips, dem, drive, slugs, tb.report, a.osm_timestamp)
     # Slugs this build changed (a key's slug differs from last week's), and the old addresses that still lead somewhere.

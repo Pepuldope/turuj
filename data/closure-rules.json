@@ -587,13 +587,13 @@
     },
     {
       "id": "malafatra-jarna-uzavera",
-      "reason": "Jarná uzávera v NP Malá Fatra: chodník na Veľký Rozsutec je zatvorený od 1. marca do 15. júna (hniezdenie, ochrana prírody).",
+      "reason": "Jarná uzávera v NP Malá Fatra: chodník na Veľký Rozsutec a dva modré chodníky (Obšívanka – Malé nocľahy, Vendovka – Malý Kriváň) sú zatvorené od 1. marca do 15. júna (hniezdenie, ochrana prírody).",
       "kind": "rocna",
       "starts_on": "2027-03-01",
       "ends_on": "2027-06-15",
       "source_url": "https://www.npmalafatra.sk/navstevnici/uzavery-turistickych-chodnikov",
-      "verified_on": "2026-10-11",
-      "applies_to": "Červená Medziholie – Veľký Rozsutec – Medzirozsutce; modrá Obšívanka – Malé nocľahy; modrá Vendovka – Malý Kriváň. Výlety sa priraďujú cez vrchol Veľký Rozsutec; dva modré úseky zatiaľ automaticky nepriraďujeme, lebo vedú cez miesta, ktorými idú aj otvorené trasy.",
+      "verified_on": "2026-11-23",
+      "applies_to": "Červená Medziholie – Veľký Rozsutec – Medzirozsutce; modrá Obšívanka – Malé nocľahy; modrá Vendovka – Malý Kriváň. Výlety sa priraďujú cez vrchol Veľký Rozsutec a podľa úsekov modrej 2752 (Dolina Obšívanka – Malé Nocľahy) a modrej 2737 (Vendovka – Malý Kriváň).",
       "selector": {
         "bbox": [
           18.95,
@@ -603,6 +603,45 @@
         ],
         "probes": [
           "Veľký Rozsutec"
+        ],
+        "sections": [
+          {
+            "ref": "2752",
+            "from": "Dolina Obšívanka",
+            "to": "Malé Nocľahy"
+          },
+          {
+            "ref": "2737",
+            "from": "Vendovka",
+            "to": "Malý Kriváň"
+          }
+        ]
+      }
+    },
+    {
+      "id": "slovenskyraj-ferrata-kysel",
+      "reason": "Ferrata HZS Kyseľ v NP Slovenský raj je otvorená len od 15. júna do 31. októbra. Ide sa po nej jednosmerne zdola nahor, s ferratovým setom a vstupenkou.",
+      "kind": "rocna",
+      "starts_on": "2026-11-01",
+      "ends_on": "2027-06-14",
+      "source_url": "https://www.npslovenskyraj.sk/ferrata-hzs-kysel-zakladne-informacie-pre-navstevnikov/",
+      "verified_on": "2026-11-23",
+      "applies_to": "Zaistený úsek ferraty v tiesňave Kyseľ od rázcestia Kyseľ, ústie po Obrovský vodopád (v OpenStreetMap cesta s via_ferrata_scale). Voľne prístupná časť náučného chodníka Kyseľ (Obrovský vodopád – V Kyseli – Kyseľ, rázcestie) podľa správy NP uzavretá nie je. Pri vysokom stave vody správa rokliny zatvára aj počas sezóny.",
+      "selector": {
+        "bbox": [
+          20.4,
+          48.92,
+          20.44,
+          48.95
+        ],
+        "way_tags": [
+          "via_ferrata_scale=0",
+          "via_ferrata_scale=1",
+          "via_ferrata_scale=2",
+          "via_ferrata_scale=3",
+          "via_ferrata_scale=4",
+          "via_ferrata_scale=5",
+          "via_ferrata_scale=6"
         ]
       }
     }

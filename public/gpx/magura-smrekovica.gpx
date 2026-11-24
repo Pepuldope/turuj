@@ -354,10 +354,26 @@
     <trkpt lat="48.999537" lon="19.207081"><ele>1371</ele></trkpt>
     <trkpt lat="48.999028" lon="19.205773"><ele>1350</ele></trkpt>
   </trkseg></trk>
-  <trk><name>Magura (Hubová)</name><desc>magura-smrekovica-hubova</desc><trkseg>
+  <trk><name>Magura (Hubová)</name><desc>magura-smrekovica-lubochna-obec</desc><trkseg>
+    <trkpt lat="49.120387" lon="19.167114"><ele>454</ele></trkpt>
+    <trkpt lat="49.120638" lon="19.167539"><ele>452</ele></trkpt>
+    <trkpt lat="49.120598" lon="19.167618"><ele>453</ele></trkpt>
+    <trkpt lat="49.120730" lon="19.167778"><ele>452</ele></trkpt>
+    <trkpt lat="49.120369" lon="19.168551"><ele>449</ele></trkpt>
+    <trkpt lat="49.120544" lon="19.169075"><ele>449</ele></trkpt>
+    <trkpt lat="49.120654" lon="19.169624"><ele>449</ele></trkpt>
+    <trkpt lat="49.120683" lon="19.169944"><ele>448</ele></trkpt>
+    <trkpt lat="49.120677" lon="19.170731"><ele>447</ele></trkpt>
+    <trkpt lat="49.120641" lon="19.171125"><ele>448</ele></trkpt>
+    <trkpt lat="49.120458" lon="19.171957"><ele>448</ele></trkpt>
+    <trkpt lat="49.120258" lon="19.173291"><ele>444</ele></trkpt>
+    <trkpt lat="49.119703" lon="19.175218"><ele>445</ele></trkpt>
+    <trkpt lat="49.119156" lon="19.176696"><ele>446</ele></trkpt>
+    <trkpt lat="49.118803" lon="19.177387"><ele>454</ele></trkpt>
+    <trkpt lat="49.118139" lon="19.178411"><ele>454</ele></trkpt>
+    <trkpt lat="49.117793" lon="19.178703"><ele>451</ele></trkpt>
     <trkpt lat="49.117711" lon="19.178571"><ele>456</ele></trkpt>
     <trkpt lat="49.117282" lon="19.178301"><ele>464</ele></trkpt>
-    <trkpt lat="49.117149" lon="19.178260"><ele>467</ele></trkpt>
     <trkpt lat="49.116889" lon="19.178248"><ele>473</ele></trkpt>
     <trkpt lat="49.116411" lon="19.178334"><ele>480</ele></trkpt>
     <trkpt lat="49.115761" lon="19.178543"><ele>490</ele></trkpt>
@@ -847,9 +863,25 @@
     <trkpt lat="49.115761" lon="19.178543"><ele>490</ele></trkpt>
     <trkpt lat="49.116411" lon="19.178334"><ele>480</ele></trkpt>
     <trkpt lat="49.116889" lon="19.178248"><ele>473</ele></trkpt>
-    <trkpt lat="49.117149" lon="19.178260"><ele>467</ele></trkpt>
     <trkpt lat="49.117282" lon="19.178301"><ele>464</ele></trkpt>
     <trkpt lat="49.117711" lon="19.178571"><ele>456</ele></trkpt>
+    <trkpt lat="49.117793" lon="19.178703"><ele>451</ele></trkpt>
+    <trkpt lat="49.118139" lon="19.178411"><ele>454</ele></trkpt>
+    <trkpt lat="49.118803" lon="19.177387"><ele>454</ele></trkpt>
+    <trkpt lat="49.119156" lon="19.176696"><ele>446</ele></trkpt>
+    <trkpt lat="49.119703" lon="19.175218"><ele>445</ele></trkpt>
+    <trkpt lat="49.120258" lon="19.173291"><ele>444</ele></trkpt>
+    <trkpt lat="49.120458" lon="19.171957"><ele>448</ele></trkpt>
+    <trkpt lat="49.120641" lon="19.171125"><ele>448</ele></trkpt>
+    <trkpt lat="49.120677" lon="19.170731"><ele>447</ele></trkpt>
+    <trkpt lat="49.120683" lon="19.169944"><ele>448</ele></trkpt>
+    <trkpt lat="49.120654" lon="19.169624"><ele>449</ele></trkpt>
+    <trkpt lat="49.120544" lon="19.169075"><ele>449</ele></trkpt>
+    <trkpt lat="49.120369" lon="19.168551"><ele>449</ele></trkpt>
+    <trkpt lat="49.120730" lon="19.167778"><ele>452</ele></trkpt>
+    <trkpt lat="49.120598" lon="19.167618"><ele>453</ele></trkpt>
+    <trkpt lat="49.120638" lon="19.167539"><ele>452</ele></trkpt>
+    <trkpt lat="49.120387" lon="19.167114"><ele>454</ele></trkpt>
   </trkseg></trk>
   <trk><name>Magura (Hubová)</name><desc>magura-smrekovica-pod-milkovom</desc><trkseg>
     <trkpt lat="49.079971" lon="19.255654"><ele>543</ele></trkpt>

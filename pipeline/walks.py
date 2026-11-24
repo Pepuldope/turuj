@@ -26,6 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 
 from .geo import LocalProjection, haversine, rdp_indices
+from .trips import approach_min, fit_walk_cap
 
 # lib/trailJoin.ts MIN_SAVING_M: joining part-way must save this much walking, or the start it is.
 MIN_SAVING_M = 100
@@ -258,3 +259,51 @@ def add(osrm_url, trips, log=print, workers=8):
         # The local OSRM is down or wasn't built: publishing would wipe every walk the site draws.
         raise RuntimeError(f"walks: {len(failed)} of {len(jobs)} failed, is OSRM running at {osrm_url}?")
     return done
+
+
+def _along(p):
+    """The walk in metres along paths when OSRM gave one, else the straight line."""
+    w = p.get("walk")
+    return w["m"] if w and w.get("m") is not None else p["walk_m"]
+
+
+def cap(trips, max_minutes, report):
+    """The trip page shows trail time plus the walk from the first car park or the stop, both ways. After
+    the walks are known (along paths, longer than the straight line), keep that within the place's cap:
+    stops that make it too long are dropped; another route (variant) that is too long by car is removed
+    (and its main loses it from route_count / route_label); a main route over the cap by car stays and is
+    only reported (the drive table already used its first car park). `max_minutes(osm)` gives the cap.
+    Appends (slug, what, minutes) to report["walk_cap"] and returns the trips that stay."""
+    out = report.setdefault("walk_cap", [])
+    mains = {t["slug"]: t for t in trips if not t.get("variant_of")}
+    gone = []
+    for t in list(trips):
+        limit = max_minutes(t["destination"]["osm"])
+        had = [t.get("transit"), *(t.get("transit_alternatives") or [])]
+        why = fit_walk_cap(t, limit, _along)
+        kept = [t.get("transit"), *(t.get("transit_alternatives") or [])]
+        dropped = len([s for s in had if s]) - len([s for s in kept if s])
+        if dropped:
+            out.append((t["slug"], f"{dropped} stops over the cap by bus left out", limit))
+        if why == "too long with the walk from the car park":
+            mins = t["duration_min"] + 2 * approach_min(_along(t["parking"]))
+            if t.get("variant_of"):
+                out.append((t["slug"], "route over cap by car, removed", mins))
+                gone.append(t)
+            else:
+                out.append((t["slug"], "main over cap by car", mins))
+        elif why:
+            if t.get("variant_of"):
+                out.append((t["slug"], "no car park and no stop within the cap, removed", limit))
+                gone.append(t)
+            else:
+                out.append((t["slug"], "main over cap by bus (no car park)", limit))
+    for t in gone:
+        trips.remove(t)
+        main = mains.get(t.get("variant_of"))
+        if main and main.get("route_count"):
+            main["route_count"] -= 1
+            if main["route_count"] <= 1:
+                main.pop("route_count", None)
+                main.pop("route_label", None)
+    return trips
