@@ -62,6 +62,7 @@ import {
   summaryWalk,
 } from "@/components/ParkingBlock";
 import { NoStartNote, PlanStartAsk } from "@/components/PlanStartAsk";
+import { tripsBehind } from "@/components/CameFrom";
 import { StopsRow } from "@/components/StopsRow";
 import { GoalStayRow } from "@/components/GoalStayRow";
 import { SunArc } from "@/components/SunArc";
@@ -273,8 +274,9 @@ export function TripPlanner({
   // The stops the group added stand on the walk where it passes them (lunch at the goal).
   const { stops, minutes: stopMin } = useTripStops(trip.slug);
   // Stops belong to this visit: opening another trip or the list forgets them (a saved trip keeps
-  // its own copy); the route comparison and the loop of this trip keep them.
-  useEffect(() => keepStopsOf(trip.slug), [trip.slug]);
+  // its own copy); the route comparison and the loop of this trip keep them, and so does a trip the
+  // back link can still lead back to.
+  useEffect(() => keepStopsOf(trip.slug, tripsBehind()), [trip.slug]);
   // Walking time alone (the plan's time less the stops), and when the walk starts: the lunch break's
   // clock time maps onto the walk with these (Peter 2026-10-27: lunch when you want it, not only at the goal).
   const walkOnlyMin = Math.max(

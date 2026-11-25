@@ -45,7 +45,8 @@ export function stopFor(p: Poi): TripStop {
   };
 }
 
-// Kept only while the group stays with one trip (Peter 2026-10-23: a saved trip keeps them, nothing else does).
+// Kept only while the group stays with one trip (Peter 2026-10-23: a saved trip keeps them, nothing else does),
+// or can still step back to it with the back link (keepStopsOf).
 const EVENT = "turuj-stops";
 type All = Record<string, TripStop[]>;
 const NONE: TripStop[] = [];
@@ -75,10 +76,13 @@ export function setTripStops(slug: string, stops: TripStop[]) {
 /**
  * A trip page opened: stops of other trips go, this trip's stay. So stepping over to the route
  * comparison and back keeps them (Peter, 2026-10-24), while the next trip starts empty.
+ * `behind` are the trips the visitor can still step back to with the back link: theirs stay too, so
+ * a look at a neighbour trip does not empty the plan they return to (Peter, 2026-11-25, C219).
  */
-export function keepStopsOf(slug: string) {
-  const mine = readAll()[slug];
-  if (Object.keys(readAll()).some((k) => k !== slug)) write(mine ? { [slug]: mine } : {});
+export function keepStopsOf(slug: string, behind: readonly string[] = []) {
+  const now = readAll();
+  const keep = Object.keys(now).filter((k) => k === slug || behind.includes(k));
+  if (keep.length !== Object.keys(now).length) write(Object.fromEntries(keep.map((k) => [k, now[k]])));
 }
 
 /** Back on the trip list: every trip starts again without stops. */

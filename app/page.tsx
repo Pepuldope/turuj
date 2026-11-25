@@ -1,6 +1,7 @@
 import { getAllTrails } from "@/lib/tripFiles";
 import { closedLast } from "@/lib/homeOrder";
 import { getKnownTownIds } from "@/lib/townTrips";
+import { Here } from "@/components/CameFrom";
 import { HomeExplorer } from "@/components/HomeExplorer";
 import { JsonLd } from "@/components/JsonLd";
 import { webApplicationLd } from "@/lib/appScreens";
@@ -64,6 +65,7 @@ export default async function Home() {
         }}
       />
       <HomeExplorer trails={trails} knownTowns={knownTowns} />
+      <Here label="Všetky výlety" translate />
     </>
   );
 }
