@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextPlan, planDay, stillPlanned } from "@/lib/nextPlan";
+import { nextPlan, planDay, planToAsk, stillPlanned } from "@/lib/nextPlan";
 
 const plan = (slug: string, date: string, time = "09:00", more: { doneAt?: string; savedAt?: string } = {}) => ({
   slug,
@@ -75,5 +75,29 @@ describe("planDay", () => {
   it("speaks English on /en", () => {
     expect(planDay("2026-11-25", TODAY, "en")).toEqual({ word: "today", date: "25 Nov" });
     expect(planDay("2026-11-28", TODAY, "en")).toEqual({ word: "Saturday", date: "28 Nov" });
+  });
+});
+
+describe("planToAsk", () => {
+  const open = (slug: string, date: string, more: { doneAt?: string; skipAsk?: boolean } = {}) => ({ ...plan(slug, date), ...more });
+
+  it("is nothing when no plan has passed", () => {
+    expect(planToAsk([], TODAY)).toBeNull();
+    expect(planToAsk([open("today", "2026-11-25"), open("later", "2026-11-28")], TODAY)).toBeNull();
+  });
+
+  it("picks the most recent day that has passed", () => {
+    expect(planToAsk([open("old", "2026-11-18"), open("new", "2026-11-24"), open("mid", "2026-11-21")], TODAY)?.slug).toBe("new");
+  });
+
+  it("skips plans that are done or skipped", () => {
+    const list = [open("done", "2026-11-24", { doneAt: "2026-11-25T08:00:00.000Z" }), open("skipped", "2026-11-23", { skipAsk: true }), open("open", "2026-11-20")];
+    expect(planToAsk(list, TODAY)?.slug).toBe("open");
+  });
+
+  it("stops asking after maxDays", () => {
+    expect(planToAsk([open("a", "2026-11-10")], TODAY)).toBeNull();
+    expect(planToAsk([open("a", "2026-11-11")], TODAY)?.slug).toBe("a");
+    expect(planToAsk([open("a", "2026-11-20")], TODAY, 3)).toBeNull();
   });
 });

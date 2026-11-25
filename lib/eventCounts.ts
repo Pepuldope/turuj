@@ -21,8 +21,8 @@ export const COUNTED: Record<string, readonly string[]> = {
   plan_commit: ["save", "share", "nav", "gpx"],
   gpx_download: [""],
   on_trail: [""],
-  // Where the trip was marked as done: the Moje výlety list, or the question on the trip page.
-  trip_done: ["list", "ask"],
+  // Where the trip was marked as done: the Moje výlety list, the question on the trip page, the question on the home page, or "Boli sme tu" by hand on the trip page.
+  trip_done: ["list", "ask", "home", "page"],
   review_sent: [""],
   list_empty: [""],
   day_pick: ["dnes", "zajtra", "so", "ne", "iny"],

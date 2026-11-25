@@ -1,13 +1,7 @@
 "use client";
 
-import { track } from "@/lib/analytics";
 import { useEffect, useState } from "react";
-import { formatDateSk } from "@/lib/format";
-import { isoDate } from "@/lib/days";
 import type { Fit } from "@/lib/reviewLimits";
-import { useSavedTrips } from "@/lib/savedTrips";
-import { markVisited } from "@/lib/visits";
-import { ReviewSheet } from "@/components/ReviewSheet";
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { decimal } from "@/lib/lang";
 
@@ -24,17 +18,13 @@ interface Summary {
 }
 
 /**
- * Under the trip facts: what other groups said (stars, matched the description, crowds),
- * and, when this trip is saved for a day that has passed, "Boli ste na výlete?" (Peter, 2026-10-22).
+ * Under the trip facts: what other groups said (stars, matched the description, crowds).
+ * The "were you here?" question is the visited row (VisitRow).
  */
-export function TripReviews({ slug, name }: { slug: string; name: string }) {
+export function TripReviews({ slug }: { slug: string }) {
   const [summary, setSummary] = useState<Summary | null>(null);
-  const { trips, patch } = useSavedTrips();
-  const [reviewing, setReviewing] = useState(false);
   const tx = useT();
   const lang = useLang();
-  const saved = trips.find((t) => t.slug === slug);
-  const ask = saved && !saved.doneAt && !saved.skipAsk && saved.date < isoDate(new Date());
 
   useEffect(() => {
     let live = true;
@@ -72,36 +62,6 @@ export function TripReviews({ slug, name }: { slug: string; name: string }) {
             </LangLink>
           </p>
         </details>
-      )}
-      {ask && (
-        <div className="flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] border border-[var(--accent)] bg-[var(--card-bg)] p-3">
-          <span className="flex-1 text-[15px] font-bold">{tx("Boli ste na výlete {date}?", { date: formatDateSk(saved.date, lang) })}</span>
-          <button
-            type="button"
-            onClick={() => {
-              patch(slug, { doneAt: new Date().toISOString() });
-              markVisited(saved);
-              track("trip_done", { trail: slug, how: "ask" });
-              if (!saved.reviewed) setReviewing(true);
-            }}
-            className="rounded-full bg-[var(--ok)] px-4 py-2 text-sm font-bold text-white"
-          >
-            {tx("Áno")} ✓
-          </button>
-          <button type="button" onClick={() => patch(slug, { skipAsk: true })} className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold">
-            {tx("Ešte nie")}
-          </button>
-        </div>
-      )}
-      {reviewing && (
-        <ReviewSheet
-          slug={slug}
-          name={name}
-          onDone={(sent) => {
-            if (sent) patch(slug, { reviewed: true });
-            setReviewing(false);
-          }}
-        />
       )}
     </>
   );

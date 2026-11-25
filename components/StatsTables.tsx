@@ -194,7 +194,7 @@ export function StatsTables() {
           </div>
           <h3 className="font-semibold">{t("Po výlete")}</h3>
           <p className="text-sm">
-            {t("Koľkokrát v mesiaci niekto označil uložený výlet ako absolvovaný („Už sme tu boli“ v Mojich výletoch alebo „Áno“ na otázku na stránke výletu) a koľko rýchlych hodnotení ľudia odoslali. Počíta sa od konca novembra 2026.")}
+            {t("Koľkokrát v mesiaci niekto označil uložený výlet ako absolvovaný („Už sme tu boli“ v Mojich výletoch alebo „Áno“ na otázku na stránke výletu alebo na úvodnej stránke, „Boli sme tu“ ručne na stránke výletu) a koľko rýchlych hodnotení ľudia odoslali. Počíta sa od konca novembra 2026.")}
           </p>
           <div className="overflow-x-auto">
             <table className={WIDE_TABLE}>
@@ -202,7 +202,7 @@ export function StatsTables() {
                 <tr className="border-b border-[var(--border)]">
                   <th className="py-2">{t("Mesiac")}</th>
                   <th>{t("Absolvované výlety")}</th>
-                  <th>{t("Z toho: zoznam / otázka")}</th>
+                  <th>{t("Z toho: zoznam / otázka / úvodná / ručne")}</th>
                   <th>{t("Odoslané hodnotenia")}</th>
                 </tr>
               </thead>
@@ -212,7 +212,7 @@ export function StatsTables() {
                     <td className="py-2">{e.month}</td>
                     <td className="font-semibold">{e.done ?? 0}</td>
                     <td>
-                      {e.doneHow?.list ?? 0} / {e.doneHow?.ask ?? 0}
+                      {e.doneHow?.list ?? 0} / {e.doneHow?.ask ?? 0} / {e.doneHow?.home ?? 0} / {e.doneHow?.page ?? 0}
                     </td>
                     <td>{e.reviews ?? 0}</td>
                   </tr>
