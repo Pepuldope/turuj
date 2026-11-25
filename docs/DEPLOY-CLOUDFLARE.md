@@ -111,6 +111,34 @@ If a trip must come down at once (a closure or a wrong route found), no data run
   push, visit and event counts) answers 403 `{"error":"preview"}` on a host that is not in
   `COUNTED_HOSTS` (`lib/site.ts`; `lib/previewGuard.ts`). Previews share the live database.
   Router-budget counting (`lib/orsBudget.ts`) still runs there: it counts real router calls.
-- **Automatic checks** (a failed run e-mails the repo owner): `site-up.yml` every 30 minutes;
+- **Automatic checks** (a failed run e-mails the repo owner): `site-up.yml`, set to every 30 minutes
+  (GitHub really starts it 1-4 times a day, measured 22-25 Nov 2026);
   `weekly-red-flags.yml` (train timetable under 3 weeks left, live build is not `main`);
   `tanap-check.yml` (opens an issue; its fetcher is still a TODO). None of them blocks the data runs.
+
+## Ship batch timer (since 25 Nov 2026)
+
+`ship-batch.yml` ships the open pull request to `main` that carries the label `ship-next-morning`
+(checks first, then merge, deploy, database load, a result comment on the pull request). It has no
+timer of its own: GitHub started this repository's timed jobs hours late or not at all. The site's
+Worker starts it instead, every day at 06:30 Slovak time (`lib/shipTimer.ts`, called from the
+5-minute cron in `worker.ts`). With no labelled pull request the run ends in a few seconds.
+
+**The token (one-time, and again when it expires).** The Worker needs a GitHub token that may start
+workflows in this repository and nothing else:
+
+1. github.com → profile picture → Settings → Developer settings → Personal access tokens →
+   Fine-grained tokens → Generate new token.
+2. Token name `turuj-ship-timer`; Expiration: the longest offered (or "No expiration"); Description
+   `Cloudflare Worker starts the Ship batch workflow`; Resource owner `Pepuldope`; Repository access
+   "Only select repositories" → `Pepuldope/turuj`; Permissions → Repository permissions → Actions:
+   "Read and write" (Metadata: Read-only is added by itself). Nothing else. Generate token, copy it.
+3. In a terminal: `cd ~/dev/Turuj && npx wrangler secret put SHIP_BATCH_TOKEN`, paste the token at the
+   prompt. It is stored encrypted at Cloudflare, survives deploys and is live at once (no site deploy).
+   Never put it in a file, a workflow or a chat.
+
+**When it breaks:** if GitHub refuses the start (expired or deleted token, lost permission), the Worker
+e-mails `info@turuj.sk` that morning ("Túruj: Ship batch did not start") and nothing ships; merge the
+labelled pull request by hand and repeat the three steps above. Without the secret the Worker does
+nothing at 06:30 and sends no e-mail. Its log line is `[ship] Ship batch workflow: started` (Workers
+Logs). A dry run by hand: Actions → Ship batch → Run workflow (the box stays ticked).
