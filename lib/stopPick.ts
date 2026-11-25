@@ -37,6 +37,10 @@ const isTrain = (s: RankableStop) => s.mode === "vlak";
  * `stops` come nearest-walk first and `rides` line up with them. Without rides (no start set, or still loading) the order
  * stays nearest walk first. The default (first) is the fastest stop, but a bus within BUS_PREFERENCE of a faster train beats it:
  * never a train that is much slower than a bus, and a tie goes to the bus.
+ *
+ * A station whose time is a guess has no train that day. When another stop has real train times (so the timetable does
+ * cover the day), such a station goes after every stop with a known time, however short its guess: a guess must not
+ * outrank a train that runs (Peter, 2026-11-25, C222). A bus is always a guess and keeps its place.
  */
 export function rankStops(stops: readonly RankableStop[], rides: readonly (StopRide | null)[] | null): StopRanking {
   const identity = stops.map((_, i) => i);
@@ -45,8 +49,11 @@ export function rankStops(stops: readonly RankableStop[], rides: readonly (StopR
     const r = rides[i];
     return r ? { totalMin: r.rideMin + approachMin(s.join?.walk_m ?? s.distance_m), approx: r.approx } : null;
   });
+  const realTrain = totals.some((t) => t && !t.approx);
+  // 0 = a known time, 1 = a station with no train that day while another stop has real trains, 2 = unknown.
+  const group = (i: number) => (!totals[i] ? 2 : realTrain && isTrain(stops[i]) && totals[i]!.approx ? 1 : 0);
   // Stable sort: equal totals keep the nearest walk first; unknown totals go last.
-  const order = [...identity].sort((a, b) => (totals[a]?.totalMin ?? Infinity) - (totals[b]?.totalMin ?? Infinity));
+  const order = [...identity].sort((a, b) => group(a) - group(b) || (totals[a]?.totalMin ?? Infinity) - (totals[b]?.totalMin ?? Infinity));
   const best = order[0];
   if (best !== undefined && totals[best] && isTrain(stops[best])) {
     const limit = totals[best]!.totalMin * BUS_PREFERENCE;
