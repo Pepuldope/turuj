@@ -121,3 +121,20 @@ jobs:
           WORKERS_CI_COMMIT_SHA: ${{ github.sha }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_DEPLOY_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # The 06:30 Ship batch timer (lib/shipTimer.ts) needs the secret SHIP_BATCH_TOKEN at Cloudflare. `wrangler secret
+      # put` is refused while a newer Worker version than the deployed one exists, and every preview build uploads one
+      # (25 Nov 2026); right after the deploy is the one moment it works. So the token is kept in this repository's
+      # Actions secrets and handed to Cloudflare here on every deploy (the same value again changes nothing).
+      # Never fails the deploy: without the token, or when Cloudflare refuses, the timer just stays off.
+      - if: env.CF_READY == 'true'
+        run: |
+          if [ -z "$SHIP_BATCH_TOKEN" ]; then
+            echo "::notice::No SHIP_BATCH_TOKEN in the repository secrets; the 06:30 Ship batch timer stays off."
+            exit 0
+          fi
+          printf '%s' "$SHIP_BATCH_TOKEN" | npx wrangler secret put SHIP_BATCH_TOKEN \
+            || echo "::warning::SHIP_BATCH_TOKEN was NOT set at Cloudflare; the 06:30 Ship batch timer stays off (docs/DEPLOY-CLOUDFLARE.md, Ship batch timer)."
+        env:
+          SHIP_BATCH_TOKEN: ${{ secrets.SHIP_BATCH_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_DEPLOY_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
