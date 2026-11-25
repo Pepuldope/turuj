@@ -37,7 +37,7 @@ db = d1(new DatabaseSync(":memory:"));
 const NOW = 1_800_000_000_000;
 const plan = (slug: string, at: number, extra: Record<string, unknown> = {}): WireItem => ({ key: slug, at, body: { slug, name: slug, date: "2026-08-01", ...extra } });
 const gone = (key: string, at: number): WireItem => ({ key, at, gone: true });
-const visit = (key: string, at: number): WireItem => ({ key, at, body: { slug: "rysy", name: "Rysy", date: "2026-08-01", from: "manual" } });
+const visit = (key: string, at: number, route = "rysy"): WireItem => ({ key, at, body: { slug: "rysy", route, name: "Rysy", date: "2026-08-01", from: "manual" } });
 const device = (plans: WireItem[] = [], visits: WireItem[] = []): DeviceState => ({ plans, visits, synced: { plans: {}, visits: {} } });
 const keys = (items: WireItem[]) => items.map((i) => i.key).sort();
 const find = (items: WireItem[], key: string) => items.find((i) => i.key === key);
@@ -186,13 +186,14 @@ describe("two devices through the real store", () => {
 
   it("(f) visits of one trail each survive, and a deleted one is gone on the other device", async () => {
     const p = post(ACC, tick);
-    const phone0 = await core.runSync(device([], [visit("m:1", 100), visit("m:2", 101)]), p);
+    const phone0 = await core.runSync(device([], [visit("m:1", 100), visit("m:2", 101), visit("p:rysy/okruh:2026-08-01", 102, "rysy/okruh")]), p);
     const laptop0 = await core.runSync(device(), p);
-    expect(keys(laptop0.visits)).toEqual(["m:1", "m:2"]);
+    expect(keys(laptop0.visits)).toEqual(["m:1", "m:2", "p:rysy/okruh:2026-08-01"]);
+    expect(find(laptop0.visits, "p:rysy/okruh:2026-08-01")?.body).toEqual({ slug: "rysy", route: "rysy/okruh", name: "Rysy", date: "2026-08-01", from: "manual" });
     const phone1 = await core.runSync({ ...phone0, visits: [gone("m:1", 300), phone0.visits[1]] }, p);
-    expect(keys(phone1.visits)).toEqual(["m:2"]);
+    expect(keys(phone1.visits)).toEqual(["m:2", "p:rysy/okruh:2026-08-01"]);
     const laptop1 = await core.runSync(laptop0, p);
-    expect(keys(laptop1.visits)).toEqual(["m:2"]);
+    expect(keys(laptop1.visits)).toEqual(["m:2", "p:rysy/okruh:2026-08-01"]);
   });
 
   it("(g) many large plans move in several rounds within the request budget", async () => {

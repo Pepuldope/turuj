@@ -33,7 +33,7 @@ const rows = (account: string) => sqlite.prepare(`SELECT kind, key, at, gone, bo
 const NOW = 1_800_000_000_000;
 const plan = (slug: string, at: number, extra: Record<string, unknown> = {}): WireItem => ({ key: slug, at, body: { slug, name: slug, date: "2026-08-01", ...extra } });
 const gone = (key: string, at: number): WireItem => ({ key, at, gone: true });
-const visit = (key: string, at: number): WireItem => ({ key, at, body: { slug: "rysy", name: "Rysy", date: "", from: "manual" } });
+const visit = (key: string, at: number): WireItem => ({ key, at, body: { slug: "rysy", route: "rysy", name: "Rysy", date: "", from: "manual" } });
 
 let acc = "";
 let n = 0;

@@ -44,7 +44,7 @@ function items<T>(live: T[], keyOf: (x: T) => string, atOf: (x: T) => number, bo
 export function toDevice(lists: DeviceLists, synced: DeviceState["synced"]): DeviceState {
   return {
     plans: items(lists.trips, (t) => t.slug, planAt, planBody, lists.savedGone),
-    visits: items(lists.visits, (v) => v.id, (v) => v.at, (v) => ({ slug: v.slug, name: v.name, date: v.date, from: v.from }), lists.visitsGone),
+    visits: items(lists.visits, (v) => v.id, (v) => v.at, (v) => ({ slug: v.slug, route: v.route, name: v.name, date: v.date, from: v.from }), lists.visitsGone),
     synced,
   };
 }
@@ -59,10 +59,10 @@ function asTrip(body: unknown): Omit<SavedTrip, "offline" | "changedAt"> | null 
 
 function asVisit(key: string, at: number, body: unknown): Visit | null {
   if (!isObject(body)) return null;
-  const { slug, name, date, from } = body;
-  if (typeof slug !== "string" || typeof name !== "string" || typeof date !== "string") return null;
+  const { slug, route, name, date, from } = body;
+  if (typeof slug !== "string" || typeof route !== "string" || typeof name !== "string" || typeof date !== "string") return null;
   if (from !== "plan" && from !== "manual") return null;
-  return { id: key, slug, name, date, from, at };
+  return { id: key, slug, route, name, date, from, at };
 }
 
 const byKey = (list: WireItem[]) => new Map(list.map((i) => [i.key, i]));

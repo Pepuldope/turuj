@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { addPlanVisit, planVisitId, removePlanVisit, visitsOfDoneTrips } from "@/lib/visits";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { addPlanVisit, markVisited, planVisitId, readVisits, removePlanVisit, unmarkVisited, visitsOfDoneTrips } from "@/lib/visits";
 import type { VisitsData } from "@/lib/visits";
 import type { SavedTrip } from "@/lib/savedTrips";
 
 const empty: VisitsData = { visits: [], gone: {} };
 const rysy = { slug: "rysy", name: "Rysy", date: "2026-08-01" };
+const loop = { ...rysy, place: "rysy", route: "rysy/okruh" };
 
 describe("visits", () => {
   it("builds the same id on every device", () => {
@@ -13,16 +14,16 @@ describe("visits", () => {
 
   it("adds a plan visit once", () => {
     const one = addPlanVisit(empty, rysy, 100);
-    expect(one.visits).toEqual([{ id: "p:rysy:2026-08-01", slug: "rysy", name: "Rysy", date: "2026-08-01", from: "plan", at: 100 }]);
+    expect(one.visits).toEqual([{ id: "p:rysy:2026-08-01", slug: "", route: "rysy", name: "Rysy", date: "2026-08-01", from: "plan", at: 100 }]);
     expect(addPlanVisit(one, rysy, 200)).toBe(one);
   });
 
   it("leaves a tombstone on unmark and a later mark is newer than it", () => {
     const one = addPlanVisit(empty, rysy, 100);
-    const none = removePlanVisit(one, "rysy", "2026-08-01", 50);
+    const none = removePlanVisit(one, rysy, 50);
     expect(none.visits).toEqual([]);
     expect(none.gone).toEqual({ "p:rysy:2026-08-01": 101 });
-    expect(removePlanVisit(none, "rysy", "2026-08-01", 500)).toBe(none);
+    expect(removePlanVisit(none, rysy, 500)).toBe(none);
     const back = addPlanVisit(none, rysy, 60);
     expect(back.gone).toEqual({});
     expect(back.visits[0].at).toBe(102);
@@ -36,5 +37,29 @@ describe("visits", () => {
     const first = visitsOfDoneTrips(empty, trips, 999);
     expect(first.visits.map((v) => [v.id, v.at])).toEqual([["p:rysy:2026-08-01", Date.parse("2026-08-01T12:00:00.000Z")]]);
     expect(visitsOfDoneTrips(first, trips, 1234)).toBe(first);
+  });
+});
+
+describe("marking a visit on this device", () => {
+  beforeEach(() => {
+    const store = new Map<string, string>();
+    vi.stubGlobal("localStorage", { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) });
+    vi.stubGlobal("window", { dispatchEvent: () => true });
+  });
+
+  it("keeps the place and the route of a plan made on the loop page", () => {
+    markVisited(loop);
+    expect(readVisits().map((v) => [v.id, v.slug, v.route, v.date])).toEqual([["p:rysy/okruh:2026-08-01", "rysy", "rysy/okruh", "2026-08-01"]]);
+  });
+
+  it("takes the slug as the route and no place for a plan saved before visits existed", () => {
+    markVisited(rysy);
+    expect(readVisits().map((v) => [v.id, v.slug, v.route])).toEqual([["p:rysy:2026-08-01", "", "rysy"]]);
+  });
+
+  it("removes the visit of the same plan again", () => {
+    markVisited(loop);
+    unmarkVisited(loop);
+    expect(readVisits()).toEqual([]);
   });
 });

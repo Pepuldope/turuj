@@ -162,7 +162,7 @@ export function SavedTripsList() {
                     onClick={() => {
                       setTouched(true);
                       patch(trip.slug, { doneAt: undefined });
-                      unmarkVisited(trip.slug, trip.date);
+                      unmarkVisited(trip);
                     }}
                     className="text-[13px] font-semibold text-[var(--muted)] underline"
                   >

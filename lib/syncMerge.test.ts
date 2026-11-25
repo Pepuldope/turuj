@@ -5,7 +5,7 @@ import type { Held, WireItem } from "@/lib/syncMerge";
 
 const NOW = 1_800_000_000_000;
 const plan = (slug: string, extra: Record<string, unknown> = {}) => ({ slug, name: "Rysy", date: "2026-08-01", ...extra });
-const visit = { slug: "rysy", name: "Rysy", date: "2026-08-01", from: "plan" };
+const visit = { slug: "rysy", route: "rysy", name: "Rysy", date: "2026-08-01", from: "plan" };
 
 describe("cleanItem keys", () => {
   it("takes trail slugs for plans", () => {
@@ -18,6 +18,7 @@ describe("cleanItem keys", () => {
   it("takes p: and m: keys for visits", () => {
     expect(cleanItem("visit", { key: "p:rysy:2026-08-01", at: 5, gone: true }, NOW)).not.toBeNull();
     expect(cleanItem("visit", { key: "m:Ab_1-2", at: 5, body: visit }, NOW)).not.toBeNull();
+    expect(cleanItem("visit", { key: "p:krivan/okruh:2026-08-01", at: 5, gone: true }, NOW)).not.toBeNull();
     for (const key of ["rysy", "x:abc", "p:", "p:a b", "p:" + "a".repeat(161)]) {
       expect(cleanItem("visit", { key, at: 5, gone: true }, NOW), key).toBeNull();
     }
@@ -64,7 +65,7 @@ describe("cleanItem plan body", () => {
 
 describe("cleanItem visit body", () => {
   const ok = (b: unknown) => cleanItem("visit", { key: "m:1", at: 5, body: b }, NOW);
-  it("keeps exactly four fields", () => {
+  it("keeps exactly five fields", () => {
     expect(ok({ ...visit, junk: 1, offline: "x" })?.body).toEqual(visit);
   });
   it("checks each field", () => {
@@ -80,6 +81,23 @@ describe("cleanItem visit body", () => {
     expect(ok({ ...visit, from: "other" })).toBeNull();
     expect(ok({ ...visit, from: "manual" })).not.toBeNull();
     expect(ok({ slug: "rysy", name: "R", date: "" })).toBeNull();
+  });
+  it("needs a route, and takes a loop but no other suffix", () => {
+    expect(ok({ slug: "rysy", name: "R", date: "", from: "plan" })).toBeNull();
+    expect(ok({ ...visit, route: 3 })).toBeNull();
+    expect(ok({ ...visit, route: "" })).toBeNull();
+    expect(ok({ ...visit, route: "rysy/okruh" })).not.toBeNull();
+    expect(ok({ ...visit, route: "rysy/okruh2" })).toBeNull();
+    expect(ok({ ...visit, route: "rysy/other" })).toBeNull();
+    expect(ok({ ...visit, route: "rysy/okruh/okruh" })).toBeNull();
+    expect(ok({ ...visit, route: "Rysy" })).toBeNull();
+  });
+  it("takes an empty place", () => {
+    expect(ok({ ...visit, slug: "" })?.body).toEqual({ ...visit, slug: "" });
+  });
+  it("takes each form of date and refuses bad ones", () => {
+    for (const date of ["2026-08-01", "2026", "2026-sp", "2026-su", "2026-au", "2026-wi", ""]) expect(ok({ ...visit, date }), date).not.toBeNull();
+    for (const date of ["2026-xx", "2026-13", "26", "2026-summer", "2026-su-01"]) expect(ok({ ...visit, date }), date).toBeNull();
   });
 });
 

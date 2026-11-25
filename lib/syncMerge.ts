@@ -23,8 +23,12 @@ export const MAX_REQUEST = 2_000_000;
 export const SEND_BUDGET = 1_000_000;
 
 const PLAN_KEY = /^[a-z0-9][a-z0-9-]{0,119}$/;
-const VISIT_KEY = /^[pm]:[A-Za-z0-9:_-]{1,160}$/;
-const VISIT_DATE = /^(\d{4}(-\d{2}-\d{2})?)?$/;
+// The key of a visit holds the route walked, which can be "<slug>/okruh" for a loop.
+const VISIT_KEY = /^[pm]:[A-Za-z0-9:_/-]{1,160}$/;
+/** The route of a visit: a trip's own slug, or that slug and "/okruh" for the loop. */
+const ROUTE = /^[a-z0-9][a-z0-9-]{0,119}(\/okruh)?$/;
+/** The day of a visit: a full day, a year, a year and season (sp, su, au, wi), or empty when not known. */
+export const VISIT_DATE = /^(\d{4}(-(\d{2}-\d{2}|sp|su|au|wi))?)?$/;
 /** Plan fields that describe one device only (offline copy, evening reminder, forecast copy). */
 const DEVICE_ONLY = ["offline", "eve", "weather"];
 
@@ -49,12 +53,14 @@ export function cleanItem(kind: SyncKind, raw: unknown, now: number): WireItem |
     if (JSON.stringify(body).length > MAX_PLAN_BODY) return null;
     return { key, at: clamped, body };
   }
-  const { slug, name, date, from } = b;
-  if (typeof slug !== "string" || !PLAN_KEY.test(slug)) return null;
+  const { slug, route, name, date, from } = b;
+  // The place can be empty: a plan saved before visits existed does not know its place yet.
+  if (typeof slug !== "string" || (slug !== "" && !PLAN_KEY.test(slug))) return null;
+  if (typeof route !== "string" || !ROUTE.test(route)) return null;
   if (typeof name !== "string" || name.length < 1 || name.length > 200) return null;
   if (typeof date !== "string" || !VISIT_DATE.test(date)) return null;
   if (from !== "plan" && from !== "manual") return null;
-  const body = { slug, name, date, from };
+  const body = { slug, route, name, date, from };
   if (JSON.stringify(body).length > MAX_VISIT_BODY) return null;
   return { key, at: clamped, body };
 }

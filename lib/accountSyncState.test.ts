@@ -45,7 +45,7 @@ const trip = (slug: string, extra: Partial<SavedTrip> = {}): SavedTrip => ({
 });
 const lists = (extra: Partial<DeviceLists> = {}): DeviceLists => ({ trips: [], savedGone: {}, visits: [], visitsGone: {}, ...extra });
 const noSynced = (): DeviceState["synced"] => ({ plans: {}, visits: {} });
-const visit = (id: string, at: number): Visit => ({ id, slug: "a", name: "A", date: "2026-08-01", from: "plan", at });
+const visit = (id: string, at: number): Visit => ({ id, slug: "a", route: "a", name: "A", date: "2026-08-01", from: "plan", at });
 
 describe("toDevice", () => {
   it("strips device fields and changedAt, and the newer of a live item and its tombstone wins", () => {
@@ -66,7 +66,7 @@ describe("toDevice", () => {
   });
   it("maps visits", () => {
     const state = toDevice(lists({ visits: [visit("p:a:2026-08-01", 7)] }), noSynced());
-    expect(state.visits).toEqual([{ key: "p:a:2026-08-01", at: 7, body: { slug: "a", name: "A", date: "2026-08-01", from: "plan" } }]);
+    expect(state.visits).toEqual([{ key: "p:a:2026-08-01", at: 7, body: { slug: "a", route: "a", name: "A", date: "2026-08-01", from: "plan" } }]);
   });
 });
 
@@ -133,7 +133,7 @@ describe("fromDevice", () => {
   it("visits: arrive, vanish on server deletion, and survive an edit during the exchange", () => {
     const local = lists({ visits: [visit("p:a:2026-08-01", 10)] });
     const before = toDevice(local, noSynced());
-    const arrived = fromDevice({ ...before, visits: [...before.visits, { key: "p:b:2026-08-02", at: 20, body: { slug: "b", name: "B", date: "2026-08-02", from: "plan" } }] }, before, local);
+    const arrived = fromDevice({ ...before, visits: [...before.visits, { key: "p:b:2026-08-02", at: 20, body: { slug: "b", route: "b", name: "B", date: "2026-08-02", from: "plan" } }] }, before, local);
     expect(arrived.lists.visits.map((v) => v.id).sort()).toEqual(["p:a:2026-08-01", "p:b:2026-08-02"]);
     const deleted = fromDevice({ ...before, visits: [] }, before, local);
     expect(deleted.lists.visits).toEqual([]);

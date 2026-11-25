@@ -18,6 +18,10 @@ import "@/lib/legacyStorage";
  */
 export interface SavedTrip {
   slug: string;
+  /** The main trip's slug of the place this route belongs to; missing on trips saved before visits existed. */
+  place?: string;
+  /** The route as step 1 names it: the trip's slug, or `<slug>/okruh` when the plan was made on the loop page; missing on older saves, then the slug counts. */
+  route?: string;
   name: string;
   date: string;
   time: string;

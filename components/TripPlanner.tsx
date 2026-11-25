@@ -64,6 +64,9 @@ interface Props extends ShareInfo {
   profile: TripProfile | null;
   gpxUrl: string | null;
   bbox: BBox | null;
+  /** The main trip's slug of this place, and the route this page shows as step 1 names it; a saved plan keeps both for its visit. */
+  place?: string;
+  route?: string;
   /** The trail's closure rules (empty when none is known). */
   closures?: Closure[];
   /** The trail itself, for the walking hand-off. */
@@ -112,7 +115,7 @@ function meetingAt(date: string, hhmm: string): Date {
   return zonedDate(y, mo, d, h, mi);
 }
 
-export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction = null, bbox, closures = [], walk, intro, children, outro, routeCount = 1, routesStep, accessMap, placesMap, dayMap, places, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
+export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction = null, bbox, place, route, closures = [], walk, intro, children, outro, routeCount = 1, routesStep, accessMap, placesMap, dayMap, places, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
   const { start } = useUserLocation();
   const { today, update, withKids } = useTripSettings();
   const t = useT();
@@ -243,7 +246,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
   );
 
   // One save for the page: the "Uložiť a navigovať" card and the box of a friend's shared plan both use it.
-  const saving = useTripSave({ slug: trip.slug, name: trip.name, gpxUrl, bbox, sun, tripPlan, profile, trail, closures, weather });
+  const saving = useTripSave({ slug: trip.slug, place, route, name: trip.name, gpxUrl, bbox, sun, tripPlan, profile, trail, closures, weather });
 
   // A shared link opens the sender's day, kids pace and parking or stop (once, then it's ours to change).
   // Friends leave from different places, so it brings a meeting time where the walk starts and this
