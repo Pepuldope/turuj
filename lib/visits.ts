@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import type { SavedTrip } from "@/lib/savedTrips";
+import { whenKey } from "@/lib/visitWhen";
 import "@/lib/legacyStorage";
 
 /** "I was on this route": one entry per route and day, kept on every device of an account. */
@@ -29,8 +30,11 @@ export interface PlanTrip { slug: string; name: string; date: string; place?: st
 
 const routeOf = (trip: PlanTrip) => trip.route ?? trip.slug;
 
-/** Adds the visit of a trip the group went on, unless it is there; clears a removal of it. */
-export function addPlanVisit(data: VisitsData, trip: PlanTrip, at: number): VisitsData {
+/**
+ * Adds the visit of a trip the group went on, unless it is there; clears a removal of it. `date` is the day the
+ * group confirmed when it is not the plan's day; the id keeps the plan's day, so the plan still finds its visit.
+ */
+export function addPlanVisit(data: VisitsData, trip: PlanTrip, at: number, date: string = trip.date): VisitsData {
   const route = routeOf(trip);
   const id = planVisitId(route, trip.date);
   if (data.visits.some((v) => v.id === id)) return data;
@@ -38,7 +42,7 @@ export function addPlanVisit(data: VisitsData, trip: PlanTrip, at: number): Visi
   const goneAt = gone[id] ?? 0;
   delete gone[id];
   // Newer than the removal it undoes, even when the clock went backwards.
-  const visit: Visit = { id, slug: trip.place ?? "", route, name: trip.name, date: trip.date, from: "plan", at: Math.max(at, goneAt + 1) };
+  const visit: Visit = { id, slug: trip.place ?? "", route, name: trip.name, date, from: "plan", at: Math.max(at, goneAt + 1) };
   return { visits: [visit, ...data.visits], gone };
 }
 
@@ -55,6 +59,53 @@ export function visitsOfDoneTrips(data: VisitsData, trips: SavedTrip[], now: num
   let next = data;
   for (const trip of trips) if (trip.doneAt) next = addPlanVisit(next, trip, Date.parse(trip.doneAt) || now);
   return next;
+}
+
+/** What a visit added by hand carries; the day and the route are what the visitor picked, never filled in for them. */
+export interface HandVisit { slug: string; route: string; name: string; date: string }
+
+/** Adds a visit made by hand (no plan behind it). Its id is random, so two visits of one day stay two. */
+export function addHandVisit(data: VisitsData, visit: HandVisit, id: string, at: number): VisitsData {
+  if (data.visits.some((v) => v.id === id)) return data;
+  return { visits: [{ id, ...visit, from: "manual", at }, ...data.visits], gone: data.gone };
+}
+
+/** Fixes a visit: another day or another route. Newer than the copy it replaces, so the fix wins in account sync. */
+export function changeVisit(data: VisitsData, id: string, change: Partial<Pick<Visit, "date" | "route" | "slug">>, now: number): VisitsData {
+  const visit = data.visits.find((v) => v.id === id);
+  if (!visit) return data;
+  const next = { ...visit, ...change };
+  if (next.date === visit.date && next.route === visit.route && next.slug === visit.slug) return data;
+  return { visits: data.visits.map((v) => (v.id === id ? { ...next, at: Math.max(now, visit.at + 1) } : v)), gone: data.gone };
+}
+
+/** Removes any visit by its id and records the removal so the other devices drop it too. */
+export function removeVisit(data: VisitsData, id: string, now: number): VisitsData {
+  const visit = data.visits.find((v) => v.id === id);
+  if (!visit) return data;
+  return { visits: data.visits.filter((v) => v.id !== id), gone: { ...data.gone, [id]: Math.max(now, visit.at + 1) } };
+}
+
+const LOOP = "/okruh";
+
+/** The trip a route belongs to: a loop ("rysy/okruh") is walked from its own trip's page ("rysy"). */
+export const routeTrip = (route: string): string => (route.endsWith(LOOP) ? route.slice(0, -LOOP.length) : route);
+
+/** Whether a visit is of this place: by the place, or, for a visit that has no place yet, by one of the place's routes. */
+const isAt = (visit: Visit, place: string, routes: readonly string[]): boolean =>
+  visit.slug ? visit.slug === place : routes.includes(routeTrip(visit.route));
+
+/** The visits of one place, the latest first. `routes` are the trip slugs of the place's routes. */
+export function visitsAt(visits: readonly Visit[], place: string, routes: readonly string[]): Visit[] {
+  return visits
+    .filter((v) => isAt(v, place, routes))
+    .sort((a, b) => (whenKey(a.date) === whenKey(b.date) ? b.at - a.at : whenKey(a.date) < whenKey(b.date) ? 1 : -1));
+}
+
+/** Gives the place to visits that have none yet (plans saved before visits existed), once their trip page is open. */
+export function withPlace(data: VisitsData, place: string, routes: readonly string[], now: number): VisitsData {
+  if (!data.visits.some((v) => !v.slug && routes.includes(routeTrip(v.route)))) return data;
+  return { visits: data.visits.map((v) => (!v.slug && routes.includes(routeTrip(v.route)) ? { ...v, slug: place, at: Math.max(now, v.at + 1) } : v)), gone: data.gone };
 }
 
 const KEY = "turuj-visits";
@@ -130,9 +181,34 @@ function commit(before: VisitsData, after: VisitsData) {
 
 const current = (): VisitsData => ({ visits: readVisits(), gone: readVisitsGone() });
 
-export function markVisited(trip: PlanTrip) {
+/** `date`: the day the group confirmed, when they changed the plan's day in the window. */
+export function markVisited(trip: PlanTrip, date?: string) {
   const before = current();
-  commit(before, addPlanVisit(before, trip, Date.now()));
+  commit(before, addPlanVisit(before, trip, Date.now(), date));
+}
+
+/** A visit ticked by hand on a trip page. Returns its id. */
+export function addVisitByHand(visit: HandVisit): string {
+  const id = `m:${crypto.randomUUID()}`;
+  const before = current();
+  commit(before, addHandVisit(before, visit, id, Date.now()));
+  return id;
+}
+
+export function editVisit(id: string, change: Partial<Pick<Visit, "date" | "route">>) {
+  const before = current();
+  commit(before, changeVisit(before, id, change, Date.now()));
+}
+
+export function dropVisit(id: string) {
+  const before = current();
+  commit(before, removeVisit(before, id, Date.now()));
+}
+
+/** Called by a trip page once it knows its place and routes. Writes only when a visit was missing its place. */
+export function fillPlace(place: string, routes: readonly string[]) {
+  const before = current();
+  commit(before, withPlace(before, place, routes, Date.now()));
 }
 
 export function unmarkVisited(trip: PlanTrip) {
