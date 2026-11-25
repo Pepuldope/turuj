@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { confirmPlanVisit } from "@/lib/confirmPlanVisit";
 import { track } from "@/lib/analytics";
 import { shortDate } from "@/lib/days";
@@ -8,9 +8,12 @@ import { useLang, useT } from "@/lib/i18n";
 import { useReviewed } from "@/lib/reviewed";
 import { useSavedTrips } from "@/lib/savedTrips";
 import { useTripSettings } from "@/lib/tripSettings";
-import { addVisitByHand, fillPlace, useVisits, visitsAt } from "@/lib/visits";
+import type { DestinationKind, GeoPoint, RouteBrief } from "@/lib/tripSchema";
+import { addVisitByHand, fillPlace, routeTrip, useVisits, visitsAt } from "@/lib/visits";
+import type { RouteWalk } from "@/lib/walkFacts";
 import { whenLabel } from "@/lib/visitWhen";
 import { ReviewSheet } from "@/components/ReviewSheet";
+import type { RoutePickData } from "@/components/RoutePick";
 import { VisitMark } from "@/components/VisitMark";
 import { VisitSheet } from "@/components/VisitSheet";
 import { VisitsSheet } from "@/components/VisitsSheet";
@@ -23,9 +26,31 @@ type Open = "ask" | "hand" | "list" | "review" | null;
 
 /**
  * The visited row at the bottom of the trip page's first card (Peter, 25 Nov 2026): asks about a plan whose day
- * has passed, shows the visits of this place, or offers "Boli sme tu" by hand.
+ * has passed, shows the visits of this place, or offers "Boli sme tu" by hand. At a place with several routes
+ * (`briefs`) the window also asks which route was walked.
  */
-export function VisitRow({ slug, name, place, route, routes, single }: { slug: string; name: string; place: string; route: string; routes: string[]; single: boolean }) {
+export function VisitRow({
+  slug,
+  name,
+  place,
+  route,
+  routes,
+  briefs,
+  walks,
+  goal,
+}: {
+  slug: string;
+  name: string;
+  place: string;
+  /** The route of the page on screen. */
+  route: string;
+  /** The trip slugs of the place's routes (no loops). */
+  routes: string[];
+  /** The place's routes as step 1 lists them, loops included; one or none at a place with a single route. */
+  briefs: RouteBrief[];
+  walks: Record<string, RouteWalk>;
+  goal: { kind: DestinationKind; name: string; location: GeoPoint };
+}) {
   const { trips, patch } = useSavedTrips();
   const { visits } = useVisits();
   const reviewedMap = useReviewed();
@@ -41,9 +66,13 @@ export function VisitRow({ slug, name, place, route, routes, single }: { slug: s
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [place, routesKey]);
 
+  const pick = useMemo<RoutePickData | undefined>(() => (briefs.length > 1 ? { routes: briefs, walks, current: route, goal } : undefined), [briefs, walks, route, goal]);
   const saved = trips.find((x) => x.slug === slug);
-  const reviewed = !!saved?.reviewed || reviewedMap[slug] !== undefined;
   const mine = visitsAt(visits, place, routes);
+  // A review is about one route: the one of the latest visit when it is known, else this page's.
+  const walked = mine.length ? routeTrip(mine[0].route) : "";
+  const reviewSlug = walked && routes.includes(walked) ? walked : slug;
+  const reviewed = !!trips.find((x) => x.slug === reviewSlug)?.reviewed || reviewedMap[reviewSlug] !== undefined;
   const ask = !!today && !!saved && !saved.doneAt && !saved.skipAsk && saved.date < today;
   const close = () => setOpen(null);
 
@@ -57,20 +86,21 @@ export function VisitRow({ slug, name, place, route, routes, single }: { slug: s
           name={name}
           slug={slug}
           reviewed={reviewed}
-          onSave={(date) => {
-            addVisitByHand({ slug: place, route, name, date });
+          pick={pick}
+          onSave={(date, picked) => {
+            addVisitByHand({ slug: place, route: picked ?? route, name, date });
             track("trip_done", { trail: slug, how: "page" });
           }}
           onClose={close}
         />
       )}
-      {open === "list" && <VisitsSheet visits={mine} name={name} slug={slug} place={place} route={route} single={single} reviewed={reviewed} onClose={close} />}
+      {open === "list" && <VisitsSheet visits={mine} name={name} slug={slug} place={place} route={route} pick={pick} reviewSlug={reviewSlug} reviewed={reviewed} onClose={close} />}
       {open === "review" && (
         <ReviewSheet
-          slug={slug}
+          slug={reviewSlug}
           name={name}
           onDone={(sent) => {
-            if (sent && saved) patch(slug, { reviewed: true });
+            if (sent && trips.some((x) => x.slug === reviewSlug)) patch(reviewSlug, { reviewed: true });
             close();
           }}
         />
@@ -135,15 +165,13 @@ export function VisitRow({ slug, name, place, route, routes, single }: { slug: s
 
   return (
     <>
-      {single && (
-        <p className={rowClass}>
-          <VisitMark done={false} />
-          <span className="min-w-0 flex-1">{t("Už ste tu boli?")}</span>
-          <button type="button" onClick={() => setOpen("hand")} className={`min-h-10 shrink-0 rounded-full border border-[var(--border)] px-4 text-sm font-semibold ${focus}`}>
-            {t("Boli sme tu")}
-          </button>
-        </p>
-      )}
+      <p className={rowClass}>
+        <VisitMark done={false} />
+        <span className="min-w-0 flex-1">{t("Už ste tu boli?")}</span>
+        <button type="button" onClick={() => setOpen("hand")} className={`min-h-10 shrink-0 rounded-full border border-[var(--border)] px-4 text-sm font-semibold ${focus}`}>
+          {t("Boli sme tu")}
+        </button>
+      </p>
       {dialogs}
     </>
   );

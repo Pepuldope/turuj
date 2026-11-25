@@ -387,7 +387,9 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                     place={trip.variant_of ?? trail.slug}
                     route={current}
                     routes={routes.length ? routes.map((r) => r.slug).filter((r) => !r.endsWith(LOOP_SUFFIX)) : [trail.slug]}
-                    single={routes.length <= 1 && !loopBack}
+                    briefs={routes}
+                    walks={walks}
+                    goal={{ kind: goal, name: trip.destination.name, location: trip.destination.location }}
                   />
                 </div>
                 {routes.length > 1 && <ShorterRouteHint routes={routes} at={routeAt} walks={walks} />}

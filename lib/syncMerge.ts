@@ -25,7 +25,7 @@ export const SEND_BUDGET = 1_000_000;
 const PLAN_KEY = /^[a-z0-9][a-z0-9-]{0,119}$/;
 // The key of a visit holds the route walked, which can be "<slug>/okruh" for a loop.
 const VISIT_KEY = /^[pm]:[A-Za-z0-9:_/-]{1,160}$/;
-/** The route of a visit: a trip's own slug, or that slug and "/okruh" for the loop. */
+/** The route of a visit: a trip's own slug, or that slug and "/okruh" for the loop. Empty when the visitor did not know which route it was. */
 const ROUTE = /^[a-z0-9][a-z0-9-]{0,119}(\/okruh)?$/;
 /** The day of a visit: a full day, a year, a year and season (sp, su, au, wi), or empty when not known. */
 export const VISIT_DATE = /^(\d{4}(-(\d{2}-\d{2}|sp|su|au|wi))?)?$/;
@@ -56,7 +56,8 @@ export function cleanItem(kind: SyncKind, raw: unknown, now: number): WireItem |
   const { slug, route, name, date, from } = b;
   // The place can be empty: a plan saved before visits existed does not know its place yet.
   if (typeof slug !== "string" || (slug !== "" && !PLAN_KEY.test(slug))) return null;
-  if (typeof route !== "string" || !ROUTE.test(route)) return null;
+  // "Neviem, ktorou trasou": no route, and then the place is what says where the visit was.
+  if (typeof route !== "string" || !(ROUTE.test(route) || (route === "" && slug !== ""))) return null;
   if (typeof name !== "string" || name.length < 1 || name.length > 200) return null;
   if (typeof date !== "string" || !VISIT_DATE.test(date)) return null;
   if (from !== "plan" && from !== "manual") return null;

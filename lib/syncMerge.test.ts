@@ -85,12 +85,15 @@ describe("cleanItem visit body", () => {
   it("needs a route, and takes a loop but no other suffix", () => {
     expect(ok({ slug: "rysy", name: "R", date: "", from: "plan" })).toBeNull();
     expect(ok({ ...visit, route: 3 })).toBeNull();
-    expect(ok({ ...visit, route: "" })).toBeNull();
     expect(ok({ ...visit, route: "rysy/okruh" })).not.toBeNull();
     expect(ok({ ...visit, route: "rysy/okruh2" })).toBeNull();
     expect(ok({ ...visit, route: "rysy/other" })).toBeNull();
     expect(ok({ ...visit, route: "rysy/okruh/okruh" })).toBeNull();
     expect(ok({ ...visit, route: "Rysy" })).toBeNull();
+  });
+  it("takes no route when the place is known (the visitor did not know which route)", () => {
+    expect(ok({ ...visit, route: "", from: "manual" })?.body).toEqual({ ...visit, route: "", from: "manual" });
+    expect(ok({ ...visit, route: "", slug: "" })).toBeNull();
   });
   it("takes an empty place", () => {
     expect(ok({ ...visit, slug: "" })?.body).toEqual({ ...visit, slug: "" });

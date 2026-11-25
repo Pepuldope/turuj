@@ -8,6 +8,8 @@ import { addVisitByHand, dropVisit, editVisit, planVisitId } from "@/lib/visits"
 import type { Visit } from "@/lib/visits";
 import { parseWhen, whenLabel } from "@/lib/visitWhen";
 import { ReviewSheet } from "@/components/ReviewSheet";
+import { routeNameOf, UNKNOWN_ROUTE } from "@/components/RoutePick";
+import type { RoutePickData } from "@/components/RoutePick";
 import { UiIcon } from "@/components/UiIcon";
 import { VisitMark } from "@/components/VisitMark";
 import { VisitSheet } from "@/components/VisitSheet";
@@ -20,7 +22,7 @@ type Inner = { kind: "edit"; visit: Visit } | { kind: "add" } | { kind: "review"
 
 /**
  * "Vaše návštevy" (Peter, 25 Nov 2026): the visits of one place, latest first. A row opens the window of that
- * visit (change the day, or remove it); only one window is on screen at a time.
+ * visit (change the day, the route at a place with several, or remove it); only one window is on screen at a time.
  */
 export function VisitsSheet({
   visits,
@@ -28,7 +30,8 @@ export function VisitsSheet({
   slug,
   place,
   route,
-  single,
+  pick,
+  reviewSlug,
   reviewed,
   onClose,
 }: {
@@ -36,8 +39,12 @@ export function VisitsSheet({
   name: string;
   slug: string;
   place: string;
+  /** The page's own route: what a visit added at a place with one route gets. */
   route: string;
-  single: boolean;
+  /** Given for a place with several routes: each visit names its route and the window asks for it. */
+  pick?: RoutePickData;
+  /** The trip "Ohodnotiť výlet" is about: the route of the latest visit, when it is known. */
+  reviewSlug: string;
   reviewed: boolean;
   onClose: () => void;
 }) {
@@ -65,8 +72,10 @@ export function VisitsSheet({
         name={name}
         slug={slug}
         reviewed={reviewed}
+        pick={pick}
         edit={{
           date: v.date,
+          route: v.route,
           onRemove: () => {
             dropVisit(v.id);
             // A visit that came from a saved plan: the plan is not done any more and is not asked about again.
@@ -74,7 +83,7 @@ export function VisitsSheet({
             if (s) patch(s.slug, { doneAt: undefined, skipAsk: true });
           },
         }}
-        onSave={(date) => editVisit(v.id, { date })}
+        onSave={(date, picked) => editVisit(v.id, picked === undefined ? { date } : { date, route: picked })}
         onClose={() => setInner(null)}
       />
     );
@@ -85,8 +94,9 @@ export function VisitsSheet({
         name={name}
         slug={slug}
         reviewed={reviewed}
-        onSave={(date) => {
-          addVisitByHand({ slug: place, route, name, date });
+        pick={pick}
+        onSave={(date, picked) => {
+          addVisitByHand({ slug: place, route: picked ?? route, name, date });
           track("trip_done", { trail: slug, how: "page" });
         }}
         onClose={() => setInner(null)}
@@ -96,10 +106,10 @@ export function VisitsSheet({
   if (inner?.kind === "review") {
     return (
       <ReviewSheet
-        slug={slug}
+        slug={reviewSlug}
         name={name}
         onDone={(sent) => {
-          if (sent && trips.some((x) => x.slug === slug)) patch(slug, { reviewed: true });
+          if (sent && trips.some((x) => x.slug === reviewSlug)) patch(reviewSlug, { reviewed: true });
           setInner(null);
         }}
       />
@@ -117,21 +127,22 @@ export function VisitsSheet({
         <ul className="flex flex-col gap-2">
           {visits.map((v) => {
             const kind = parseWhen(v.date).kind;
+            // At a place with several routes the second line is the route; a route the place lost says nothing.
+            const walked = !pick ? null : v.route === UNKNOWN_ROUTE ? tx("trasu neviete") : routeNameOf(pick, v.route, lang);
+            const under = walked ?? (kind === "day" || kind === "unknown" ? null : tx("presný deň neviete"));
             return (
               <li key={v.id}>
                 <button type="button" onClick={() => setInner({ kind: "edit", visit: v })} className={`flex min-h-10 w-full items-center gap-2.5 rounded-xl border border-[var(--border)] px-3.5 py-2.5 text-left ${focus}`}>
                   <VisitMark done />
                   <span className="min-w-0 flex-1">
                     {kind === "day" ? (
-                      <span className="font-data whitespace-nowrap text-[17px]">{whenLabel(v.date, lang)}</span>
+                      <span className="font-data block whitespace-nowrap text-[17px]">{whenLabel(v.date, lang)}</span>
                     ) : kind === "unknown" ? (
-                      <span className="text-[14.5px] text-[var(--muted)]">{whenLabel(v.date, lang)}</span>
+                      <span className="block text-[14.5px] text-[var(--muted)]">{whenLabel(v.date, lang)}</span>
                     ) : (
-                      <>
-                        <b className="block text-[14.5px]">{whenLabel(v.date, lang)}</b>
-                        <span className="block text-[13px] text-[var(--muted)]">{tx("presný deň neviete")}</span>
-                      </>
+                      <b className="block text-[14.5px]">{whenLabel(v.date, lang)}</b>
                     )}
+                    {under && <span className="block text-[13px] text-[var(--muted)]">{under}</span>}
                   </span>
                   <UiIcon name="chev" size={18} className="text-[var(--muted)]" />
                 </button>
@@ -139,17 +150,15 @@ export function VisitsSheet({
             );
           })}
         </ul>
-        {single && (
-          <button type="button" onClick={() => setInner({ kind: "add" })} className={outline}>
-            {tx("+ Pridať ďalšiu návštevu")}
-          </button>
-        )}
+        <button type="button" onClick={() => setInner({ kind: "add" })} className={outline}>
+          {tx("+ Pridať ďalšiu návštevu")}
+        </button>
         {!reviewed && (
           <button type="button" onClick={() => setInner({ kind: "review" })} className={outline}>
             {tx("Ohodnotiť výlet")}
           </button>
         )}
-        <p className="text-[13px] text-[var(--muted)]">{tx("Ťuknutím na návštevu zmeníte dátum alebo ju odstránite.")}</p>
+        <p className="text-[13px] text-[var(--muted)]">{tx(pick ? "Ťuknutím na návštevu zmeníte dátum, trasu alebo ju odstránite." : "Ťuknutím na návštevu zmeníte dátum alebo ju odstránite.")}</p>
         <div className="flex justify-end">
           <button type="button" onClick={() => leave(onClose)} className={`rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-bold text-[var(--accent-contrast)] min-h-10 ${focus}`}>
             {tx("Hotovo")}

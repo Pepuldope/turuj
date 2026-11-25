@@ -10,7 +10,7 @@ export interface Visit {
   id: string;
   /** The place: the main trip's slug, what cards and pins look up. Empty when not known yet (a plan saved before visits existed); a later build fills it in from trip data. */
   slug: string;
-  /** The route walked: its own trip slug, or `<slug>/okruh` for a loop. */
+  /** The route walked: its own trip slug, or `<slug>/okruh` for a loop. Empty when the visitor did not know which route it was; such a visit always has its place. */
   route: string;
   name: string;
   /** "YYYY-MM-DD", "YYYY", "YYYY-sp" / "-su" / "-au" / "-wi" (year and season; winter counts to the year the person names) or "" when not known. */
@@ -61,7 +61,7 @@ export function visitsOfDoneTrips(data: VisitsData, trips: SavedTrip[], now: num
   return next;
 }
 
-/** What a visit added by hand carries; the day and the route are what the visitor picked, never filled in for them. */
+/** What a visit added by hand carries; the day and the route are what the visitor picked, never filled in for them ("" for a route they do not know). */
 export interface HandVisit { slug: string; route: string; name: string; date: string }
 
 /** Adds a visit made by hand (no plan behind it). Its id is random, so two visits of one day stay two. */

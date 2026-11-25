@@ -6,10 +6,13 @@ import { useLang, useT } from "@/lib/i18n";
 import { PREVIEW_MESSAGE } from "@/lib/previewGuard";
 import { sendReview } from "@/lib/sendReview";
 import { useTripSettings } from "@/lib/tripSettings";
+import { routeTrip } from "@/lib/visits";
 import { useLeave } from "@/lib/usePresence";
 import { detailAsked, parseWhen, roughWhen, SEASONS, seasonWord, whenLabel, yearChoices } from "@/lib/visitWhen";
 import type { Season } from "@/lib/visitWhen";
 import { chip, NO_ANSWERS, ReviewFields } from "@/components/ReviewFields";
+import { RoutePick } from "@/components/RoutePick";
+import type { RoutePickData } from "@/components/RoutePick";
 import { UiIcon } from "@/components/UiIcon";
 import { VisitMark } from "@/components/VisitMark";
 
@@ -24,12 +27,17 @@ const pill = `rounded-full px-4 py-2.5 text-sm font-semibold min-h-10 ${focus}`;
  * "Kedy ste tu boli?" (Peter, 25 Nov 2026): the day of a visit and, when there is none yet, a quick review.
  * The day is never filled in for the visitor: by hand nothing is chosen until they pick a day, a rough time or
  * say they do not know. From a saved plan the day is the plan's and is shown, with a way to change it.
+ *
+ * At a place with several routes (`pick`) the same window then asks the route, on a small drawn map and in a
+ * list (Peter: one window, the day first). The route is not chosen for the visitor either; "I don't know which"
+ * is an answer. A visit from a plan has the plan's route and is not asked.
  */
 export function VisitSheet({
   name,
   slug,
   plan,
   edit,
+  pick,
   reviewed,
   onSave,
   onClose,
@@ -37,9 +45,12 @@ export function VisitSheet({
   name: string;
   slug: string;
   plan?: { date: string };
-  edit?: { date: string; onRemove: () => void };
+  edit?: { date: string; route: string; onRemove: () => void };
+  /** The routes to choose from: given for a place with several routes, by hand or when fixing a visit. */
+  pick?: RoutePickData;
   reviewed: boolean;
-  onSave: (date: string) => void;
+  /** `route` is what the visitor picked ("" = does not know); undefined when the window did not ask. */
+  onSave: (date: string, route?: string) => void;
   onClose: () => void;
 }) {
   const tx = useT();
@@ -49,6 +60,8 @@ export function VisitSheet({
   const start = edit ? edit.date : (plan?.date ?? null);
   const startKind = start === null ? null : parseWhen(start).kind;
   const [date, setDate] = useState<string | null>(start);
+  const asksRoute = pick !== undefined && plan === undefined;
+  const [route, setRoute] = useState<string | null>(edit && asksRoute ? edit.route : null);
   const [rough, setRough] = useState(edit !== undefined && startKind !== "day");
   const [changing, setChanging] = useState(false);
   const [older, setOlder] = useState(false);
@@ -78,15 +91,16 @@ export function VisitSheet({
 
   async function sendOnly() {
     setPhase("sending");
-    const r = await sendReview(slug, detail ? answers : { ...answers, fit: null, crowded: null, timing: null });
+    // The review is of the route walked, when the visitor named one; else of the page's own.
+    const r = await sendReview(asksRoute && route ? routeTrip(route) : slug, detail ? answers : { ...answers, fit: null, crowded: null, timing: null });
     if (r === "ok") close();
     else setPhase(r);
   }
 
   function save() {
-    if (date === null || saved.current) return;
+    if (date === null || (asksRoute && route === null) || saved.current) return;
     saved.current = true;
-    onSave(date);
+    onSave(date, asksRoute && route !== null ? route : undefined);
     if (showReview && answers.stars > 0) void sendOnly();
     else close();
   }
@@ -109,7 +123,7 @@ export function VisitSheet({
   }
 
   const shell = (children: React.ReactNode) => (
-    <div role="dialog" aria-modal="true" aria-label={tx("Kedy ste tu boli?")} className="fixed inset-0 z-50 grid place-items-center p-4">
+    <div role="dialog" aria-modal="true" aria-label={tx(asksRoute ? "Vaša návšteva" : "Kedy ste tu boli?")} className="fixed inset-0 z-50 grid place-items-center p-4">
       <div data-state={motion} className="pres pres-backdrop absolute inset-0 bg-black/45" onClick={phase === "form" ? close : undefined} />
       <div data-state={motion} className="pres pres-pop relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[420px] flex-col gap-4 overflow-y-auto rounded-[var(--radius-card)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-float)]">
         {children}
@@ -149,9 +163,11 @@ export function VisitSheet({
   return shell(
     <>
       <div>
-        <h2 className="text-lg font-extrabold">{tx("Kedy ste tu boli?")}</h2>
+        <h2 className="text-lg font-extrabold">{tx(asksRoute ? "Vaša návšteva" : "Kedy ste tu boli?")}</h2>
         <p className="text-sm text-[var(--muted)]">{name}</p>
       </div>
+
+      {asksRoute && <b className="-mb-1.5 text-[15px]">{tx("Kedy ste tu boli?")}</b>}
 
       {rough ? (
         <div className="flex flex-col gap-3">
@@ -289,6 +305,14 @@ export function VisitSheet({
         </div>
       )}
 
+      {asksRoute && pick && (
+        <>
+          <hr className="border-[var(--border)]" />
+          <b className="-mb-1.5 text-[15px]">{tx("Ktorou trasou ste išli?")}</b>
+          <RoutePick data={pick} value={route} onChange={setRoute} />
+        </>
+      )}
+
       {showReview && (
         <>
           <hr className="border-[var(--border)]" />
@@ -319,13 +343,15 @@ export function VisitSheet({
         </div>
       )}
 
+      {asksRoute && date !== null && route === null && <p className="-mb-1.5 text-[13px] text-[var(--muted)]">{tx("Ešte vyberte trasu.")}</p>}
+
       <div className="flex justify-between gap-2">
         <button type="button" onClick={close} className={`${pill} border border-[var(--border)]`}>
           {tx("Zrušiť")}
         </button>
         <button
           type="button"
-          disabled={date === null || phase === "sending"}
+          disabled={date === null || (asksRoute && route === null) || phase === "sending"}
           onClick={save}
           className={`rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-bold text-[var(--accent-contrast)] disabled:opacity-40 min-h-10 ${focus}`}
         >
