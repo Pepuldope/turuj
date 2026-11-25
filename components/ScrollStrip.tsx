@@ -15,7 +15,7 @@ export function scrollBehavior(): ScrollBehavior {
  * A strip that scrolls sideways (a swipe, a trackpad, the keyboard when focused): no scrollbar, and a soft fade at an
  * edge only when there is more content that way. `startAt` gives the scroll position to open at: applied once per `startKey`,
  * as soon as the strip really has a width (a step that opens later, a card that mounts closed, has none at first), never
- * while the visitor is scrolling. The caller owns the scroller's ref (for scrolling it itself).
+ * while the visitor is scrolling or holds a finger on it (a new `startKey` then waits: 25 Nov 2026, C221). The caller owns the scroller's ref (for scrolling it itself).
  */
 export function ScrollStrip({
   scrollerRef,
@@ -34,6 +34,8 @@ export function ScrollStrip({
   const [fade, setFade] = useState({ left: false, right: false });
   const latest = useRef(startAt);
   const applied = useRef<string | null>(null);
+  // A finger or the mouse is down on the strip: it is theirs, whatever changes meanwhile.
+  const held = useRef(false);
   useEffect(() => {
     latest.current = startAt;
   });
@@ -49,16 +51,24 @@ export function ScrollStrip({
     // the visitor touches the strip; then it is theirs until the key changes.
     applied.current = null;
     const open = () => {
-      if (applied.current === startKey || !latest.current || el.clientWidth === 0 || el.scrollWidth <= el.clientWidth) return;
+      if (held.current || applied.current === startKey || !latest.current || el.clientWidth === 0 || el.scrollWidth <= el.clientWidth) return;
       el.scrollTo({ left: Math.max(0, Math.min(latest.current(el), el.scrollWidth - el.clientWidth)), behavior: "instant" });
     };
     const mine = () => {
       applied.current = startKey;
     };
+    const hold = () => {
+      held.current = true;
+    };
+    const letGo = () => {
+      held.current = false;
+    };
     open();
     const frame = requestAnimationFrame(open);
     const late = setTimeout(open, 400);
     for (const ev of ["pointerdown", "wheel", "touchstart", "keydown"] as const) el.addEventListener(ev, mine, { passive: true });
+    el.addEventListener("pointerdown", hold, { passive: true });
+    for (const ev of ["pointerup", "pointercancel"] as const) window.addEventListener(ev, letGo, { passive: true });
     el.addEventListener("scroll", sync, { passive: true });
     const ro = new ResizeObserver(() => {
       open();
@@ -70,6 +80,8 @@ export function ScrollStrip({
       cancelAnimationFrame(frame);
       clearTimeout(late);
       for (const ev of ["pointerdown", "wheel", "touchstart", "keydown"] as const) el.removeEventListener(ev, mine);
+      el.removeEventListener("pointerdown", hold);
+      for (const ev of ["pointerup", "pointercancel"] as const) window.removeEventListener(ev, letGo);
       el.removeEventListener("scroll", sync);
       ro.disconnect();
     };

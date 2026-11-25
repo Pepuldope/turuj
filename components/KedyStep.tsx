@@ -32,6 +32,7 @@ import {
   kedyCards,
   hasLeg,
   latestSetStart,
+  leadMs,
   startTime,
   minToHhmm,
   rowCells,
@@ -42,6 +43,7 @@ import {
 } from "@/lib/kedyTimeline";
 import type { BarPiece, KedyCandidate, KedyCard, KedyWarning, RowCell, WarnFix } from "@/lib/kedyTimeline";
 import { usePlanDay } from "@/lib/planDay";
+import { edgeScroll, latestThumbMin } from "@/lib/trackDrag";
 import { getSunTimes } from "@/lib/sun";
 import { useTripSettings } from "@/lib/tripSettings";
 import type { Closure, LatLng, TransitMode } from "@/lib/types";
@@ -398,7 +400,10 @@ function StartBlock({
   const [typed, setTyped] = useState<string | null>(null);
   const [dragged, setDragged] = useState<string | null>(null);
   const shown = dragged ?? typed ?? current;
-  const min = Math.min(SCALE_TO_MIN - 5, Math.max(0, hhmmToMin(shown)));
+  // The thumb stops where the walk would start past midnight: beyond it the plan moved to the next day and the
+  // track jumped under the finger (Peter, 25 Nov 2026, C221).
+  const maxMin = latestThumbMin(leadMs(plan) / MIN);
+  const min = Math.min(maxMin, Math.max(0, hhmmToMin(shown)));
   const field = useRef<HTMLInputElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const leaveMin = dayMinutes(plan.segments[0].start, plan.hikeStart);
@@ -455,6 +460,7 @@ function StartBlock({
         <div className="relative" style={{ width: `${(24 / VISIBLE_HOURS) * 100}%` }}>
           <TrackSlider
             min={min}
+            max={maxMin}
             valueText={`${fieldWord} ${clockShort(startTime(plan))}`}
             label={fieldWord}
             scroller={scroller}
@@ -479,10 +485,12 @@ function StartBlock({
 /**
  * The slider in the track's own coordinates. A swipe on the track scrolls it; only a drag on the thumb changes the time
  * (the thumb has touch-action none and captures the pointer). The native range stays for keyboard and screen readers: hidden
- * and not pointer-reachable, its focus ring is drawn on the thumb. Near the visible edge a drag scrolls the track along.
+ * and not pointer-reachable, its focus ring is drawn on the thumb. Dragged to the visible edge, the thumb takes the track
+ * along (lib/trackDrag.ts: only toward the edge it was dragged to, slowly at the zone's rim).
  */
 function TrackSlider({
   min,
+  max,
   label,
   valueText,
   scroller,
@@ -490,6 +498,8 @@ function TrackSlider({
   onRelease,
 }: {
   min: number;
+  /** The latest minute the thumb may be set to. */
+  max: number;
   label: string;
   valueText: string;
   scroller: RefObject<HTMLDivElement | null>;
@@ -498,11 +508,11 @@ function TrackSlider({
 }) {
   const pos = scalePos(min);
   const rail = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ dx: number; x: number; raf: number } | null>(null);
+  const drag = useRef<{ dx: number; x: number; from: number; at: number; carry: number; raf: number } | null>(null);
   const timeAt = (x: number, dx: number) => {
     const r = rail.current!.getBoundingClientRect();
     const f = Math.min(1, Math.max(0, (x - dx - r.left) / r.width));
-    return minToHhmm(Math.min(SCALE_TO_MIN - 5, snapTime(f * SCALE_TO_MIN * MIN, 5) / MIN));
+    return minToHhmm(Math.min(max, snapTime(f * SCALE_TO_MIN * MIN, 5) / MIN));
   };
   const stop = () => {
     const d = drag.current;
@@ -516,23 +526,31 @@ function TrackSlider({
     },
     []
   );
-  const tick = () => {
+  const tick = (now: number) => {
     const d = drag.current;
     const el = scroller.current;
     if (!d || !el) return;
     // 16 px in from the strip's edges (its padding) is where the track's visible part starts.
     const r = el.getBoundingClientRect();
-    const dir = d.x < r.left + 16 + 32 ? -1 : d.x > r.right - 16 - 32 ? 1 : 0;
-    if (dir) {
-      el.scrollBy({ left: dir * 8 });
-      onChange(timeAt(d.x, d.dx));
-    }
+    const speed = edgeScroll(d.x, d.from, r.left + 16, r.right - 16);
+    const room = speed < 0 ? el.scrollLeft > 0 : el.scrollLeft < el.scrollWidth - el.clientWidth - 1;
+    if (speed && room) {
+      // By the clock, not by the frame: the same speed on a 60 Hz and a 120 Hz screen. Whole pixels only.
+      d.carry += (speed * Math.min(50, now - d.at)) / 1000;
+      const px = Math.trunc(d.carry);
+      if (px) {
+        d.carry -= px;
+        el.scrollBy({ left: px, behavior: "instant" });
+        onChange(timeAt(d.x, d.dx));
+      }
+    } else d.carry = 0;
+    d.at = now;
     d.raf = requestAnimationFrame(tick);
   };
   const down = (e: PointerEvent<HTMLDivElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     const box = e.currentTarget.getBoundingClientRect();
-    drag.current = { dx: e.clientX - (box.left + box.width / 2), x: e.clientX, raf: 0 };
+    drag.current = { dx: e.clientX - (box.left + box.width / 2), x: e.clientX, from: e.clientX, at: performance.now(), carry: 0, raf: 0 };
     // Auto-scroll is movement the visitor did not ask for twice: not with reduced motion (they swipe the track instead).
     if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) drag.current.raf = requestAnimationFrame(tick);
   };
@@ -549,7 +567,7 @@ function TrackSlider({
       <input
         type="range"
         min={0}
-        max={SCALE_TO_MIN - 5}
+        max={max}
         step={5}
         value={min}
         aria-label={label}
