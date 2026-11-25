@@ -2,7 +2,7 @@
 
 import { startTransition, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { Difficulty, LatLng, TrailDetail } from "@/lib/types";
-import { driveDestination, nearestStop, primaryTrailhead, routeWalk, sunLocation, trailDetailFrom } from "@/lib/data";
+import { driveDestination, longerFit, nearestStop, realMatchesFirst, primaryTrailhead, routeWalk, sunLocation, trailDetailFrom } from "@/lib/data";
 import { formatKm, pickWalk, walkMinutes } from "@/lib/walkFacts";
 import { activeClosures } from "@/lib/closures";
 import { hikeMinutes } from "@/lib/dayPlan";
@@ -384,7 +384,11 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
       const short = detail.trail.shorter?.[byBus ? "bus" : "car"];
       const shortMin = short ? hikeMinutes(short.min, withKids) : null;
       const fitsTime = (m: number | null) => m !== null && TIME_FILTERS.some((f) => timeFilter.includes(f.key) && m >= f.min && m <= f.max);
-      if (timeFilter.length > 0 && !fitsTime(hikeMin) && !fitsTime(shortMin)) return [];
+      // A clearly longer route counts the same way: "nad 6 h" finds a place whose main route is a short one, and the
+      // card names that route's walk. Only when the place is on the list through it (Peter, 2026-11-24).
+      const longMin =
+        timeFilter.length > 0 ? longerFit(detail.trail.longer?.[byBus ? "bus" : "car"], fitsTime(hikeMin) || fitsTime(shortMin), (m) => hikeMinutes(m, withKids), fitsTime) : null;
+      if (timeFilter.length > 0 && !fitsTime(hikeMin) && !fitsTime(shortMin) && longMin === null) return [];
       if (farFilter !== null && start && driveMin !== null && driveMin > farFilter) return [];
       const th = primaryTrailhead(detail);
       const sun = sunLocation(detail);
@@ -393,6 +397,7 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
           detail,
           hikeMin,
           shortMin,
+          longMin,
           easierRoute: viaEasier ? detail.trail.easier!.difficulty : null,
           walkM: walk?.m ?? detail.trail.distance_m,
           ascentM: walk?.ascentM ?? detail.trail.ascent_m,
@@ -420,7 +425,8 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
     // the list, washed out, after the ones that fit; so a search for Rysy in winter still finds it.
     const late = open.filter((i) => !fitsDay(i));
     const noneFit = fitting.length === 0 && open.length > 0;
-    return { listedAll: [...fitting, ...late, ...all.filter(out)], noneFit };
+    // Places on the list only through a longer route come after every real match, late ones included.
+    return { listedAll: [...realMatchesFirst([...fitting, ...late]), ...all.filter(out)], noneFit };
   }, [trails, destinations, drives, startDrives, driveStatus, withKids, easier, goalFilter, diffFilter, timeFilter, farFilter, date, today, start, transit]);
 
   const bySlug = useMemo(() => new Map(listedAll.map((i) => [i.detail.trail.slug, i])), [listedAll]);
@@ -501,8 +507,8 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
       return at ? haversineM({ lat, lon }, at) / 1000 - KM_PER_RANK * (i.detail.trail.rank ?? 0) : Infinity;
     };
     // Best first; trips the day is too short for stay after the ones that fit, as on the rest of the list.
-    const ranked = listedAll.map((i) => ({ i, s: score(i), late: !fitsDay(i) }));
-    ranked.sort((a, b) => Number(a.late) - Number(b.late) || a.s - b.s);
+    const ranked = listedAll.map((i) => ({ i, s: score(i), late: !fitsDay(i), via: i.longMin != null }));
+    ranked.sort((a, b) => Number(a.via) - Number(b.via) || Number(a.late) - Number(b.late) || a.s - b.s);
     return ranked.filter((r) => r.s < Infinity).map((r) => r.i);
   }, [listedAll, words, matches, nameMatches, mapView, start]);
 

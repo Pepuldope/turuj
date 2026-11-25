@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/analytics";
 import { setTripStops } from "@/lib/tripStops";
 import { useEffect, useRef, useState } from "react";
 import type { DayPlan } from "@/lib/dayPlan";
@@ -108,6 +109,7 @@ export function SavedTripsList() {
   const went = (trip: SavedTrip) => {
     setTouched(true);
     patch(trip.slug, { doneAt: new Date().toISOString() });
+    track("trip_done", { trail: trip.slug, how: "list" });
     if (!trip.reviewed) setReviewing(trip);
   };
 

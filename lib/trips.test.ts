@@ -79,6 +79,7 @@ describe("trip data", () => {
       transit: trips[0].transit && { ...trips[0].transit, osm: null },
       // Home list only (scripts/list-joins.ts).
       shorter: full.shorter,
+      longer: full.longer,
     });
   });
 

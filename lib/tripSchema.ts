@@ -198,6 +198,12 @@ export interface TripSummary {
    * scared people off places with a 1 h way up (Peter, 2026-10-23).
    */
   shorter?: { car?: ShorterRoute; bus?: ShorterRoute };
+  /**
+   * Home list only: the walks (minutes, shortest first) of the clearly longer routes to the same place, by car and
+   * by bus, as their own trip pages count them (scripts/list-joins.ts, longerWalks in lib/data.ts). A "nad 6 h"
+   * filter finds a place whose main route is a short one (Peter, 2026-11-24).
+   */
+  longer?: { car?: number[]; bus?: number[] };
   /** Home list only: the easiest other route when it is easier than this one, so a difficulty filter finds the place (A13, Peter 2026-10-26). */
   easier?: { slug: string; difficulty: Difficulty };
 }

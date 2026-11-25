@@ -1,6 +1,6 @@
 # Trip pipeline report
 
-Run: 2026-11-24T07:38:05+00:00 · OSM data: 2026-11-23T21:21:17Z
+Run: 2026-11-24T10:00:49+00:00 · OSM data: 2026-11-23T21:21:17Z
 
 **6430 trips**
 
@@ -1296,8 +1296,8 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 | Buková, rázcestie | Buková | node/33101054 |
 | Cigeľka, rázcestie | Cigeľka,,osada | node/1493609325 |
 | Krajné, rázcestie | Dobrá Mera | node/672812261 |
-| Mariáš, rázc. pod hradom | Dobrá Voda, okolie | node/303826857 |
 | Odbočka k Dobrovodskému hradu | Dobrá Voda, okolie | node/269311174 |
+| Mariáš, rázc. pod hradom | Dobrá Voda, okolie | node/303826857 |
 | Domaša, odbočka k hrádzi | Domaša,,priehrada | node/12070301067 |
 | Doľany, rázcestie | Doľany | node/13068135866 |
 | Rázc. Gola | Drienica, okolie | node/11052516888 |
@@ -1309,8 +1309,8 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 | Hlboké nad Váhom, rázcestie | Hlboké n.Váhom,,kríž | node/850544784 |
 | Hliník nad Hronom, rázcestie | Hliník nad Hronom | node/1831377205 |
 | Majdan, odb. staré kúpalisko | Horné Orešany, Pálffyho nám. | node/274722600 |
-| Pod hotelom, rázc. | Horský hotel Poľana | node/293204074 |
 | Vrchdetva, rázc. | Horský hotel Poľana | node/293567036 |
+| Pod hotelom, rázc. | Horský hotel Poľana | node/293204074 |
 | Za Kalváriou, rázc. | Hrabovo | node/8075807270 |
 | Hradište pod Vrátnom, rázc. | Hradište pod Vrátnom | node/303820707 |
 | Rázcestie nad Hutami | Huty, Javorinský potok | node/9046046008 |
@@ -1338,8 +1338,8 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 | Nová Bystrica, odbočka do Veľkého Potoka | Nová Bystrica, Cadrikovia | node/1447936905 |
 | Šport Chata, rázcestie | Nová Lehota, okolie | node/303174329 |
 | Majdan, rázcestie | Olejníkov, okolie | node/281326148 |
-| Rázcestie Oravice | Oravice | node/5736009562 |
 | Rázcestie pod Čistým Grúňom | Oravice | node/1705795303 |
+| Rázcestie Oravice | Oravice | node/5736009562 |
 | Biela Farma, rázcestie | Oravská Polhora, okolie | node/5791978002 |
 | Pavlovce, rázc. | Pavlovce, otoč. | node/759020919 |
 | Pezinská Baba, rázcestie | Pezinská baba - Parkovisko | node/7746603410 |
@@ -1375,12 +1375,12 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 | Rázcestie pod Jahodnou | Vyšný Klátov, okolie | node/173407586 |
 | Zaježová, rázcestie | Zaježová | node/4440896334 |
 | Rázcestie Prte | Zuberec, okolie | node/243453531 |
-| Rázcestie Zverovka | Zverovka | node/244881275 |
 | Rázcestie Šindľovec | Zverovka | node/1888793050 |
+| Rázcestie Zverovka | Zverovka | node/244881275 |
 | Odbočka na Hradisko | Záturčie, okolie | node/312934226 |
 | Štefanov, rázc. | Štefanov nad Oravou | node/7913906566 |
-| Odbočka pri Heliose | Štrbské Pleso | node/306246045 |
 | Rázcestie pred Heliosom | Štrbské Pleso | node/281108101 |
+| Odbočka pri Heliose | Štrbské Pleso | node/306246045 |
 | Odbočka na Baranec a Plačlivé | Žiar, okolie | node/496004526 |
 
 ## Rejected candidates
