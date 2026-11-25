@@ -8,13 +8,16 @@ name: Ship batch
 # How to use: put the label "ship-next-morning" on the open pull request to main. Nothing else.
 # No labelled pull request = the run ends in a few seconds and changes nothing.
 #
+# Started every day at 06:30 Slovak time by the site's own Cloudflare Worker (lib/shipTimer.ts, from
+# worker.ts's 5-minute cron), as a real run (dry_run false). There is no "schedule" here on purpose:
+# GitHub started this repository's timed jobs hours late or not at all (25 Nov 2026: neither morning
+# slot ran), and a run that comes hours late would ship a pull request labelled that day for the
+# NEXT morning. Starting it by hand in Actions is a dry run unless the box is unticked.
+#
 # A merge made with GITHUB_TOKEN starts no push event, so "Deploy" and "Trip database" are started
 # here by hand (workflow_dispatch), the same two a normal merge would start.
 
 on:
-  schedule:
-    - cron: "30 5 * * *" # 06:30 CET (07:30 in summer)
-    - cron: "30 6 * * *" # second try, in case GitHub dropped the first; finds nothing if it ran
   workflow_dispatch:
     inputs:
       dry_run:
@@ -38,7 +41,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+      DRY_RUN: ${{ inputs.dry_run }}
       LABEL: ship-next-morning
       SITE: https://turuj.sk
     steps:

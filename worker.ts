@@ -1,5 +1,6 @@
 // The Worker's front door (wrangler.jsonc "main"), plus a cron job: every 5 minutes (wrangler.jsonc
-// "triggers") it sends the walk reminders that fall due (lib/pushPlan.ts).
+// "triggers") it sends the walk reminders that fall due (lib/pushPlan.ts), and at 06:30 Slovak time
+// it starts the "Ship batch" GitHub workflow (lib/shipTimer.ts).
 // Pages built ahead (home, every trip and town
 // page, the info pages) are answered here straight from the deploy's page cache, without
 // starting Next.js; everything else goes to the OpenNext Worker as before.
@@ -39,11 +40,15 @@ import { tripJson } from "./lib/tripJson";
 import { pulledResponse } from "./lib/pulledTrips";
 import pulledTrips from "./data/pulled-trips.json";
 import { sendDue } from "./lib/pushPlan";
+import { shipTimer } from "./lib/shipTimer";
 import { fromOtherSite } from "./lib/routeGuard";
 
 interface Env {
   ASSETS: { fetch(req: Request | string): Promise<Response> };
   VISITS_DB?: D1Like;
+  // Secrets (set with "wrangler secret put"); both may be missing.
+  SHIP_BATCH_TOKEN?: string;
+  RESEND_API_KEY?: string;
 }
 
 interface Ctx {
@@ -180,9 +185,16 @@ const worker = {
     return new HTMLRewriter().on("html", { element: (el) => el.setAttribute("lang", "en") }).transform(res);
   },
   async scheduled(event: unknown, env: Env, ctx: Ctx) {
+    const at = (event as { scheduledTime?: number })?.scheduledTime ?? Date.now();
+    // Once a day (the run at 06:30 Slovak time): start the Ship batch workflow on GitHub.
+    ctx.waitUntil(
+      shipTimer(at, env).then(
+        (r) => (r === "started" || r === "failed") && console.log(`[ship] Ship batch workflow: ${r}`),
+        (err) => console.warn("[ship] timer failed:", err)
+      )
+    );
     if (!env.VISITS_DB) return;
     // Once an hour (the run at :00): old email codes, sessions and messages (lib/cleanup.ts).
-    const at = (event as { scheduledTime?: number })?.scheduledTime ?? Date.now();
     if (new Date(at).getUTCMinutes() < 5) {
       const db = env.VISITS_DB;
       ctx.waitUntil(cleanup(db, at).then((n) => n > 0 && console.log(`[cleanup] removed ${n} rows`), (err) => console.warn("[cleanup] failed:", err)));
