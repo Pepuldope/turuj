@@ -909,8 +909,11 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
       </ul>
       )}
 
+      {/* The left side gives way first (its lines cut off with "…"), down to the width of the time; only then the weather
+          words on the right do. Before, the right side could not shrink at all, and a long forecast ("slabý dážď so snehom")
+          made a saved trip's card wider than a 320 px phone (C217). */}
       <div className="flex justify-between gap-3 border-t border-[var(--border)] px-4 pt-2.5 pb-3.5 text-sm">
-        <div className="min-w-0">
+        <div className="min-w-12 shrink-[1000]">
           <div className="font-data text-[22px] leading-none">{formatTime(new Date(t))}</div>
           <div className="truncate font-semibold">{what}</div>
           {/* Height and trail sign at that moment, only on the walk (while driving the line stays, empty). Always exactly one
@@ -938,14 +941,14 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
           )}
           </div>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-0.5 text-right text-[13px] whitespace-nowrap text-[var(--muted)]">
+        <div className="flex min-w-0 flex-col items-end gap-0.5 text-right text-[13px] whitespace-nowrap text-[var(--muted)]">
           {now && (
             // One line always: icon, word and the temperature at that moment (higher up the trail it is colder).
-            <span className="inline-flex items-center gap-1 font-semibold whitespace-nowrap text-[var(--foreground)]">
-              {kind && <svg viewBox="0 0 22 22" className="h-[18px] w-[22px]" aria-hidden="true" dangerouslySetInnerHTML={{ __html: weatherIconSvg(kind) }} />}
-              {kind && <>{weatherWords(baseSymbol(now.symbol!), lang).split(" (")[0]}</>}
+            <span className="inline-flex max-w-full min-w-0 items-center gap-1 font-semibold whitespace-nowrap text-[var(--foreground)]">
+              {kind && <svg viewBox="0 0 22 22" className="h-[18px] w-[22px] shrink-0" aria-hidden="true" dangerouslySetInnerHTML={{ __html: weatherIconSvg(kind) }} />}
+              {kind && <span className="truncate">{weatherWords(baseSymbol(now.symbol!), lang).split(" (")[0]}</span>}
               {temp !== null && (
-                <span>
+                <span className="shrink-0">
                   <span className="font-data">{temp}</span> °C
                 </span>
               )}
