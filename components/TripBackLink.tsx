@@ -48,7 +48,8 @@ export function TripBackLink() {
     <Link
       href={from ? from.href : langPath(lang, town ? `/vylety-z/${town.id}` : "/")}
       onClick={from ? (e) => backClick(e, from) : undefined}
-      className="inline-flex max-w-full min-w-0 items-center gap-0.5 rounded-full border border-[var(--border)] bg-[var(--card-bg)]/90 px-3 py-1.5 text-sm font-semibold"
+      // Below lg the top bar's two round buttons lie over the right end of this row: a long name stops short of them.
+      className="inline-flex max-w-[calc(100%-6rem)] min-w-0 items-center gap-0.5 rounded-full lg:max-w-full border border-[var(--border)] bg-[var(--card-bg)]/90 px-3 py-1.5 text-sm font-semibold"
     >
       <UiIcon name="back" size={15} className="shrink-0" />
       <span className="truncate">{from ? from.label : town ? t("Okolo {town}", { town: townOf(lang, town.id, town.name) }) : t("Všetky výlety")}</span>

@@ -136,7 +136,8 @@ export function PageBackLink() {
     <Link
       href={from ? from.href : langPath(lang, "/")}
       onClick={from ? (e) => backClick(e, from) : undefined}
-      className="block w-fit max-w-full truncate text-sm font-semibold text-[var(--accent)]"
+      // Below lg the top bar's two round buttons lie over the right end of this row: a long name stops short of them.
+      className="block w-fit max-w-[calc(100%-6rem)] truncate text-sm font-semibold text-[var(--accent)] lg:max-w-full"
     >
       ← {from ? from.label : t("Všetky výlety")}
     </Link>
