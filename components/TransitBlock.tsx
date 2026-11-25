@@ -7,9 +7,10 @@ import { formatDuration, formatDurationShort, formatFromUser, formatTime, stopLa
 import { appleTransitUrl, cpSkBackUrl, cpSkUrl, googleTransitUrl, startTown } from "@/lib/links";
 import type { RailJourney } from "@/lib/rail";
 import type { RailTrip } from "@/lib/useRailTrip";
-import { useTripDay } from "@/lib/tripSettings";
+import { useTripDay, useTripSettings } from "@/lib/tripSettings";
 import { useHomeStop } from "@/lib/useHomeStop";
 import { useUserLocation } from "@/lib/userLocation";
+import type { StartPoint } from "@/lib/userLocation";
 import type { TransitStop } from "@/lib/types";
 import { clock } from "@/lib/zoned";
 import { focusOnMap } from "@/lib/mapFocus";
@@ -169,28 +170,91 @@ function Legs({ journey, before, after }: { journey: RailJourney; before?: strin
 }
 
 /**
- * Right under the travel switch when going by bus or train: one big button that opens Google Maps
- * with the start and the stop filled in and set to public transport (Mapy.com's links can't do
- * public transport). cp.sk stays in the bus section below, once.
+ * Do we know a connection goes there that day? Only for a railway station while our own timetable
+ * answers (or is still loading). A bus stop is a stop on the map: no free bus timetable exists.
  */
-export function TransitHandoff() {
-  const { stop } = useTripAccess();
-  const { start } = useUserLocation();
+function checked(stop: TransitStop, rail: RailTrip): boolean {
+  return stop.mode === "vlak" && (rail.status === "ok" || rail.status === "loading");
+}
+
+/**
+ * The start as cp.sk can find it. cp.sk finds connections between stops; the start's own stop beats the
+ * town name, unless it is a city-bus stop named without its town ("Hodžovo nám."), which cp.sk can't place: then the town.
+ */
+function useCpHome(start: StartPoint | null, town: string | null | undefined) {
+  const homeStop = useHomeStop(start);
+  const place = startTown(start, town);
+  const home = homeStop && (homeStop.mode === "vlak" || homeStop.name.includes(",") || !place) ? homeStop.name : (place ?? homeStop?.name ?? null);
+  return { homeStop, home };
+}
+
+const primary =
+  "flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-3 text-[15px] font-bold whitespace-nowrap text-[var(--accent-contrast)] no-underline";
+
+/**
+ * Right under the stop list when going by bus or train: one big button that opens the search for the
+ * connection, with the start and the stop filled in.
+ *
+ * By train with our own times: Google Maps, door to door (Mapy.com's links can't do public transport).
+ * By bus, or by train on a day our timetable doesn't cover: cp.sk, the official search with every
+ * Slovak bus. Google Maps lacks many regional buses and then says "no route", so it is a small link
+ * here. We could not check that a bus runs, so the page says so and gives the way out: by car
+ * (Peter, 2026-11-25, C220).
+ */
+export function TransitHandoff({ plan, rail }: { plan: DayPlan | null; rail: RailTrip }) {
+  const { stop, noCar } = useTripAccess();
+  const { start, fix } = useUserLocation();
+  const { date } = useTripDay();
+  const { update } = useTripSettings();
+  const { home } = useCpHome(start, fix?.town);
   const t = useT();
   if (!stop) return null;
   const to = stop.join?.location ?? stop.location;
-  return (
-    <div className="flex flex-col items-center gap-1.5">
-      <a
-        href={googleTransitUrl(to, start)}
-        data-umami-event="transit_open"
-        data-umami-event-leg="google-top"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-3 text-[15px] font-bold whitespace-nowrap text-[var(--accent-contrast)] no-underline"
-      >
+  const out = { target: "_blank", rel: "noopener noreferrer", "data-umami-event": "transit_open" };
+
+  if (checked(stop, rail)) {
+    return (
+      <a href={googleTransitUrl(to, start)} data-umami-event-leg="google-top" {...out} className={primary}>
         <StopIcon mode={stop.mode} /> {t("Nájsť spoj v Google Mapách")} ↗
       </a>
+    );
+  }
+
+  const bus = stop.mode !== "vlak";
+  return (
+    <div className="flex flex-col gap-2.5">
+      <a href={cpSkUrl(stop.name, home, date, plan ? hhmm(plan.hikeStart) : null, true)} data-umami-event-leg="cp-top" {...out} className={primary}>
+        <StopIcon mode={stop.mode} /> {t("Nájsť spoj na cp.sk")} ↗
+      </a>
+      <div className="flex flex-wrap justify-center gap-x-5 gap-y-1">
+        <a href={googleTransitUrl(to, start)} data-umami-event-leg="google" {...out} className={link}>
+          {t("Google Mapy")} ↗
+        </a>
+        <a href={appleTransitUrl(to, start)} data-umami-event-leg="apple" {...out} className={link}>
+          {t("Apple Mapy")} ↗
+        </a>
+      </div>
+      {/* Not a warning: nothing is known to be wrong. Grey like "Stav chodníka neoverený", with its next step. */}
+      <div className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--neutral-bg)] px-3 py-2.5 text-sm">
+        <p>
+          <strong>{t(bus ? "Autobus sme neoverili." : "Vlak sme neoverili.")}</strong>{" "}
+          {t(bus ? "Zastávka pri trase je. Či na ňu v tento deň ide spoj, ukáže cp.sk." : "Stanica pri trase je. Či na ňu v tento deň ide spoj, ukáže cp.sk.")}
+        </p>
+        {noCar ? (
+          <p>{t("Ak spoj nenájdete, skúste iný deň alebo inú túru.")}</p>
+        ) : (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <p>{t("Ak spoj nenájdete, táto túra je lepšia autom.")}</p>
+            <button
+              type="button"
+              onClick={() => update({ travel: "car" })}
+              className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-2.5 text-sm font-semibold hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+            >
+              {t("Naplánovať autom")}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -206,13 +270,9 @@ export function TransitLegs({ plan, rail }: { plan: DayPlan; rail: RailTrip }) {
   const { stop } = useTripAccess();
   const { start, fix } = useUserLocation();
   const { date } = useTripDay();
-  const homeStop = useHomeStop(start);
+  const { homeStop, home } = useCpHome(start, fix?.town);
   const t = useT();
   const lang = useLang();
-  const town = startTown(start, fix?.town);
-  // cp.sk finds connections between stops; the start's own stop beats the town name, unless it is a
-  // city-bus stop named without its town ("Hodžovo nám."), which cp.sk can't place: then the town.
-  const home = homeStop && (homeStop.mode === "vlak" || homeStop.name.includes(",") || !town) ? homeStop.name : (town ?? homeStop?.name ?? null);
 
   if (!stop) {
     return (
@@ -232,6 +292,8 @@ export function TransitLegs({ plan, rail }: { plan: DayPlan; rail: RailTrip }) {
   const trainBack = rail.status === "ok" ? (rail.back[rail.backChoice] ?? null) : null;
   const rideMin = plan.segments[0].kind === "drive-there" ? Math.round((plan.hikeStart.getTime() - plan.segments[0].start.getTime()) / 60000) : null;
   const to = stop.join?.location ?? stop.location;
+  // Not checked: the search for the way there and Apple Maps are under the big button above, once.
+  const sure = checked(stop, rail);
 
   return (
     <section aria-label={t("Cesta vlakom a autobusom")} className="flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-3 py-3 text-sm">
@@ -303,7 +365,7 @@ export function TransitLegs({ plan, rail }: { plan: DayPlan; rail: RailTrip }) {
                 ? t("Hľadáme vlaky…")
                 : rail.status === "no-day"
                   ? t("Cestovný poriadok vlakov na tento deň ešte nemáme. Čas je odhad podľa cesty autom.")
-                  : t("Čas je odhad podľa cesty autom s rezervou na zastávky a čakanie. Presný spoj nájdete v Google Mapách vyššie.")}
+                  : t("Čas je odhad podľa cesty autom s rezervou na zastávky a čakanie. Presný spoj nájdete na cp.sk vyššie.")}
             </p>
           )}
           <p className="pt-1">
@@ -321,15 +383,19 @@ export function TransitLegs({ plan, rail }: { plan: DayPlan; rail: RailTrip }) {
       <div className="flex flex-col gap-2 border-t border-[var(--border)] pt-3">
         <p className="font-semibold">{t("Presné spoje a prestupy")}</p>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
-          <a href={cpSkUrl(stop.name, home, date, train ? fromMidnight(train.dep) : there, !train)} data-umami-event="transit_open" data-umami-event-leg="there" target="_blank" rel="noopener noreferrer" className={link}>
-            {t("Spoje tam na cp.sk")} ↗
-          </a>
+          {sure && (
+            <a href={cpSkUrl(stop.name, home, date, train ? fromMidnight(train.dep) : there, !train)} data-umami-event="transit_open" data-umami-event-leg="there" target="_blank" rel="noopener noreferrer" className={link}>
+              {t("Spoje tam na cp.sk")} ↗
+            </a>
+          )}
           <a href={cpSkBackUrl(stop.name, home, date, back)} data-umami-event="transit_open" data-umami-event-leg="back" target="_blank" rel="noopener noreferrer" className={link}>
             {t("Spoje späť na cp.sk")} ↗
           </a>
-          <a href={appleTransitUrl(to, start)} data-umami-event="transit_open" data-umami-event-leg="apple" target="_blank" rel="noopener noreferrer" className={link}>
-            {t("Apple Mapy")} ↗
-          </a>
+          {sure && (
+            <a href={appleTransitUrl(to, start)} data-umami-event="transit_open" data-umami-event-leg="apple" target="_blank" rel="noopener noreferrer" className={link}>
+              {t("Apple Mapy")} ↗
+            </a>
+          )}
         </div>
       </div>
       {!start && <p className="text-xs text-[var(--muted)]">{t("Vyberte, odkiaľ cestujete, a nájdeme vám najbližšiu zastávku aj vlaky.")}</p>}

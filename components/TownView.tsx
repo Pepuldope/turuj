@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Here, PageBackLink } from "@/components/CameFrom";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ClosedSinks } from "@/components/ClosedSinks";
 import { TownTile } from "@/components/TownTile";
@@ -107,9 +108,8 @@ export async function TownView({ id, lang }: { id: string; lang: Lang }) {
         }}
       />
       <div className="flex items-center justify-between gap-3">
-        <Link href={langPath(lang, "/")} className="w-fit text-sm font-semibold text-[var(--accent)]">
-          ← {tr(lang, "Všetky výlety")}
-        </Link>
+        <PageBackLink />
+        <Here label={tr(lang, "Okolo {town}", { town: around })} />
       </div>
       <header className="flex flex-col gap-1">
         <h1 className="text-[2.3rem] leading-none font-extrabold tracking-tight">{tr(lang, "Výlety v okolí {town}", { town: around })}</h1>

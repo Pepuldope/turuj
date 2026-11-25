@@ -35,6 +35,7 @@ import { PlanStep, PlanStepsProvider, PlanWarningsRecap, StepInfo } from "@/comp
 import type { StepDef } from "@/components/PlanStep";
 import { ParkingOptions, feeLabel, parkingTitle, summaryWalk } from "@/components/ParkingBlock";
 import { NoStartNote, PlanStartAsk } from "@/components/PlanStartAsk";
+import { tripsBehind } from "@/components/CameFrom";
 import { StopsRow } from "@/components/StopsRow";
 import { GoalStayRow } from "@/components/GoalStayRow";
 import { SunArc } from "@/components/SunArc";
@@ -154,8 +155,9 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
   // The stops the group added stand on the walk where it passes them (lunch at the goal).
   const { stops, minutes: stopMin } = useTripStops(trip.slug);
   // Stops belong to this visit: opening another trip or the list forgets them (a saved trip keeps
-  // its own copy); the route comparison and the loop of this trip keep them.
-  useEffect(() => keepStopsOf(trip.slug), [trip.slug]);
+  // its own copy); the route comparison and the loop of this trip keep them, and so does a trip the
+  // back link can still lead back to.
+  useEffect(() => keepStopsOf(trip.slug, tripsBehind()), [trip.slug]);
   // Walking time alone (the plan's time less the stops), and when the walk starts: the lunch break's
   // clock time maps onto the walk with these (Peter 2026-10-27: lunch when you want it, not only at the goal).
   const walkOnlyMin = Math.max(1, tripPlan.hikeMin - stopsMinutes(stops) - stayMin);
@@ -561,7 +563,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
           )}
           {accessMap}
           {transit ? <StopOptions /> : <ParkingOptions />}
-          {transit && <TransitHandoff />}
+          {transit && <TransitHandoff plan={plan} rail={rail} />}
         </PlanStep>
 
         <PlanStep id="when" n={whenN} title={t("Kedy")} warn={kedy.warn} summary={kedy.summary}>

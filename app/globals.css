@@ -901,6 +901,9 @@ h2,
 }
 .reveal-clip {
   min-height: 0;
+  /* Never wider than the row it sits in: without this, content that cannot shrink widened the whole page as soon as
+     the row settled and stopped clipping (C217). */
+  min-width: 0;
   overflow: hidden;
 }
 .reveal[data-settled="true"] > .reveal-clip {
