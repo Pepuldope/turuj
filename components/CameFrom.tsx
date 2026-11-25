@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useSyncExternalStore, type MouseEvent } from "react";
-import { arrive, cameFrom, readTrail, type Visit } from "@/lib/cameFrom";
+import { arrive, cameFrom, readTrail, tripsOn, type Visit } from "@/lib/cameFrom";
 import { useLang, useT } from "@/lib/i18n";
 import { langPath } from "@/lib/lang";
 
@@ -52,6 +52,11 @@ function visit(path: string, label: string): void {
     return;
   }
   window.dispatchEvent(new Event(CHANGED));
+}
+
+/** The trips the visitor can still step back to in this tab (their slugs). */
+export function tripsBehind(): string[] {
+  return tripsOn(readTrail(stored()));
 }
 
 /**

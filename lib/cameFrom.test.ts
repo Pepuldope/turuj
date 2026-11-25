@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arrive, cameFrom, readTrail, type Visit } from "@/lib/cameFrom";
+import { arrive, cameFrom, readTrail, tripsOn, type Visit } from "@/lib/cameFrom";
 
 const v = (path: string, label = path, href = path): Visit => ({ path, href, label });
 const HOME = v("/", "Všetky výlety");
@@ -65,6 +65,18 @@ describe("where the visitor came from", () => {
   it("keeps the trail short", () => {
     const many: [Visit][] = Array.from({ length: 80 }, (_, i) => [v(`/trasa/t${i}`)]);
     expect(walk(many)).toHaveLength(30);
+  });
+});
+
+describe("the trips a back link can still lead to", () => {
+  it("lists trip pages only, Slovak and English alike", () => {
+    const trail = walk([[HOME], [PLESO], [TOWN], [v("/en/trasa/krivan", "Kriváň")]]);
+    expect(tripsOn(trail)).toEqual(["popradske-pleso", "krivan"]);
+  });
+
+  it("drops a trip once the visitor has gone back past it", () => {
+    const trail = walk([[PLESO], [STRBSKE], [PLESO, true]]);
+    expect(tripsOn(trail)).toEqual(["popradske-pleso"]);
   });
 });
 

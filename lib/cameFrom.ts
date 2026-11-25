@@ -48,6 +48,14 @@ export function cameFrom(trail: readonly Visit[], path: string): Visit | null {
   return trail[trail.length - 2] ?? null;
 }
 
+/** The trips on the trail (their slugs): the trip pages a back link can still lead to. */
+export function tripsOn(trail: readonly Visit[]): string[] {
+  return trail.flatMap((v) => {
+    const slug = /^\/trasa\/([^/]+)$/.exec(bare(v.path))?.[1];
+    return slug ? [slug] : [];
+  });
+}
+
 /** What is stored, read back safely: anything odd is an empty trail. */
 export function readTrail(raw: string | null): Visit[] {
   if (!raw) return [];
