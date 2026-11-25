@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { BBox, Closure, LatLng } from "@/lib/types";
 import type { TripProfile } from "@/lib/tripProfile";
-import { offlineMapUrls } from "@/lib/tiles";
+import { makeOfflineCopy, pageBuildFiles } from "@/lib/offlineCopy";
 import { dayAfterNa } from "@/lib/days";
 import { useSavedTrips } from "@/lib/savedTrips";
 import type { SavedTrail, SavedTrip } from "@/lib/savedTrips";
@@ -71,36 +71,6 @@ function loadedAssetUrls(): string[] {
     .getEntriesByType("resource")
     .map((e) => e.name)
     .filter((u) => new URL(u).pathname.startsWith("/_next/static/"));
-}
-
-/** A few missing map tiles leave gaps; more than this share and the offline map isn't worth the name. */
-const MAX_MISSING_SHARE = 0.1;
-
-/**
- * Ask the service worker to store these URLs. Fails when one of `required` (the page, the GPX)
- * or too many of the rest could not be stored, so the page never says "works without signal" wrongly.
- */
-async function cacheTrip(slug: string, urls: string[], required: string[], onProgress: (done: number, total: number) => void) {
-  // Never resolves when the service worker failed to register: give up instead of saving forever.
-  const reg = await Promise.race([
-    navigator.serviceWorker.ready,
-    new Promise<never>((_, reject) => setTimeout(() => reject(new Error("no service worker")), 10000)),
-  ]);
-  const channel = new MessageChannel();
-  const done = new Promise<void>((resolve, reject) => {
-    channel.port1.onmessage = (event) => {
-      const msg = event.data;
-      if (msg.type === "PROGRESS") onProgress(msg.done, msg.total);
-      if (msg.type === "DONE") {
-        const failed: string[] = msg.failed ?? [];
-        if (failed.some((u) => required.includes(u)) || failed.length > MAX_MISSING_SHARE * urls.length) reject(new Error("incomplete"));
-        else resolve();
-      }
-    };
-    setTimeout(() => reject(new Error("timeout")), 120000);
-  });
-  reg.active?.postMessage({ type: "CACHE_TRIP", slug, urls }, [channel.port2]);
-  await done;
 }
 
 const primary =
@@ -189,15 +159,14 @@ export function useTripSave({ slug, name, gpxUrl, bbox, sun, tripPlan, profile, 
       setStatus("idle");
       return;
     }
-    const required = [langPath(lang, `/trasa/${slug}`), ...(gpxUrl ? [gpxUrl] : [])];
-    const mapUrls = bbox ? await offlineMapUrls(bbox) : [];
-    const urls = [...required, ...loadedAssetUrls(), ...mapUrls];
-    // The map style and its TileJSON (the URLs without a file extension): without them there is no offline map at all.
-    const mapCore = mapUrls.filter((u) => !/\.[a-z0-9]+$/i.test(new URL(u, window.location.origin).pathname));
     try {
-      await cacheTrip(slug, urls, [...required, ...mapCore], (d, t) => setProgress({ done: d, total: t }));
-      // The map's style couldn't be read (no signal, map service down): the page and GPX are kept, but no map.
-      if (bbox && mapUrls.length === 0) throw new Error("no map");
+      const pagePath = langPath(lang, `/trasa/${slug}`);
+      // What the page has loaded so far misses the map's code when save is tapped before the map came into view
+      // (the box on a shared link, a quick tap): with no signal the saved page then broke at the map. So the copy
+      // also takes every build file the page names. If that list can't be read, it is as before.
+      const named = await pageBuildFiles(pagePath).then((f) => f.assets, () => [] as string[]);
+      const assets = [...new Set([...loadedAssetUrls(), ...named].map((u) => new URL(u, window.location.origin).href))];
+      await makeOfflineCopy({ slug, pagePath, gpxUrl, bbox, assets, onProgress: (d, t) => setProgress({ done: d, total: t }) });
       patch(slug, { offline: "ok" });
       setStatus("idle");
     } catch {
@@ -241,6 +210,9 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
   // The reminder question shows where the save was tapped: here, or in the box of a friend's plan.
   const askEve = saving.askEve === "card";
   const t = useT();
+  // Only the installed app says the saved trip works without signal (Peter, 25 Nov 2026): in a browser tab that promise
+  // reads as if the website needed no internet. The copy is made either way, and Moje výlety shows its state.
+  const installed = useInstalled();
   const lang = useLang();
 
   // "pending" while this page isn't saving: the save was cut off (page closed, phone asleep).
@@ -261,7 +233,7 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
   const saveButton = (
         <button type="button" onClick={() => onSave()} disabled={status === "saving" || saving.notReady} className={closedDay ? `${secondary} min-h-11 w-full` : primary}>
           {status === "saving"
-            ? t("Ukladám aj na cestu bez signálu... ({done}/{total})", { done: progress.done, total: progress.total || "?" })
+            ? t(installed ? "Ukladám aj na cestu bez signálu... ({done}/{total})" : "Ukladám... ({done}/{total})", { done: progress.done, total: progress.total || "?" })
             : saved
               ? t("Uložiť zmeny")
               : t("Uložiť výlet")}
@@ -297,7 +269,7 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
             {t("Mojich výletoch")}
           </LangLink>
           , {t("naplánované na")} <strong>{dayAfterNa(saved.date, lang)}</strong> {t("o")} <strong>{saved.time}</strong>
-          {saved.offline === "ok" ? t(", funguje aj bez signálu. ") : ". "}
+          {saved.offline === "ok" && installed ? t(", funguje aj bez signálu. ") : ". "}
           <button type="button" onClick={remove} className="underline">
             {t("Odstrániť")}
           </button>
@@ -311,7 +283,8 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
 
       {share}
 
-      {status === "error" && (
+      {/* A browser tab is promised nothing about working without signal (C224), so a failed copy is only said in the installed app. */}
+      {status === "error" && installed && (
         <p className="flex items-start gap-1.5 text-sm text-[var(--warn)]">
           <UiIcon name="warn" size={16} className="mt-0.5" />
           <span>{t("Výlet je uložený, ale kópia bez signálu sa nepodarila. Skúste to znova so signálom.")}</span>
@@ -334,12 +307,13 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
  */
 export function SharedSave({ saving, plan, sun, closures = [], where = null }: { saving: TripSave; plan: TripPlan["plan"]; sun: LatLng | null; closures?: Closure[]; where?: Props["where"] }) {
   const t = useT();
+  const installed = useInstalled();
   const { saved, changed, status, progress } = saving;
   if (saving.closedDay) return null;
   if (status === "saving")
     return (
       <p role="status" className="font-semibold">
-        {t("Ukladám aj na cestu bez signálu... ({done}/{total})", { done: progress.done, total: progress.total || "?" })}
+        {t(installed ? "Ukladám aj na cestu bez signálu... ({done}/{total})" : "Ukladám... ({done}/{total})", { done: progress.done, total: progress.total || "?" })}
       </p>
     );
   if (saved && !changed)
@@ -350,7 +324,7 @@ export function SharedSave({ saving, plan, sun, closures = [], where = null }: {
           <LangLink href="/ulozene" className="underline">
             {t("Mojich výletoch")}
           </LangLink>
-          {saved.offline === "ok" ? t(", funguje aj bez signálu. ").trimEnd() : "."}
+          {saved.offline === "ok" && installed ? t(", funguje aj bez signálu. ").trimEnd() : "."}
         </p>
         {saving.askEve === "shared" && (
           <div className="rounded-xl bg-[var(--card-bg)] p-3">
@@ -364,7 +338,7 @@ export function SharedSave({ saving, plan, sun, closures = [], where = null }: {
       <button type="button" onClick={() => saving.onSave("shared")} disabled={saving.notReady} className={primary}>
         {t("Uložiť si výlet")}
       </button>
-      <p className="text-xs text-[var(--muted)]">{t("Aj s mapou bez signálu a pripomienkou večer vopred.")}</p>
+      <p className="text-xs text-[var(--muted)]">{installed ? t("Aj s mapou bez signálu a pripomienkou večer vopred.") : t("Aj s pripomienkou večer vopred.")}</p>
     </div>
   );
 }

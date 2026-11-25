@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SavedIntro } from "@/components/SavedIntro";
 import { SavedTripsList } from "@/components/SavedTripsList";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Here, PageBackLink } from "@/components/CameFrom";
@@ -18,7 +19,7 @@ export default function SavedTripsPage() {
       </div>
       <header className="flex flex-col gap-1">
         <h1 className="text-[1.65rem] leading-tight font-extrabold"><T>Moje výlety</T></h1>
-        <p className="text-sm text-[var(--muted)]"><T>Uložené len v tomto zariadení. Pri každom výlete vidíte, či funguje aj bez signálu.</T></p>
+        <SavedIntro />
       </header>
       <SavedTripsList />
       <SiteFooter />
