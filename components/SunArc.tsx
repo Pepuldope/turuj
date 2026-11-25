@@ -909,11 +909,11 @@ export function SunArc({ plan, profile, sun, hasDrive, byBus = false, byTrain = 
       </ul>
       )}
 
-      {/* The left side gives way first (its lines cut off with "…"), down to the width of the time; only then the weather
+      {/* The left side gives way first (its lines cut off with "…"), down to the width of the time (48.5 px, so 52); only then the weather
           words on the right do. Before, the right side could not shrink at all, and a long forecast ("slabý dážď so snehom")
           made a saved trip's card wider than a 320 px phone (C217). */}
       <div className="flex justify-between gap-3 border-t border-[var(--border)] px-4 pt-2.5 pb-3.5 text-sm">
-        <div className="min-w-12 shrink-[1000]">
+        <div className="min-w-[52px] shrink-[1000]">
           <div className="font-data text-[22px] leading-none">{formatTime(new Date(t))}</div>
           <div className="truncate font-semibold">{what}</div>
           {/* Height and trail sign at that moment, only on the walk (while driving the line stays, empty). Always exactly one
