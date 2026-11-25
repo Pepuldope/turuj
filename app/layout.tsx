@@ -3,6 +3,7 @@ import { preload } from "react-dom";
 import "./fonts.css";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { AccountSync } from "@/components/AccountSync";
 import { StaleCodeReload } from "@/components/StaleCodeReload";
 import { UserLocationProvider } from "@/lib/userLocation";
 import { TripSettingsProvider } from "@/lib/tripSettings";
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
+        <AccountSync />
         <StaleCodeReload />
         <LangProvider>
           <UserLocationProvider>

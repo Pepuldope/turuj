@@ -244,7 +244,7 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
   const lang = useLang();
 
   // "pending" while this page isn't saving: the save was cut off (page closed, phone asleep).
-  const showButton = !saved || changed || saved.offline === "failed" || saved.offline === "pending" || status === "saving";
+  const showButton = !saved || changed || saved.offline === "failed" || saved.offline === "pending" || saved.offline === "none" || status === "saving";
   const share = (
     <ShareButton
       {...trip}

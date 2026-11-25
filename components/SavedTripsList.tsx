@@ -16,6 +16,7 @@ import { UiIcon } from "@/components/UiIcon";
 import { isoDate } from "@/lib/days";
 import { VERDICT_SHORT, formatDateSk, formatDuration, formatTime } from "@/lib/format";
 import { useSavedTrips } from "@/lib/savedTrips";
+import { markVisited, unmarkVisited } from "@/lib/visits";
 import type { SavedTrip } from "@/lib/savedTrips";
 import { useTripSettings } from "@/lib/tripSettings";
 import { useUserLocation } from "@/lib/userLocation";
@@ -109,6 +110,7 @@ export function SavedTripsList() {
   const went = (trip: SavedTrip) => {
     setTouched(true);
     patch(trip.slug, { doneAt: new Date().toISOString() });
+    markVisited(trip);
     track("trip_done", { trail: trip.slug, how: "list" });
     if (!trip.reviewed) setReviewing(trip);
   };
@@ -160,6 +162,7 @@ export function SavedTripsList() {
                     onClick={() => {
                       setTouched(true);
                       patch(trip.slug, { doneAt: undefined });
+                      unmarkVisited(trip.slug, trip.date);
                     }}
                     className="text-[13px] font-semibold text-[var(--muted)] underline"
                   >

@@ -91,3 +91,16 @@ export function googleHref(): string {
   const here = `${location.pathname}${location.search.replace(/[?&]prihlasenie=[^&]*/, "")}`;
   return `/api/auth/google?next=${encodeURIComponent(here || "/")}`;
 }
+
+const OPEN_SIGN_IN = "turuj-open-account";
+
+/** Opens the account panel of the top bar (the sign-in form when nobody is signed in). */
+export function openSignIn() {
+  window.dispatchEvent(new Event(OPEN_SIGN_IN));
+}
+
+/** For the top bar: runs `fn` whenever some other component asks for the account panel. */
+export function onOpenSignIn(fn: () => void) {
+  window.addEventListener(OPEN_SIGN_IN, fn);
+  return () => window.removeEventListener(OPEN_SIGN_IN, fn);
+}

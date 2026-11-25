@@ -6,6 +6,7 @@ import { formatDateSk } from "@/lib/format";
 import { isoDate } from "@/lib/days";
 import type { Fit } from "@/lib/reviewLimits";
 import { useSavedTrips } from "@/lib/savedTrips";
+import { markVisited } from "@/lib/visits";
 import { ReviewSheet } from "@/components/ReviewSheet";
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { decimal } from "@/lib/lang";
@@ -79,6 +80,7 @@ export function TripReviews({ slug, name }: { slug: string; name: string }) {
             type="button"
             onClick={() => {
               patch(slug, { doneAt: new Date().toISOString() });
+              markVisited(saved);
               track("trip_done", { trail: slug, how: "ask" });
               if (!saved.reviewed) setReviewing(true);
             }}

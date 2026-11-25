@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { deleteMyAccount, googleHref, signOut, signedIn, useAccount } from "@/lib/account";
+import { deleteMyAccount, googleHref, onOpenSignIn, signOut, signedIn, useAccount } from "@/lib/account";
 import type { MyAccount } from "@/lib/account";
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { PREVIEW_MESSAGE } from "@/lib/previewGuard";
@@ -165,6 +165,9 @@ export function TopBar() {
     });
     return () => clearTimeout(id);
   }, []);
+
+  // "Prihlásiť sa" in the middle of a page (the saved trips line) asks for the same panel.
+  useEffect(() => onOpenSignIn(() => setOpened({ kind: "account", path: location.pathname })), []);
 
   // A page we come back to (back/forward, a link to a route Next kept in memory) must not show the panel
   // as we left it: state kept with the path would match again. Close on every path change and bfcache restore.
@@ -378,7 +381,7 @@ function AccountPanel({ notice, code: why, onDone }: { notice: string | null; co
           type="button"
           disabled={busy}
           onClick={async () => {
-            if (!window.confirm(t("Naozaj zmazať účet? Zmažeme meno, email aj heslo a nedá sa to vrátiť. Uložené výlety ostanú v tomto prehliadači."))) return;
+            if (!window.confirm(t("Naozaj zmazať účet? Zmažeme meno, email, heslo aj výlety uložené v účte a nedá sa to vrátiť. Výlety v tomto prehliadači ostanú."))) return;
             setBusy(true);
             const ok = await deleteMyAccount();
             setBusy(false);
