@@ -210,6 +210,9 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
   // The reminder question shows where the save was tapped: here, or in the box of a friend's plan.
   const askEve = saving.askEve === "card";
   const t = useT();
+  // Only the installed app says the saved trip works without signal (Peter, 25 Nov 2026): in a browser tab that promise
+  // reads as if the website needed no internet. The copy is made either way, and Moje výlety shows its state.
+  const installed = useInstalled();
   const lang = useLang();
 
   // "pending" while this page isn't saving: the save was cut off (page closed, phone asleep).
@@ -266,7 +269,7 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
             {t("Mojich výletoch")}
           </LangLink>
           , {t("naplánované na")} <strong>{dayAfterNa(saved.date, lang)}</strong> {t("o")} <strong>{saved.time}</strong>
-          {saved.offline === "ok" ? t(", funguje aj bez signálu. ") : ". "}
+          {saved.offline === "ok" && installed ? t(", funguje aj bez signálu. ") : ". "}
           <button type="button" onClick={remove} className="underline">
             {t("Odstrániť")}
           </button>
@@ -303,6 +306,7 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
  */
 export function SharedSave({ saving, plan, sun, closures = [], where = null }: { saving: TripSave; plan: TripPlan["plan"]; sun: LatLng | null; closures?: Closure[]; where?: Props["where"] }) {
   const t = useT();
+  const installed = useInstalled();
   const { saved, changed, status, progress } = saving;
   if (saving.closedDay) return null;
   if (status === "saving")
@@ -319,7 +323,7 @@ export function SharedSave({ saving, plan, sun, closures = [], where = null }: {
           <LangLink href="/ulozene" className="underline">
             {t("Mojich výletoch")}
           </LangLink>
-          {saved.offline === "ok" ? t(", funguje aj bez signálu. ").trimEnd() : "."}
+          {saved.offline === "ok" && installed ? t(", funguje aj bez signálu. ").trimEnd() : "."}
         </p>
         {saving.askEve === "shared" && (
           <div className="rounded-xl bg-[var(--card-bg)] p-3">
@@ -333,7 +337,7 @@ export function SharedSave({ saving, plan, sun, closures = [], where = null }: {
       <button type="button" onClick={() => saving.onSave("shared")} disabled={saving.notReady} className={primary}>
         {t("Uložiť si výlet")}
       </button>
-      <p className="text-xs text-[var(--muted)]">{t("Aj s mapou bez signálu a pripomienkou večer vopred.")}</p>
+      <p className="text-xs text-[var(--muted)]">{installed ? t("Aj s mapou bez signálu a pripomienkou večer vopred.") : t("Aj s pripomienkou večer vopred.")}</p>
     </div>
   );
 }
