@@ -208,7 +208,8 @@ h2,
    (set inline). No marking from here: a plain white sign with a dashed edge. */
 .mt-pin-mark {
   width: 20px;
-  height: 15px;
+  /* Even, like every pin: MapLibre centres a pin by half its size, and half of 15 put it between two rows of pixels. */
+  height: 16px;
   border-radius: 2px;
   border: 1px solid #5b6577;
   background: #fff;
@@ -267,7 +268,8 @@ h2,
   pointer-events: none;
   font-size: 14px;
   font-weight: 700;
-  line-height: 1.1;
+  /* Whole pixels: the label is centred by half its height, and half of 15.4 px smeared the text on plain screens. */
+  line-height: 16px;
   color: #17213a;
   text-shadow: -1.5px 0 #fff, 1.5px 0 #fff, 0 -1.5px #fff, 0 1.5px #fff, -1px -1px #fff, 1px -1px #fff, -1px 1px #fff, 1px 1px #fff;
 }
@@ -383,6 +385,9 @@ h2,
 .day-map-static .mt-walker-time {
   font-size: 12px;
 }
+.day-map-static .mt-pin-label {
+  line-height: 14px;
+}
 .day-map-static .mt-walker {
   width: 22px;
   height: 22px;
@@ -464,6 +469,74 @@ h2,
 .mt-pin-transit.mt-pin-dimmed {
   opacity: 0.6;
   cursor: pointer;
+}
+
+/* Screens with few pixels (a desk monitor at 100 %: one pixel per point, where a laptop or a phone has two or
+   three). A 14 px pictogram gets 14 pixels there and the fork melts into "a half-circle on top of a line" (Peter,
+   24 Nov 2026, C216, on his 27-inch monitor); it needs about 20. So on such screens the pins and their pictograms
+   are a size bigger, and so are the day map's pins and small print (C214). Sharper screens are not touched. */
+@media (max-resolution: 1.49dppx) {
+  .mt-pin-parking {
+    width: 28px;
+    height: 28px;
+    font-size: 0.875rem;
+  }
+  .mt-pin-poi,
+  .mt-pin-transit {
+    width: 30px;
+    height: 30px;
+  }
+  .mt-pin-poi.is-active,
+  .mt-pin-transit.is-active,
+  .mt-pin-goal {
+    width: 34px;
+    height: 34px;
+  }
+  .mt-pin-poi svg,
+  .mt-pin-transit svg {
+    width: 20px;
+    height: 20px;
+  }
+  .mt-pin-goal svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .day-map-static .mt-pin {
+    font-size: 0.75rem;
+  }
+  .day-map-static .mt-pin-goal,
+  .day-map-static .mt-pin-transit,
+  .day-map-static .mt-pin-transit.is-active,
+  .day-map-static .mt-pin-poi,
+  .day-map-static .mt-pin-poi.is-active {
+    width: 26px;
+    height: 26px;
+  }
+  .day-map-static .mt-pin-parking {
+    width: 22px;
+    height: 22px;
+  }
+  .day-map-static .mt-pin svg {
+    width: 20px;
+    height: 20px;
+  }
+  .day-map-static .mt-pin-label,
+  .day-map-static .mt-walker-time {
+    font-size: 14px;
+  }
+  .day-map-static .mt-pin-label {
+    line-height: 16px;
+    /* The white edge in whole pixels: a 1.5 px one is half grey there. */
+    text-shadow: -2px 0 #fff, 2px 0 #fff, 0 -2px #fff, 0 2px #fff, -1px -1px #fff, 1px -1px #fff, -1px 1px #fff, 1px 1px #fff;
+  }
+  .day-map-static .mt-walker-time {
+    line-height: 18px;
+  }
+  .day-map-static .mt-walker {
+    width: 26px;
+    height: 26px;
+  }
 }
 
 /* Mountain areas on the zoomed-out home map: tap to zoom in. */
