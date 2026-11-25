@@ -13,6 +13,7 @@ import { poiIcon, poiLabel } from "@/lib/food";
 import { kindSvg } from "@/lib/kindIcons";
 import { GOAL_COLOUR, POI_COLOUR } from "@/lib/palette";
 import { MARKING_COLOR, MARKING_LABEL, trackColor } from "@/lib/mapLayers";
+import { markingAt, markingRuns } from "@/lib/markSigns";
 import type { MarkSigns } from "@/lib/markSigns";
 import { linesNear, markingAlong } from "@/lib/sideMarking";
 import type { MarkColour } from "@/lib/tripSchema";
@@ -69,6 +70,8 @@ const OFFERED = 4;
 
 /** Other routes in a muted slate: clearly not the walk you picked (that one keeps its trail colour), still easy to see. */
 const OTHER_ROUTE_COLOUR = "#6b7a93";
+/** The KST sign on a marking pin (.mt-pin-mark, 14 px inside its edge): white, the colour, white, each band on whole pixels so it stays crisp on a screen with one pixel per point. "gradient" in it is what the pin's CSS looks for. */
+const markStripe = (colour: string) => `linear-gradient(#fff 0 4px, ${colour} 4px 10px, #fff 10px)`;
 
 /** Closer than this, the car is at the trail: no walking link. */
 const AT_TRAIL_M = 60;
@@ -254,12 +257,12 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
     const up = loop ? points.length - 1 : Math.floor((points.length - 1) / 2);
     const ll = points.slice(0, up + 1).map(([lat, lon]) => ({ lat, lon }));
     let at = 0;
-    const out: (MarkSigns["signs"][number] & { at: number })[] = [];
+    const out: (MarkSigns["signs"][number] & { at: number; f: number })[] = [];
     for (const s of marks.signs) {
       const hit = nearestOnPath(ll.slice(at), s.location);
       if (!hit || hit.distanceM > SIGN_ON_TRACK_M) continue;
       at += hit.i;
-      out.push({ ...s, location: hit.point, at });
+      out.push({ ...s, location: hit.point, at, f: hit.t });
     }
     return out;
   }, [points, marks, loop]);
@@ -277,8 +280,8 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
     const routeAt = (p: [number, number]): MarkColour | null => {
       const hit = nearestOnPath(trip, { lat: p[0], lon: p[1] });
       if (!marks || !hit) return null;
-      const i = loop || hit.i <= up ? hit.i : Math.max(0, points.length - 2 - hit.i);
-      return signs.filter((x) => x.at <= i).pop()?.colour ?? marks.start;
+      const at = hit.i + hit.t;
+      return markingAt(signs, marks.start, loop || at <= up ? at : points.length - 1 - at);
     };
     Promise.all(legs.map(async (leg) => markingAlong(leg.slice(0, -1), await linesNear(leg), trip, routeAt(leg[0])))).then(
       (marks) => !cancelled && setSideMarks({ key: sideKey, marks })
@@ -300,6 +303,9 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
     return {
       outI: out.i,
       backI: mid + back.i,
+      // How far along those two segments (0 to 1).
+      outT: out.t,
+      backT: back.t,
       a: [out.point.lat, out.point.lon] as [number, number],
       b: [back.point.lat, back.point.lon] as [number, number],
     };
@@ -329,33 +335,15 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
   // (Peter, 15 Nov, C168). With several routes the picked one too (Peter, 16 Nov); the others keep their list colours.
   const drawnTracks = useMemo<MapTrack[]>(() => {
     if (!marks || points.length < 3) return tracks;
-    const n = points.length;
-    const up = loop ? n - 1 : Math.floor((n - 1) / 2);
-    const out = (i: number) => signs.filter((s) => s.at <= i).pop()?.colour ?? marks.start;
-    // Segment i runs from point i to i + 1; on the way back it is the mirrored segment of the way there.
-    const colourOf = (i: number) => {
-      const c = loop || i < up ? out(i) : out(Math.max(0, n - 2 - i));
-      return c ? MARKING_COLOR[c] : UNMARKED_COLOUR;
-    };
-    const runs: MapTrack[] = [];
-    // One stretch of the line, cut into runs of one marking colour; its segment k is the path's segment base + k.
-    const stretch = (pts: [number, number][], base: number, state: MapTrack["state"]) => {
-      let from = 0;
-      for (let k = 1; k <= pts.length - 1; k++) {
-        if (k < pts.length - 1 && colourOf(base + k) === colourOf(base + from)) continue;
-        runs.push({ slug: `${trail.slug}-m${runs.length}`, points: pts.slice(from, k + 1), color: colourOf(base + from), state, arrows: loop && state === "selected" });
-        from = k;
-      }
-    };
-    if (!cut) stretch(points, 0, "selected");
-    else {
-      // Parked up the trail: the skipped stretches keep their marking colours too, only faint (Peter, 17 Nov:
-      // with the nearer parking the whole line came out in the route's own colour).
-      const { a, b, outI, backI } = cut;
-      stretch([...points.slice(0, outI + 1), a], 0, "dimmed");
-      stretch([b, ...points.slice(backI + 1)], backI, "dimmed");
-      stretch([a, ...points.slice(outI + 1, backI + 1), b], outI, "selected");
-    }
+    // Cut exactly at the signs (lib/markSigns.ts). Parked up the trail: the skipped stretches keep their marking
+    // colours too, only faint (Peter, 17 Nov: with the nearer parking the whole line came out in the route's own colour).
+    const runs: MapTrack[] = markingRuns(points, signs, marks.start, loop, cut && { from: cut.outI + cut.outT, to: cut.backI + cut.backT, a: cut.a, b: cut.b }).map((r, k) => ({
+      slug: `${trail.slug}-m${k}`,
+      points: r.points,
+      color: r.colour ? MARKING_COLOR[r.colour] : UNMARKED_COLOUR,
+      state: r.faint ? "dimmed" : "selected",
+      arrows: loop && !r.faint,
+    }));
     // The step maps keep the other routes around the picked one.
     const own = (slug: string) => slug === trail.slug || slug.startsWith(`${trail.slug}-skipped-`);
     return day ? runs : tracks.flatMap((tk) => (tk.slug === trail.slug ? runs : own(tk.slug) ? [] : [tk]));
@@ -379,7 +367,7 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
           lines: loop
             ? []
             : [t("Cestou tam ďalej {mark}", { mark: mark(s.colour) }), t("Cestou späť ďalej {mark}", { mark: mark(s.before) })],
-          colour: s.colour ? `linear-gradient(#fff 0 30%, ${MARKING_COLOR[s.colour]} 30% 70%, #fff 70%)` : undefined,
+          colour: s.colour ? markStripe(MARKING_COLOR[s.colour]) : undefined,
           dimmed: off,
         };
       }),
@@ -395,7 +383,7 @@ export function TripMap({ detail, gpxUrl, path, others: othersProp = [], loop = 
             location: { lat, lon },
             title: t("K zastávke {mark}", { mark: c ? t(MARKING_LABEL[c]) : t("bez značky") }),
             lines: [t(sideStops[i].poi.name)],
-            colour: c ? `linear-gradient(#fff 0 30%, ${MARKING_COLOR[c]} 30% 70%, #fff 70%)` : undefined,
+            colour: c ? markStripe(MARKING_COLOR[c]) : undefined,
           },
         ];
       }),

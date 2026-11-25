@@ -5,6 +5,7 @@ import type { ExpressionSpecification, GeoJSONSource, LineLayerSpecification, Ma
 import type { LatLng } from "@/lib/types";
 import type { DestinationKind } from "@/lib/tripSchema";
 import { MAP_STYLE_URL, mapPixelRatio } from "@/lib/mapLayers";
+import { keepMapSharp } from "@/lib/mapSharp";
 import { keepInSlovakia } from "@/lib/slovakia";
 import { GOAL_COLOUR, POPULARITY_DASH, POPULARITY_RAMP, POPULARITY_TOP_OUTLINE, QUIET_THREAD, desaturate } from "@/lib/palette";
 import { lineFeeder, OVERVIEW_POINTS_PER_STEP } from "@/lib/mapFeed";
@@ -414,6 +415,7 @@ export function BrowseMap({
         minZoom: 5,
         pixelRatio: mapPixelRatio(),
       });
+      keepMapSharp(map);
       map.touchZoomRotate.disableRotation();
       map.addControl(new ml.NavigationControl({ showCompass: false }), "bottom-right");
       // The credits start folded as the "i", as on the trip maps (Peter, 15 Nov, C169).
