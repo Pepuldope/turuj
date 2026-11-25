@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { BBox, Closure, LatLng } from "@/lib/types";
 import type { TripProfile } from "@/lib/tripProfile";
-import { offlineMapUrls } from "@/lib/tiles";
+import { makeOfflineCopy } from "@/lib/offlineCopy";
 import { dayAfterNa } from "@/lib/days";
 import { useSavedTrips } from "@/lib/savedTrips";
 import type { SavedTrail, SavedTrip } from "@/lib/savedTrips";
@@ -71,36 +71,6 @@ function loadedAssetUrls(): string[] {
     .getEntriesByType("resource")
     .map((e) => e.name)
     .filter((u) => new URL(u).pathname.startsWith("/_next/static/"));
-}
-
-/** A few missing map tiles leave gaps; more than this share and the offline map isn't worth the name. */
-const MAX_MISSING_SHARE = 0.1;
-
-/**
- * Ask the service worker to store these URLs. Fails when one of `required` (the page, the GPX)
- * or too many of the rest could not be stored, so the page never says "works without signal" wrongly.
- */
-async function cacheTrip(slug: string, urls: string[], required: string[], onProgress: (done: number, total: number) => void) {
-  // Never resolves when the service worker failed to register: give up instead of saving forever.
-  const reg = await Promise.race([
-    navigator.serviceWorker.ready,
-    new Promise<never>((_, reject) => setTimeout(() => reject(new Error("no service worker")), 10000)),
-  ]);
-  const channel = new MessageChannel();
-  const done = new Promise<void>((resolve, reject) => {
-    channel.port1.onmessage = (event) => {
-      const msg = event.data;
-      if (msg.type === "PROGRESS") onProgress(msg.done, msg.total);
-      if (msg.type === "DONE") {
-        const failed: string[] = msg.failed ?? [];
-        if (failed.some((u) => required.includes(u)) || failed.length > MAX_MISSING_SHARE * urls.length) reject(new Error("incomplete"));
-        else resolve();
-      }
-    };
-    setTimeout(() => reject(new Error("timeout")), 120000);
-  });
-  reg.active?.postMessage({ type: "CACHE_TRIP", slug, urls }, [channel.port2]);
-  await done;
 }
 
 const primary =
@@ -167,6 +137,7 @@ export function useTripSave({ slug, name, gpxUrl, bbox, sun, tripPlan, profile, 
       profile,
       stops,
       trail,
+      gpx: gpxUrl,
       closures,
       eve: saved?.eve,
       weather: weather?.urls
@@ -189,15 +160,8 @@ export function useTripSave({ slug, name, gpxUrl, bbox, sun, tripPlan, profile, 
       setStatus("idle");
       return;
     }
-    const required = [langPath(lang, `/trasa/${slug}`), ...(gpxUrl ? [gpxUrl] : [])];
-    const mapUrls = bbox ? await offlineMapUrls(bbox) : [];
-    const urls = [...required, ...loadedAssetUrls(), ...mapUrls];
-    // The map style and its TileJSON (the URLs without a file extension): without them there is no offline map at all.
-    const mapCore = mapUrls.filter((u) => !/\.[a-z0-9]+$/i.test(new URL(u, window.location.origin).pathname));
     try {
-      await cacheTrip(slug, urls, [...required, ...mapCore], (d, t) => setProgress({ done: d, total: t }));
-      // The map's style couldn't be read (no signal, map service down): the page and GPX are kept, but no map.
-      if (bbox && mapUrls.length === 0) throw new Error("no map");
+      await makeOfflineCopy({ slug, pagePath: langPath(lang, `/trasa/${slug}`), gpxUrl, bbox, assets: loadedAssetUrls(), onProgress: (d, t) => setProgress({ done: d, total: t }) });
       patch(slug, { offline: "ok" });
       setStatus("idle");
     } catch {

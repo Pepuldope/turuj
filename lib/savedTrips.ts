@@ -47,6 +47,8 @@ export interface SavedTrip {
   reviewed?: boolean;
   /** The walk itself, for the trail screen ("Začať výlet"); missing on trips saved before it existed. */
   trail?: SavedTrail;
+  /** The trail's GPX file address, so another device can make its offline copy; missing on trips saved before account sync. */
+  gpx?: string | null;
   /** The trail's closure rules at save time, so the list can warn about a closed day offline; missing on trips saved before it existed. */
   closures?: Closure[];
   /** The evening-before reminder (push): true on, false switched off by the group, missing until first offered. */
