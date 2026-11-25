@@ -33,6 +33,34 @@ describe("rankStops", () => {
     expect(r.order).toEqual([1, 0]);
   });
 
+  it("puts a station with no train that day after a station with real trains (C222)", () => {
+    // Harichovce: a guess of 75 min; Spišská Nová Ves: a real train, 111 min door to trail.
+    const r = rankStops([train, train], [ride(75, true), ride(111)]);
+    expect(r.order).toEqual([1, 0]);
+    expect(r.totals[0]).toEqual({ totalMin: 75, approx: true });
+  });
+
+  it("puts a station with no train that day after the buses too, when real trains exist", () => {
+    const r = rankStops([train, bus, train], [ride(40, true), ride(90, true), ride(60)]);
+    expect(r.order).toEqual([2, 1, 0]);
+  });
+
+  it("still prefers a faster bus over a real train when a guessed station is around", () => {
+    const r = rankStops([train, bus, train], [ride(40, true), ride(45, true), ride(229)]);
+    expect(r.order).toEqual([1, 2, 0]);
+  });
+
+  it("keeps the fastest first when no stop has real train times", () => {
+    // The timetable does not cover the day: every time is a guess, so none is better founded.
+    const r = rankStops([train, bus], [ride(60, true), ride(90, true)]);
+    expect(r.order).toEqual([0, 1]);
+  });
+
+  it("keeps a station with no train that day ahead of a stop with an unknown ride", () => {
+    const r = rankStops([train, bus, train], [ride(40, true), null, ride(60)]);
+    expect(r.order).toEqual([2, 0, 1]);
+  });
+
   it("keeps the nearest-walk order without a start", () => {
     const r = rankStops([train, bus], null);
     expect(r.order).toEqual([0, 1]);
