@@ -4,6 +4,7 @@ import { openSignIn, useAccount } from "@/lib/account";
 import { needsSync, syncNow, useSyncStatus } from "@/lib/accountSync";
 import { useSavedTrips } from "@/lib/savedTrips";
 import { useT } from "@/lib/i18n";
+import { useInstalled } from "@/lib/installApp";
 import { UiIcon } from "@/components/UiIcon";
 
 // The look of the site's inline text links (GoalStayRow, HomeExplorer); the padding is the tap target.
@@ -15,12 +16,15 @@ export function SyncLine() {
   const { loaded, account } = useAccount();
   const { trips } = useSavedTrips();
   const sync = useSyncStatus();
-  const offline = t("Pri každom výlete vidíte, či funguje aj bez signálu.");
+  // Only the installed app talks about working without signal (Peter, 25 Nov 2026); in a browser tab the line stops at where the trips are kept.
+  const installed = useInstalled();
+  const offline = installed ? t("Pri každom výlete vidíte, či funguje aj bez signálu.") : "";
   const cls = "text-sm text-[var(--muted)] break-words [overflow-wrap:anywhere]";
 
-  if (!loaded) return <p className={cls}>{offline}</p>;
+  // Not known yet who is signed in: keep the line's height, say nothing that may be wrong.
+  if (!loaded) return <p className={cls}>{offline || "\u00a0"}</p>;
   if (!account) {
-    if (trips.length === 0) return <p className={cls}>{t("Uložené len v tomto zariadení. Pri každom výlete vidíte, či funguje aj bez signálu.")}</p>;
+    if (trips.length === 0) return <p className={cls}>{installed ? t("Uložené len v tomto zariadení. Pri každom výlete vidíte, či funguje aj bez signálu.") : t("Uložené len v tomto zariadení.")}</p>;
     return (
       <p className={cls}>
         {t("Výlety sú len na tomto zariadení.")}{" "}

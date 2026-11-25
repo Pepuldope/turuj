@@ -1,6 +1,7 @@
 "use client";
 
 import { track } from "@/lib/analytics";
+import { useInstalled } from "@/lib/installApp";
 import { setTripStops } from "@/lib/tripStops";
 import { useEffect, useRef, useState } from "react";
 import type { DayPlan } from "@/lib/dayPlan";
@@ -34,6 +35,8 @@ function todayIso(): string {
 /** Saved trips on this device. Renders from the saved snapshots alone, so it works offline. */
 export function SavedTripsList() {
   const { trips, remove, patch } = useSavedTrips();
+  // Only the installed app talks about working without signal (Peter, 25 Nov 2026); in a browser tab it read as if the website needed no internet.
+  const installed = useInstalled();
   const [reviewing, setReviewing] = useState<SavedTrip | null>(null);
   // A card moving between "Plánované" and "Absolvované" rolls out of one list and into the other (Peter, 17 Nov), but only
   // once the visitor has pressed something: the trips come out of storage right after hydration, and that is not an event.
@@ -99,7 +102,9 @@ export function SavedTripsList() {
   if (trips.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-[var(--border)] p-4 text-sm opacity-80">
-        {t("Zatiaľ tu nemáte žiadny výlet. Na stránke trasy ťuknite na „Uložiť výlet“, uloží sa aj s mapou, aby fungoval bez signálu.")}
+        {installed
+          ? t("Zatiaľ tu nemáte žiadny výlet. Na stránke trasy ťuknite na „Uložiť výlet“, uloží sa aj s mapou, aby fungoval bez signálu.")
+          : t("Zatiaľ tu nemáte žiadny výlet. Na stránke trasy ťuknite na „Uložiť výlet“.")}
       </p>
     );
   }
@@ -323,6 +328,7 @@ function TripCard({
   const past = trip.date < today;
   const good = plan?.verdict === "ok" || plan?.verdict === "close";
   const weather = useSavedWeather(trip, plan, past);
+  const installed = useInstalled();
   return (
           <div className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-x-3">
@@ -337,8 +343,7 @@ function TripCard({
               {trip.driveMin !== null && ` · ${t(byTrain ? "vlakom" : transit ? "autobusom" : "autom")} ${formatDuration(trip.driveMin)}`}
               {` · ${t("túra")} ${formatDuration(trip.hikeMin)}`}
               {trip.withKids && ` · ${t("s deťmi")}`}
-              {" · "}
-              {trip.offline === "ok" ? t("funguje bez signálu") : t("len so signálom")}
+              {installed && ` · ${trip.offline === "ok" ? t("funguje bez signálu") : t("len so signálom")}`}
             </p>
             {!past && trip.closures && activeClosures(trip.closures, trip.date).length > 0 && (
               <p className="flex items-start gap-1.5 text-[13px] font-semibold text-[var(--danger)]">
