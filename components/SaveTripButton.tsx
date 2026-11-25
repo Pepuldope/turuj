@@ -368,7 +368,7 @@ export function SharedSave({ saving, plan, sun, closures = [], where = null }: {
       <button type="button" onClick={() => saving.onSave("shared")} disabled={saving.notReady} className={primary}>
         {t("Uložiť si výlet")}
       </button>
-      <p className="text-xs text-[var(--muted)]">{t("Aj s mapou bez signálu a pripomienkou večer vopred.")}</p>
+      <p className="text-xs text-[var(--muted)]">{installed ? t("Aj s mapou bez signálu a pripomienkou večer vopred.") : t("Aj s pripomienkou večer vopred.")}</p>
     </div>
   );
 }
