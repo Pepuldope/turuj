@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { BBox, Closure, LatLng } from "@/lib/types";
 import type { TripProfile } from "@/lib/tripProfile";
-import { makeOfflineCopy } from "@/lib/offlineCopy";
+import { makeOfflineCopy, pageBuildFiles } from "@/lib/offlineCopy";
 import { dayAfterNa } from "@/lib/days";
 import { useSavedTrips } from "@/lib/savedTrips";
 import type { SavedTrail, SavedTrip } from "@/lib/savedTrips";
@@ -161,7 +161,13 @@ export function useTripSave({ slug, name, gpxUrl, bbox, sun, tripPlan, profile, 
       return;
     }
     try {
-      await makeOfflineCopy({ slug, pagePath: langPath(lang, `/trasa/${slug}`), gpxUrl, bbox, assets: loadedAssetUrls(), onProgress: (d, t) => setProgress({ done: d, total: t }) });
+      const pagePath = langPath(lang, `/trasa/${slug}`);
+      // What the page has loaded so far misses the map's code when save is tapped before the map came into view
+      // (the box on a shared link, a quick tap): with no signal the saved page then broke at the map. So the copy
+      // also takes every build file the page names. If that list can't be read, it is as before.
+      const named = await pageBuildFiles(pagePath).then((f) => f.assets, () => [] as string[]);
+      const assets = [...new Set([...loadedAssetUrls(), ...named].map((u) => new URL(u, window.location.origin).href))];
+      await makeOfflineCopy({ slug, pagePath, gpxUrl, bbox, assets, onProgress: (d, t) => setProgress({ done: d, total: t }) });
       patch(slug, { offline: "ok" });
       setStatus("idle");
     } catch {
