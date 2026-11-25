@@ -32,6 +32,7 @@ import { TripAccessProvider } from "@/components/TripAccess";
 import { JsonLd } from "@/components/JsonLd";
 import { TrackEvent } from "@/components/TrackEvent";
 import { TripSeenFlag } from "@/components/TripSeenFlag";
+import { Here } from "@/components/CameFrom";
 import { TripBackLink } from "@/components/TripBackLink";
 import { OG_IMAGE, absoluteUrl } from "@/lib/site";
 import type { RouteBrief, Town, TripDetail } from "@/lib/tripSchema";
@@ -301,6 +302,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
             {/* Below the clock in the home-screen app, level with the round buttons of the top bar (TopBar pads them the same). */}
             <nav aria-label={tr(lang, "Navigácia")} className="relative flex items-center justify-between gap-2 px-4 pt-[calc(1rem+env(safe-area-inset-top))]">
               <TripBackLink />
+              <Here label={h1} />
             </nav>
             {/* pt-4: a two-line name grows the header and the pill used to touch the back button (Peter, 15 Nov, C166). */}
             {/* pb-6 under a terrain picture: its credit line gets a strip of its own below the "send a photo" link. */}

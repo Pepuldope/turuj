@@ -2,7 +2,8 @@
 
 import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/SiteFooter";
-import { LangLink, useT } from "@/lib/i18n";
+import { Here, PageBackLink } from "@/components/CameFrom";
+import { useT } from "@/lib/i18n";
 
 /** Plain text page (privacy, disclaimer, sources). */
 export function InfoPage({ title, intro, children }: { title: ReactNode; intro?: ReactNode; children: ReactNode }) {
@@ -10,9 +11,8 @@ export function InfoPage({ title, intro, children }: { title: ReactNode; intro?:
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-6">
       <div className="flex items-center justify-between gap-3">
-        <LangLink href="/" className="w-fit text-sm font-semibold text-[var(--accent)]">
-          ← {t("Všetky výlety")}
-        </LangLink>
+        <PageBackLink />
+        {typeof title === "string" && <Here label={t(title)} />}
       </div>
       <header className="flex flex-col gap-1">
         <h1 className="text-[1.65rem] leading-tight font-extrabold">{typeof title === "string" ? t(title) : title}</h1>

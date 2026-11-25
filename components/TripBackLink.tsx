@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { backClick, useCameFrom } from "@/components/CameFrom";
 import { UiIcon } from "@/components/UiIcon";
 import { useLang, useT } from "@/lib/i18n";
 import { langPath } from "@/lib/lang";
@@ -34,18 +35,23 @@ export function useTownParam(): Town | null {
   return town;
 }
 
-/** "Všetky výlety" back home; opened from a town page, back to that town page instead (Peter, 15 Nov, C170). */
+/**
+ * Back to the page the trip was opened from, by its name: another trip, a town page, the list (Peter,
+ * 25 Nov 2026, C219). Opened directly: "Všetky výlety" home, or the town of a ?z= link (Peter, 15 Nov, C170).
+ */
 export function TripBackLink() {
   const t = useT();
   const lang = useLang();
   const town = useTownParam();
+  const from = useCameFrom();
   return (
     <Link
-      href={langPath(lang, town ? `/vylety-z/${town.id}` : "/")}
-      className="inline-flex items-center gap-0.5 rounded-full border border-[var(--border)] bg-[var(--card-bg)]/90 px-3 py-1.5 text-sm font-semibold"
+      href={from ? from.href : langPath(lang, town ? `/vylety-z/${town.id}` : "/")}
+      onClick={from ? (e) => backClick(e, from) : undefined}
+      className="inline-flex max-w-full min-w-0 items-center gap-0.5 rounded-full border border-[var(--border)] bg-[var(--card-bg)]/90 px-3 py-1.5 text-sm font-semibold"
     >
-      <UiIcon name="back" size={15} />
-      {town ? t("Okolo {town}", { town: townOf(lang, town.id, town.name) }) : t("Všetky výlety")}
+      <UiIcon name="back" size={15} className="shrink-0" />
+      <span className="truncate">{from ? from.label : town ? t("Okolo {town}", { town: townOf(lang, town.id, town.name) }) : t("Všetky výlety")}</span>
     </Link>
   );
 }
