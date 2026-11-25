@@ -48,6 +48,7 @@ import { StopOptions, TransitHandoff, TransitLegs } from "@/components/TransitBl
 import { TravelSwitch } from "@/components/TravelSwitch";
 import { GOAL_WORDS, trimProfile, withApproach, withStops } from "@/lib/tripProfile";
 import { LUNCH, STAY_MIN, keepStopsOf, stopsMinutes, useTripStops } from "@/lib/tripStops";
+import { PLAN_CARD_ID } from "@/lib/nextPlan";
 import { goalStayDefault, useGoalStay } from "@/lib/goalStay";
 import type { LunchPick } from "@/components/StopsRow";
 import type { PauseAt, TripProfile } from "@/lib/tripProfile";
@@ -481,7 +482,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
 
       {/* F9: interactive planner chrome stays out of Google's snippets (data-nosnippet). */}
       {/* Buttons and links here are pointer targets (Tailwind 4 leaves buttons on the arrow); a washed-out one keeps its own cursor. */}
-      <section data-nosnippet aria-label={t("Váš plán")} className={`${part} [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer`}>
+      <section id={PLAN_CARD_ID} data-nosnippet aria-label={t("Váš plán")} className={`${part} scroll-mt-[calc(64px+env(safe-area-inset-top))] lg:scroll-mt-3 [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer`}>
         <h2 className="text-[1.35rem] leading-tight font-bold">{t("Váš plán")}</h2>
         {/* Quiet once there is a start (Peter, 2026-11-11); without one a card asks for it (2026-11-12). */}
         <PlanStartAsk />
