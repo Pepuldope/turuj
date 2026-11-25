@@ -23,6 +23,7 @@ import { nearestMainTrips, noYearlyClosure, withoutYearlyClosure } from "@/lib/n
 import { TripAnswers, TripHeaderFacts } from "@/components/TripAnswers";
 import { TripPlanner } from "@/components/TripPlanner";
 import { TripReviews } from "@/components/TripReviews";
+import { PlanRow } from "@/components/PlanRow";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TripFacts } from "@/components/TripFacts";
 import { TripMap } from "@/components/TripMap";
@@ -378,6 +379,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                   />
                   {description && <p className="text-sm text-[var(--muted)]">{description}</p>}
                   <TripReviews slug={trail.slug} name={trail.name} />
+                  <PlanRow slug={trail.slug} />
                 </div>
                 {routes.length > 1 && <ShorterRouteHint routes={routes} at={routeAt} walks={walks} />}
                 {!loopBack && (

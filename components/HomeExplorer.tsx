@@ -42,6 +42,7 @@ import { genitiveFrom } from "@/lib/slovakCase";
 import { suggestTowns } from "@/lib/townSuggest";
 import { decimal, regionIn } from "@/lib/lang";
 import { StartChip } from "@/components/StartChip";
+import { NextPlanStrip } from "@/components/NextPlanStrip";
 import { TownButton } from "@/components/TownButton";
 import { TripCard } from "@/components/TripCard";
 import type { TripCardItem } from "@/components/TripCard";
@@ -1172,7 +1173,8 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
           </div>
         </header>
 
-        <div className="relative z-[1] -mx-1 -mt-14">
+        <div className="relative z-[1] -mx-1 -mt-14 flex flex-col gap-3">
+          <NextPlanStrip />
           <StartChip />
         </div>
 
