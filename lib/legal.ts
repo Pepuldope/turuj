@@ -13,6 +13,11 @@ export const LEGAL_FACTS: Record<string, string> = {
     "Túruj robia Peter Nemčok a Radoslav Nemec. O vašich údajoch rozhodujeme spoločne, preto sme spoloční prevádzkovatelia (čl. 26 nariadenia (EÚ) 2016/679, ďalej GDPR). Medzi sebou sme sa dohodli, že žiadosti o údaje vybavuje Peter Nemčok a Radoslav Nemec ho zastúpi, keď nemôže. Napísať však môžete ktorémukoľvek z nás a svoje práva môžete uplatniť voči obom.",
   DB_ACCESS:
     "Prístup k databáze a ku kódu má len Peter Nemčok a jeho účty sú chránené dvojfázovým overením (2FA).",
+  // English of the two sentences above, for content/legal/sukromie.en.ts.
+  CONTROLLERS_EN:
+    "Túruj is made by Peter Nemčok and Radoslav Nemec. We decide about your data together, so we are joint controllers (art. 26 of Regulation (EU) 2016/679, the GDPR). Between us we agreed that Peter Nemčok handles data requests and Radoslav Nemec stands in for him when he cannot. You can still write to either of us and use your rights against both.",
+  DB_ACCESS_EN:
+    "Only Peter Nemčok can reach the database and the code, and his accounts are protected by two-factor authentication (2FA).",
 };
 
 /** Placeholders left open: a test keeps them off the live site. */
