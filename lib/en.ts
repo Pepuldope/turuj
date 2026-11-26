@@ -942,6 +942,8 @@ export const EN: Record<string, string> = {
   "už nie je v ponuke": "no longer offered",
   "Tento výlet už nie je v ponuke.": "This trip is no longer offered.",
   "Vaše hodnotenie": "Your rating",
+  "môžete ho zmeniť": "you can change it",
+  "Uložiť zmenu": "Save the change",
   "Vaše hodnotenie: {n} z 5. Zmeniť.": "Your rating: {n} out of 5. Change it.",
   "Zmeniť hodnotenie": "Change the rating",
   "Naplánovať znova": "Plan it again",

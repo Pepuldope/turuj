@@ -45,7 +45,7 @@ import { StartChip } from "@/components/StartChip";
 import { NextPlanStrip } from "@/components/NextPlanStrip";
 import { useVisitedTrips } from "@/lib/visits";
 import { TownButton } from "@/components/TownButton";
-import { TripCard } from "@/components/TripCard";
+import { CardVisitMark, TripCard } from "@/components/TripCard";
 import type { TripCardItem } from "@/components/TripCard";
 import { BrowseMap } from "@/components/BrowseMap";
 import type { BrowseArea, BrowseTrip, MapFocus, MapView } from "@/components/BrowseMap";
@@ -1265,11 +1265,19 @@ function MiniCard({ item }: { item: TripCardItem }) {
   const lang = useLang();
   const { trail } = item.detail;
   const goal = trail.goal ?? "ine";
+  // The visited mark here too (Peter, 26 Nov 2026): the card that pops up over the map is the same place as its list card.
+  const visited = useVisitedTrips().has(trail.slug);
   return (
     <div className="flex items-start gap-3 pr-8">
-      <GoalTile goal={goal} size={44} />
+      <span className="relative shrink-0">
+        <GoalTile goal={goal} size={44} />
+        {visited && <CardVisitMark className="absolute -top-1.5 -left-1.5 grid ring-1 ring-[#14233b]/15" />}
+      </span>
       <div className="min-w-0">
-        <h3 className="text-lg leading-tight font-bold">{trail.name}</h3>
+        <h3 className="text-lg leading-tight font-bold">
+          {trail.name}
+          {visited && <span className="sr-only"> ({t("boli ste tu")})</span>}
+        </h3>
         <p className="text-[13px] text-[var(--muted)]">
           {t(GOAL_LABEL[goal])}
           {trail.region_name ? ` · ${regionIn(lang, trail.region_name)}` : ""}

@@ -20,6 +20,11 @@ import { useScrollLock } from "@/lib/useScrollLock";
 export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string; onDone: (sent: boolean) => void }) {
   // A trip rated before opens with its old answers (Peter, 26 Nov 2026): a second rating replaces the first.
   const [answers, setAnswers] = useState<ReviewAnswers>(() => keptReview(slug));
+  // What was sent before, if anything. Then the window shows a rating that exists (Peter, 26 Nov 2026: "you already
+  // have sent it"): it closes with "Zavrieť", and "Uložiť" is there only once something was changed.
+  const [before] = useState(answers);
+  const sentBefore = before.stars > 0;
+  const changed = answers.stars !== before.stars || answers.fit !== before.fit || answers.crowded !== before.crowded || answers.timing !== before.timing;
   const [state, setState] = useState<"idle" | "sending" | "error" | "preview">("idle");
   const tx = useT();
   // Fades and scales away before the parent removes it (Peter, 17 Nov).
@@ -38,8 +43,8 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
       <div data-state={motion} className="pres pres-backdrop absolute inset-0 touch-none bg-black/45" />
       <div data-state={motion} className="pres pres-pop relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[420px] flex-col gap-4 overflow-y-auto overscroll-contain rounded-[var(--radius-card)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-float)]">
         <div>
-          <h2 className="text-lg font-extrabold">{tx("Aký bol výlet?")}</h2>
-          <p className="text-sm text-[var(--muted)]">{name} · {tx("zaberie to pár sekúnd")}</p>
+          <h2 className="text-lg font-extrabold">{tx(sentBefore ? "Vaše hodnotenie" : "Aký bol výlet?")}</h2>
+          <p className="text-sm text-[var(--muted)]">{name} · {tx(sentBefore ? "môžete ho zmeniť" : "zaberie to pár sekúnd")}</p>
         </div>
         <ReviewFields value={answers} onChange={setAnswers} detail />
         {/* More than the quick choices (C2): an idea for us, or something wrong on this trip. */}
@@ -57,15 +62,15 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
         {state === "error" && <p className="flex items-start gap-1.5 text-sm text-[var(--danger)]"><UiIcon name="warn" size={15} className="mt-0.5" /><span>{tx("Nepodarilo sa odoslať. Skúste to o chvíľu.")}</span></p>}
         <div className="flex justify-between gap-2">
           <button type="button" onClick={() => leave(() => onDone(false))} className="rounded-full border border-[var(--border)] px-4 py-2.5 text-sm font-semibold">
-            {tx("Teraz nie")}
+            {tx(sentBefore ? "Zavrieť" : "Teraz nie")}
           </button>
           <button
             type="button"
-            disabled={answers.stars === 0 || state === "sending"}
+            disabled={answers.stars === 0 || state === "sending" || (sentBefore && !changed)}
             onClick={send}
             className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-bold text-[var(--accent-contrast)] disabled:opacity-40"
           >
-            {state === "sending" ? tx("Odosielam…") : tx("Odoslať")}
+            {state === "sending" ? tx("Odosielam…") : tx(sentBefore ? "Uložiť zmenu" : "Odoslať")}
           </button>
         </div>
       </div>
