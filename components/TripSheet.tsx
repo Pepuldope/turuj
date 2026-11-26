@@ -49,6 +49,7 @@ import { describeTripEn } from "@/lib/tripJsonLdEn";
 import { markSigns } from "@/lib/markSigns";
 import { startLines, subtitle } from "@/lib/tripAnswers";
 import { photoFocus } from "@/lib/photoFocus";
+import { photoLicenseUrl } from "@/lib/photoLicense";
 import { bannerScene, terrainKeyOf } from "@/lib/terrainScene";
 
 /**
@@ -62,14 +63,14 @@ const NEARBY_OPEN = 7;
 
 /**
  * The photo as a schema.org ImageObject with the credit fields Google's image metadata reads (F17):
- * only for Commons photos, and only the fields the photo data has. Others stay a bare URL.
+ * only for Commons photos. `license` is always set (lib/photoLicense.ts); author fields only when known. Others stay a bare URL.
  */
 function photoImage(photo: PlacePhoto) {
   if (photoSource(photo) !== "Wikimedia Commons") return photo.url;
   return {
     "@type": "ImageObject",
     contentUrl: photo.url,
-    ...(photo.license_url ? { license: photo.license_url } : {}),
+    license: photoLicenseUrl(photo),
     acquireLicensePage: photo.page,
     ...(photo.author ? { creditText: `${photo.author}, ${photo.license}, Wikimedia Commons`, creator: { "@type": "Person", name: photo.author } } : {}),
   };
