@@ -452,6 +452,12 @@ def credit(meta):
         asked = re.search(r"credit (?:me|the author) as:?\s*(.+)$", text, re.I)
         if asked:
             text = asked.group(1).strip()
+        # Commons' own filler for files without an Artist field:
+        # "No machine-readable author provided. Rado Bahna~commonswiki assumed (based on copyright claims)." -> "Rado Bahna".
+        guessed = re.match(r"no machine-readable author provided\.\s*(.+?)\s+assumed\b.*$", text, re.I)
+        if guessed:
+            text = guessed.group(1).strip()
+        text = re.sub(r"~\w*wiki\b", "", text).strip()
         if text and not NOT_A_NAME.match(text):
             return text if len(text) <= 100 else text[:100].rsplit(" ", 1)[0] + "…"
     return ""

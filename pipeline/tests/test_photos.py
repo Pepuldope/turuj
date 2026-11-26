@@ -29,6 +29,9 @@ def test_credit_lines_name_the_author():
     assert credit({"Artist": {"value": "I would appreciate being notified if you use my work outside Wikimedia. More of"}}) == ""
     assert credit({"Artist": {"value": '<a href="//commons.wikimedia.org/wiki/User:X">Jerzy Opioła</a>'}}) == "Jerzy Opioła"
     assert credit({"Attribution": {"value": "Photo: Jane Doe"}, "Artist": {"value": "jdoe"}}) == "Photo: Jane Doe"
+    # Commons' filler for files without an author field (Dobrá Voda castle photo).
+    filler = "No machine-readable author provided. Rado Bahna~commonswiki assumed (based on copyright claims)."
+    assert credit({"Artist": {"value": filler}}) == "Rado Bahna"
     long = credit({"Artist": {"value": "word " * 40}})
     assert len(long) <= 101 and long.endswith("…") and not long[:-1].endswith(" ")
 
