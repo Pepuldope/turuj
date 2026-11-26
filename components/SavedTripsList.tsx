@@ -40,7 +40,7 @@ export function SavedTripsList() {
   // A card moving between "Plánované" and "Absolvované" rolls out of one list and into the other (Peter, 17 Nov), but only
   // once the visitor has pressed something: the trips come out of storage right after hydration, and that is not an event.
   const [touched, setTouched] = useState(false);
-  const { update } = useTripSettings();
+  const { openPlan } = useTripSettings();
   const { setManualStart } = useUserLocation();
   const router = useRouter();
   const t = useT();
@@ -72,7 +72,8 @@ export function SavedTripsList() {
   const walking = onTrail ? trips.find((x) => x.slug === onTrail) : undefined;
 
   function open(trip: SavedTrip) {
-    update({ date: trip.date, time: trip.time, ...(trip.travel ? { travel: trip.travel } : {}), ...(trip.withKids !== undefined ? { withKids: trip.withKids } : {}) });
+    // openPlan, not update: the home list's own day comes back when the visitor returns to it (lib/tripSettings.tsx).
+    openPlan({ date: trip.date, time: trip.time, ...(trip.travel ? { travel: trip.travel } : {}), ...(trip.withKids !== undefined ? { withKids: trip.withKids } : {}) });
     if (trip.start) setManualStart(trip.start, "remembered");
     setTripStops(trip.slug, trip.stops ?? []);
     const href = langPath(lang, `/trasa/${trip.slug}`);
@@ -327,7 +328,17 @@ function TripCard({
   const weather = useSavedWeather(trip, plan, past);
   const installed = useInstalled();
   return (
-          <div className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] p-4">
+          <div
+            // A tap anywhere on the card that is not one of its buttons opens the planned trip, as "Otvoriť" does
+            // (Peter, 26 Nov 2026). Not while text is being selected. The keyboard has the "Otvoriť" button.
+            onClick={(e) => {
+              if ((e.target as Element).closest("button, a, input, select, label, summary, [role='button']")) return;
+              if (window.getSelection()?.toString()) return;
+              open(trip);
+            }}
+            data-plan-card
+            className="flex cursor-pointer flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] p-4 transition-colors hover:border-[var(--accent)]"
+          >
             <div className="flex flex-wrap items-baseline justify-between gap-x-3">
               <h2 className="text-lg font-semibold">{trip.name}</h2>
               <span className="text-sm tabular-nums">

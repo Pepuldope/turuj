@@ -26,6 +26,10 @@ interface TripSettingsState extends TripSettings {
   /** Today's date in the visitor's timezone; null until hydrated (the server has no "now"). */
   today: string | null;
   update: (patch: Partial<TripSettings>) => void;
+  /** A saved plan is opened: its day and the rest take over, and the day the lists showed is kept to come back to (giveDayBack). */
+  openPlan: (patch: Partial<TripSettings>) => void;
+  /** Back on a list of trips after a saved plan was opened: the list's own day again. Does nothing otherwise. */
+  giveDayBack: () => void;
 }
 
 // v3: earlier versions stored "today" as the default day; starting fresh makes Zajtra the default for them too.
@@ -89,6 +93,39 @@ function store(s: TripSettings) {
   }
 }
 
+// Opening a saved plan shows its day on the trip page, but must not change the day the home list shows
+// (Peter, 26 Nov 2026: he opened a plan for today, went back to the home page, and its day was "today" although
+// it was already late). So the day and time from before the plan are kept here until a list of trips is shown
+// again. A day the visitor then picks on the trip page is their own choice and stays.
+const LENT_KEY = "turuj-trip-lent";
+
+type Lent = Pick<TripSettings, "date" | "time">;
+
+function readLent(): Lent | null {
+  try {
+    const raw = sessionStorage.getItem(LENT_KEY);
+    return raw ? (JSON.parse(raw) as Lent) : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeLent(lent: Lent | null) {
+  try {
+    if (lent) sessionStorage.setItem(LENT_KEY, JSON.stringify(lent));
+    else sessionStorage.removeItem(LENT_KEY);
+  } catch {
+    // Storage blocked: the plan's day then stays, as before.
+  }
+}
+
+/** The day and time the lists go back to after a plan was open: the ones from before it, or the default day when that day has passed. */
+export function dayToGiveBack(lent: Lent, now = new Date()): Lent {
+  const date = lent.date && lent.date >= isoDate(now) ? lent.date : defaultDay(now);
+  const time = date === lent.date && lent.time && !timeGone(date, lent.time, now) ? lent.time : null;
+  return { date, time };
+}
+
 // Car or not is a fact about the visitor, not about one visit: remembered across visits.
 const TRAVEL_KEY = "turuj-travel";
 
@@ -109,7 +146,7 @@ function storeTravel(t: Travel) {
   }
 }
 
-const TripSettingsContext = createContext<TripSettingsState>({ ...DEFAULTS, today: null, update: () => {} });
+const TripSettingsContext = createContext<TripSettingsState>({ ...DEFAULTS, today: null, update: () => {}, openPlan: () => {}, giveDayBack: () => {} });
 
 export function TripSettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<TripSettings>(DEFAULTS);
@@ -152,6 +189,8 @@ export function TripSettingsProvider({ children }: { children: ReactNode }) {
 
   const update = useCallback((patch: Partial<TripSettings>) => {
     if (patch.travel) storeTravel(patch.travel);
+    // A day picked by hand while a plan is open is the visitor's own: nothing to give back any more.
+    if (patch.date !== undefined && patch.date !== readStored()?.date) storeLent(null);
     setSettings((prev) => {
       // A new day keeps the picked departure and every other choice (Peter, 2026-10-26),
       // unless that time has already gone by today.
@@ -162,12 +201,48 @@ export function TripSettingsProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const value = useMemo(() => ({ ...settings, today, update }), [settings, today, update]);
+  const openPlan = useCallback((patch: Partial<TripSettings>) => {
+    if (patch.travel) storeTravel(patch.travel);
+    // The first plan opened keeps the lists' day; a second one opened after it must not keep the first plan's.
+    if (!readLent()) {
+      const before = readStored();
+      storeLent({ date: before?.date ?? null, time: before?.time ?? null });
+    }
+    setSettings((prev) => {
+      const next = { ...prev, ...patch };
+      store(next);
+      return next;
+    });
+  }, []);
+
+  // Works on the stored copy first: on a full page load this runs before the settings are read from storage above.
+  const giveDayBack = useCallback(() => {
+    const lent = readLent();
+    if (!lent) return;
+    storeLent(null);
+    const back = dayToGiveBack(lent);
+    store({ ...DEFAULTS, ...readStored(), ...back });
+    setSettings((prev) => ({ ...prev, ...back }));
+  }, []);
+
+  const value = useMemo(() => ({ ...settings, today, update, openPlan, giveDayBack }), [settings, today, update, openPlan, giveDayBack]);
   return <TripSettingsContext.Provider value={value}>{children}</TripSettingsContext.Provider>;
 }
 
 export function useTripSettings(): TripSettingsState {
   return useContext(TripSettingsContext);
+}
+
+/** For a page that lists trips by day (home, a town's trips): the list's own day comes back after a saved plan was open. */
+export function useOwnDay() {
+  const { giveDayBack } = useTripSettings();
+  useEffect(() => {
+    giveDayBack();
+    // A page brought back whole by the browser's back button does not mount again.
+    const onShow = (e: PageTransitionEvent) => e.persisted && giveDayBack();
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, [giveDayBack]);
 }
 
 /**
