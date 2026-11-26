@@ -239,7 +239,7 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
   const saveButton = (
         <button type="button" onClick={() => onSave()} disabled={status === "saving" || saving.notReady} className={closedDay ? `${secondary} min-h-11 w-full` : primary}>
           {status === "saving"
-            ? t("Ukladám aj na cestu bez signálu... ({done}/{total})", { done: progress.done, total: progress.total || "?" })
+            ? t(installed ? "Ukladám aj na cestu bez signálu... ({done}/{total})" : "Ukladám... ({done}/{total})", { done: progress.done, total: progress.total || "?" })
             : saved
               ? t("Uložiť zmeny")
               : t("Uložiť výlet")}
@@ -289,7 +289,8 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
 
       {share}
 
-      {status === "error" && (
+      {/* A browser tab is promised nothing about working without signal (C224), so a failed copy is only said in the installed app. */}
+      {status === "error" && installed && (
         <p className="flex items-start gap-1.5 text-sm text-[var(--warn)]">
           <UiIcon name="warn" size={16} className="mt-0.5" />
           <span>{t("Výlet je uložený, ale kópia bez signálu sa nepodarila. Skúste to znova so signálom.")}</span>
@@ -318,7 +319,7 @@ export function SharedSave({ saving, plan, sun, closures = [], where = null }: {
   if (status === "saving")
     return (
       <p role="status" className="font-semibold">
-        {t("Ukladám aj na cestu bez signálu... ({done}/{total})", { done: progress.done, total: progress.total || "?" })}
+        {t(installed ? "Ukladám aj na cestu bez signálu... ({done}/{total})" : "Ukladám... ({done}/{total})", { done: progress.done, total: progress.total || "?" })}
       </p>
     );
   if (saved && !changed)

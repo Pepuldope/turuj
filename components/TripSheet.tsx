@@ -23,6 +23,7 @@ import { nearestMainTrips, noYearlyClosure, withoutYearlyClosure } from "@/lib/n
 import { TripAnswers, TripHeaderFacts } from "@/components/TripAnswers";
 import { TripPlanner } from "@/components/TripPlanner";
 import { TripReviews } from "@/components/TripReviews";
+import { PlanRow } from "@/components/PlanRow";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TripFacts } from "@/components/TripFacts";
 import { TripMap } from "@/components/TripMap";
@@ -48,6 +49,7 @@ import { describeTripEn } from "@/lib/tripJsonLdEn";
 import { markSigns } from "@/lib/markSigns";
 import { startLines, subtitle } from "@/lib/tripAnswers";
 import { photoFocus } from "@/lib/photoFocus";
+import { photoLicenseUrl } from "@/lib/photoLicense";
 import { bannerScene, terrainKeyOf } from "@/lib/terrainScene";
 
 /**
@@ -61,14 +63,14 @@ const NEARBY_OPEN = 7;
 
 /**
  * The photo as a schema.org ImageObject with the credit fields Google's image metadata reads (F17):
- * only for Commons photos, and only the fields the photo data has. Others stay a bare URL.
+ * only for Commons photos. `license` is always set (lib/photoLicense.ts); author fields only when known. Others stay a bare URL.
  */
 function photoImage(photo: PlacePhoto) {
   if (photoSource(photo) !== "Wikimedia Commons") return photo.url;
   return {
     "@type": "ImageObject",
     contentUrl: photo.url,
-    ...(photo.license_url ? { license: photo.license_url } : {}),
+    license: photoLicenseUrl(photo),
     acquireLicensePage: photo.page,
     ...(photo.author ? { creditText: `${photo.author}, ${photo.license}, Wikimedia Commons`, creator: { "@type": "Person", name: photo.author } } : {}),
   };
@@ -378,6 +380,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                   />
                   {description && <p className="text-sm text-[var(--muted)]">{description}</p>}
                   <TripReviews slug={trail.slug} name={trail.name} />
+                  <PlanRow slug={trail.slug} />
                 </div>
                 {routes.length > 1 && <ShorterRouteHint routes={routes} at={routeAt} walks={walks} />}
                 {!loopBack && (
