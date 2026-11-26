@@ -26,9 +26,9 @@ interface TripSettingsState extends TripSettings {
   /** Today's date in the visitor's timezone; null until hydrated (the server has no "now"). */
   today: string | null;
   update: (patch: Partial<TripSettings>) => void;
-  /** A saved plan is opened: its day and the rest take over, and the day the lists showed is kept to come back to (giveDayBack). */
+  /** A saved plan is opened: its day and the rest take over, and the day and way of travel the lists had are kept to come back to (giveDayBack). */
   openPlan: (patch: Partial<TripSettings>) => void;
-  /** Back on a list of trips after a saved plan was opened: the list's own day again. Does nothing otherwise. */
+  /** Back on a list of trips after a saved plan was opened: the list's own day and way of travel again. Does nothing otherwise. */
   giveDayBack: () => void;
 }
 
@@ -97,9 +97,16 @@ function store(s: TripSettings) {
 // (Peter, 26 Nov 2026: he opened a plan for today, went back to the home page, and its day was "today" although
 // it was already late). So the day and time from before the plan are kept here until a list of trips is shown
 // again. A day the visitor then picks on the trip page is their own choice and stays.
+// The same for the way of travel (Peter, 26 Nov 2026: "yes for the transport"): a plan made by bus must not turn the
+// home list to buses. "S deťmi" stays as the plan set it (his word: keep the kids switch on).
 const LENT_KEY = "turuj-trip-lent";
 
-type Lent = Pick<TripSettings, "date" | "time">;
+type LentDay = Pick<TripSettings, "date" | "time">;
+/** What the lists had before a plan was opened; a part the visitor has since chosen by hand is gone from it. */
+interface Lent {
+  day?: LentDay;
+  travel?: Travel;
+}
 
 function readLent(): Lent | null {
   try {
@@ -112,7 +119,7 @@ function readLent(): Lent | null {
 
 function storeLent(lent: Lent | null) {
   try {
-    if (lent) sessionStorage.setItem(LENT_KEY, JSON.stringify(lent));
+    if (lent && (lent.day || lent.travel)) sessionStorage.setItem(LENT_KEY, JSON.stringify(lent));
     else sessionStorage.removeItem(LENT_KEY);
   } catch {
     // Storage blocked: the plan's day then stays, as before.
@@ -120,7 +127,7 @@ function storeLent(lent: Lent | null) {
 }
 
 /** The day and time the lists go back to after a plan was open: the ones from before it, or the default day when that day has passed. */
-export function dayToGiveBack(lent: Lent, now = new Date()): Lent {
+export function dayToGiveBack(lent: LentDay, now = new Date()): LentDay {
   const date = lent.date && lent.date >= isoDate(now) ? lent.date : defaultDay(now);
   const time = date === lent.date && lent.time && !timeGone(date, lent.time, now) ? lent.time : null;
   return { date, time };
@@ -164,7 +171,9 @@ export function TripSettingsProvider({ children }: { children: ReactNode }) {
     // A new visit plans for tomorrow. A day is never left un-picked (Peter, 16 Nov): one stored as un-picked by the
     // old second-tap toggle starts on tomorrow too.
     const fresh = !stored?.date || stale;
-    const merged = { ...DEFAULTS, ...stored, ...(fresh ? { date: defaultDay(), time: null } : {}), ...(travel ? { travel } : {}) };
+    // While a saved plan is open (a reload of its page), its way of travel stays; otherwise the visitor's own.
+    const planOpen = readLent()?.travel !== undefined;
+    const merged = { ...DEFAULTS, ...stored, ...(fresh ? { date: defaultDay(), time: null } : {}), ...(travel && !planOpen ? { travel } : {}) };
     // The old separate "easier trips" switch is gone: without kids, nothing narrows the list.
     setSettings(merged.withKids ? merged : { ...merged, easier: false });
   }, []);
@@ -189,8 +198,12 @@ export function TripSettingsProvider({ children }: { children: ReactNode }) {
 
   const update = useCallback((patch: Partial<TripSettings>) => {
     if (patch.travel) storeTravel(patch.travel);
-    // A day picked by hand while a plan is open is the visitor's own: nothing to give back any more.
-    if (patch.date !== undefined && patch.date !== readStored()?.date) storeLent(null);
+    // A day or a way of travel picked by hand while a plan is open is the visitor's own: that part is not given back.
+    const lent = readLent();
+    if (lent) {
+      const day = patch.date !== undefined && patch.date !== readStored()?.date ? undefined : lent.day;
+      storeLent({ day, travel: patch.travel ? undefined : lent.travel });
+    }
     setSettings((prev) => {
       // A new day keeps the picked departure and every other choice (Peter, 2026-10-26),
       // unless that time has already gone by today.
@@ -202,11 +215,11 @@ export function TripSettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const openPlan = useCallback((patch: Partial<TripSettings>) => {
-    if (patch.travel) storeTravel(patch.travel);
-    // The first plan opened keeps the lists' day; a second one opened after it must not keep the first plan's.
+    // The plan's way of travel is not written down as the visitor's own (storeTravel): it is the plan's.
+    // The first plan opened keeps what the lists had; a second one opened after it must not keep the first plan's.
     if (!readLent()) {
       const before = readStored();
-      storeLent({ date: before?.date ?? null, time: before?.time ?? null });
+      storeLent({ day: { date: before?.date ?? null, time: before?.time ?? null }, travel: before?.travel ?? readTravel() ?? DEFAULTS.travel });
     }
     setSettings((prev) => {
       const next = { ...prev, ...patch };
@@ -220,7 +233,7 @@ export function TripSettingsProvider({ children }: { children: ReactNode }) {
     const lent = readLent();
     if (!lent) return;
     storeLent(null);
-    const back = dayToGiveBack(lent);
+    const back: Partial<TripSettings> = { ...(lent.day ? dayToGiveBack(lent.day) : {}), ...(lent.travel ? { travel: lent.travel } : {}) };
     store({ ...DEFAULTS, ...readStored(), ...back });
     setSettings((prev) => ({ ...prev, ...back }));
   }, []);
