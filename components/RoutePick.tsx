@@ -1,13 +1,15 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { Map as MlMap } from "maplibre-gl";
 import { useLang, useT } from "@/lib/i18n";
 import { KIND_ICON } from "@/lib/kindIcons";
 import { routeNameIn } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 import { LOOP_SUFFIX } from "@/lib/loopRoute";
+import { MAP_STYLE_URL, mapPixelRatio } from "@/lib/mapLayers";
 import { GOAL_COLOUR, ROUTE_COLOURS } from "@/lib/palette";
-import { routeSketch, SKETCH_MIN_H } from "@/lib/routeSketch";
+import { routeSketch, SKETCH_MAX_H, SKETCH_MIN_H } from "@/lib/routeSketch";
 import type { DestinationKind, GeoPoint, RouteBrief } from "@/lib/tripSchema";
 import type { RouteWalk } from "@/lib/walkFacts";
 import { useRouteNumbers } from "@/components/RouteRows";
@@ -36,10 +38,15 @@ const focus = "focus-visible:outline-2 focus-visible:outline-[var(--accent)]";
 const colour = (i: number) => ROUTE_COLOURS[i % ROUTE_COLOURS.length];
 const isLoop = (slug: string) => slug.endsWith(LOOP_SUFFIX);
 
+/** The size of the map's credit button with its margin: it gets a corner to itself, and no start's name goes there. */
+const CREDIT_CORNER = { w: 40, h: 36 };
+
 /**
- * The routes drawn as coloured lines from their starts to the goal. A drawing, not a map: it cannot be moved,
- * so a finger on it scrolls the window. Tapping a line or its start picks that route; the list under it is
- * the control for keyboards and screen readers.
+ * The routes drawn as coloured lines from their starts to the goal, over the real map of that piece of country
+ * (Peter, 26 Nov 2026: on a blank background the lines were hard to place). The lines are drawn at once; the
+ * map comes in behind them when it has loaded, and without signal the drawing stands alone. The map cannot be
+ * moved, so a finger on it scrolls the window. Tapping a line or its start picks that route; the list under
+ * it is the control for keyboards and screen readers.
  */
 function RouteSketch({ data, value, onPick }: { data: RoutePickData; value: string | null; onPick: (route: string) => void }) {
   const t = useT();
@@ -61,8 +68,84 @@ function RouteSketch({ data, value, onPick }: { data: RoutePickData; value: stri
     if (w <= 0) return null;
     // Loops last: a start's name then belongs to a route that is always drawn, not to a loop that shows only when picked.
     const input = [...routes].sort((a, b) => Number(isLoop(a.slug)) - Number(isLoop(b.slug)));
-    return routeSketch(input.map((r) => ({ slug: r.slug, startName: r.start_name, up: r.up })), goal.location, goal.name, w);
+    return routeSketch(input.map((r) => ({ slug: r.slug, startName: r.start_name, up: r.up })), goal.location, goal.name, w, SKETCH_MIN_H, SKETCH_MAX_H, CREDIT_CORNER);
   }, [routes, goal, w]);
+
+  // The map behind the lines. The sketch says which piece of the map lies under it, so the map only has to
+  // stand still there: no dragging or zooming, which would also pull the lines and the map apart.
+  const mapBox = useRef<HTMLDivElement>(null);
+  const [map, setMap] = useState<{ m: MlMap; ml: typeof import("maplibre-gl") } | null>(null);
+  const [mapOn, setMapOn] = useState(false);
+  const view = sketch?.view;
+  // Kept for the map's first frame: it is made once, a moment after the sketch (the library loads on demand).
+  const viewRef = useRef(view);
+  useEffect(() => {
+    viewRef.current = view;
+  });
+  // The credit folds to its "i" button: open, it would cover a third of a map this small. (MapLibre unfolds
+  // it whenever it learns the map's sources, and folds it only when the map is dragged.)
+  const foldCredit = () => {
+    const credit = mapBox.current?.querySelector(".maplibregl-ctrl-attrib");
+    credit?.classList.remove("maplibregl-compact-show");
+    credit?.removeAttribute("open");
+  };
+  const ready = sketch !== null;
+  useEffect(() => {
+    if (!ready) return;
+    let live = true;
+    let m: MlMap | null = null;
+    (async () => {
+      try {
+        const ml = await import("maplibre-gl");
+        const v = viewRef.current;
+        if (!live || !mapBox.current || !v) return;
+        m = new ml.Map({
+          container: mapBox.current,
+          style: MAP_STYLE_URL,
+          interactive: false,
+          pixelRatio: mapPixelRatio(),
+          attributionControl: false,
+          center: [v.lon, v.lat],
+          zoom: v.zoom,
+        });
+        // Without signal the style or a tile does not come: the drawing stays alone, and nothing is logged.
+        m.on("error", () => {});
+        m.once("load", () => {
+          if (!live) return;
+          foldCredit();
+          setMapOn(true);
+        });
+        setMap({ m, ml });
+      } catch {
+        // No map (an old browser, no WebGL): the drawing stays as it is.
+      }
+    })();
+    return () => {
+      live = false;
+      m?.remove();
+    };
+  }, [ready]);
+  const h = sketch?.h;
+  useEffect(() => {
+    if (!map || !view) return;
+    map.m.resize();
+    map.m.jumpTo({ center: [view.lon, view.lat], zoom: view.zoom });
+  }, [map, view, w, h]);
+  // The credit sits in the corner the routes leave free, which can change with the window's width.
+  const corner = sketch?.credit;
+  useEffect(() => {
+    if (!map || !corner) return;
+    const control = new map.ml.AttributionControl({ compact: true });
+    map.m.addControl(control, corner);
+    foldCredit();
+    return () => {
+      try {
+        map.m.removeControl(control);
+      } catch {
+        // The map is already gone (the window closed).
+      }
+    };
+  }, [map, corner]);
   const picked = value !== null && value !== UNKNOWN_ROUTE && routes.some((r) => r.slug === value) ? value : null;
   // A loop runs over two routes that are drawn already: its own line shows only once it is picked.
   const drawn = (slug: string) => !isLoop(slug) || slug === picked;
@@ -75,40 +158,53 @@ function RouteSketch({ data, value, onPick }: { data: RoutePickData; value: stri
     : [];
 
   return (
-    <div ref={ref} className="route-sketch overflow-hidden rounded-xl border border-[var(--border)]" style={{ height: sketch?.h ?? SKETCH_MIN_H }}>
+    <div ref={ref} className="route-sketch relative box-content overflow-hidden rounded-xl border border-[var(--border)]" style={{ height: sketch?.h ?? SKETCH_MIN_H }}>
+      {/* Exactly the drawing's size and corner, so both use the same pixels. */}
+      {sketch && <div ref={mapBox} aria-hidden="true" className={`route-sketch-map absolute left-0 top-0 ${mapOn ? "opacity-100" : "opacity-0"}`} style={{ width: w, height: sketch.h }} />}
       {sketch && (
-        <svg role="img" aria-label={t("Náčrt trás: {name}", { name: goal.name })} width={w} height={sketch.h} viewBox={`0 0 ${w} ${sketch.h}`} className="block select-none">
+        <svg
+          role="img"
+          aria-label={t("Mapa trás: {name}", { name: goal.name })}
+          width={w}
+          height={sketch.h}
+          viewBox={`0 0 ${w} ${sketch.h}`}
+          className="pointer-events-none relative block select-none"
+        >
           {order.map(({ r, i }) => {
+            // Over a map a faded line reads as a stream: the routes not picked keep their colour and go thin.
             const dim = picked !== null && r.slug !== picked;
+            const on = r.slug === picked;
             return (
-              <g key={r.slug} opacity={dim ? 0.3 : 1}>
-                <path d={r.path} fill="none" stroke="var(--sketch-paper)" strokeWidth={r.slug === picked ? 9 : 7} strokeLinecap="round" strokeLinejoin="round" />
-                <path d={r.path} fill="none" stroke={colour(i)} strokeWidth={r.slug === picked ? 5 : 4} strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx={r.start[0]} cy={r.start[1]} r={5} fill={colour(i)} stroke="var(--sketch-paper)" strokeWidth={2} />
+              <g key={r.slug} opacity={dim ? 0.8 : 1}>
+                <path d={r.path} fill="none" stroke="#fff" strokeWidth={on ? 10 : dim ? 5.5 : 7} strokeLinecap="round" strokeLinejoin="round" />
+                <path d={r.path} fill="none" stroke={colour(i)} strokeWidth={on ? 6 : dim ? 3 : 4} strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx={r.start[0]} cy={r.start[1]} r={on ? 6 : dim ? 4 : 5} fill={colour(i)} stroke="#fff" strokeWidth={2} />
               </g>
             );
           })}
           <g transform={`translate(${sketch.goal[0] - 11} ${sketch.goal[1] - 11})`}>
-            <rect width={22} height={22} rx={6} fill={GOAL_COLOUR[goal.kind]} stroke="var(--sketch-paper)" strokeWidth={2} />
+            <rect width={22} height={22} rx={6} fill={GOAL_COLOUR[goal.kind]} stroke="#fff" strokeWidth={2} />
             <g transform="translate(3 3) scale(0.6667)" style={{ color: "#fff" }} dangerouslySetInnerHTML={{ __html: KIND_ICON[goal.kind] }} />
           </g>
-          {[sketch.goalLabel, ...sketch.routes.map((r) => (drawn(r.slug) ? r.label : null))].map(
-            (l, i) =>
-              l && (
-                <text key={i} x={l.x} y={l.y} className="route-sketch-name">
-                  {l.text}
-                </text>
-              )
-          )}
           {/* Wide invisible lines on top, so a finger finds the route; the picked one last, so it stays easy to hit. */}
           {order.map(({ r }) => (
             <g key={r.slug} onClick={() => onPick(r.slug)} className="cursor-pointer">
               <path d={r.path} fill="none" stroke="transparent" strokeWidth={24} strokeLinecap="round" strokeLinejoin="round" pointerEvents="stroke" />
-              <circle cx={r.start[0]} cy={r.start[1]} r={14} fill="transparent" />
+              <circle cx={r.start[0]} cy={r.start[1]} r={14} fill="transparent" pointerEvents="fill" />
             </g>
           ))}
         </svg>
       )}
+      {/* The names stand on white plates: over a map a bare name runs into the map's own names. */}
+      {sketch &&
+        [sketch.goalLabel, ...sketch.routes.map((r) => (drawn(r.slug) ? r.label : null))].map(
+          (l, i) =>
+            l && (
+              <span key={i} aria-hidden="true" className="route-sketch-name" style={{ left: l.x - 3, top: l.y - 11 }}>
+                {l.text}
+              </span>
+            ),
+        )}
     </div>
   );
 }

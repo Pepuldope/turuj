@@ -3,15 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { addDaysIso, shortDate, weekdayName } from "@/lib/days";
 import { useLang, useT } from "@/lib/i18n";
-import { PREVIEW_MESSAGE } from "@/lib/previewGuard";
 import { sendReview } from "@/lib/sendReview";
 import { useTripSettings } from "@/lib/tripSettings";
 import { routeTrip } from "@/lib/visits";
 import { useLeave } from "@/lib/usePresence";
+import { useScrollLock } from "@/lib/useScrollLock";
 import { detailAsked, parseWhen, roughWhen, SEASONS, seasonWord, whenLabel, yearChoices } from "@/lib/visitWhen";
 import type { Season } from "@/lib/visitWhen";
+import { DayCalendar } from "@/components/DayCalendar";
 import { chip, NO_ANSWERS, ReviewFields } from "@/components/ReviewFields";
-import { RoutePick } from "@/components/RoutePick";
+import { RoutePick, routeNameOf, UNKNOWN_ROUTE } from "@/components/RoutePick";
 import type { RoutePickData } from "@/components/RoutePick";
 import { UiIcon } from "@/components/UiIcon";
 import { VisitMark } from "@/components/VisitMark";
@@ -65,11 +66,13 @@ export function VisitSheet({
   const [rough, setRough] = useState(edit !== undefined && startKind !== "day");
   const [changing, setChanging] = useState(false);
   const [older, setOlder] = useState(false);
+  const [calendar, setCalendar] = useState(false);
   const [answers, setAnswers] = useState(NO_ANSWERS);
   const [phase, setPhase] = useState<"form" | "sending" | "preview" | "error">("form");
   const [asking, setAsking] = useState(false);
   const saved = useRef(false);
   const close = () => leave(onClose);
+  useScrollLock();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && leave(onClose);
@@ -124,33 +127,51 @@ export function VisitSheet({
 
   const shell = (children: React.ReactNode) => (
     <div role="dialog" aria-modal="true" aria-label={tx(asksRoute ? "Vaša návšteva" : "Kedy ste tu boli?")} className="fixed inset-0 z-50 grid place-items-center p-4">
-      <div data-state={motion} className="pres pres-backdrop absolute inset-0 bg-black/45" onClick={phase === "form" ? close : undefined} />
-      <div data-state={motion} className="pres pres-pop relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[420px] flex-col gap-4 overflow-y-auto rounded-[var(--radius-card)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-float)]">
+      <div data-state={motion} className="pres pres-backdrop absolute inset-0 touch-none bg-black/45" onClick={phase === "form" ? close : undefined} />
+      <div data-state={motion} className="pres pres-pop relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[420px] flex-col gap-4 overflow-y-auto overscroll-contain rounded-[var(--radius-card)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-float)]">
         {children}
       </div>
     </div>
   );
 
   if (phase === "preview" || phase === "error") {
+    // The visit is on the device; only the stars did not go. Says what was saved, so the window is worth reading.
+    const walked = !asksRoute || !pick || route === null ? null : route === UNKNOWN_ROUTE ? tx("trasu neviete") : routeNameOf(pick, route, lang);
+    const savedWhen = date === null ? null : date === "" ? tx("Kedy to bolo, neviete") : whenLabel(date, lang);
     return shell(
       <>
-        <p className="font-bold">{tx("Návšteva je uložená.")}</p>
+        <div className="flex flex-col items-center gap-2 pt-1 text-center">
+          <span aria-hidden="true" className="grid h-12 w-12 place-items-center rounded-full bg-[var(--foreground)] text-[var(--card-bg)]">
+            <UiIcon name="check" size={26} />
+          </span>
+          <h2 className="text-lg font-extrabold">{tx("Návšteva je uložená")}</h2>
+          <p className="text-[15px]">
+            <b>{name}</b>
+            {savedWhen && (
+              <>
+                {" · "}
+                <span className={date === "" ? "" : "font-data whitespace-nowrap text-[17px]"}>{savedWhen}</span>
+              </>
+            )}
+            {walked && <span className="block text-sm text-[var(--muted)]">{walked}</span>}
+          </p>
+        </div>
         {phase === "preview" ? (
-          <p className="text-sm text-[var(--muted)]">{tx(PREVIEW_MESSAGE)}</p>
+          <p className="rounded-xl bg-[var(--page-sunk)] px-3.5 py-3 text-sm">{tx("Hodnotenie sa neodoslalo: toto je len skúšobná verzia stránky.")}</p>
         ) : (
-          <p className="flex items-start gap-1.5 text-sm text-[var(--danger)]">
-            <UiIcon name="warn" size={15} className="mt-0.5" />
+          <p className="flex items-start gap-2 rounded-xl bg-[var(--danger-bg)] px-3.5 py-3 text-sm text-[var(--danger)]">
+            <UiIcon name="warn" size={16} className="mt-0.5" />
             <span>{tx("Hodnotenie sa nepodarilo odoslať.")}</span>
           </p>
         )}
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-col gap-2">
           {phase === "error" && (
-            <button type="button" onClick={sendOnly} className={`${pill} border border-[var(--border)]`}>
+            <button type="button" onClick={sendOnly} className={`${pill} w-full border border-[var(--border)]`}>
               {tx("Skúsiť znova")}
             </button>
           )}
-          <button type="button" onClick={close} className={`${pill} border border-[var(--border)]`}>
-            {tx("Zavrieť")}
+          <button type="button" onClick={close} className={`${pill} w-full bg-[var(--accent)] font-bold text-[var(--accent-contrast)]`}>
+            {tx("Hotovo")}
           </button>
         </div>
       </>,
@@ -265,31 +286,33 @@ export function VisitSheet({
               {dayButton(tx("Včera"), yesterday)}
             </div>
           )}
-          <label className={`${box(otherDay)} relative flex min-h-10 items-center gap-2.5 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--accent)]`}>
+          <button
+            type="button"
+            aria-expanded={calendar}
+            onClick={() => setCalendar((v) => !v)}
+            className={`${box(otherDay)} flex min-h-10 items-center gap-2.5 ${focus}`}
+          >
             <UiIcon name="cal" size={20} className="text-[var(--accent)]" />
             {otherDay && dayIso ? (
-              <span className="min-w-0 whitespace-nowrap">
+              <span className="min-w-0 flex-1 whitespace-nowrap">
                 {dayName(dayIso).w} <span className="font-data text-[17px] font-bold">{whenLabel(dayIso, lang)}</span>
               </span>
             ) : (
-              <span className="text-[14.5px] font-semibold text-[var(--muted)]">{tx("Iný deň: vyberte v kalendári telefónu")}</span>
+              <span className="min-w-0 flex-1 text-[14.5px] font-semibold">{tx("Iný deň")}</span>
             )}
-            <input
-              type="date"
-              max={today ?? undefined}
-              value={otherDay && dayIso ? dayIso : ""}
-              aria-label={tx("Iný deň: vyberte v kalendári telefónu")}
-              onChange={(e) => setDate(e.target.value || null)}
-              onClick={(e) => {
-                try {
-                  e.currentTarget.showPicker?.();
-                } catch {
-                  // The browser opens its own picker, or none: nothing to do.
-                }
+            <UiIcon name="down" size={18} className={`text-[var(--muted)] ${calendar ? "rotate-180" : ""}`} />
+          </button>
+          {calendar && today && (
+            <DayCalendar
+              value={dayIso}
+              today={today}
+              oldestYear={OLDEST_YEAR}
+              onPick={(iso) => {
+                setDate(iso);
+                setCalendar(false);
               }}
-              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             />
-          </label>
+          )}
           <button
             type="button"
             onClick={() => {

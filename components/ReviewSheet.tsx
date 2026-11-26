@@ -8,6 +8,7 @@ import "@/lib/legacyStorage";
 import { LangLink, useT } from "@/lib/i18n";
 import { PREVIEW_MESSAGE } from "@/lib/previewGuard";
 import { useLeave } from "@/lib/usePresence";
+import { useScrollLock } from "@/lib/useScrollLock";
 
 /**
  * The quick review after a trip (Peter, 2026-10-22: under a minute; 2026-10-23: four questions
@@ -20,6 +21,7 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
   const tx = useT();
   // Fades and scales away before the parent removes it (Peter, 17 Nov).
   const { state: motion, leave } = useLeave();
+  useScrollLock();
 
   async function send() {
     setState("sending");
@@ -30,8 +32,8 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
 
   return (
     <div role="dialog" aria-modal="true" aria-label={tx("Hodnotenie: {name}", { name })} className="fixed inset-0 z-50 grid place-items-center p-4">
-      <div data-state={motion} className="pres pres-backdrop absolute inset-0 bg-black/45" />
-      <div data-state={motion} className="pres pres-pop relative flex w-full max-w-[420px] flex-col gap-4 rounded-[var(--radius-card)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-float)]">
+      <div data-state={motion} className="pres pres-backdrop absolute inset-0 touch-none bg-black/45" />
+      <div data-state={motion} className="pres pres-pop relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[420px] flex-col gap-4 overflow-y-auto overscroll-contain rounded-[var(--radius-card)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-float)]">
         <div>
           <h2 className="text-lg font-extrabold">{tx("Aký bol výlet?")}</h2>
           <p className="text-sm text-[var(--muted)]">{name} · {tx("zaberie to pár sekúnd")}</p>

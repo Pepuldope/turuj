@@ -14,6 +14,7 @@ import { UiIcon } from "@/components/UiIcon";
 import { VisitMark } from "@/components/VisitMark";
 import { VisitSheet } from "@/components/VisitSheet";
 import { useLeave } from "@/lib/usePresence";
+import { useScrollLock } from "@/lib/useScrollLock";
 
 const focus = "focus-visible:outline-2 focus-visible:outline-[var(--accent)]";
 const outline = `flex min-h-10 w-full items-center justify-center rounded-full border border-[var(--border)] px-4 py-2.5 text-sm font-semibold ${focus}`;
@@ -53,6 +54,7 @@ export function VisitsSheet({
   const { trips, patch } = useSavedTrips();
   const { state: motion, leave } = useLeave();
   const [inner, setInner] = useState<Inner>(null);
+  useScrollLock();
 
   useEffect(() => {
     if (visits.length === 0 && inner === null) onClose();
@@ -118,8 +120,8 @@ export function VisitsSheet({
 
   return (
     <div role="dialog" aria-modal="true" aria-label={tx("Vaše návštevy")} className="fixed inset-0 z-50 grid place-items-center p-4">
-      <div data-state={motion} className="pres pres-backdrop absolute inset-0 bg-black/45" onClick={() => leave(onClose)} />
-      <div data-state={motion} className="pres pres-pop relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[420px] flex-col gap-3 overflow-y-auto rounded-[var(--radius-card)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-float)]">
+      <div data-state={motion} className="pres pres-backdrop absolute inset-0 touch-none bg-black/45" onClick={() => leave(onClose)} />
+      <div data-state={motion} className="pres pres-pop relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[420px] flex-col gap-3 overflow-y-auto overscroll-contain rounded-[var(--radius-card)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-float)]">
         <div>
           <h2 className="text-lg font-extrabold">{tx("Vaše návštevy")}</h2>
           <p className="text-sm text-[var(--muted)]">{name}</p>

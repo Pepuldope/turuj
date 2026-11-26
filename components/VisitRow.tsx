@@ -115,7 +115,8 @@ export function VisitRow({
       <>
         <p className={rowClass}>
           <VisitMark done={false} />
-          <span className="min-w-0 flex-1">
+          {/* The answers sit beside the question, not at the card's far edge (Peter, 26 Nov 2026). */}
+          <span className="mr-1 min-w-0">
             <b>{t("Boli ste tu")}</b> <span className="font-data whitespace-nowrap text-[17px]">{shortDate(saved.date, lang)}</span>?
           </span>
           <button type="button" onClick={() => setOpen("ask")} className={`min-h-10 shrink-0 rounded-full bg-[var(--accent)] px-4 text-sm font-bold text-[var(--accent-contrast)] ${focus}`}>
@@ -166,10 +167,14 @@ export function VisitRow({
   return (
     <>
       <p className={rowClass}>
-        <VisitMark done={false} />
-        <span className="min-w-0 flex-1">{t("Už ste tu boli?")}</span>
-        <button type="button" onClick={() => setOpen("hand")} className={`min-h-10 shrink-0 rounded-full border border-[var(--border)] px-4 text-sm font-semibold ${focus}`}>
-          {t("Boli sme tu")}
+        {/* One control, the answer right beside its question (Peter, 26 Nov 2026: at the card's far edge the
+            button "has no connection to the text"). The circle and the question open the window too. */}
+        <button type="button" onClick={() => setOpen("hand")} className={`group flex min-h-10 items-center gap-2 rounded-full text-left ${focus}`}>
+          <VisitMark done={false} />
+          <span>{t("Už ste tu boli?")}</span>
+          <span className="ml-1 grid min-h-10 shrink-0 place-items-center rounded-full border border-[var(--accent)] px-4 text-sm font-bold text-[var(--accent)] group-hover:bg-[var(--accent-soft)]">
+            {t("Boli sme tu")}
+          </span>
         </button>
       </p>
       {dialogs}
