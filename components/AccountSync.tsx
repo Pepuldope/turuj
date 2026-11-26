@@ -65,7 +65,8 @@ export function AccountSync() {
     if (!loaded || !email || !onList) return;
     syncIfOlder(email, 3000);
     const id = setInterval(() => {
-      if (document.visibilityState === "visible" && navigator.onLine !== false) syncIfOlder(email, LIST_MS - 2000);
+      // Every tick looks, unless an exchange has only just finished (a change made here, the tab coming back).
+      if (document.visibilityState === "visible" && navigator.onLine !== false) syncIfOlder(email, 5000);
     }, LIST_MS);
     return () => clearInterval(id);
   }, [loaded, email, onList]);

@@ -172,7 +172,7 @@ export function VisitsSheet({
             if (asking === v.id) {
               return (
                 <li key={v.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-[var(--danger-bg)] px-3.5 py-2.5 text-sm">
-                  <span className="min-w-0 flex-1 font-semibold">
+                  <span className="basis-full font-semibold">
                     {tx("Naozaj odstrániť?")} <span className="font-data whitespace-nowrap font-normal">{whenLabel(v.date, lang)}</span>
                   </span>
                   <button type="button" onClick={() => { setAsking(null); remove(v); }} className={`${REMOVE_NOW} ${focus}`}>

@@ -354,7 +354,7 @@ export function VisitSheet({
         <div className="text-sm">
           {asking ? (
             <div className="flex flex-wrap items-center gap-2 rounded-xl bg-[var(--danger-bg)] px-3.5 py-2.5">
-              <span className="min-w-0 flex-1 font-semibold">{tx("Naozaj odstrániť?")}</span>
+              <span className="basis-full font-semibold">{tx("Naozaj odstrániť?")}</span>
               <button type="button" onClick={() => { edit.onRemove(); close(); }} className={`${REMOVE_NOW} ${focus}`}>
                 <UiIcon name="trash" size={16} />
                 {tx("Odstrániť")}
