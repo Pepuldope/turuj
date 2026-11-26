@@ -74,18 +74,59 @@ async function db() {
   return d;
 }
 
-/** Stores (or replaces) one review; false without the database. */
+/**
+ * Stores one review, or changes the one this browser sent before; false without the database. A question left
+ * unanswered the second time keeps its first answer: changing the stars later (Peter, 26 Nov 2026) or rating an
+ * old visit, where only the stars are asked, must not wipe what was said about the trail.
+ */
 export async function saveReview(r: ReviewIn, at: Date): Promise<boolean> {
   const d = await db();
   if (!d) return false;
   await d
     .prepare(
       `INSERT INTO review (slug, reviewer, stars, fit, crowded, note, at, timing) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
-       ON CONFLICT (slug, reviewer) DO UPDATE SET stars = ?3, fit = ?4, crowded = ?5, note = ?6, at = ?7, timing = ?8`
+       ON CONFLICT (slug, reviewer) DO UPDATE SET stars = ?3, fit = COALESCE(?4, fit), crowded = COALESCE(?5, crowded), note = ?6, at = ?7, timing = COALESCE(?8, timing)`
     )
     .bind(r.slug, r.reviewer, r.stars, r.fit, r.crowded === null ? null : Number(r.crowded), r.note, at.toISOString(), r.timing)
     .run();
   return true;
+}
+
+/** The most trips one browser's reviews are given for. */
+const OWN_MAX = 500;
+
+/** A browser's own review of a trip, as it gets it back. */
+export interface OwnReview {
+  stars: number;
+  fit: Fit | null;
+  crowded: boolean | null;
+  timing: Timing | null;
+}
+
+/**
+ * The reviews one browser sent, by trip slug; {} without the database, null when the id is not one of ours.
+ * Reads the whole table (its key starts with the trip): fine while it has hundreds of rows and each browser asks
+ * once; give it an index on `reviewer` before it has tens of thousands.
+ */
+export async function ownReviews(reviewer: unknown): Promise<Record<string, OwnReview> | null> {
+  if (typeof reviewer !== "string" || !REVIEWER.test(reviewer)) return null;
+  const d = await db();
+  if (!d) return {};
+  const { results } = await d
+    .prepare(`SELECT slug, stars, fit, crowded, timing FROM review WHERE reviewer = ?1 LIMIT ${OWN_MAX}`)
+    .bind(reviewer)
+    .all<{ slug: string; stars: number; fit: string | null; crowded: number | null; timing: string | null }>();
+  return Object.fromEntries(
+    results.map((r) => [
+      r.slug,
+      {
+        stars: r.stars,
+        fit: FITS.includes(r.fit as Fit) ? (r.fit as Fit) : null,
+        crowded: r.crowded === null ? null : r.crowded === 1,
+        timing: TIMINGS.includes(r.timing as Timing) ? (r.timing as Timing) : null,
+      },
+    ])
+  );
 }
 
 /** Totals for one trip; null without the database. */

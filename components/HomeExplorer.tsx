@@ -43,6 +43,7 @@ import { suggestTowns } from "@/lib/townSuggest";
 import { decimal, regionIn } from "@/lib/lang";
 import { StartChip } from "@/components/StartChip";
 import { NextPlanStrip } from "@/components/NextPlanStrip";
+import { useVisitedTrips } from "@/lib/visits";
 import { TownButton } from "@/components/TownButton";
 import { TripCard } from "@/components/TripCard";
 import type { TripCardItem } from "@/components/TripCard";
@@ -529,7 +530,9 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
   const season = seasonOf(date ? new Date(`${date}T12:00`) : new Date());
   const dayWord = date && today ? dayInSentence(date, new Date(), lang) : null;
 
-  // The map: every trip that passes the filters; the ones the day is too short for washed out.
+  // The map: every trip that passes the filters; the ones the day is too short for washed out; a check on the
+  // square of a place the visitor has been to (Peter, 25 Nov 2026, C213).
+  const visitedTrips = useVisitedTrips();
   const mapTrips = useMemo<BrowseTrip[]>(
     () =>
       listedAll.flatMap((item) => {
@@ -538,9 +541,9 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
         const th = primaryTrailhead(detail);
         if (!at) return [];
         const dim = !fitsDay(item);
-        return [{ slug: detail.trail.slug, goal: detail.trail.goal ?? "ine", rank: detail.trail.rank ?? 0, location: at, start: th?.location ?? at, dim, closed: item.closed }];
+        return [{ slug: detail.trail.slug, goal: detail.trail.goal ?? "ine", rank: detail.trail.rank ?? 0, location: at, start: th?.location ?? at, dim, closed: item.closed, visited: visitedTrips.has(detail.trail.slug) }];
       }),
-    [listedAll]
+    [listedAll, visitedTrips]
   );
   const outlines = useAreaOutlines();
   // Until the outlines arrive (or if they can't), the dots come from the trips themselves.
@@ -852,6 +855,15 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
         <span className="flex items-center gap-1.5">
           <i className="block h-[3px] w-5 rounded-full bg-[#8a8f7a] opacity-60" /> {t("chodník bez výletu")}
         </span>
+        {/* Only for a visitor who has ticked a place that is on the map now. */}
+        {mapTrips.some((x) => x.visited) && (
+          <span className="flex items-center gap-1.5" data-visited-legend>
+            <span className="grid h-3.5 w-3.5 place-items-center rounded-full border border-[#14233b] bg-white text-[#14233b]">
+              <UiIcon name="check" size={9} />
+            </span>
+            {t("boli ste tu")}
+          </span>
+        )}
       </div>
       {mapHint && !picking && (
         <div className="pointer-events-none absolute bottom-4 left-1/2 z-[5] -translate-x-1/2 rounded-full bg-[#14233b]/90 px-4 py-2 text-[13px] font-semibold whitespace-nowrap text-white shadow-[var(--shadow-float)]" role="note">

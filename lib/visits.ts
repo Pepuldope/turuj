@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import type { SavedTrip } from "@/lib/savedTrips";
 import { whenKey } from "@/lib/visitWhen";
 import "@/lib/legacyStorage";
@@ -95,11 +95,30 @@ export const routeTrip = (route: string): string => (route.endsWith(LOOP) ? rout
 const isAt = (visit: Visit, place: string, routes: readonly string[]): boolean =>
   visit.slug ? visit.slug === place : routes.includes(routeTrip(visit.route));
 
+/** Orders visits the latest first; two of the same time by which was entered later. A visit with no date comes last. */
+export const latestFirst = (a: Visit, b: Visit): number => (whenKey(a.date) === whenKey(b.date) ? b.at - a.at : whenKey(a.date) < whenKey(b.date) ? 1 : -1);
+
 /** The visits of one place, the latest first. `routes` are the trip slugs of the place's routes. */
 export function visitsAt(visits: readonly Visit[], place: string, routes: readonly string[]): Visit[] {
-  return visits
-    .filter((v) => isAt(v, place, routes))
-    .sort((a, b) => (whenKey(a.date) === whenKey(b.date) ? b.at - a.at : whenKey(a.date) < whenKey(b.date) ? 1 : -1));
+  return visits.filter((v) => isAt(v, place, routes)).sort(latestFirst);
+}
+
+/**
+ * What a card or a map pin looks up by its trip's slug: the places visited by any route, and the trips of the
+ * routes walked (so a card of one route is marked only when that route was walked).
+ */
+export function visitedTrips(visits: readonly Visit[]): ReadonlySet<string> {
+  const out = new Set<string>();
+  for (const v of visits) {
+    if (v.slug) out.add(v.slug);
+    if (v.route) out.add(routeTrip(v.route));
+  }
+  return out;
+}
+
+/** The routes walked, as step 1 names them (a loop is `<slug>/okruh`). */
+export function walkedRoutes(visits: readonly Visit[]): ReadonlySet<string> {
+  return new Set(visits.filter((v) => v.route).map((v) => v.route));
 }
 
 /** Gives the place to visits that have none yet (plans saved before visits existed), once their trip page is open. */
@@ -242,4 +261,16 @@ function subscribe(cb: () => void) {
 export function useVisits() {
   const visits = useSyncExternalStore(subscribe, readVisits, () => EMPTY);
   return { visits };
+}
+
+/** The trips to mark on cards and pins (see visitedTrips); the same set until the visits change. */
+export function useVisitedTrips(): ReadonlySet<string> {
+  const { visits } = useVisits();
+  return useMemo(() => visitedTrips(visits), [visits]);
+}
+
+/** The routes to mark in step 1 (see walkedRoutes). */
+export function useWalkedRoutes(): ReadonlySet<string> {
+  const { visits } = useVisits();
+  return useMemo(() => walkedRoutes(visits), [visits]);
 }

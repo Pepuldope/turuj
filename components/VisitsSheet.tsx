@@ -2,11 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { track } from "@/lib/analytics";
-import { useLang, useT } from "@/lib/i18n";
+import { LangLink, useLang, useT } from "@/lib/i18n";
+import { usePlanAgain } from "@/lib/openPlan";
+import { useReviewed } from "@/lib/reviewed";
 import { useSavedTrips } from "@/lib/savedTrips";
+import { lastWalk } from "@/lib/visitedList";
 import { addVisitByHand, dropVisit, editVisit, planVisitId } from "@/lib/visits";
 import type { Visit } from "@/lib/visits";
 import { parseWhen, whenLabel } from "@/lib/visitWhen";
+import { MyStars } from "@/components/MyStars";
 import { ReviewSheet } from "@/components/ReviewSheet";
 import { routeNameOf, UNKNOWN_ROUTE } from "@/components/RoutePick";
 import type { RoutePickData } from "@/components/RoutePick";
@@ -24,6 +28,8 @@ type Inner = { kind: "edit"; visit: Visit } | { kind: "add" } | { kind: "review"
 /**
  * "Vaše návštevy" (Peter, 25 Nov 2026): the visits of one place, latest first. A row opens the window of that
  * visit (change the day, the route at a place with several, or remove it); only one window is on screen at a time.
+ * Under them (Peter, 26 Nov 2026): the visitor's own stars, changeable, and "Naplánovať znova", which opens the
+ * route walked last time with that day's plan put back (lib/openPlan.ts usePlanAgain).
  */
 export function VisitsSheet({
   visits,
@@ -34,6 +40,9 @@ export function VisitsSheet({
   pick,
   reviewSlug,
   reviewed,
+  canAdd = true,
+  gone = false,
+  openHref,
   onClose,
 }: {
   visits: Visit[];
@@ -47,6 +56,12 @@ export function VisitsSheet({
   /** The trip "Ohodnotiť výlet" is about: the route of the latest visit, when it is known. */
   reviewSlug: string;
   reviewed: boolean;
+  /** Off in Moje výlety while the place's routes are not known (no signal): a new visit could not say its route. */
+  canAdd?: boolean;
+  /** The trip is no longer offered: its visits can be fixed or removed, nothing else. */
+  gone?: boolean;
+  /** Given in Moje výlety: the trip's page, as a link. */
+  openHref?: string;
   onClose: () => void;
 }) {
   const tx = useT();
@@ -54,7 +69,25 @@ export function VisitsSheet({
   const { trips, patch } = useSavedTrips();
   const { state: motion, leave } = useLeave();
   const [inner, setInner] = useState<Inner>(null);
+  const stars = useReviewed()[reviewSlug];
+  const planAgain = usePlanAgain();
   useScrollLock();
+
+  // Last time: the route walked, and from the plan of that day (while the device still has it) how the group went.
+  const walk = lastWalk(visits, trips) ?? { route, plan: null };
+  const last = walk.plan;
+  const asLast = [
+    pick ? routeNameOf(pick, walk.route, lang) : null,
+    last?.start ? tx("štart {name}", { name: tx(last.start.label) }) : null,
+    last ? tx(last.transit ? (last.fixed ? "vlakom" : "autobusom") : "autom") : null,
+    last?.withKids ? tx("s deťmi") : null,
+  ].filter((x): x is string => !!x);
+  // The window goes first: while it is open the page behind does not scroll, so the plan could not be shown.
+  const again = () =>
+    leave(() => {
+      onClose();
+      window.setTimeout(() => planAgain(walk), 60);
+    });
 
   useEffect(() => {
     if (visits.length === 0 && inner === null) onClose();
@@ -152,13 +185,42 @@ export function VisitsSheet({
             );
           })}
         </ul>
-        <button type="button" onClick={() => setInner({ kind: "add" })} className={outline}>
-          {tx("+ Pridať ďalšiu návštevu")}
-        </button>
-        {!reviewed && (
-          <button type="button" onClick={() => setInner({ kind: "review" })} className={outline}>
-            {tx("Ohodnotiť výlet")}
+        {canAdd && !gone && (
+          <button type="button" onClick={() => setInner({ kind: "add" })} className={outline}>
+            {tx("+ Pridať ďalšiu návštevu")}
           </button>
+        )}
+        {gone ? (
+          <p className="text-sm text-[var(--muted)]">{tx("Tento výlet už nie je v ponuke.")}</p>
+        ) : stars !== undefined ? (
+          // How the visitor rated it, never the word "ohodnotené" (Peter, 26 Nov 2026); a tap changes it.
+          <button type="button" onClick={() => setInner({ kind: "review" })} className={`flex min-h-10 w-full items-center gap-2 rounded-xl border border-[var(--border)] px-3.5 py-2 text-left text-sm ${focus}`}>
+            <span className="min-w-0 flex-1 font-semibold">{tx("Vaše hodnotenie")}</span>
+            <MyStars stars={stars} className="text-[17px]" />
+            <span className="sr-only">{tx("{n} z 5", { n: stars })}</span>
+            <span className="font-bold text-[var(--accent)] underline underline-offset-[3px]">{tx("Zmeniť")}</span>
+          </button>
+        ) : (
+          <button type="button" onClick={() => setInner({ kind: "review" })} className={outline}>
+            {tx(reviewed ? "Zmeniť hodnotenie" : "Ohodnotiť výlet")}
+          </button>
+        )}
+        {!gone && (
+          <div className="flex flex-col gap-1.5 border-t border-[var(--border)] pt-3">
+            <button type="button" onClick={again} className={`flex min-h-10 w-full items-center justify-center rounded-full border border-[var(--accent)] px-4 py-2.5 text-sm font-bold text-[var(--accent)] hover:bg-[var(--accent-soft)] ${focus}`}>
+              {tx("Naplánovať znova")}
+            </button>
+            {asLast.length > 0 && (
+              <p data-as-last className="text-center text-[13px] text-[var(--muted)]">
+                {tx("Ako naposledy: {what}", { what: asLast.join(" · ") })}
+              </p>
+            )}
+            {openHref && (
+              <LangLink href={openHref} className={`self-center py-1 text-sm font-bold text-[var(--accent)] underline underline-offset-[3px] ${focus}`}>
+                {tx("Otvoriť výlet")}
+              </LangLink>
+            )}
+          </div>
         )}
         <p className="text-[13px] text-[var(--muted)]">{tx(pick ? "Ťuknutím na návštevu zmeníte dátum, trasu alebo ju odstránite." : "Ťuknutím na návštevu zmeníte dátum alebo ju odstránite.")}</p>
         <div className="flex justify-end">

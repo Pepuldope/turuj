@@ -1,11 +1,9 @@
 "use client";
 
 import { track } from "@/lib/analytics";
-import { noteReviewed } from "@/lib/reviewed";
+import { REVIEWER_KEY, noteReviewed } from "@/lib/reviewed";
 import type { Fit, Timing } from "@/lib/reviewLimits";
 import "@/lib/legacyStorage";
-
-const REVIEWER_KEY = "turuj-reviewer";
 
 /** A random id this browser keeps, so a second review of a trip replaces the first (nothing about the person). */
 function reviewerId(): string {
@@ -39,7 +37,7 @@ export async function sendReview(slug: string, answers: ReviewAnswers): Promise<
     if (r.status === 403 && (await r.json().catch(() => null))?.error === "preview") return "preview";
     if (!r.ok) throw new Error(String(r.status));
     track("review_sent", { trail: slug });
-    noteReviewed(slug, answers.stars);
+    noteReviewed(slug, answers);
     return "ok";
   } catch {
     return "error";

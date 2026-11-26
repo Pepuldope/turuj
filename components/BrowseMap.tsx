@@ -37,6 +37,8 @@ export interface BrowseTrip {
   dim?: boolean;
   /** A yearly closure is in force on the picked day: washed out like `dim`, dashed, with a lock on its square. */
   closed?: boolean;
+  /** The visitor has been here: a small check on the square's corner. */
+  visited?: boolean;
 }
 
 /** A mountain area: one dot while zoomed out. */
@@ -198,10 +200,17 @@ function roundSquare(g: CanvasRenderingContext2D, x: number, y: number, size: nu
   g.closePath();
 }
 
-/** The site's square trail mark (16 px, white edge, soft shadow), drawn for the map at 2x. */
-function squareImage(fill: string, edge: string, size: number, lock = false): ImageData {
+/** The visited check on a square's corner: this many px across, its middle on the square's top right corner. */
+const VISITED_BADGE = 11;
+
+/**
+ * The site's square trail mark (16 px, white edge, soft shadow), drawn for the map at 2x. `visited` adds the
+ * visited mark on the top right corner: a white circle with an ink check (never green). The picture grows on
+ * every side by the same amount, so the square stays in its middle, on the place itself.
+ */
+function squareImage(fill: string, edge: string, size: number, lock = false, visited = false): ImageData {
   const r = 2;
-  const pad = 3 * r;
+  const pad = (visited ? 3 + Math.ceil(VISITED_BADGE / 2) : 3) * r;
   const s = size * r;
   const c = document.createElement("canvas");
   c.width = c.height = s + 2 * pad;
@@ -227,6 +236,29 @@ function squareImage(fill: string, edge: string, size: number, lock = false): Im
     g.arc(mid, mid - 1.5 * r, 2.6 * r, Math.PI, 0);
     g.stroke();
     g.fillRect(mid - 4 * r, mid - 1 * r, 8 * r, 6 * r);
+  }
+  if (visited) {
+    const x = pad + s - 1 * r;
+    const y = pad + 1 * r;
+    const br = (VISITED_BADGE / 2) * r;
+    g.shadowColor = "rgba(0,0,0,0.4)";
+    g.shadowBlur = 2 * r;
+    g.shadowOffsetY = 0.5 * r;
+    g.fillStyle = "#ffffff";
+    g.beginPath();
+    g.arc(x, y, br, 0, 2 * Math.PI);
+    g.fill();
+    g.shadowColor = "transparent";
+    g.strokeStyle = NIGHT;
+    g.lineWidth = 0.75 * r;
+    g.stroke();
+    g.lineWidth = 1.6 * r;
+    g.lineCap = g.lineJoin = "round";
+    g.beginPath();
+    g.moveTo(x - 2.4 * r, y + 0.1 * r);
+    g.lineTo(x - 0.7 * r, y + 1.8 * r);
+    g.lineTo(x + 2.5 * r, y - 1.7 * r);
+    g.stroke();
   }
   return g.getImageData(0, 0, c.width, c.height);
 }
@@ -515,6 +547,14 @@ export function BrowseMap({
         for (const [kind, colour] of Object.entries(GOAL_COLOUR)) m.addImage(`sq-dim-${kind}`, squareImage(desaturate(colour), "#ffffff", 16), { pixelRatio: 2 });
         for (const [kind, colour] of Object.entries(GOAL_COLOUR)) m.addImage(`sq-lock-${kind}`, squareImage(desaturate(colour), "#ffffff", 16, true), { pixelRatio: 2 });
         m.addImage("sq-active", squareImage(SUN, NIGHT, 22), { pixelRatio: 2 });
+        // The same squares with the visited check on the corner ("v-" before the kind).
+        for (const [kind, colour] of Object.entries(GOAL_COLOUR)) {
+          m.addImage(`sq-v-${kind}`, squareImage(colour, "#ffffff", 16, false, true), { pixelRatio: 2 });
+          m.addImage(`sq-dim-v-${kind}`, squareImage(desaturate(colour), "#ffffff", 16, false, true), { pixelRatio: 2 });
+          m.addImage(`sq-lock-v-${kind}`, squareImage(desaturate(colour), "#ffffff", 16, true, true), { pixelRatio: 2 });
+          m.addImage(`sq-big-v-${kind}`, squareImage(colour, "#ffffff", 20, false, true), { pixelRatio: 2 });
+        }
+        const seen = ["case", ["get", "v"], "v-", ""];
         m.addSource("squares", { type: "geojson", data: EMPTY });
         for (let z = SQUARE_MIN; z <= SQUARE_MAX; z++) {
           const fade = ["interpolate", ["linear"], ["zoom"], z - shift - 0.01, 0, z - shift + 0.15, 1] as unknown as ExpressionSpecification;
@@ -524,7 +564,7 @@ export function BrowseMap({
             source: "squares",
             minzoom: z - shift - 0.01,
             filter: ["==", ["get", "z"], z],
-            layout: { "icon-image": ["concat", ["case", ["get", "c"], "sq-lock-", ["get", "d"], "sq-dim-", "sq-"], ["get", "g"]], "icon-allow-overlap": true, "icon-ignore-placement": true, "symbol-sort-key": ["-", 0, ["get", "r"]] },
+            layout: { "icon-image": ["concat", ["case", ["get", "c"], "sq-lock-", ["get", "d"], "sq-dim-", "sq-"], seen, ["get", "g"]] as unknown as ExpressionSpecification, "icon-allow-overlap": true, "icon-ignore-placement": true, "symbol-sort-key": ["-", 0, ["get", "r"]] },
             paint: { "icon-opacity": fade },
           });
         }
@@ -536,7 +576,7 @@ export function BrowseMap({
           source: "squares",
           maxzoom: SQUARE_MIN - shift,
           filter: ["==", ["get", "f"], true],
-          layout: { "icon-image": ["concat", "sq-big-", ["get", "g"]], "icon-allow-overlap": true, "icon-ignore-placement": true, "symbol-sort-key": ["-", 0, ["get", "r"]] },
+          layout: { "icon-image": ["concat", "sq-big-", seen, ["get", "g"]] as unknown as ExpressionSpecification, "icon-allow-overlap": true, "icon-ignore-placement": true, "symbol-sort-key": ["-", 0, ["get", "r"]] },
         });
         m.addLayer({
           id: "sq-active",
@@ -908,7 +948,7 @@ export function BrowseMap({
     showDots(areaEls.current, !few && map.getZoom() < AREA_ZOOM - ctx.shift);
     squares.current.all = trips.map((t) => ({
       type: "Feature",
-      properties: { s: t.slug, g: t.goal, r: t.rank, z: level.get(t.slug), d: !!t.dim, c: !!t.closed, f: few && !t.dim },
+      properties: { s: t.slug, g: t.goal, r: t.rank, z: level.get(t.slug), d: !!t.dim, c: !!t.closed, f: few && !t.dim, v: !!t.visited },
       geometry: { type: "Point", coordinates: [t.location.lon, t.location.lat] },
     }));
     squares.current.full = false;

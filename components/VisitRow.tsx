@@ -5,7 +5,7 @@ import { confirmPlanVisit } from "@/lib/confirmPlanVisit";
 import { track } from "@/lib/analytics";
 import { shortDate } from "@/lib/days";
 import { useLang, useT } from "@/lib/i18n";
-import { useReviewed } from "@/lib/reviewed";
+import { useMyStars } from "@/lib/reviewed";
 import { useSavedTrips } from "@/lib/savedTrips";
 import { useTripSettings } from "@/lib/tripSettings";
 import type { DestinationKind, GeoPoint, RouteBrief } from "@/lib/tripSchema";
@@ -53,7 +53,7 @@ export function VisitRow({
 }) {
   const { trips, patch } = useSavedTrips();
   const { visits } = useVisits();
-  const reviewedMap = useReviewed();
+  const reviewedMap = useMyStars();
   const { today } = useTripSettings();
   const t = useT();
   const lang = useLang();

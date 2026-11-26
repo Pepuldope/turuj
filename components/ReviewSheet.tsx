@@ -2,8 +2,10 @@
 
 import { UiIcon } from "@/components/UiIcon";
 import { useState } from "react";
-import { NO_ANSWERS, ReviewFields } from "@/components/ReviewFields";
+import { ReviewFields } from "@/components/ReviewFields";
+import { keptReview } from "@/lib/reviewed";
 import { sendReview } from "@/lib/sendReview";
+import type { ReviewAnswers } from "@/lib/sendReview";
 import "@/lib/legacyStorage";
 import { LangLink, useT } from "@/lib/i18n";
 import { PREVIEW_MESSAGE } from "@/lib/previewGuard";
@@ -13,10 +15,11 @@ import { useScrollLock } from "@/lib/useScrollLock";
 /**
  * The quick review after a trip (Peter, 2026-10-22: under a minute; 2026-10-23: four questions
  * at most, only stars and choices, no typing): stars, did it match the description, did the
- * plan's times hold, was it crowded. A centred sheet over the page.
+ * plan's times hold, was it crowded. A centred sheet over the page. Also the way to change a rating.
  */
 export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string; onDone: (sent: boolean) => void }) {
-  const [answers, setAnswers] = useState(NO_ANSWERS);
+  // A trip rated before opens with its old answers (Peter, 26 Nov 2026): a second rating replaces the first.
+  const [answers, setAnswers] = useState<ReviewAnswers>(() => keptReview(slug));
   const [state, setState] = useState<"idle" | "sending" | "error" | "preview">("idle");
   const tx = useT();
   // Fades and scales away before the parent removes it (Peter, 17 Nov).
