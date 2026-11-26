@@ -133,12 +133,23 @@ workflows in this repository and nothing else:
    `Cloudflare Worker starts the Ship batch workflow`; Resource owner `Pepuldope`; Repository access
    "Only select repositories" → `Pepuldope/turuj`; Permissions → Repository permissions → Actions:
    "Read and write" (Metadata: Read-only is added by itself). Nothing else. Generate token, copy it.
-3. In a terminal: `cd ~/dev/Turuj && npx wrangler secret put SHIP_BATCH_TOKEN`, paste the token at the
-   prompt. It is stored encrypted at Cloudflare, survives deploys and is live at once (no site deploy).
-   Never put it in a file, a workflow or a chat.
+3. Store it in this repository's Actions secrets: github.com/Pepuldope/turuj → Settings → Secrets and variables →
+   Actions → New repository secret; Name `SHIP_BATCH_TOKEN`, Secret: the token; Add secret. (Or in a terminal:
+   `gh secret set SHIP_BATCH_TOKEN -R Pepuldope/turuj`, paste at the prompt.) Never put it in a file, a workflow
+   or a chat.
+4. The next deploy hands it to Cloudflare by itself (last step of `deploy.yml`): it is stored encrypted there and
+   survives later deploys. To see whether it arrived: `npx wrangler secret list` in `~/dev/Turuj` (names only), or
+   the deploy's log line "Success! Uploaded secret SHIP_BATCH_TOKEN".
+
+**Why not `npx wrangler secret put` by hand (25 Nov 2026):** Cloudflare refuses it while a Worker version newer
+than the deployed one exists ("the latest version of your Worker isn't currently deployed"), and every preview
+build uploads one. Right after a deploy is the one moment it works, so the deploy does it. **Never use
+`wrangler versions secret put` + `wrangler versions deploy` here:** it copies the NEWEST version, which is a
+preview build, and deploying that puts preview code (which refuses writes) on turuj.sk.
 
 **When it breaks:** if GitHub refuses the start (expired or deleted token, lost permission), the Worker
 e-mails `info@turuj.sk` that morning ("Túruj: Ship batch did not start") and nothing ships; merge the
-labelled pull request by hand and repeat the three steps above. Without the secret the Worker does
+labelled pull request by hand, make a new token (steps 1-2) and replace the Actions secret (step 3); the next
+deploy passes it on. Without the secret the Worker does
 nothing at 06:30 and sends no e-mail. Its log line is `[ship] Ship batch workflow: started` (Workers
 Logs). A dry run by hand: Actions → Ship batch → Run workflow (the box stays ticked).
