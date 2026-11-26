@@ -64,7 +64,9 @@ export function lastSyncAt(account: string): number | null {
   return readMemory(account).at;
 }
 
-let status: SyncStatus = { state: "off", busy: false, at: null };
+/** The state before anything is known. One object, so the server render and the first client render get the same snapshot. */
+const OFF: SyncStatus = { state: "off", busy: false, at: null };
+let status: SyncStatus = OFF;
 const listeners = new Set<() => void>();
 
 function setStatus(next: Partial<SyncStatus>) {
@@ -79,7 +81,7 @@ export function useSyncStatus(): SyncStatus {
       return () => void listeners.delete(l);
     },
     () => status,
-    () => ({ state: "off", busy: false, at: null }),
+    () => OFF,
   );
 }
 
