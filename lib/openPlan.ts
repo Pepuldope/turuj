@@ -18,15 +18,16 @@ import { useUserLocation } from "@/lib/userLocation";
  * trip page shows the day as it was planned. The same as "Otvoriť" in Moje výlety (SavedTripsList.open).
  */
 export function usePutPlanBack(): (trip: SavedTrip) => void {
-  const { update } = useTripSettings();
+  const { openPlan } = useTripSettings();
   const { setManualStart } = useUserLocation();
   return useCallback(
     (trip: SavedTrip) => {
-      update({ date: trip.date, time: trip.time, ...(trip.travel ? { travel: trip.travel } : {}), ...(trip.withKids !== undefined ? { withKids: trip.withKids } : {}) });
+      // openPlan, not update: the day the home list showed comes back when the visitor returns to it.
+      openPlan({ date: trip.date, time: trip.time, ...(trip.travel ? { travel: trip.travel } : {}), ...(trip.withKids !== undefined ? { withKids: trip.withKids } : {}) });
       if (trip.start) setManualStart(trip.start, "remembered");
       setTripStops(trip.slug, trip.stops ?? []);
     },
-    [update, setManualStart]
+    [openPlan, setManualStart]
   );
 }
 

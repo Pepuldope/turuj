@@ -20,7 +20,7 @@ import { haversineM } from "@/lib/geo";
 import { plain, preparePlaces, searchPlaces } from "@/lib/placeSearch";
 import { fuzzyScore } from "@/lib/fuzzy";
 import type { PlaceSearch, SearchIndexFile } from "@/lib/placeSearch";
-import { useTripSettings } from "@/lib/tripSettings";
+import { useTripSettings, useOwnDay } from "@/lib/tripSettings";
 import { knownDriveMin, useStartDrives, useTownDrives } from "@/lib/useDriveRoute";
 import { clearAllStops } from "@/lib/tripStops";
 import { smoothScroll } from "@/lib/motion";
@@ -252,6 +252,8 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
   // Back on the list: stops added on a trip page don't follow into the next one.
   useEffect(() => clearAllStops(), []);
   const { date, today, withKids, easier, travel, update } = useTripSettings();
+  // After a saved plan was open, the list shows its own day again, not the plan's (Peter, 26 Nov 2026).
+  useOwnDay();
   const t = useT();
   const lang = useLang();
   // Several kinds at once (testers): empty = every kind.
