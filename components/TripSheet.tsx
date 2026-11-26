@@ -24,6 +24,7 @@ import { TripAnswers, TripHeaderFacts } from "@/components/TripAnswers";
 import { TripPlanner } from "@/components/TripPlanner";
 import { TripReviews } from "@/components/TripReviews";
 import { PlanRow } from "@/components/PlanRow";
+import { VisitRow } from "@/components/VisitRow";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TripFacts } from "@/components/TripFacts";
 import { TripMap } from "@/components/TripMap";
@@ -359,6 +360,8 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
             // A visible action of the "Uložiť a navigovať" card (still in the server HTML: the link is a plain anchor).
             gpxAction={gpxUrl ? <GpxDownload gpxUrl={gpxUrl} slug={trail.slug} name={gpxName} /> : null}
             bbox={trail.bbox}
+            place={trip.variant_of ?? trail.slug}
+            route={current}
             closures={closures}
             hasPlaces={detail.pois.length > 0}
             routeCount={routes.length}
@@ -377,8 +380,18 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                     familyFriendly={trail.family_friendly}
                   />
                   {description && <p className="text-sm text-[var(--muted)]">{description}</p>}
-                  <TripReviews slug={trail.slug} name={trail.name} />
+                  <TripReviews slug={trail.slug} />
                   <PlanRow slug={trail.slug} />
+                  <VisitRow
+                    slug={trail.slug}
+                    name={trail.name}
+                    place={trip.variant_of ?? trail.slug}
+                    route={current}
+                    routes={routes.length ? routes.map((r) => r.slug).filter((r) => !r.endsWith(LOOP_SUFFIX)) : [trail.slug]}
+                    briefs={routes}
+                    walks={walks}
+                    goal={{ kind: goal, name: trip.destination.name, location: trip.destination.location }}
+                  />
                 </div>
                 {routes.length > 1 && <ShorterRouteHint routes={routes} at={routeAt} walks={walks} />}
                 {!loopBack && (

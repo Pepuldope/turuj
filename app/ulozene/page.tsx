@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { SavedIntro } from "@/components/SavedIntro";
 import { SavedTripsList } from "@/components/SavedTripsList";
+import { SyncLine } from "@/components/SyncLine";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Here, PageBackLink } from "@/components/CameFrom";
 import { T } from "@/lib/i18n";
@@ -19,7 +19,7 @@ export default function SavedTripsPage() {
       </div>
       <header className="flex flex-col gap-1">
         <h1 className="text-[1.65rem] leading-tight font-extrabold"><T>Moje výlety</T></h1>
-        <SavedIntro />
+        <SyncLine />
       </header>
       <SavedTripsList />
       <SiteFooter />

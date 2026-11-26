@@ -35,12 +35,15 @@ const SCHEMA = [
   // "Chcem testovať", with the day of the first press, and the days they used the app (Bratislava dates only).
   `CREATE TABLE IF NOT EXISTS tester (account TEXT PRIMARY KEY, since TEXT NOT NULL) WITHOUT ROWID`,
   `CREATE TABLE IF NOT EXISTS tester_day (account TEXT NOT NULL, day TEXT NOT NULL, PRIMARY KEY (account, day)) WITHOUT ROWID`,
+  // Synced saved trips and visits (lib/syncStore.ts); a normal rowid table on purpose, because bodies are tens of kB.
+  `CREATE TABLE IF NOT EXISTS account_item (account TEXT NOT NULL, kind TEXT NOT NULL, key TEXT NOT NULL, at INTEGER NOT NULL, gone INTEGER NOT NULL DEFAULT 0, body TEXT, PRIMARY KEY (account, kind, key))`,
 ];
 // Columns added after the first tables; "duplicate column" on later runs is fine.
 const ADD = [`ALTER TABLE account ADD COLUMN pw TEXT`, `ALTER TABLE account ADD COLUMN pw_fails INTEGER NOT NULL DEFAULT 0`, `ALTER TABLE account ADD COLUMN pw_locked INTEGER NOT NULL DEFAULT 0`, `ALTER TABLE account ADD COLUMN team INTEGER NOT NULL DEFAULT 0`];
 let ready: Promise<unknown> | null = null;
 
-async function db(): Promise<D1Like | null> {
+/** The database with the account tables ready; the sync store shares it. */
+export async function accountDb(): Promise<D1Like | null> {
   const d = await getDb();
   if (!d) return null;
   ready ??= d
@@ -97,7 +100,7 @@ export function sessionCookie(token: string, maxAgeS = SESSION_DAYS * 86400): st
 export async function currentAccount(req: Request): Promise<Account | null> {
   const token = sessionToken(req);
   if (!token) return null;
-  const d = await db();
+  const d = await accountDb();
   if (!d) return null;
   const row = await d
     .prepare(`SELECT a.id, a.email, a.name, a.team FROM account_session s JOIN account a ON a.id = s.account WHERE s.token = ? AND s.expires > ?`)
@@ -108,7 +111,7 @@ export async function currentAccount(req: Request): Promise<Account | null> {
 
 /** Marks the account as a team one (or not): its browsers stop being counted, see /statistiky. */
 export async function setTeam(accountId: string, team: boolean): Promise<void> {
-  const d = await db();
+  const d = await accountDb();
   if (!d) throw new Error("no database");
   await d.prepare(`UPDATE account SET team = ? WHERE id = ?`).bind(team ? 1 : 0, accountId).run();
 }
@@ -117,7 +120,7 @@ export type SignInMethod = "google" | "email" | "password";
 
 /** A new session for the account; returns the token for the cookie. */
 export async function startSession(accountId: string, method: SignInMethod): Promise<string> {
-  const d = await db();
+  const d = await accountDb();
   if (!d) throw new Error("no database");
   const token = randomToken();
   const now = Date.now();
@@ -134,17 +137,18 @@ export async function startSession(accountId: string, method: SignInMethod): Pro
 }
 
 /**
- * Deletes the account with its sessions and any pending email code (/sukromie: "Zmazať účet").
+ * Deletes the account with its sessions, synced trips and any pending email code (/sukromie: "Zmazať účet").
  * Reviews carry only a random browser id, never the account, so nothing else points at it.
  */
 export async function deleteAccount(account: Account): Promise<void> {
-  const d = await db();
+  const d = await accountDb();
   if (!d) throw new Error("no database");
   await d.batch([
     d.prepare(`DELETE FROM account_session WHERE account = ?`).bind(account.id),
     d.prepare(`DELETE FROM login_code WHERE email = ?`).bind(account.email),
     d.prepare(`DELETE FROM tester_day WHERE account = ?`).bind(account.id),
     d.prepare(`DELETE FROM tester WHERE account = ?`).bind(account.id),
+    d.prepare(`DELETE FROM account_item WHERE account = ?`).bind(account.id),
     d.prepare(`DELETE FROM account WHERE id = ?`).bind(account.id),
   ]);
 }
@@ -156,7 +160,7 @@ export function bratislavaDay(at: Date = new Date()): string {
 
 /** Marks the account as a tester (the first day is kept) and counts today as one of its days. Safe to repeat. */
 export async function markTester(accountId: string, at: Date = new Date()): Promise<void> {
-  const d = await db();
+  const d = await accountDb();
   if (!d) throw new Error("no database");
   const day = bratislavaDay(at);
   await d.batch([
@@ -167,7 +171,7 @@ export async function markTester(accountId: string, at: Date = new Date()): Prom
 
 /** Counts today for a signed-in account if (and only if) it is a tester: one cheap statement, nothing is written for anyone else or a second time in a day. */
 export async function recordTesterDay(accountId: string, at: Date = new Date()): Promise<void> {
-  const d = await db();
+  const d = await accountDb();
   if (!d) return;
   await d
     .prepare(`INSERT OR IGNORE INTO tester_day (account, day) SELECT ?, ? WHERE EXISTS (SELECT 1 FROM tester WHERE account = ?)`)
@@ -177,14 +181,14 @@ export async function recordTesterDay(accountId: string, at: Date = new Date()):
 
 export async function endSession(req: Request): Promise<void> {
   const token = sessionToken(req);
-  const d = await db();
+  const d = await accountDb();
   if (!token || !d) return;
   await d.prepare(`DELETE FROM account_session WHERE token = ?`).bind(await sha256(token)).run();
 }
 
 /** The account for this email (made on first sign-in); with Google, its id and name are kept too. */
 export async function accountFor(email: string, google?: { sub: string; name: string | null }): Promise<Account> {
-  const d = await db();
+  const d = await accountDb();
   if (!d) throw new Error("no database");
   const now = new Date().toISOString();
   if (google) {
@@ -211,7 +215,7 @@ export type CodeAsk = "ok" | "wait" | "no-db";
 
 /** Stores a new code for the email; "wait" when one went out less than a minute ago. */
 export async function newLoginCode(email: string, code: string): Promise<CodeAsk> {
-  const d = await db();
+  const d = await accountDb();
   if (!d) return "no-db";
   const now = Date.now();
   const prev = await d.prepare(`SELECT sent FROM login_code WHERE email = ?`).bind(email).first<{ sent: number }>();
@@ -229,7 +233,7 @@ export type CodeCheck = "ok" | "wrong" | "expired";
 
 /** Checks a typed code; a right one is used up, and too many wrong ones end it. */
 export async function checkLoginCode(email: string, code: string): Promise<CodeCheck> {
-  const d = await db();
+  const d = await accountDb();
   if (!d) return "expired";
   const row = await d.prepare(`SELECT code, expires, tries FROM login_code WHERE email = ?`).bind(email).first<{ code: string; expires: number; tries: number }>();
   if (!row || row.expires < Date.now() || row.tries >= CODE_TRIES) return "expired";
@@ -259,7 +263,7 @@ export interface AccountMonth {
 
 /** Accounts for /statistiky: the total and each month, newest first; null without the database. */
 export async function accountStats(): Promise<{ total: number; months: AccountMonth[] } | null> {
-  const d = await db().catch(() => null);
+  const d = await accountDb().catch(() => null);
   if (!d) return null;
   const [made, signins] = await Promise.all([
     d.prepare(`SELECT substr(created, 1, 7) AS month, COUNT(*) AS n FROM account GROUP BY month`).all<{ month: string; n: number }>(),
@@ -323,13 +327,13 @@ export function okPassword(raw: unknown): raw is string {
 }
 
 export async function setPassword(accountId: string, password: string): Promise<void> {
-  const d = await db();
+  const d = await accountDb();
   if (!d) throw new Error("no database");
   await d.prepare(`UPDATE account SET pw = ?, pw_fails = 0, pw_locked = 0 WHERE id = ?`).bind(await hashPassword(password), accountId).run();
 }
 
 export async function setName(accountId: string, name: string): Promise<void> {
-  const d = await db();
+  const d = await accountDb();
   if (!d) return;
   await d.prepare(`UPDATE account SET name = ? WHERE id = ?`).bind(name, accountId).run();
 }
@@ -342,7 +346,7 @@ export type PasswordLogin = { ok: true; account: Account } | { ok: false; why: "
  * with Google or a code) says "nopw", and after PW_TRIES wrong ones in a row it waits a while.
  */
 export async function passwordLogin(email: string, password: string): Promise<PasswordLogin> {
-  const d = await db();
+  const d = await accountDb();
   if (!d) throw new Error("no database");
   const row = await d
     .prepare(`SELECT id, email, name, pw, pw_fails, pw_locked FROM account WHERE email = ?`)

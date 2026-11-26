@@ -652,6 +652,37 @@ h2,
   font-family: var(--font-figtree), system-ui, sans-serif;
 }
 
+/* The routes in the visit window (components/RoutePick.tsx): drawn lines over the real map. Light in both
+   themes, like the maps: the route colours (lib/palette.ts) are tuned for a light map. The paper colour shows
+   until the map has loaded, and stays when there is no signal. */
+.route-sketch {
+  --sketch-paper: #eef3f8;
+  background: var(--sketch-paper);
+}
+.route-sketch-map {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transition: opacity 250ms ease-out;
+}
+/* This map stands still, so a wheel or a finger on it scrolls the window (the big maps keep the scroll to
+   themselves, see .maplibregl-map above). */
+.route-sketch-map .maplibregl-map {
+  overscroll-behavior: auto;
+}
+.route-sketch-name {
+  position: absolute;
+  padding: 0 3px;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.92);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 14px;
+  white-space: nowrap;
+  color: #14233b;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mt-flake {
     display: none;

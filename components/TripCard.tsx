@@ -20,6 +20,7 @@ import type { CSSProperties, ImgHTMLAttributes } from "react";
 import { photoFocus } from "@/lib/photoFocus";
 import { cardSvg } from "@/lib/terrainScene";
 import type { CardEntry } from "@/lib/terrainScene";
+import { useVisitedTrips } from "@/lib/visits";
 
 /**
  * A photo that fades in once it has loaded (Peter, 17 Nov: thumbnails popped in one by one). A picture that was
@@ -193,7 +194,7 @@ function NoPhotoScene({ goal, colour, slug }: { goal: DestinationKind; colour: s
 let thumbsP: Promise<Record<string, string>> | null = null;
 
 /** Card photos by trip slug (scripts/photo-thumbs.mjs), loaded once for every card. */
-function useThumb(slug: string): string | null {
+export function useThumb(slug: string): string | null {
   const [thumbs, setThumbs] = useState<Record<string, string> | null>(null);
   useEffect(() => {
     let live = true;
@@ -211,6 +212,15 @@ function useThumb(slug: string): string | null {
   return thumbs?.[slug] ?? null;
 }
 
+/** The visited mark as it sits on a picture: a white circle with an ink check, never green. `className` places it and gives its display (grid or inline-grid). */
+export function CardVisitMark({ className }: { className: string }) {
+  return (
+    <span aria-hidden data-visited-mark className={`h-[22px] w-[22px] place-items-center rounded-full bg-white text-[#14233b] shadow-[0_1px_3px_rgba(0,0,0,0.35)] ${className}`}>
+      <UiIcon name="check" size={13} />
+    </span>
+  );
+}
+
 /** One trip: what it is, how long to get there and walk, and when to leave. */
 export function TripCard({ item, dayWord, transit, active, onClose, onActive, registerItem, enter }: Props) {
   const { detail, hikeMin, carMin, driveMin, driveApprox, driveLoading, distanceM, nearStop } = item;
@@ -218,6 +228,8 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
   const lang = useLang();
   const t = (sk: string, vars?: Record<string, string | number>) => tr(lang, sk, vars);
   const thumb = useThumb(item.detail.trail.slug);
+  // The visited mark on the picture (Peter, 25 Nov 2026, C213): the place by any route, or this card's own route.
+  const visited = useVisitedTrips().has(item.detail.trail.slug);
   const { trail } = detail;
   const goal = trail.goal ?? "ine";
   const colour = GOAL_COLOUR[goal];
@@ -283,6 +295,7 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
               dangerouslySetInnerHTML={{ __html: kindSvg(goal, 15) }}
             />
           )}
+          {visited && <CardVisitMark className="absolute top-2 left-2 grid" />}
           <span aria-hidden />
         </>
       ) : thumb ? (
@@ -307,7 +320,12 @@ export function TripCard({ item, dayWord, transit, active, onClose, onActive, re
       )}
       <span className="flex min-w-0 flex-col gap-1">
         <span className="flex items-baseline justify-between gap-2">
-          <span data-trip-name className={`leading-tight font-bold ${big ? "text-xl" : "text-base"} ${dim ? "text-[var(--muted)]" : ""}`}>{trail.name}</span>
+          <span data-trip-name className={`leading-tight font-bold ${big ? "text-xl" : "text-base"} ${dim ? "text-[var(--muted)]" : ""}`}>
+            {trail.name}
+            {visited && <span className="sr-only"> ({t("boli ste tu")})</span>}
+            {/* The big card's picture is small and may be a plain icon: its mark stands by the name. */}
+            {visited && big && <CardVisitMark className="ml-1.5 inline-grid align-[-3px]" />}
+          </span>
           {big ? (
             <button
               type="button"

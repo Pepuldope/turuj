@@ -1,4 +1,4 @@
-import { addDaysIso, longDay, shortDate } from "@/lib/days";
+import { addDaysIso, daysBetween, longDay, shortDate } from "@/lib/days";
 import type { Lang } from "@/lib/lang";
 import type { SavedTrip } from "@/lib/savedTrips";
 
@@ -19,6 +19,13 @@ export function nextPlan<T extends Plan>(trips: readonly T[], today: string): T 
   const ahead = trips.filter((t) => stillPlanned(t, today));
   if (ahead.length === 0) return null;
   return ahead.reduce((best, t) => (order(t, best) < 0 ? t : best));
+}
+
+/** The plan the home page asks about: the latest one whose day has passed (at most `maxDays` ago) and that is neither done nor skipped. */
+export function planToAsk<T extends Pick<SavedTrip, "date" | "doneAt" | "skipAsk">>(trips: readonly T[], today: string, maxDays = 14): T | null {
+  const open = trips.filter((t) => !t.doneAt && !t.skipAsk && t.date < today && daysBetween(t.date, today) <= maxDays);
+  if (open.length === 0) return null;
+  return open.reduce((best, t) => (t.date > best.date ? t : best));
 }
 
 function order(a: Plan, b: Plan): number {

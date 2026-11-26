@@ -21,10 +21,10 @@ export type AnalyticsEvent =
   | "plus_no" // "Za túto cenu nie" on /plus
   | "app_link" // "Získať appku" tapped: home bottom bar or after saving a trip
   | "app_installed" // Android install dialog accepted on /aplikacia
-  | "trip_done" // a saved trip marked as done: "Už sme tu boli" in Moje výlety (how: list) or "Áno" to "Boli ste na výlete?" on the trip page (how: ask); "Ešte nie" afterwards does not take it back
+  | "trip_done" // a saved trip marked as done: "Už sme tu boli" in Moje výlety (how: list) or "Áno" to "Boli ste tu?" on the trip page (how: ask) or on the home page (how: home), or "Boli sme tu" by hand on the trip page (how: page); "Nie" afterwards does not take it back
   | "review_sent" // the quick review was accepted by the server
   | "on_trail" // "Začať výlet" tapped on a saved trip in Moje výlety (trail mode opens)
-  | "plan_open" // the way back to a saved plan was used: the strip on the home page (from: home) or "Otvoriť" in the first card of the planned trip's page (from: trip)
+  | "plan_open" // the way back to a saved plan was used: the strip on the home page (from: home) or "Otvoriť" in the first card of the planned trip's page (from: trip); also "Naplánovať znova" on a visited place (from: again)
   | "plan_commit" // North Star: the first save, send, navigation or GPX for a trail in this page load (sent by track())
   | "list_empty" // the home trip list came back empty for the chosen filters (trackListEmpty)
   | "heard_from" // one-tap "Ako ste sa o nás dozvedeli?" after the first saved trip on this device

@@ -18,6 +18,10 @@ import "@/lib/legacyStorage";
  */
 export interface SavedTrip {
   slug: string;
+  /** The main trip's slug of the place this route belongs to; missing on trips saved before visits existed. */
+  place?: string;
+  /** The route as step 1 names it: the trip's slug, or `<slug>/okruh` when the plan was made on the loop page; missing on older saves, then the slug counts. */
+  route?: string;
   name: string;
   date: string;
   time: string;
@@ -47,14 +51,39 @@ export interface SavedTrip {
   reviewed?: boolean;
   /** The walk itself, for the trail screen ("Začať výlet"); missing on trips saved before it existed. */
   trail?: SavedTrail;
+  /** The trail's GPX file address, so another device can make its offline copy; missing on trips saved before account sync. */
+  gpx?: string | null;
   /** The trail's closure rules at save time, so the list can warn about a closed day offline; missing on trips saved before it existed. */
   closures?: Closure[];
   /** The evening-before reminder (push): true on, false switched off by the group, missing until first offered. */
   eve?: boolean;
   /** The forecast for the trip day, kept so the saved trip shows it offline; refreshed whenever the list loads a newer one. Missing on trips saved before it existed. */
   weather?: SavedWeather;
-  /** Offline copy state: the page, GPX and map tiles. */
-  offline: "ok" | "failed" | "pending";
+  /** Offline copy state: the page, GPX and map tiles. "none": the plan came from the account and this device has not made its offline copy yet. */
+  offline: "ok" | "failed" | "pending" | "none";
+  /** When the plan itself last changed on any device (ms); decides which copy wins in account sync. Missing on trips saved before sync existed (then savedAt counts). */
+  changedAt?: number;
+}
+
+/** Fields that belong to one device and never travel with the account. */
+export const DEVICE_FIELDS = ["offline", "eve", "weather"] as const;
+
+/** When the plan last changed, for account sync. */
+export const planAt = (trip: SavedTrip): number => trip.changedAt ?? (Date.parse(trip.savedAt) || 1);
+
+/** A trip being saved: always newer than the copy it replaces, even if the clock went backwards. */
+export function stampSave(trip: SavedTrip, prev: SavedTrip | undefined, now: number): SavedTrip {
+  return { ...trip, changedAt: Math.max(now, (prev ? planAt(prev) : 0) + 1) };
+}
+
+/** Applies a change; the plan counts as changed only when a field that travels really got another value. */
+export function stampPatch(trip: SavedTrip, change: Partial<SavedTrip>, now: number): SavedTrip {
+  const next = { ...trip, ...change };
+  const device = DEVICE_FIELDS as readonly string[];
+  const before: Record<string, unknown> = { ...trip };
+  const after: Record<string, unknown> = { ...next };
+  const travels = Object.keys(change).some((k) => !device.includes(k) && k !== "changedAt" && JSON.stringify(before[k]) !== JSON.stringify(after[k]));
+  return travels ? { ...next, changedAt: Math.max(now, planAt(trip) + 1) } : next;
 }
 
 /** A saved trip's weather: where to ask for it and the last copy of the trip day's forecast. */
@@ -79,6 +108,7 @@ export interface SavedTrail extends WalkTrip {
 
 const KEY = "turuj-saved-trips";
 const EVENT = "turuj-saved-trips";
+const GONE_KEY = "turuj-saved-gone";
 const EMPTY: SavedTrip[] = [];
 
 let cachedRaw: string | null = null;
@@ -110,6 +140,43 @@ function write(list: SavedTrip[]) {
     // Storage full / blocked: nothing we can do; the UI keeps the old list.
   }
   window.dispatchEvent(new Event(EVENT));
+}
+
+let goneRaw: string | null = null;
+let goneMap: Record<string, number> = {};
+
+/** Slugs removed on this device and when; account sync sends them so the removal reaches the other devices. */
+export function readSavedGone(): Record<string, number> {
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem(GONE_KEY);
+  } catch {
+    return goneMap;
+  }
+  if (raw === goneRaw) return goneMap;
+  goneRaw = raw;
+  try {
+    const parsed = raw ? (JSON.parse(raw) as unknown) : {};
+    goneMap = typeof parsed === "object" && parsed !== null && !Array.isArray(parsed) ? (parsed as Record<string, number>) : {};
+  } catch {
+    goneMap = {};
+  }
+  return goneMap;
+}
+
+export function writeSavedGone(map: Record<string, number>) {
+  try {
+    localStorage.setItem(GONE_KEY, JSON.stringify(map));
+  } catch {
+    // Storage full / blocked: the removal is then not sent to other devices.
+  }
+}
+
+export const readSavedTrips = read;
+
+/** Writes the list as given, no stamping (the sync engine decides what the stamps are). */
+export function writeSavedTrips(list: SavedTrip[]) {
+  write(list);
 }
 
 function subscribe(cb: () => void) {
@@ -147,16 +214,27 @@ export function useSavedTrips() {
 
   /** One saved entry per trail: saving again replaces it. Newest first. */
   const save = useCallback((trip: SavedTrip) => {
-    write([trip, ...read().filter((t) => t.slug !== trip.slug)]);
+    const list = read();
+    write([stampSave(trip, list.find((t) => t.slug === trip.slug), Date.now()), ...list.filter((t) => t.slug !== trip.slug)]);
+    const gone = readSavedGone();
+    if (trip.slug in gone) {
+      const rest = { ...gone };
+      delete rest[trip.slug];
+      writeSavedGone(rest);
+    }
     keepStorage();
   }, []);
 
   const patch = useCallback((slug: string, change: Partial<SavedTrip>) => {
-    write(read().map((t) => (t.slug === slug ? { ...t, ...change } : t)));
+    const now = Date.now();
+    write(read().map((t) => (t.slug === slug ? stampPatch(t, change, now) : t)));
   }, []);
 
   const remove = useCallback(async (slug: string) => {
-    write(read().filter((t) => t.slug !== slug));
+    const list = read();
+    const trip = list.find((t) => t.slug === slug);
+    if (trip) writeSavedGone({ ...readSavedGone(), [slug]: Math.max(Date.now(), planAt(trip) + 1) });
+    write(list.filter((t) => t.slug !== slug));
     try {
       await caches.delete(tripCacheName(slug));
     } catch {

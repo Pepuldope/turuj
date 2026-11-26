@@ -100,6 +100,18 @@ export function shortDate(iso: string, lang: Lang = "sk"): string {
   return `${d.getUTCDate()}. ${d.getUTCMonth() + 1}.`;
 }
 
+/** "sobota": the weekday alone. */
+export function weekdayName(iso: string, lang: Lang = "sk"): string {
+  const day = parseIso(iso).getUTCDay();
+  return lang === "en" ? EN_WEEKDAY[day] : WEEKDAY[day];
+}
+
+/** "v sobotu", "on Saturday": the weekday as it stands in a sentence. */
+export function weekdayInSentence(iso: string, lang: Lang = "sk"): string {
+  const day = parseIso(iso).getUTCDay();
+  return lang === "en" ? `on ${EN_WEEKDAY[day]}` : WEEKDAY_IN[day];
+}
+
 /** "sobota 17. 10." */
 export function longDay(iso: string, lang: Lang = "sk"): string {
   if (lang === "en") return `${EN_WEEKDAY[parseIso(iso).getUTCDay()]} ${shortDate(iso, lang)}`;

@@ -17,11 +17,13 @@ import { UiIcon } from "@/components/UiIcon";
 import { isoDate } from "@/lib/days";
 import { VERDICT_SHORT, formatDateSk, formatDuration, formatTime } from "@/lib/format";
 import { useSavedTrips } from "@/lib/savedTrips";
+import { markVisited, useVisits } from "@/lib/visits";
 import type { SavedTrip } from "@/lib/savedTrips";
 import { useTripSettings } from "@/lib/tripSettings";
 import { useUserLocation } from "@/lib/userLocation";
 import { Reveal } from "@/components/Reveal";
 import { ReviewSheet } from "@/components/ReviewSheet";
+import { VisitedList } from "@/components/VisitedList";
 import { SunArc } from "@/components/SunArc";
 import { TrailMode, activeTrip, trackTrailStart } from "@/components/TrailMode";
 import { useLang, useT } from "@/lib/i18n";
@@ -34,10 +36,11 @@ function todayIso(): string {
 /** Saved trips on this device. Renders from the saved snapshots alone, so it works offline. */
 export function SavedTripsList() {
   const { trips, remove, patch } = useSavedTrips();
+  const { visits } = useVisits();
   // Only the installed app talks about working without signal (Peter, 25 Nov 2026); in a browser tab it read as if the website needed no internet.
   const installed = useInstalled();
   const [reviewing, setReviewing] = useState<SavedTrip | null>(null);
-  // A card moving between "Plánované" and "Absolvované" rolls out of one list and into the other (Peter, 17 Nov), but only
+  // A card leaving "Plánované" for "Navštívené" rolls out of its list and into the other (Peter, 17 Nov), but only
   // once the visitor has pressed something: the trips come out of storage right after hydration, and that is not an event.
   const [touched, setTouched] = useState(false);
   const { openPlan } = useTripSettings();
@@ -99,24 +102,34 @@ export function SavedTripsList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trips]);
 
+  const empty = (
+    <p className="rounded-xl border border-dashed border-[var(--border)] p-4 text-sm opacity-80">
+      {installed
+        ? t("Zatiaľ tu nemáte žiadny výlet. Na stránke trasy ťuknite na „Uložiť výlet“, uloží sa aj s mapou, aby fungoval bez signálu.")
+        : t("Zatiaľ tu nemáte žiadny výlet. Na stránke trasy ťuknite na „Uložiť výlet“.")}
+    </p>
+  );
+  // No plan was ever saved: the note, and under it the places ticked by hand on their trip pages, if any.
   if (trips.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-[var(--border)] p-4 text-sm opacity-80">
-        {installed
-          ? t("Zatiaľ tu nemáte žiadny výlet. Na stránke trasy ťuknite na „Uložiť výlet“, uloží sa aj s mapou, aby fungoval bez signálu.")
-          : t("Zatiaľ tu nemáte žiadny výlet. Na stránke trasy ťuknite na „Uložiť výlet“.")}
-      </p>
+      <>
+        {empty}
+        <VisitedList />
+      </>
     );
   }
 
-  // Bol som tu (Peter, 2026-10-22): planned trips first, the ones the group went on below, then a quick review.
+  // Bol som tu (Peter, 2026-10-22): planned trips first, the places the group has been to below ("Navštívené",
+  // from the visits, C213), then a quick review.
   const planned = trips.filter((x) => !x.doneAt);
-  const done = trips.filter((x) => x.doneAt);
   const went = (trip: SavedTrip) => {
     setTouched(true);
     patch(trip.slug, { doneAt: new Date().toISOString() });
+    markVisited(trip);
     track("trip_done", { trail: trip.slug, how: "list" });
-    if (!trip.reviewed) setReviewing(trip);
+    // Also for a trip rated before (Peter, 26 Nov 2026: after taking the visit back and "Už sme tu boli" again
+    // no rating window came): it opens with the old answers, and a second rating replaces the first.
+    setReviewing(trip);
   };
 
   return (
@@ -134,48 +147,12 @@ export function SavedTripsList() {
       )}
       <div className="flex flex-col">
         <Reveal open={planned.length > 0} className="roll-gap [--roll-gap:20px]" appear={touched} animate={touched}>
-          <Reveal open={done.length > 0} animate={touched} appear={touched}>
+          <Reveal open={visits.length > 0} animate={touched} appear={touched}>
             <h2 className="pb-5 text-base font-bold">{t("Plánované")}</h2>
           </Reveal>
           <TripList trips={trips} today={today} open={open} remove={remove} went={went} start={startTrip} animate={touched} />
         </Reveal>
-        <Reveal open={done.length > 0} className="roll-gap [--roll-gap:20px]" appear={touched} animate={touched}>
-          <h2 className="pt-2 pb-5 text-base font-bold">
-            {t("Absolvované")} <span className="font-semibold text-[var(--muted)]">· {done.length}</span>
-          </h2>
-          <ul className="flex flex-col">
-            {trips.map((trip) => (
-              <Reveal as="li" key={trip.slug} open={!!trip.doneAt} className="roll-gap [--roll-gap:8px]" appear={touched} animate={touched}>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3">
-                  <span className="text-[var(--ok)]" aria-hidden>
-                    ✓
-                  </span>
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="font-semibold">{trip.name}</span>
-                    <span className="text-[13px] text-[var(--muted)]">{formatDateSk(trip.date, lang)}</span>
-                  </span>
-                  {trip.reviewed ? (
-                    <span className="text-[13px] font-semibold text-[var(--muted)]">{t("ohodnotené")}</span>
-                  ) : (
-                    <button type="button" onClick={() => setReviewing(trip)} className="rounded-full border border-[var(--accent)] px-3 py-1.5 text-[13px] font-bold text-[var(--accent)]">
-                      {t("Ohodnotiť")}
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTouched(true);
-                      patch(trip.slug, { doneAt: undefined });
-                    }}
-                    className="text-[13px] font-semibold text-[var(--muted)] underline"
-                  >
-                    {t("Ešte nie")}
-                  </button>
-                </div>
-              </Reveal>
-            ))}
-          </ul>
-        </Reveal>
+        <VisitedList />
       </div>
     </>
   );

@@ -19,6 +19,8 @@ import { BusOk, Dot, NoParkingChip, routeAccess, routeLabel } from "@/components
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { routeNameIn } from "@/lib/lang";
 import { useTownParam } from "@/components/TripBackLink";
+import { VisitMark } from "@/components/VisitMark";
+import { useWalkedRoutes } from "@/lib/visits";
 
 export interface RouteNumbers {
   min: number;
@@ -58,6 +60,8 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
   const t = useT();
   const lang = useLang();
   const day = usePlanDay();
+  // A check by the name of a route the visitor walked (Peter, 25 Nov 2026, C213).
+  const walked = useWalkedRoutes();
   // The tapped row is marked at once; the new page (a server render) takes a moment and only then changes `at`.
   const [tapped, setTapped] = useState<{ slug: string; at: number } | null>(null);
   const picked = tapped && tapped.at === at ? tapped.slug : null;
@@ -99,6 +103,12 @@ export function RouteRows({ routes, at, walks, shown }: { routes: RouteBrief[]; 
         <span className="flex min-w-0 flex-col leading-snug">
           <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[15px] font-bold">
             {routeNameIn(lang, routeLabel(r))}
+            {walked.has(r.slug) && (
+              <>
+                <VisitMark done />
+                <span className="sr-only">{t("boli ste tu")}</span>
+              </>
+            )}
             {!r.parking && <NoParkingChip />}
           </span>
           <span className="text-[13px] text-[var(--muted)]">

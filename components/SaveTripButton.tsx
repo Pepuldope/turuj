@@ -31,6 +31,9 @@ import { langPath } from "@/lib/lang";
 /** What saving a trip needs from its page. */
 interface SaveInput {
   slug: string;
+  /** The main trip's slug of the place, and the route as step 1 names it (the slug, or `<slug>/okruh` on the loop page); kept so a visit knows both. */
+  place?: string;
+  route?: string;
   name: string;
   gpxUrl: string | null;
   bbox: BBox | null;
@@ -82,7 +85,7 @@ const secondary =
  * Saving one trip, once per trip page: the page has two places to tap it (the "Uložiť a navigovať" card and,
  * on a friend's shared link, the box at the top; C91), and both show the same progress and result.
  */
-export function useTripSave({ slug, name, gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], weather = null }: SaveInput) {
+export function useTripSave({ slug, place, route, name, gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], weather = null }: SaveInput) {
   const { trips, save, patch, remove } = useSavedTrips();
   const { start } = useUserLocation();
   const { travel } = useTripSettings();
@@ -123,6 +126,8 @@ export function useTripSave({ slug, name, gpxUrl, bbox, sun, tripPlan, profile, 
     const keep = saved?.date === date && saved.weather?.url === weather?.urls?.below ? saved.weather : null;
     save({
       slug,
+      place,
+      route,
       name,
       date,
       time,
@@ -137,6 +142,7 @@ export function useTripSave({ slug, name, gpxUrl, bbox, sun, tripPlan, profile, 
       profile,
       stops,
       trail,
+      gpx: gpxUrl,
       closures,
       eve: saved?.eve,
       weather: weather?.urls
@@ -216,7 +222,7 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
   const lang = useLang();
 
   // "pending" while this page isn't saving: the save was cut off (page closed, phone asleep).
-  const showButton = !saved || changed || saved.offline === "failed" || saved.offline === "pending" || status === "saving";
+  const showButton = !saved || changed || saved.offline === "failed" || saved.offline === "pending" || saved.offline === "none" || status === "saving";
   const share = (
     <ShareButton
       {...trip}
