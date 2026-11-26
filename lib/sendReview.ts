@@ -34,7 +34,12 @@ export async function sendReview(slug: string, answers: ReviewAnswers): Promise<
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ slug, reviewer: reviewerId(), ...answers }),
     });
-    if (r.status === 403 && (await r.json().catch(() => null))?.error === "preview") return "preview";
+    if (r.status === 403 && (await r.json().catch(() => null))?.error === "preview") {
+      // A preview never stores a rating, but the browser keeps it as if it had: otherwise the visitor's own stars
+      // and the old answers in the rating window could not be tried on a preview at all (Peter checks previews first).
+      noteReviewed(slug, answers);
+      return "preview";
+    }
     if (!r.ok) throw new Error(String(r.status));
     track("review_sent", { trail: slug });
     noteReviewed(slug, answers);
