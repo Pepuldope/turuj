@@ -94,7 +94,7 @@ export const PRIVACY_SK = [
   "",
   "„Boli sme tu“ a „Už sme tu boli“, teda výlet, trasu a deň návštevy, si pamätá váš prehliadač, a ak ste prihlásený, aj váš účet (bod 7). Keď potom pošlete rýchle hodnotenie (hviezdičky, či trasa zodpovedala popisu, či sedeli časy a či tam bolo veľa ľudí), uložíme ho do databázy spolu s výletom, dátumom a náhodným číslom z vášho prehliadača. Vďaka nemu druhé hodnotenie toho istého výletu nahradí prvé. Meno, email ani IP adresu k hodnoteniu neukladáme. Na stránke výletu ukazujeme len súčty. Čo ste poslali, si pamätá aj váš prehliadač, aby ste svoje hodnotenie videli pri navštívenom výlete a mohli ho zmeniť. Hodnotenia poslané skôr si prehliadač raz vyžiada od nás podľa toho istého náhodného čísla.",
   "",
-  "Hodnotenie s vami nevieme spojiť: nemá meno, email ani IP adresu.",
+  "Jednotlivé hodnotenia nezverejňujeme a s vaším účtom ich nespájame: hodnotenie nemá meno, email ani IP adresu.",
   "",
   "### 9. Pripomienky počas túry",
   "",
