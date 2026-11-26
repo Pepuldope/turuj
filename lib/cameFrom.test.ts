@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arrive, cameFrom, readTrail, tripsOn, type Visit } from "@/lib/cameFrom";
+import { arrive, cameFrom, oneStepBackIsSafe, readTrail, tripsOn, type Visit } from "@/lib/cameFrom";
 
 const v = (path: string, label = path, href = path): Visit => ({ path, href, label });
 const HOME = v("/", "Všetky výlety");
@@ -92,5 +92,30 @@ describe("the stored trail", () => {
     expect(readTrail('{"a":1}')).toEqual([]);
     expect(readTrail('[{"path":"https://evil.example","href":"https://evil.example","label":"x"}, null, 3]')).toEqual([]);
     expect(readTrail('[{"path":"/a","href":"//evil.example/a","label":"x"}]')).toEqual([]);
+  });
+});
+
+describe("one step back in the browser's history", () => {
+  const SAVED: Visit = { path: "/ulozene", href: "/ulozene", label: "Moje výlety" };
+
+  it("is safe while the history is as long as when the visitor arrived", () => {
+    const trail = arrive(arrive([], { ...PLESO, len: 3 }, false), { ...SAVED, len: 4 }, false);
+    expect(oneStepBackIsSafe(trail, 4)).toBe(true);
+  });
+
+  it("is not safe once the page added an entry of its own (the trail screen, a sign-in detour)", () => {
+    const trail = arrive(arrive([], { ...PLESO, len: 3 }, false), { ...SAVED, len: 4 }, false);
+    expect(oneStepBackIsSafe(trail, 5)).toBe(false);
+  });
+
+  it("keeps the first arrival's length through a reload or a changed query string", () => {
+    let trail = arrive(arrive([], { ...PLESO, len: 3 }, false), { ...SAVED, len: 4 }, false);
+    trail = arrive(trail, { ...SAVED, href: "/ulozene?na-trase=devin", len: 5 }, false);
+    expect(trail[trail.length - 1]).toMatchObject({ href: "/ulozene?na-trase=devin", len: 4 });
+    expect(oneStepBackIsSafe(trail, 5)).toBe(false);
+  });
+
+  it("is not safe with a trail from before lengths were kept", () => {
+    expect(oneStepBackIsSafe(arrive(arrive([], PLESO, false), SAVED, false), 2)).toBe(false);
   });
 });

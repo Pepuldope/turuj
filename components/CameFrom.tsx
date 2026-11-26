@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useSyncExternalStore, type MouseEvent } from "react";
-import { arrive, cameFrom, readTrail, tripsOn, type Visit } from "@/lib/cameFrom";
+import { arrive, cameFrom, oneStepBackIsSafe, readTrail, tripsOn, type Visit } from "@/lib/cameFrom";
 import { useLang, useT } from "@/lib/i18n";
 import { langPath } from "@/lib/lang";
 
@@ -45,7 +45,7 @@ function visit(path: string, label: string): void {
     const nav = performance.getEntriesByType?.("navigation")[0] as PerformanceNavigationTiming | undefined;
     if (nav?.type === "back_forward") back = true;
   }
-  const trail = arrive(readTrail(stored()), { path, href: path + window.location.search, label }, back);
+  const trail = arrive(readTrail(stored()), { path, href: path + window.location.search, label, len: window.history.length }, back);
   try {
     sessionStorage.setItem(KEY, JSON.stringify(trail));
   } catch {
@@ -96,11 +96,33 @@ interface NavigationLike {
   traverseTo(key: string): unknown;
 }
 
+/** Opens `from` as a new page, counted as going back so the two pages don't name each other in turns. */
+function openPlain(from: Visit): void {
+  stepped = from.path;
+  window.location.assign(from.href);
+}
+
+/** After a step back: if it did not land on `from`, open that page plainly, so the link never does nothing. */
+function landOrOpen(from: Visit): void {
+  let done = false;
+  const check = () => {
+    if (done) return;
+    done = true;
+    window.removeEventListener("popstate", check);
+    window.clearTimeout(timer);
+    if (window.location.pathname !== from.path) openPlain(from);
+  };
+  // A step inside the site changes the address at once and says so; a step that reloads the page takes this one away.
+  window.addEventListener("popstate", check);
+  const timer = window.setTimeout(check, 1200);
+}
+
 /**
  * Click on a back link to `from`: step back in the browser's history to that page instead of opening
  * it as a new one. Where the browser can list its history (Navigation API) the step goes to exactly
- * that page; elsewhere it is one step back. With no history to step through (a tab opened on this
- * page) the link works as a plain link.
+ * that page; elsewhere it is one step back, and only while this page has added no history entries of
+ * its own (lib/cameFrom.ts oneStepBackIsSafe). With no history to step through (a tab opened on this
+ * page) the link works as a plain link. A step that fails or lands elsewhere opens the page plainly.
  */
 export function backClick(e: MouseEvent, from: Visit): void {
   if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -111,13 +133,19 @@ export function backClick(e: MouseEvent, from: Visit): void {
       const url = entries[i]?.url;
       if (url && new URL(url).pathname === from.path) {
         e.preventDefault();
-        nav.traverseTo(entries[i].key);
+        try {
+          const step = nav.traverseTo(entries[i].key) as { committed?: Promise<unknown> } | undefined;
+          step?.committed?.catch(() => openPlain(from));
+        } catch {
+          openPlain(from);
+        }
         return;
       }
     }
-  } else if (window.history.length > 1) {
+  } else if (window.history.length > 1 && oneStepBackIsSafe(readTrail(stored()), window.history.length)) {
     e.preventDefault();
     window.history.back();
+    landOrOpen(from);
     return;
   }
   // Opens as a new page: count it as going back all the same, so the two pages don't name each other in turns.

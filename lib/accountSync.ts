@@ -131,6 +131,16 @@ async function exchange(account: string) {
 let running: Promise<void> | null = null;
 let again: string | null = null;
 
+/**
+ * Looks whether another device changed something: syncs unless an exchange is running or the last one
+ * finished less than `ms` ago. For the quiet triggers (the tab comes back, Moje výlety is open).
+ */
+export function syncIfOlder(account: string, ms: number): void {
+  if (running) return;
+  const at = lastSyncAt(account);
+  if (at === null || Date.now() - at > ms) void syncNow(account);
+}
+
 /** Syncs now. One exchange at a time: a call during one makes it run once more afterwards. */
 export function syncNow(account: string): Promise<void> {
   if (running) {
