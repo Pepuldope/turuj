@@ -1381,9 +1381,9 @@ export const EN: Record<string, string> = {
   "Odpovede na „Ako ste sa o nás dozvedeli?“ po prvom uložení výletu.": "Answers to \"How did you hear about us?\" after the first saved trip.",
   "Výlety a hľadanie": "Trips and search",
   "Po výlete": "After the trip",
-  "Koľkokrát v mesiaci niekto označil uložený výlet ako absolvovaný („Už sme tu boli“ v Mojich výletoch alebo „Áno“ na otázku na stránke výletu alebo na úvodnej stránke, „Boli sme tu“ ručne na stránke výletu) a koľko rýchlych hodnotení ľudia odoslali. Počíta sa od konca novembra 2026.":
+  "Koľkokrát v mesiaci niekto označil výlet ako navštívený („Už sme tu boli“ v Mojich výletoch alebo „Áno“ na otázku na stránke výletu alebo na úvodnej stránke, „Boli sme tu“ ručne na stránke výletu) a koľko rýchlych hodnotení ľudia odoslali. Počíta sa od konca novembra 2026.":
     "How many times a month someone marked a saved trip as done (“We’ve been here” in My trips, or “Yes” to the question on the trip page or the home page, “We were here” by hand on the trip page) and how many quick reviews people sent. Counted from late November 2026.",
-  "Absolvované výlety": "Trips marked as done",
+  "Navštívené výlety": "Trips marked as visited",
   "Odoslané hodnotenia": "Reviews sent",
   "Koľkokrát v mesiaci niekto otvoril stránku výletu (počíta sa od konca novembra 2026, obnovenie stránky sa počíta znova), stiahol GPX, začal výlet v Mojich výletoch, koľkokrát vyšiel zoznam výletov prázdny a koľko hľadaní na úvodnej stránke niečo našlo alebo nenašlo.": "How many times in the month someone opened a trip page (counted from late November 2026, a reload counts again), downloaded a GPX file, started a trip in My trips, how many times the trip list came back empty, and how many searches on the home page found something or nothing.",
   "Otvorené výlety": "Trips opened",

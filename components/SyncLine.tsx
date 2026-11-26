@@ -3,6 +3,7 @@
 import { openSignIn, useAccount } from "@/lib/account";
 import { needsSync, syncNow, useSyncStatus } from "@/lib/accountSync";
 import { useSavedTrips } from "@/lib/savedTrips";
+import { useVisits } from "@/lib/visits";
 import { useT } from "@/lib/i18n";
 import { useInstalled } from "@/lib/installApp";
 import { UiIcon } from "@/components/UiIcon";
@@ -15,6 +16,8 @@ export function SyncLine() {
   const t = useT();
   const { loaded, account } = useAccount();
   const { trips } = useSavedTrips();
+  // Places ticked by hand follow the account too, so they count as something worth signing in for.
+  const { visits } = useVisits();
   const sync = useSyncStatus();
   // Only the installed app talks about working without signal (Peter, 25 Nov 2026); in a browser tab the line stops at where the trips are kept.
   const installed = useInstalled();
@@ -24,7 +27,7 @@ export function SyncLine() {
   // Not known yet who is signed in: keep the line's height, say nothing that may be wrong.
   if (!loaded) return <p className={cls}>{offline || "\u00a0"}</p>;
   if (!account) {
-    if (trips.length === 0) return <p className={cls}>{installed ? t("Uložené len v tomto zariadení. Pri každom výlete vidíte, či funguje aj bez signálu.") : t("Uložené len v tomto zariadení.")}</p>;
+    if (trips.length === 0 && visits.length === 0) return <p className={cls}>{installed ? t("Uložené len v tomto zariadení. Pri každom výlete vidíte, či funguje aj bez signálu.") : t("Uložené len v tomto zariadení.")}</p>;
     return (
       <p className={cls}>
         {t("Výlety sú len na tomto zariadení.")}{" "}

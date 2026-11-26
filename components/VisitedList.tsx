@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { GOAL_LABEL } from "@/lib/format";
 import { useLang, useT } from "@/lib/i18n";
 import { kindSvg } from "@/lib/kindIcons";
+import { routeNameIn } from "@/lib/lang";
 import { GOAL_COLOUR } from "@/lib/palette";
 import { photoFocus } from "@/lib/photoFocus";
 import { useMyStars } from "@/lib/reviewed";
@@ -16,6 +17,7 @@ import { parseWhen, whenLabel } from "@/lib/visitWhen";
 import { MyStars } from "@/components/MyStars";
 import { ReviewSheet } from "@/components/ReviewSheet";
 import type { RoutePickData } from "@/components/RoutePick";
+import { routeLabel } from "@/components/routeBits";
 import { useThumb } from "@/components/TripCard";
 import { UiIcon } from "@/components/UiIcon";
 import { VisitsSheet } from "@/components/VisitsSheet";
@@ -84,7 +86,7 @@ function useTripInfos(keys: string[]): Record<string, Info> {
 const routeSlugs = (trip: TripFile): string[] => (trip.routes?.length ? trip.routes.map((r) => r.slug).filter((s) => !s.endsWith(LOOP)) : [trip.slug]);
 
 /**
- * "Navštívené" in Moje výlety (Peter, 25 Nov 2026, C213; before: "Absolvované", the saved trips marked done):
+ * "Navštívené" in Moje výlety (Peter, 25 Nov 2026, C213; before it, a list of the saved trips marked done):
  * every place the visitor has been to, from the visits, under the year of the latest one. A row opens the
  * place's "Vaše návštevy": fix or remove a visit, rate, plan the trip again. The stars are the visitor's own.
  */
@@ -93,6 +95,7 @@ export function VisitedList() {
   const { trips, patch } = useSavedTrips();
   const stars = useMyStars();
   const t = useT();
+  const lang = useLang();
   const places = useMemo(() => visitedPlaces(visits), [visits]);
   const infos = useTripInfos(places.map((p) => p.key));
   const [open, setOpen] = useState<string | null>(null);
@@ -114,7 +117,9 @@ export function VisitedList() {
     const reviewSlug = walked && (!trip || routes.includes(walked)) ? walked : place.key;
     const mine: number | undefined = stars[reviewSlug];
     const reviewed = mine !== undefined || !!trips.find((x) => x.slug === reviewSlug)?.reviewed;
-    return { place, trip, gone: info?.state === "gone", name: trip?.name ?? latest.name, reviewSlug, mine, reviewed };
+    // The route walked last, by its step 1 name, at a place with several (Peter, 26 Nov 2026: stars, day and route at a glance).
+    const brief = trip?.routes && trip.routes.length > 1 ? trip.routes.find((r) => r.slug === latest.route) : undefined;
+    return { place, trip, gone: info?.state === "gone", name: trip?.name ?? latest.name, route: brief ? routeNameIn(lang, routeLabel(brief)) : null, reviewSlug, mine, reviewed };
   });
   const row = (key: string | null) => rows.find((r) => r.place.key === key);
   const opened = row(open);
@@ -140,7 +145,7 @@ export function VisitedList() {
           <ul className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card-bg)]">
             {section.places.map((p) => {
               const r = row(p.key)!;
-              return <PlaceRow key={p.key} place={p} name={r.name} kind={r.trip?.destination.kind ?? null} gone={r.gone} mine={r.mine} reviewed={r.reviewed} onOpen={() => setOpen(p.key)} onRate={() => setRating(p.key)} />;
+              return <PlaceRow key={p.key} place={p} name={r.name} kind={r.trip?.destination.kind ?? null} route={r.route} gone={r.gone} mine={r.mine} reviewed={r.reviewed} onOpen={() => setOpen(p.key)} onRate={() => setRating(p.key)} />;
             })}
           </ul>
         </div>
@@ -179,6 +184,7 @@ function PlaceRow({
   place,
   name,
   kind,
+  route,
   gone,
   mine,
   reviewed,
@@ -187,6 +193,8 @@ function PlaceRow({
 }: {
   place: VisitedPlace;
   name: string;
+  /** The route of the latest visit, at a place with several routes; it takes the kind's place in the line. */
+  route: string | null;
   /** Null until the trip's own data is there, and for a trip no longer offered. */
   kind: DestinationKind | null;
   gone: boolean;
@@ -219,7 +227,7 @@ function PlaceRow({
         <span className="flex min-w-0 flex-col leading-snug">
           <b className={`truncate text-[15px] ${gone ? "text-[var(--muted)]" : ""}`}>{name}</b>
           <span className="text-[13px] text-[var(--muted)]">
-            {kind && !gone && `${t(GOAL_LABEL[kind])} · `}
+            {route ? <span data-row-route>{route} · </span> : kind && !gone && `${t(GOAL_LABEL[kind])} · `}
             {dated ? <span className="font-data text-[15px] text-[var(--foreground)]">{whenLabel(latest.date, lang)}</span> : whenLabel(latest.date, lang)}
             {place.visits.length > 1 && (
               <>
