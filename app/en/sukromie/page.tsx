@@ -21,6 +21,7 @@ export default function PrivacyPage() {
       <h2>What we keep and for how long</h2>
       <ul>
         <li>Account (email, name if given, Google account number with Google sign-in, dates): until you delete it. Passwords only as a salted PBKDF2 hash.</li>
+        <li>Trips in your account, only while you are signed in: your saved trips (trip, day and time, the start you chose with its name and coordinates rounded to about 100 m, way of travel, stops) and the list of trips you have been on (trip, route, date), so you have them on every device you sign in on. Kept until you delete the trip or the account.</li>
         <li>Tester days: if you press “Become a tester” while signed in, we store the dates (day only, no times or places) you used Túruj, to measure our school project’s goal; deleted with your account.</li>
         <li>Sign-in cookie <code>turuj_s</code>: at most 180 days; we store only its hash. Email codes: deleted when used, otherwise within an hour.</li>
         <li>Quick reviews: trip, answers, date and a random number from your browser; no name, email or IP address.</li>
@@ -32,7 +33,7 @@ export default function PrivacyPage() {
       <h2>Who receives data</h2>
       <p>Cloudflare (hosting, database, logs, email forwarding, Web Analytics), Umami (statistics), Resend (sign-in emails), Google (Google sign-in, the Gmail inbox behind info@turuj.sk, tester forms), your browser’s push service (encrypted reminders), openrouteservice by HeiGIT in Germany and, as a fallback, the public OSRM demo server (drive times from your rounded start, called by our server), Nominatim by the OpenStreetMap Foundation in the UK (place search, called by your browser), OpenFreeMap and Wikimedia Commons (map tiles and photos). US transfers rely on the EU-US Data Privacy Framework and standard contractual clauses; the UK on the Commission’s adequacy decision.</p>
       <h2>Cookies and browser storage</h2>
-      <p>Two strictly necessary cookies: <code>turuj_s</code> (signed in) and <code>turuj_g</code> (Google sign-in protection, 10 minutes). Saved trips, your start and settings stay in your browser’s storage and are never sent to us.</p>
+      <p>Two strictly necessary cookies: <code>turuj_s</code> (signed in) and <code>turuj_g</code> (Google sign-in protection, 10 minutes). Saved trips, the trips you have been on, your start and settings stay in your browser’s storage. Only saved trips and the trips you have been on are sent to us, and only while you are signed in, to keep them in your account.</p>
       <h2>Statistics and how to switch them off</h2>
       <p>Umami counts pages and a few steps without cookies (including the skippable “How did you hear about Túruj?” answer after your first saved trip); Cloudflare measures page speed; our own counter keeps only monthly totals. This button stops Umami and our counters in this browser (an ad blocker stops Cloudflare’s speed beacon):</p>
       <CountMeToggle />
