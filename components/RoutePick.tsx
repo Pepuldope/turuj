@@ -159,8 +159,14 @@ function RouteSketch({ data, value, onPick }: { data: RoutePickData; value: stri
 
   return (
     <div ref={ref} className="route-sketch relative box-content overflow-hidden rounded-xl border border-[var(--border)]" style={{ height: sketch?.h ?? SKETCH_MIN_H }}>
-      {/* Exactly the drawing's size and corner, so both use the same pixels. */}
-      {sketch && <div ref={mapBox} aria-hidden="true" className={`route-sketch-map absolute left-0 top-0 ${mapOn ? "opacity-100" : "opacity-0"}`} style={{ width: w, height: sketch.h }} />}
+      {/* Exactly the drawing's size and corner, so both use the same pixels. The map library gets a box of its
+          own inside: it puts its own class on its box (which sets `position: relative`), and React would wipe
+          that class again whenever this one's changed. Either way the lines got pushed out of the picture. */}
+      {sketch && (
+        <div aria-hidden="true" className={`route-sketch-map ${mapOn ? "opacity-100" : "opacity-0"}`} style={{ width: w, height: sketch.h }}>
+          <div ref={mapBox} className="h-full w-full" />
+        </div>
+      )}
       {sketch && (
         <svg
           role="img"

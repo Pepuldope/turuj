@@ -660,7 +660,15 @@ h2,
   background: var(--sketch-paper);
 }
 .route-sketch-map {
+  position: absolute;
+  left: 0;
+  top: 0;
   transition: opacity 250ms ease-out;
+}
+/* This map stands still, so a wheel or a finger on it scrolls the window (the big maps keep the scroll to
+   themselves, see .maplibregl-map above). */
+.route-sketch-map .maplibregl-map {
+  overscroll-behavior: auto;
 }
 .route-sketch-name {
   position: absolute;
