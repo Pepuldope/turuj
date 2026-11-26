@@ -16,7 +16,7 @@ import { routeNameOf, UNKNOWN_ROUTE } from "@/components/RoutePick";
 import type { RoutePickData } from "@/components/RoutePick";
 import { UiIcon } from "@/components/UiIcon";
 import { VisitMark } from "@/components/VisitMark";
-import { VisitSheet } from "@/components/VisitSheet";
+import { REMOVE_NOW, VisitSheet } from "@/components/VisitSheet";
 import { useLeave } from "@/lib/usePresence";
 import { useScrollLock } from "@/lib/useScrollLock";
 
@@ -69,6 +69,14 @@ export function VisitsSheet({
   const { trips, patch } = useSavedTrips();
   const { state: motion, leave } = useLeave();
   const [inner, setInner] = useState<Inner>(null);
+  /** The visit whose row asks "really remove?" (its id). */
+  const [asking, setAsking] = useState<string | null>(null);
+  const remove = (v: Visit) => {
+    dropVisit(v.id);
+    // A visit that came from a saved plan: the plan is not done any more and is not asked about again.
+    const s = trips.find((x) => planVisitId(x.route ?? x.slug, x.date) === v.id);
+    if (s) patch(s.slug, { doneAt: undefined, skipAsk: true });
+  };
   const stars = useReviewed()[reviewSlug];
   const planAgain = usePlanAgain();
   useScrollLock();
@@ -111,12 +119,7 @@ export function VisitsSheet({
         edit={{
           date: v.date,
           route: v.route,
-          onRemove: () => {
-            dropVisit(v.id);
-            // A visit that came from a saved plan: the plan is not done any more and is not asked about again.
-            const s = trips.find((x) => planVisitId(x.route ?? x.slug, x.date) === v.id);
-            if (s) patch(s.slug, { doneAt: undefined, skipAsk: true });
-          },
+          onRemove: () => remove(v),
         }}
         onSave={(date, picked) => editVisit(v.id, picked === undefined ? { date } : { date, route: picked })}
         onClose={() => setInner(null)}
@@ -165,9 +168,26 @@ export function VisitsSheet({
             // At a place with several routes the second line is the route; a route the place lost says nothing.
             const walked = !pick ? null : v.route === UNKNOWN_ROUTE ? tx("trasu neviete") : routeNameOf(pick, v.route, lang);
             const under = walked ?? (kind === "day" || kind === "unknown" ? null : tx("presný deň neviete"));
+            // Asked to remove this one: the row turns into the question, so the answer sits where the tap was.
+            if (asking === v.id) {
+              return (
+                <li key={v.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-[var(--danger-bg)] px-3.5 py-2.5 text-sm">
+                  <span className="basis-full font-semibold">
+                    {tx("Naozaj odstrániť?")} <span className="font-data whitespace-nowrap font-normal">{whenLabel(v.date, lang)}</span>
+                  </span>
+                  <button type="button" onClick={() => { setAsking(null); remove(v); }} className={`${REMOVE_NOW} ${focus}`}>
+                    <UiIcon name="trash" size={16} />
+                    {tx("Odstrániť")}
+                  </button>
+                  <button type="button" onClick={() => setAsking(null)} className={`min-h-10 rounded-full border border-[var(--border)] bg-[var(--card-bg)] px-4 py-2 text-sm font-semibold ${focus}`}>
+                    {tx("Nechať")}
+                  </button>
+                </li>
+              );
+            }
             return (
-              <li key={v.id}>
-                <button type="button" onClick={() => setInner({ kind: "edit", visit: v })} className={`flex min-h-10 w-full items-center gap-2.5 rounded-xl border border-[var(--border)] px-3.5 py-2.5 text-left ${focus}`}>
+              <li key={v.id} className="flex items-stretch gap-2">
+                <button type="button" onClick={() => setInner({ kind: "edit", visit: v })} className={`flex min-h-11 min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-[var(--border)] px-3.5 py-2.5 text-left ${focus}`}>
                   <VisitMark done />
                   <span className="min-w-0 flex-1">
                     {kind === "day" ? (
@@ -180,6 +200,10 @@ export function VisitsSheet({
                     {under && <span className="block text-[13px] text-[var(--muted)]">{under}</span>}
                   </span>
                   <UiIcon name="chev" size={18} className="text-[var(--muted)]" />
+                </button>
+                {/* Straight from the list (Peter, 26 Nov 2026): no need to open the visit to remove it. */}
+                <button type="button" aria-label={tx("Odstrániť návštevu")} onClick={() => setAsking(v.id)} className={`grid min-h-11 w-11 shrink-0 place-items-center rounded-xl border border-[var(--danger)] text-[var(--danger)] ${focus}`}>
+                  <UiIcon name="trash" size={20} />
                 </button>
               </li>
             );

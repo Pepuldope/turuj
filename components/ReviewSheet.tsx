@@ -8,7 +8,6 @@ import { sendReview } from "@/lib/sendReview";
 import type { ReviewAnswers } from "@/lib/sendReview";
 import "@/lib/legacyStorage";
 import { LangLink, useT } from "@/lib/i18n";
-import { PREVIEW_MESSAGE } from "@/lib/previewGuard";
 import { useLeave } from "@/lib/usePresence";
 import { useScrollLock } from "@/lib/useScrollLock";
 
@@ -25,7 +24,7 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
   const [before] = useState(answers);
   const sentBefore = before.stars > 0;
   const changed = answers.stars !== before.stars || answers.fit !== before.fit || answers.crowded !== before.crowded || answers.timing !== before.timing;
-  const [state, setState] = useState<"idle" | "sending" | "error" | "preview">("idle");
+  const [state, setState] = useState<"idle" | "sending" | "error">("idle");
   const tx = useT();
   // Fades and scales away before the parent removes it (Peter, 17 Nov).
   const { state: motion, leave } = useLeave();
@@ -34,8 +33,10 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
   async function send() {
     setState("sending");
     const r = await sendReview(slug, answers);
-    if (r === "ok") leave(() => onDone(true));
-    else setState(r);
+    // "Odoslať" closes the window (Peter, 26 Nov 2026). Also on a preview, which stores no rating on the server: the
+    // browser keeps it there (lib/sendReview.ts), so the stars and the lists behave as on the live site.
+    if (r === "error") setState("error");
+    else leave(() => onDone(true));
   }
 
   return (
@@ -58,7 +59,6 @@ export function ReviewSheet({ slug, name, onDone }: { slug: string; name: string
             {tx("Nahlásiť chybu")}
           </LangLink>
         </p>
-        {state === "preview" && <p className="text-sm text-[var(--muted)]">{tx(PREVIEW_MESSAGE)}</p>}
         {state === "error" && <p className="flex items-start gap-1.5 text-sm text-[var(--danger)]"><UiIcon name="warn" size={15} className="mt-0.5" /><span>{tx("Nepodarilo sa odoslať. Skúste to o chvíľu.")}</span></p>}
         <div className="flex justify-between gap-2">
           <button type="button" onClick={() => leave(() => onDone(false))} className="rounded-full border border-[var(--border)] px-4 py-2.5 text-sm font-semibold">

@@ -23,6 +23,9 @@ const box = (on: boolean) => `rounded-xl border px-3.5 py-3 text-left ${on ? "bo
 const focus = "focus-visible:outline-2 focus-visible:outline-[var(--accent)]";
 const link = `text-sm font-bold text-[var(--accent)] underline underline-offset-[3px] ${focus}`;
 const pill = `rounded-full px-4 py-2.5 text-sm font-semibold min-h-10 ${focus}`;
+/** "Remove" as an outlined red button, and the filled one that does it (the text takes the card's colour, so it reads in the dark theme too). */
+export const REMOVE_ASK = "inline-flex min-h-10 items-center gap-2 rounded-full border border-[var(--danger)] px-4 py-2 text-sm font-bold text-[var(--danger)]";
+export const REMOVE_NOW = "inline-flex min-h-10 items-center gap-1.5 rounded-full bg-[var(--danger)] px-4 py-2 text-sm font-bold text-[var(--card-bg)]";
 
 /**
  * "Kedy ste tu boli?" (Peter, 25 Nov 2026): the day of a visit and, when there is none yet, a quick review.
@@ -346,20 +349,23 @@ export function VisitSheet({
         </>
       )}
 
+      {/* Removing is a button that can be seen and hit (Peter, 26 Nov 2026: "the smallest delete text button i have ever seen"). */}
       {edit && (
         <div className="text-sm">
           {asking ? (
-            <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span>{tx("Naozaj odstrániť?")}</span>
-              <button type="button" onClick={() => { edit.onRemove(); close(); }} className={`py-2 font-bold underline underline-offset-[3px] ${focus}`}>
+            <div className="flex flex-wrap items-center gap-2 rounded-xl bg-[var(--danger-bg)] px-3.5 py-2.5">
+              <span className="basis-full font-semibold">{tx("Naozaj odstrániť?")}</span>
+              <button type="button" onClick={() => { edit.onRemove(); close(); }} className={`${REMOVE_NOW} ${focus}`}>
+                <UiIcon name="trash" size={16} />
                 {tx("Odstrániť")}
               </button>
-              <button type="button" onClick={() => setAsking(false)} className={`py-2 font-bold underline underline-offset-[3px] ${focus}`}>
+              <button type="button" onClick={() => setAsking(false)} className={`${pill} border border-[var(--border)] bg-[var(--card-bg)]`}>
                 {tx("Nechať")}
               </button>
-            </p>
+            </div>
           ) : (
-            <button type="button" onClick={() => setAsking(true)} className={`py-2 text-[var(--muted)] underline underline-offset-[3px] ${focus}`}>
+            <button type="button" onClick={() => setAsking(true)} className={`${REMOVE_ASK} ${focus}`}>
+              <UiIcon name="trash" size={18} />
               {tx("Odstrániť návštevu")}
             </button>
           )}
