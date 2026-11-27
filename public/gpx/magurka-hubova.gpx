@@ -2,18 +2,16 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Magurka (Hubová)</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Magurka (Hubová)</name><desc>magurka-hubova</desc><trkseg>
-    <trkpt lat="49.093160" lon="19.258805"><ele>468</ele></trkpt>
-    <trkpt lat="49.093039" lon="19.258724"><ele>469</ele></trkpt>
-    <trkpt lat="49.092856" lon="19.258495"><ele>469</ele></trkpt>
-    <trkpt lat="49.092423" lon="19.257687"><ele>473</ele></trkpt>
-    <trkpt lat="49.091939" lon="19.256533"><ele>481</ele></trkpt>
+    <trkpt lat="49.093113" lon="19.258775"><ele>468</ele></trkpt>
+    <trkpt lat="49.092904" lon="19.258562"><ele>469</ele></trkpt>
+    <trkpt lat="49.092561" lon="19.257976"><ele>472</ele></trkpt>
+    <trkpt lat="49.092160" lon="19.257080"><ele>478</ele></trkpt>
     <trkpt lat="49.091676" lon="19.255814"><ele>484</ele></trkpt>
-    <trkpt lat="49.091974" lon="19.255356"><ele>484</ele></trkpt>
-    <trkpt lat="49.092118" lon="19.254915"><ele>485</ele></trkpt>
-    <trkpt lat="49.092132" lon="19.254653"><ele>486</ele></trkpt>
-    <trkpt lat="49.092074" lon="19.254201"><ele>487</ele></trkpt>
-    <trkpt lat="49.092134" lon="19.253634"><ele>490</ele></trkpt>
-    <trkpt lat="49.092207" lon="19.253384"><ele>491</ele></trkpt>
+    <trkpt lat="49.091971" lon="19.255323"><ele>484</ele></trkpt>
+    <trkpt lat="49.092108" lon="19.254923"><ele>485</ele></trkpt>
+    <trkpt lat="49.092123" lon="19.254640"><ele>486</ele></trkpt>
+    <trkpt lat="49.092079" lon="19.254124"><ele>488</ele></trkpt>
+    <trkpt lat="49.092132" lon="19.253618"><ele>490</ele></trkpt>
     <trkpt lat="49.092364" lon="19.253021"><ele>490</ele></trkpt>
     <trkpt lat="49.092863" lon="19.252269"><ele>490</ele></trkpt>
     <trkpt lat="49.093266" lon="19.251577"><ele>492</ele></trkpt>
@@ -465,18 +463,16 @@
     <trkpt lat="49.093266" lon="19.251577"><ele>492</ele></trkpt>
     <trkpt lat="49.092863" lon="19.252269"><ele>490</ele></trkpt>
     <trkpt lat="49.092364" lon="19.253021"><ele>490</ele></trkpt>
-    <trkpt lat="49.092207" lon="19.253384"><ele>491</ele></trkpt>
-    <trkpt lat="49.092134" lon="19.253634"><ele>490</ele></trkpt>
-    <trkpt lat="49.092074" lon="19.254201"><ele>487</ele></trkpt>
-    <trkpt lat="49.092132" lon="19.254653"><ele>486</ele></trkpt>
-    <trkpt lat="49.092118" lon="19.254915"><ele>485</ele></trkpt>
-    <trkpt lat="49.091974" lon="19.255356"><ele>484</ele></trkpt>
+    <trkpt lat="49.092132" lon="19.253618"><ele>490</ele></trkpt>
+    <trkpt lat="49.092079" lon="19.254124"><ele>488</ele></trkpt>
+    <trkpt lat="49.092123" lon="19.254640"><ele>486</ele></trkpt>
+    <trkpt lat="49.092108" lon="19.254923"><ele>485</ele></trkpt>
+    <trkpt lat="49.091971" lon="19.255323"><ele>484</ele></trkpt>
     <trkpt lat="49.091676" lon="19.255814"><ele>484</ele></trkpt>
-    <trkpt lat="49.091939" lon="19.256533"><ele>481</ele></trkpt>
-    <trkpt lat="49.092423" lon="19.257687"><ele>473</ele></trkpt>
-    <trkpt lat="49.092856" lon="19.258495"><ele>469</ele></trkpt>
-    <trkpt lat="49.093039" lon="19.258724"><ele>469</ele></trkpt>
-    <trkpt lat="49.093160" lon="19.258805"><ele>468</ele></trkpt>
+    <trkpt lat="49.092160" lon="19.257080"><ele>478</ele></trkpt>
+    <trkpt lat="49.092561" lon="19.257976"><ele>472</ele></trkpt>
+    <trkpt lat="49.092904" lon="19.258562"><ele>469</ele></trkpt>
+    <trkpt lat="49.093113" lon="19.258775"><ele>468</ele></trkpt>
   </trkseg></trk>
   <trk><name>Magurka (Hubová)</name><desc>magurka-hubova-pod-milkovom</desc><trkseg>
     <trkpt lat="49.079971" lon="19.255654"><ele>543</ele></trkpt>
