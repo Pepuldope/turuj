@@ -42,8 +42,9 @@ export function PassedPlanAnswers({ trip, from, here = false, onWent }: { trip: 
     const check = () => {
       const w = el.clientWidth;
       if (!narrow) {
-        // A label fits when it and its icon keep 8 px of air on each side; touching the edge reads as cramped (320 px phones).
-        const need = (b: Element) => Array.from(b.children).reduce((sum, k) => sum + k.getBoundingClientRect().width, 0) + 6 * (b.children.length - 1) + 16;
+        // A label fits when it and its icon keep 6 px of air on each side; touching the edge reads as cramped (320 px phones
+        // have about 2 px, 390 px about 8).
+        const need = (b: Element) => Array.from(b.children).reduce((sum, k) => sum + k.getBoundingClientRect().width, 0) + 6 * (b.children.length - 1) + 12;
         const over = Array.from(el.children).some((b) => need(b) > b.clientWidth + 0.5);
         if (over) {
           failedAt.current = w;
@@ -54,10 +55,16 @@ export function PassedPlanAnswers({ trip, from, here = false, onWent }: { trip: 
     check();
     const ro = new ResizeObserver(check);
     ro.observe(el);
-    // The page's own fonts can arrive after the first look, and they are wider than the stand-ins.
-    void document.fonts?.ready.then(check);
     return () => ro.disconnect();
   }, [narrow, lang]);
+
+  // The page's own fonts can arrive after the first look and measure differently from the stand-ins: try one row once more.
+  useEffect(() => {
+    void document.fonts?.ready.then(() => {
+      failedAt.current = Infinity;
+      setNarrow(false);
+    });
+  }, []);
 
   return (
     <>
