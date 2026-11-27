@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import { PRIVACY_SK } from "@/content/legal/sukromie";
 import { PRIVACY_EN } from "@/content/legal/sukromie.en";
 import { TERMS_SK } from "@/content/legal/podmienky";
+import { TERMS_EN } from "@/content/legal/podmienky.en";
 import { fillFacts } from "@/lib/legalText";
 
 describe("terms and privacy texts", () => {
   it("fill every {{fact}} (COUNT_ME is the opt-out button)", () => {
-    for (const text of [TERMS_SK, PRIVACY_SK, PRIVACY_EN]) {
+    for (const text of [TERMS_SK, TERMS_EN, PRIVACY_SK, PRIVACY_EN]) {
       expect(fillFacts(text).replace("{{COUNT_ME}}", "").match(/\{\{\w+\}\}/g)).toBeNull();
     }
   });
@@ -16,12 +17,15 @@ describe("terms and privacy texts", () => {
   });
 });
 
-// The English privacy page is a translation of the Slovak one. A change made in one language only shows up here.
-describe("English privacy text follows the Slovak one", () => {
+// The English privacy and terms pages are translations of the Slovak ones. A change made in one language only shows up here.
+describe.each([
+  ["privacy", PRIVACY_SK, PRIVACY_EN],
+  ["terms", TERMS_SK, TERMS_EN],
+])("English %s text follows the Slovak one", (_name, SK, EN) => {
   const blocks = (text: string) => text.split(/\n\s*\n/).map((b) => b.trim());
   const kind = (b: string) => (b.startsWith("### ") ? `heading ${b.match(/^### (\d+)\./)?.[1]}` : b.startsWith("|") ? `table ${b.split("\n").length} rows` : b.includes("\n- ") || b.startsWith("- ") ? `list ${b.split("\n").filter((l) => l.startsWith("- ")).length}` : /^\{\{\w+\}\}$/.test(b) ? "block" : "text");
-  const sk = blocks(PRIVACY_SK);
-  const en = blocks(PRIVACY_EN);
+  const sk = blocks(SK);
+  const en = blocks(EN);
 
   it("has the same blocks in the same order: headings, tables with as many rows, lists with as many points", () => {
     expect(en.map(kind)).toEqual(sk.map(kind));
@@ -38,6 +42,6 @@ describe("English privacy text follows the Slovak one", () => {
   });
 
   it("has no Slovak fact left in it", () => {
-    expect(PRIVACY_EN).not.toMatch(/\{\{(CONTROLLERS|DB_ACCESS|OPERATORS|OPERATORS_SHORT)\}\}/);
+    expect(EN).not.toMatch(/\{\{(CONTROLLERS|DB_ACCESS|OPERATORS|OPERATORS_SHORT)\}\}/);
   });
 });
