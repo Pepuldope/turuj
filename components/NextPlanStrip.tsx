@@ -13,6 +13,8 @@ import { langPath } from "@/lib/lang";
 import { nextPlan, planDay, planToAsk } from "@/lib/nextPlan";
 import { usePutPlanBack } from "@/lib/openPlan";
 import { useSavedTrips } from "@/lib/savedTrips";
+import { useVisits } from "@/lib/visits";
+import { myTripsCounts, myTripsParts } from "@/lib/myTripsCount";
 import { useTripSettings } from "@/lib/tripSettings";
 import { UiIcon } from "@/components/UiIcon";
 
@@ -24,6 +26,7 @@ import { UiIcon } from "@/components/UiIcon";
  */
 export function NextPlanStrip() {
   const { trips, patch } = useSavedTrips();
+  const { visits } = useVisits();
   const reviewedMap = useReviewed();
   // The plan the window is open for: kept here, because confirming it takes the plan out of the question.
   const [confirming, setConfirming] = useState<SavedTrip | null>(null);
@@ -70,12 +73,46 @@ export function NextPlanStrip() {
       </>
     );
   }
-  if (!plan || !today) return sheet || null;
+  if (!today) return sheet || null;
+  if (!plan) {
+    // No plan ahead and nothing to ask: a quiet way to Moje výlety, when the device holds a trip or a visit.
+    const parts = myTripsParts(myTripsCounts(trips, visits));
+    if (parts.length === 0) return sheet || null;
+    return (
+      <>
+        <LangLink
+          href="/ulozene"
+          onClick={() => track("my_trips_open", { from: "home" })}
+          className="flex items-center gap-3 rounded-[var(--radius-card)] border border-[var(--card-edge)] bg-[var(--card-bg)] px-3.5 py-2.5 shadow-[var(--shadow-float)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+        >
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--accent-soft)] text-[var(--accent)]">
+            <UiIcon name="list" size={20} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <strong className="block text-base leading-tight">{t("Moje výlety")}</strong>
+            <span className="block text-sm text-[var(--muted)]">
+              {parts.map((p, i) => (
+                <span key={p.word}>
+                  {i > 0 && " · "}
+                  <span className="whitespace-nowrap">
+                    <span className="font-data text-base text-[var(--foreground)]">{p.n}</span> {t(p.word)}
+                  </span>
+                </span>
+              ))}
+            </span>
+          </span>
+          <UiIcon name="chev" size={20} className="text-[var(--accent)]" />
+        </LangLink>
+        {sheet}
+      </>
+    );
+  }
   const day = planDay(plan.date, today, lang);
   const href = `/trasa/${plan.slug}`;
 
   return (
     <>
+    <div className="rounded-[var(--radius-card)] border-[1.5px] border-[var(--accent)] bg-[var(--card-bg)] px-3.5 pt-3 pb-1 shadow-[var(--shadow-float)]">
     <LangLink
       href={href}
       onClick={(e) => {
@@ -87,7 +124,7 @@ export function NextPlanStrip() {
           window.location.assign(langPath(lang, href));
         }
       }}
-      className="flex items-center gap-3 rounded-[var(--radius-card)] border-[1.5px] border-[var(--accent)] bg-[var(--card-bg)] px-3.5 py-3 shadow-[var(--shadow-float)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+      className="flex items-center gap-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
     >
       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-[var(--accent-soft)] text-[var(--accent)]">
         <UiIcon name="cal" size={18} />
@@ -107,6 +144,15 @@ export function NextPlanStrip() {
       </span>
       <UiIcon name="chev" size={20} className="text-[var(--accent)]" />
     </LangLink>
+    <LangLink
+      href="/ulozene"
+      onClick={() => track("my_trips_open", { from: "home-plan" })}
+      className="ml-auto flex min-h-10 w-fit items-center gap-0.5 text-sm font-bold text-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+    >
+      {t("všetky výlety")}
+      <UiIcon name="chev" size={14} />
+    </LangLink>
+    </div>
     {sheet}
     </>
   );
