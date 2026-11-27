@@ -26,7 +26,9 @@ export const MAX_REQUEST = 2_000_000;
 /** Characters of bodies in one answer; the rest comes on the next round. */
 export const SEND_BUDGET = 1_000_000;
 
-const PLAN_KEY = /^[a-z0-9][a-z0-9-]{0,119}$/;
+const SLUG = /^[a-z0-9][a-z0-9-]{0,119}$/;
+/** A plan's key: the route's slug, or for one more plan of the same route the slug, "--" and a short base-36 stamp (C235). */
+const PLAN_KEY = /^[a-z0-9][a-z0-9-]{0,119}(--[0-9a-z]{1,12})?$/;
 // The key of a visit holds the route walked, which can be "<slug>/okruh" for a loop.
 const VISIT_KEY = /^[pm]:[A-Za-z0-9:_/-]{1,160}$/;
 /** The route of a visit: a trip's own slug, or that slug and "/okruh" for the loop. Empty when the visitor did not know which route it was. */
@@ -82,7 +84,9 @@ export function cleanItem(kind: SyncKind, raw: unknown, now: number): WireItem |
   if (!isObject(raw.body)) return null;
   const b = raw.body;
   if (kind === "plan") {
-    if (b.slug !== key) return null;
+    if (typeof b.slug !== "string" || !SLUG.test(b.slug)) return null;
+    // The first plan of a route has no `key` and travels under its slug; any other names its own key, made from the slug.
+    if (b.key === undefined ? b.slug !== key : b.key !== key || !key.startsWith(`${b.slug}--`)) return null;
     const body: Record<string, unknown> = { ...b };
     for (const f of DEVICE_ONLY) delete body[f];
     if (JSON.stringify(body).length > MAX_PLAN_BODY) return null;
@@ -90,7 +94,7 @@ export function cleanItem(kind: SyncKind, raw: unknown, now: number): WireItem |
   }
   const { slug, route, name, date, from } = b;
   // The place can be empty: a plan saved before visits existed does not know its place yet.
-  if (typeof slug !== "string" || (slug !== "" && !PLAN_KEY.test(slug))) return null;
+  if (typeof slug !== "string" || (slug !== "" && !SLUG.test(slug))) return null;
   // "Neviem, ktorou trasou": no route, and then the place is what says where the visit was.
   if (typeof route !== "string" || !(ROUTE.test(route) || (route === "" && slug !== ""))) return null;
   if (typeof name !== "string" || name.length < 1 || name.length > 200) return null;

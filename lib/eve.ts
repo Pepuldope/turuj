@@ -40,7 +40,7 @@ export function eveAtFor(date: string): number | null {
 
 /** What the server needs for a plan's evening reminder; null when the day plan is not for that day. Used by the switch on the trip page and by moving a plan to another day. */
 export function eveJobFor(
-  trip: { name: string; slug: string; date: string },
+  trip: { name: string; slug: string; key?: string; date: string },
   plan: { hikeStart: Date; hikeEnd: Date; latestStart: Date; noTrainInLight?: boolean },
   sun: { lat: number; lon: number },
   lang: Lang,
@@ -49,7 +49,8 @@ export function eveJobFor(
   if (new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Bratislava" }).format(plan.hikeStart) !== trip.date) return null;
   return {
     name: trip.name,
-    slug: trip.slug,
+    // The plan's key (C235: a route can hold several plans), so each plan has its own reminder and opens itself.
+    slug: trip.key ?? trip.slug,
     lang,
     lat: Math.round(sun.lat * 1e4) / 1e4,
     lon: Math.round(sun.lon * 1e4) / 1e4,

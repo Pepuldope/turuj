@@ -5,7 +5,7 @@ import { track } from "@/lib/analytics";
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { usePlanAgain } from "@/lib/openPlan";
 import { useReviewed } from "@/lib/reviewed";
-import { useSavedTrips } from "@/lib/savedTrips";
+import { useSavedTrips, planKey } from "@/lib/savedTrips";
 import { lastWalk } from "@/lib/visitedList";
 import { addVisitByHand, dropVisit, editVisit, planVisitId } from "@/lib/visits";
 import type { Visit } from "@/lib/visits";
@@ -66,7 +66,7 @@ export function VisitsSheet({
 }) {
   const tx = useT();
   const lang = useLang();
-  const { trips, patch } = useSavedTrips();
+  const { trips, patch, patchRoute } = useSavedTrips();
   const { state: motion, leave } = useLeave();
   const [inner, setInner] = useState<Inner>(null);
   /** The visit whose row asks "really remove?" (its id). */
@@ -75,7 +75,7 @@ export function VisitsSheet({
     dropVisit(v.id);
     // A visit that came from a saved plan: the plan is not done any more and is not asked about again.
     const s = trips.find((x) => planVisitId(x.route ?? x.slug, x.date) === v.id);
-    if (s) patch(s.slug, { doneAt: undefined, skipAsk: true });
+    if (s) patch(planKey(s), { doneAt: undefined, skipAsk: true });
   };
   const stars = useReviewed()[reviewSlug];
   const planAgain = usePlanAgain();
@@ -150,7 +150,7 @@ export function VisitsSheet({
         slug={reviewSlug}
         name={name}
         onDone={(sent) => {
-          if (sent && trips.some((x) => x.slug === reviewSlug)) patch(reviewSlug, { reviewed: true });
+          if (sent) patchRoute(reviewSlug, { reviewed: true });
           setInner(null);
         }}
       />

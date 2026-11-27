@@ -13,6 +13,27 @@ import { useTripSettings } from "@/lib/tripSettings";
 import { setTripStops } from "@/lib/tripStops";
 import { routeTrip } from "@/lib/visits";
 import { useUserLocation } from "@/lib/userLocation";
+import { planKey } from "@/lib/savedTrips";
+
+const OPENED_KEY = "turuj-opened-plan";
+
+/** Remembers the plan last opened in this tab (C235: a route can hold several), so the trip page knows which one "presunúť" moves. */
+export function noteOpenedPlan(trip: SavedTrip) {
+  try {
+    sessionStorage.setItem(OPENED_KEY, planKey(trip));
+  } catch {
+    // Storage blocked: the trip page then moves the nearest plan ahead.
+  }
+}
+
+/** The key noteOpenedPlan kept, or null. */
+export function openedPlanKey(): string | null {
+  try {
+    return typeof sessionStorage === "undefined" ? null : sessionStorage.getItem(OPENED_KEY);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Puts a saved plan back in place: its day, departure time, way of travel, kids, start and stops, so the
@@ -27,6 +48,7 @@ export function usePutPlanBack(): (trip: SavedTrip) => void {
       openPlan({ date: trip.date, time: trip.time, ...(trip.travel ? { travel: trip.travel } : {}), ...(trip.withKids !== undefined ? { withKids: trip.withKids } : {}) });
       if (trip.start) setManualStart(trip.start, "remembered");
       setTripStops(trip.slug, trip.stops ?? []);
+      noteOpenedPlan(trip);
     },
     [openPlan, setManualStart]
   );

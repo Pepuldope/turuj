@@ -5,7 +5,8 @@ import { useLang, useT } from "@/lib/i18n";
 import { smoothScroll } from "@/lib/motion";
 import { PLAN_CARD_ID, planDay, stillPlanned } from "@/lib/nextPlan";
 import { usePutPlanBack } from "@/lib/openPlan";
-import { useSavedTrips } from "@/lib/savedTrips";
+import { planKey, useSavedTrips } from "@/lib/savedTrips";
+import type { SavedTrip } from "@/lib/savedTrips";
 import { useTripSettings } from "@/lib/tripSettings";
 import { UiIcon } from "@/components/UiIcon";
 
@@ -17,13 +18,49 @@ import { UiIcon } from "@/components/UiIcon";
  */
 export function PlanRow({ slug }: { slug: string }) {
   const { trips } = useSavedTrips();
-  const { today } = useTripSettings();
+  const { today, date: pageDate } = useTripSettings();
   const putBack = usePutPlanBack();
   const t = useT();
   const lang = useLang();
-  const plan = trips.find((x) => x.slug === slug);
-  if (!today || !plan || !stillPlanned(plan, today)) return null;
+  const ahead = today ? trips.filter((x) => x.slug === slug && stillPlanned(x, today)).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time)) : [];
+  const plan = ahead[0];
+  if (!today || !plan) return null;
   const day = planDay(plan.date, today, lang);
+  const openIt = (p: SavedTrip) => {
+    putBack(p);
+    track("plan_open", { from: "trip" });
+    document.getElementById(PLAN_CARD_ID)?.scrollIntoView({ block: "start", behavior: smoothScroll() });
+  };
+
+  // Several plans for this route (C235, Peter's pick B): one chip per plan, the one for the page's day ticked.
+  if (ahead.length > 1)
+    return (
+      <div className="mt-1 flex flex-col gap-2 border-t border-[var(--border)] pt-3 text-[14.5px]">
+        <b>
+          {t("Vaše plány")} ({ahead.length}):
+        </b>
+        <div className="flex flex-wrap gap-1.5">
+          {ahead.map((p) => {
+            const here = p.date === pageDate;
+            const d = planDay(p.date, today, lang);
+            return (
+              <button
+                key={planKey(p)}
+                type="button"
+                onClick={() => openIt(p)}
+                aria-current={here ? "true" : undefined}
+                className={`inline-flex min-h-10 items-center gap-1 rounded-[var(--radius-chip)] border px-3 text-sm whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
+                  here ? "border-[color-mix(in_srgb,var(--ok)_35%,transparent)] bg-[var(--ok-bg)] font-bold text-[var(--ok)]" : "border-[var(--border)] bg-[var(--card-bg)]"
+                }`}
+              >
+                {d.word} <span className="font-data text-base">{d.date}</span> · <span className="font-data text-base">{p.time}</span>
+                {here && <UiIcon name="check" size={15} />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
 
   return (
     <p className="mt-1 flex min-h-10 items-center gap-2 border-t border-[var(--border)] pt-3 text-[14.5px]">
@@ -38,11 +75,7 @@ export function PlanRow({ slug }: { slug: string }) {
       </span>
       <button
         type="button"
-        onClick={() => {
-          putBack(plan);
-          track("plan_open", { from: "trip" });
-          document.getElementById(PLAN_CARD_ID)?.scrollIntoView({ block: "start", behavior: smoothScroll() });
-        }}
+        onClick={() => openIt(plan)}
         className="-my-2 -mr-2 shrink-0 py-2 pr-2 pl-1 text-sm font-bold text-[var(--accent)] underline underline-offset-[3px] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
       >
         {t("Otvoriť")}

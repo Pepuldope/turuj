@@ -6,7 +6,7 @@ import { isoDate } from "@/lib/days";
 import { langOfPath, langPath } from "@/lib/lang";
 import type { Lang } from "@/lib/lang";
 import { makeOfflineCopy, pageBuildFiles } from "@/lib/offlineCopy";
-import { readSavedTrips, useSavedTrips } from "@/lib/savedTrips";
+import { readSavedTrips, useSavedTrips, planKey } from "@/lib/savedTrips";
 import type { SavedTrip } from "@/lib/savedTrips";
 
 const START_DELAY_MS = 3000;
@@ -40,7 +40,9 @@ async function copyAll(lang: Lang, patch: (slug: string, change: Partial<SavedTr
         const found = await pageBuildFiles(pagePath);
         await makeOfflineCopy({ slug: trip.slug, pagePath, gpxUrl: trip.gpx ?? found.gpxUrl, bbox: trip.trail?.bbox ?? null, assets: found.assets });
         // The plan may have been removed or saved by hand while the copy was made.
-        if (readSavedTrips().find((t) => t.slug === trip.slug)?.offline === "none") patch(trip.slug, { offline: "ok" });
+        // One copy serves every plan of the route.
+        const waiting = readSavedTrips().filter((t) => t.slug === trip.slug && t.offline === "none");
+        if (waiting.length) for (const t of waiting) patch(planKey(t), { offline: "ok" });
         else failedSlugs.add(trip.slug);
       } catch {
         failedSlugs.add(trip.slug);

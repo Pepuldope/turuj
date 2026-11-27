@@ -92,7 +92,7 @@ const routeSlugs = (trip: TripFile): string[] => (trip.routes?.length ? trip.rou
  */
 export function VisitedList() {
   const { visits } = useVisits();
-  const { trips, patch } = useSavedTrips();
+  const { trips, patch, patchRoute } = useSavedTrips();
   const stars = useMyStars();
   const t = useT();
   const lang = useLang();
@@ -171,7 +171,7 @@ export function VisitedList() {
           slug={rated.reviewSlug}
           name={rated.name}
           onDone={(sent) => {
-            if (sent && trips.some((x) => x.slug === rated.reviewSlug)) patch(rated.reviewSlug, { reviewed: true });
+            if (sent) patchRoute(rated.reviewSlug, { reviewed: true });
             setRating(null);
           }}
         />

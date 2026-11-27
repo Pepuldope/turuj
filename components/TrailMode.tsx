@@ -14,7 +14,7 @@ import { markSigns } from "@/lib/markSigns";
 import { NETWORK_ON } from "@/lib/trailNetwork";
 import { buildWalk, locate, timing, turnBack } from "@/lib/onTrail";
 import type { OnTrail } from "@/lib/onTrail";
-import { useSavedTrips } from "@/lib/savedTrips";
+import { useSavedTrips, planKey } from "@/lib/savedTrips";
 import type { SavedTrail, SavedTrip } from "@/lib/savedTrips";
 import { getSunTimes } from "@/lib/sun";
 import type { MarkColour, TripDetail } from "@/lib/tripSchema";
@@ -110,7 +110,7 @@ export function TrailMode({ trip, onClose }: { trip: SavedTrip; onClose: () => v
       if (gone) return;
       if (!got) return setStatus("nodata");
       setTrail(got);
-      patch(trip.slug, { trail: got });
+      patch(planKey(trip), { trail: got });
       setStatus("locating");
     });
     return () => {
