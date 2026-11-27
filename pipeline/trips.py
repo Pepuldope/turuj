@@ -10,6 +10,7 @@ from scipy.spatial import cKDTree
 
 from . import names
 from . import osm as osm_mod
+from .beside import MarkedLines
 from .geo import LocalProjection, ascent_descent, colour_runs, din33466_minutes, haversine, rdp_indices, resample, round_up_15, slugify
 
 COLOUR_ORDER = ["red", "blue", "green", "yellow", "black"]
@@ -179,6 +180,11 @@ class TripBuilder:
             if w.routes:
                 for i in np.searchsorted(graph.node_ids, w.nodes):
                     self.node_routes.setdefault(int(i), set()).update(w.routes)
+        # every marked way, walked or not: a pavement beside one takes its marking (make_trip)
+        self.marked_lines = MarkedLines(
+            [(w.lats, w.lons, self._colour(w)) for w in graph.ways if w.routes]
+            + [(lats, lons, self._routes_colour(r)) for lats, lons, r in getattr(osm, "marked_lines", [])],
+            self.proj)
 
     # ----------------------------------------------------------- helpers --
     def _town_cells(self):
@@ -1094,7 +1100,9 @@ class TripBuilder:
         e_idx = g.edges(full) if len(full) > 1 else np.zeros(0, int)
         e_len = g.edge_len[e_idx]
         e_way = [g.ways[w] for w in g.edge_way[e_idx]]
-        e_colour = [self._colour(w) for w in e_way]
+        # The marking of each step; a pavement beside a marked road takes the road's (pipeline/beside.py).
+        # marked_share below stays the share of marked ways walked, so the same routes pass the checks.
+        e_colour = self.marked_lines.fill(lat, lon, [self._colour(w) for w in e_way], [bool(w.routes) for w in e_way])
         total = float(e_len.sum())
         marked_len = float(sum(L for L, w in zip(e_len, e_way) if w.routes))
         out_len = float(e_len[:turn].sum())
@@ -1221,7 +1229,10 @@ class TripBuilder:
         return trip
 
     def _colour(self, way):
-        cols = [self.g.routes[i]["colour"] for i in way.routes if self.g.routes[i]["colour"]]
+        return self._routes_colour(way.routes)
+
+    def _routes_colour(self, routes):
+        cols = [self.g.routes[i]["colour"] for i in routes if self.g.routes[i]["colour"]]
         if not cols:
             return None
         return min(cols, key=lambda c: COLOUR_ORDER.index(c))

@@ -59,6 +59,9 @@ class Way:
 class OsmData:
     routes: list = field(default_factory=list)  # dicts: id, ref, colour, name
     ways: list = field(default_factory=list)
+    # (lats, lons, route indices) of marked ways no trip walks: a main road, a closed track. The signs
+    # still stand there, beside the pavement the trip does walk (pipeline/beside.py).
+    marked_lines: list = field(default_factory=list)
     guideposts: list = field(default_factory=list)
     parking: list = field(default_factory=list)
     stops: list = field(default_factory=list)
@@ -315,7 +318,8 @@ def load(path, boxes, probe_names=(), border_relation=14296, name_keys=(), inclu
         hw = t.get("highway")
         walk = hw in WALK_HIGHWAYS
         feature = hw is None and ("name" in t or t.get("amenity") == "parking")
-        if not (walk or feature):
+        marked = o.id in way_routes
+        if not (walk or feature or marked):
             continue
         try:
             lats = np.array([n.lat for n in o.nodes])
@@ -324,7 +328,9 @@ def load(path, boxes, probe_names=(), border_relation=14296, name_keys=(), inclu
             continue
         if len(lats) == 0:
             continue
-        if walk and len(lats) >= 2 and way_box.overlaps(lats.min(), lons.min(), lats.max(), lons.max()):
+        in_box = len(lats) >= 2 and way_box.overlaps(lats.min(), lons.min(), lats.max(), lons.max())
+        walked = False
+        if walk and in_box:
             access_blocked = t.get("access") in NO_ACCESS and t.get("foot") not in FOOT_OK
             ferrata = t.get("via_ferrata_scale") not in NO_GEAR_FERRATA
             if not access_blocked and not ferrata and t.get("foot") != "no" and t.get("area") != "yes":
@@ -341,6 +347,9 @@ def load(path, boxes, probe_names=(), border_relation=14296, name_keys=(), inclu
                     routes=way_routes.get(o.id, []),
                     tags=frozenset(f"{k}={t.get(k)}" for k in WATCH_TAGS if k in t),
                 ))
+                walked = True
+        if marked and in_box and not walked:
+            data.marked_lines.append((lats, lons, way_routes[o.id]))
         if feature:
             extra = None
             if t.get("amenity") == "parking" and len(lats) >= 4 and o.nodes[0].ref == o.nodes[-1].ref:
