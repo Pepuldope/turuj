@@ -7,10 +7,14 @@ route, and the page said "no marking" for a stretch where the signs stand a few 
 the marked way is a main road the trip builder never walks (osm.WALK_HIGHWAYS has no primary or
 secondary), or the pavement was simply the cheaper way.
 
-The walked line does not change. A step on a way that belongs to no hiking route takes the colour
-of a marked way that runs beside it: at most BESIDE_M away and in the same direction within BESIDE_DEG, for at least
+The walked line does not change. A step with no trail colour takes the colour of a marked way that
+runs beside it: at most BESIDE_M away and in the same direction within BESIDE_DEG, for at least
 BESIDE_MIN_M in a row. The last rule keeps out a path that leaves a trail at a flat angle (its
 first metres are still close to the trail) and every crossing.
+
+A pavement that carries a route without a trail colour of its own counts too (Via Slovakia or a
+pilgrim route on the pavement, the coloured trail on the road 5 m away: Selec, Stará Ľubovňa,
+Devínska Nová Ves; about 40 routes on 2026-11-27).
 """
 
 import math
@@ -74,17 +78,14 @@ class MarkedLines:
         self.col = np.concatenate(cols) if cols else np.zeros(0, np.int16)
         self.tree = cKDTree(self.xy) if len(self.xy) else None
 
-    def fill(self, lat, lon, colours, own_route=None):
+    def fill(self, lat, lon, colours):
         """The step colours of a walked line with the marking beside it filled in.
 
         `colours[i]` is the marking of the step from point i to point i + 1, None for none. Steps
-        that have a marking keep it. So do steps where `own_route[i]` is true: a way that carries
-        a hiking route of its own without a trail colour (an educational path) was mapped apart
-        from the marked way beside it on purpose.
+        that have a marking keep it.
         """
         out = list(colours)
-        todo = np.array([i for i, c in enumerate(out) if c is None and not (own_route is not None and own_route[i])],
-                        dtype=int)
+        todo = np.array([i for i, c in enumerate(out) if c is None], dtype=int)
         if self.tree is None or not len(todo):
             return out
         xy = self.proj.xy(lat, lon)

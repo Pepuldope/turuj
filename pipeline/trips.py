@@ -1102,7 +1102,7 @@ class TripBuilder:
         e_way = [g.ways[w] for w in g.edge_way[e_idx]]
         # The marking of each step; a pavement beside a marked road takes the road's (pipeline/beside.py).
         # marked_share below stays the share of marked ways walked, so the same routes pass the checks.
-        e_colour = self.marked_lines.fill(lat, lon, [self._colour(w) for w in e_way], [bool(w.routes) for w in e_way])
+        e_colour = self.marked_lines.fill(lat, lon, [self._colour(w) for w in e_way])
         total = float(e_len.sum())
         marked_len = float(sum(L for L, w in zip(e_len, e_way) if w.routes))
         out_len = float(e_len[:turn].sum())

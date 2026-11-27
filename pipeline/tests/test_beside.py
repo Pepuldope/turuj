@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 
 import numpy as np
+import pytest
 import yaml
 
 from pipeline import osm as osm_mod
@@ -28,9 +29,9 @@ def marked(*lines):
     return MarkedLines([(*ll(pts), colour) for colour, pts in lines], PROJ)
 
 
-def walk(m, points, colours=None, own_route=None):
+def walk(m, points, colours=None):
     lat, lon = ll(points)
-    return m.fill(lat, lon, colours or [None] * (len(points) - 1), own_route)
+    return m.fill(lat, lon, colours or [None] * (len(points) - 1))
 
 
 ROAD = ("red", [(0, 0), (300, 0), (600, 40)])  # a marked road with a bend
@@ -68,12 +69,6 @@ def test_marked_steps_keep_their_colour_and_only_the_pavement_part_is_filled():
     assert walk(marked(ROAD), path, ["blue", None, None, None]) == ["blue", "red", "red", None]
 
 
-def test_a_way_with_a_route_of_its_own_is_left_alone():
-    # an educational path mapped beside the road: it has no trail colour, and it does not borrow one
-    pavement = [(0, 8), (100, 8), (200, 8), (300, 8)]
-    assert walk(marked(ROAD), pavement, own_route=[True, True, False]) == [None, None, "red"]
-
-
 def test_the_nearer_of_two_marked_ways_wins():
     m = marked(("red", [(0, 0), (300, 0)]), ("blue", [(0, 20), (300, 20)]))
     assert walk(m, [(0, 6), (150, 6), (300, 6)]) == ["red", "red"]
@@ -88,9 +83,10 @@ def test_no_marked_ways_at_all():
 M_LAT, M_LON = 1 / 111_320, 1 / 74_220  # one metre in degrees at 48.19 N
 
 
-def osm_xml():
+def osm_xml(pilgrim_route=False):
     """A village street that carries the red trail but is a main road (no trip walks its line), a
-    pavement 8 m beside it for 500 m, then the red path up to a peak."""
+    pavement 8 m beside it for 500 m, then the red path up to a peak. With pilgrim_route the
+    pavement carries a long-distance route that has no trail colour (Via Slovakia at Selec)."""
     nodes, ways = [], []
 
     def node(i, east, north, **tags):
@@ -115,11 +111,15 @@ def osm_xml():
     rel = ('<relation id="5000" version="1"><member type="way" ref="1000" role=""/><member type="way" ref="1002" role=""/>'
            '<tag k="type" v="route"/><tag k="route" v="hiking"/><tag k="ref" v="0801"/>'
            '<tag k="osmc:symbol" v="red:white:red_bar"/></relation>')
+    if pilgrim_route:
+        rel += ('\n<relation id="5001" version="1"><member type="way" ref="1001" role=""/>'
+                '<tag k="type" v="route"/><tag k="route" v="hiking"/><tag k="name" v="Via Skúška"/></relation>')
     return ('<?xml version="1.0" encoding="UTF-8"?>\n<osm version="0.6" generator="test">\n'
             + "\n".join(sorted(nodes, key=lambda x: int(x.split('"')[1])) + ways + [rel]) + "\n</osm>\n")
 
 
-def test_the_whole_build_colours_the_pavement(tmp_path):
+@pytest.mark.parametrize("pilgrim_route", [False, True])
+def test_the_whole_build_colours_the_pavement(tmp_path, pilgrim_route):
     (tmp_path / "pipeline").mkdir()
     (tmp_path / "data").mkdir()
     cfg = yaml.safe_load((ROOT / "pipeline" / "config.yaml").read_text())
@@ -131,7 +131,7 @@ def test_the_whole_build_colours_the_pavement(tmp_path):
     for f in ("closure-rules.json", "fee-rules.json"):
         shutil.copy(ROOT / "data" / f, tmp_path / "data" / f)
     pbf = tmp_path / "test.osm"
-    pbf.write_text(osm_xml())
+    pbf.write_text(osm_xml(pilgrim_route))
 
     # the main road is no way to walk, but its marking is kept
     data = osm_mod.load(str(pbf), [b for r in cfg["regions"] for b in r["bboxes"]])
@@ -144,5 +144,5 @@ def test_the_whole_build_colours_the_pavement(tmp_path):
     assert trip["marking"] == ["red"]
     assert trip["marking_runs"] == [{"from": 0, "to": trip["turnaround_index"], "colour": "red"}]
     assert 1500 < trip["distance_m"] / 2 < 1700
-    # the share of marked ways walked is what it was (the checks that drop a route read it)
-    assert 0.5 < trip["marked_share"] < 0.75
+    # the share of ways walked that belong to a route is what it was (the checks that drop a route read it)
+    assert trip["marked_share"] == 1 if pilgrim_route else 0.5 < trip["marked_share"] < 0.75
