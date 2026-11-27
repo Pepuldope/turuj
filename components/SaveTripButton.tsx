@@ -262,14 +262,14 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
                   {t("Uložené")}
                 </p>
                 <p className="text-[14.5px]">
-                  {day ? (
-                    <>
-                      {day.word} <span className="font-data text-[17px] whitespace-nowrap">{day.date}</span>
-                    </>
-                  ) : (
-                    <span className="font-data text-[17px] whitespace-nowrap">{shortDate(saved.date, lang)}</span>
-                  )}{" "}
-                  {t("o")} <span className="font-data text-[17px] whitespace-nowrap">{saved.time}</span>
+                  {/* Two pieces that never break inside: on a 320 px phone "o 08:00" goes under the day as one piece. */}
+                  <span className="whitespace-nowrap">
+                    {day && <>{day.word} </>}
+                    <span className="font-data text-[17px]">{day ? day.date : shortDate(saved.date, lang)}</span>
+                  </span>{" "}
+                  <span className="whitespace-nowrap">
+                    {t("o")} <span className="font-data text-[17px]">{saved.time}</span>
+                  </span>
                 </p>
                 {saved.offline === "ok" && installed && <p className="mt-0.5 text-[13.5px]">{t("Funguje aj bez signálu.")}</p>}
               </div>
