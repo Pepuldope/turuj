@@ -78,7 +78,7 @@ interface Props extends ShareInfo {
   children?: ReactNode;
   /** Under the plan card, in the last card. */
   outro?: ReactNode;
-  /** Its own slim card between the plan card and "Navigácia a zdieľanie": the visited row (components/VisitRow.tsx). */
+  /** The visited row (components/VisitRow.tsx), the plan card's last row under Save. */
   visit?: ReactNode;
   /** How many routes the trip has: with one there is no route choice, only a line of plain info. */
   routeCount?: number;
@@ -639,12 +639,13 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
         <div data-nosnippet className="border-t border-[var(--border)] pt-4 [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer">
           <SaveTripButton sun={sun} tripPlan={tripPlan} closures={closures} saving={saving} where={calendarPlace} />
         </div>
+        {/* The visited row, the card's last row (Peter, 27 Nov 2026: in the same card as Save, not a card of its own). */}
+        {visit}
         </div>
         </PlanStepsProvider>
         </PlanDayProvider>
       </section>
 
-      {visit}
       {/* Its own card (Peter, 2026-11-11): navigate, share and the GPX are what you do with a finished plan. Named "Navigácia a zdieľanie" since 26 Nov 2026 (was "Uložiť a navigovať"; saving moved into the day card above). */}
       <section data-nosnippet aria-label={t("Navigácia a zdieľanie")} className={`${part} [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer`}>
         <h2 className="text-[1.35rem] leading-tight font-bold">{t("Navigácia a zdieľanie")}</h2>

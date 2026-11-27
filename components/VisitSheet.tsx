@@ -33,7 +33,8 @@ export const REMOVE_NOW = "inline-flex min-h-10 items-center gap-1.5 rounded-ful
  * say they do not know. From a saved plan the day is the plan's and is shown, with a way to change it.
  *
  * At a place with several routes (`pick`) the same window then asks the route, on a small drawn map and in a
- * list (Peter: one window, the day first). The route is not chosen for the visitor either; "I don't know which"
+ * list (Peter: one window, the day first). On the trip page the window opens with the route of the plan above
+ * picked (`preset`; Peter, 27 Nov 2026) and says so; elsewhere no route is chosen for the visitor. "I don't know which"
  * is an answer. A visit from a plan has the plan's route and is not asked.
  */
 export function VisitSheet({
@@ -42,6 +43,7 @@ export function VisitSheet({
   plan,
   edit,
   pick,
+  preset,
   reviewed,
   onSave,
   onClose,
@@ -52,6 +54,8 @@ export function VisitSheet({
   edit?: { date: string; route: string; onRemove: () => void };
   /** The routes to choose from: given for a place with several routes, by hand or when fixing a visit. */
   pick?: RoutePickData;
+  /** The route the trip page's plan shows: the window opens with it picked (Peter, 27 Nov 2026), and says so. Not given where there is no plan above (Moje výlety). */
+  preset?: string;
   reviewed: boolean;
   /** `route` is what the visitor picked ("" = does not know); undefined when the window did not ask. */
   onSave: (date: string, route?: string) => void;
@@ -65,7 +69,7 @@ export function VisitSheet({
   const startKind = start === null ? null : parseWhen(start).kind;
   const [date, setDate] = useState<string | null>(start);
   const asksRoute = pick !== undefined && plan === undefined;
-  const [route, setRoute] = useState<string | null>(edit && asksRoute ? edit.route : null);
+  const [route, setRoute] = useState<string | null>(edit && asksRoute ? edit.route : asksRoute && preset ? preset : null);
   const [rough, setRough] = useState(edit !== undefined && startKind !== "day");
   const [changing, setChanging] = useState(false);
   const [older, setOlder] = useState(false);
@@ -336,6 +340,7 @@ export function VisitSheet({
           <hr className="border-[var(--border)]" />
           <b className="-mb-1.5 text-[15px]">{tx("Ktorou trasou ste išli?")}</b>
           <RoutePick data={pick} value={route} onChange={setRoute} />
+          {preset && !edit && route === preset && <p className="-mt-1 text-[13px] text-[var(--muted)]">{tx("Vybrali sme trasu z plánu vyššie. Ak ste išli inou, zmeňte ju.")}</p>}
         </>
       )}
 

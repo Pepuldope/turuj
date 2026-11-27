@@ -13,9 +13,9 @@ const rowClass = "mt-1 flex min-h-10 items-center gap-2 border-t border-[var(--b
 const jump = () => document.getElementById(VISIT_CARD_ID)?.scrollIntoView({ block: "center", behavior: smoothScroll() });
 
 /**
- * The quiet line at the bottom of the trip page's first card (Peter, 27 Nov 2026) that points down to the visit
- * card (VisitRow): a link to add a visit, the mark of the visits already there, or the question about a plan
- * whose day has passed. It only scrolls; the windows open from the card.
+ * The quiet line at the bottom of the trip page's first card (Peter, 27 Nov 2026) that points down to the visited
+ * row under Save (VisitRow): a link to add a visit, the mark of the visits already there, or the question about a plan
+ * whose day has passed. It only scrolls; the windows open from the row.
  */
 export function VisitLink({ slug, place, routes }: { slug: string; place: string; routes: string[] }) {
   const { today, saved, mine, ask } = useVisitState(slug, place, routes);
