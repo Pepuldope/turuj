@@ -1,6 +1,6 @@
 # Trip pipeline report
 
-Run: 2026-11-27T12:21:29+00:00 · OSM data: 2026-11-26T21:21:01Z
+Run: 2026-11-27T14:25:38+00:00 · OSM data: 2026-11-26T21:21:01Z
 
 **6430 trips**
 
@@ -1338,8 +1338,8 @@ Foreign names left out: Apostoły, Barát-fő, Barátfői kilátó, Biała Skał
 | Nová Bystrica, odbočka do Veľkého Potoka | Nová Bystrica, Cadrikovia | node/1447936905 |
 | Šport Chata, rázcestie | Nová Lehota, okolie | node/303174329 |
 | Majdan, rázcestie | Olejníkov, okolie | node/281326148 |
-| Rázcestie pod Čistým Grúňom | Oravice | node/1705795303 |
 | Rázcestie Oravice | Oravice | node/5736009562 |
+| Rázcestie pod Čistým Grúňom | Oravice | node/1705795303 |
 | Biela Farma, rázcestie | Oravská Polhora, okolie | node/5791978002 |
 | Pavlovce, rázc. | Pavlovce, otoč. | node/759020919 |
 | Pezinská Baba, rázcestie | Pezinská baba - Parkovisko | node/7746603410 |
