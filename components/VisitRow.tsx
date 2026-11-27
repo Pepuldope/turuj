@@ -20,10 +20,9 @@ import { VisitsSheet } from "@/components/VisitsSheet";
 
 const focus = "focus-visible:outline-2 focus-visible:outline-[var(--accent)]";
 const rowClass = "flex min-h-10 items-center gap-2 text-[14.5px]";
-/** The slim card of the row, between the plan card and "Navigácia a zdieľanie"; `VisitLink` scrolls here. */
+/** The row's place: the last row of the plan card, under Save; `VisitLink` scrolls here. */
 export const VISIT_CARD_ID = "navstevy";
-const card =
-  "scroll-mt-[calc(64px+env(safe-area-inset-top))] rounded-[var(--radius-card)] border border-[var(--card-edge)] bg-[var(--card-bg)] px-4 py-2.5 shadow-[var(--shadow-card)] lg:scroll-mt-3";
+const card = "scroll-mt-[calc(64px+env(safe-area-inset-top))] border-t border-[var(--border)] pt-3 lg:scroll-mt-3";
 const textLink = `-my-2 -mr-2 shrink-0 py-2 pr-2 pl-1 text-sm font-bold text-[var(--accent)] underline underline-offset-[3px] ${focus}`;
 
 type Open = "ask" | "hand" | "list" | "review" | null;
@@ -43,10 +42,11 @@ export function useVisitState(slug: string, place: string, routes: string[]) {
 }
 
 /**
- * The visited row, its own slim card between the plan card and "Navigácia a zdieľanie" (Peter, 27 Nov 2026; the
- * line at the old place is VisitLink): asks about a plan whose day has passed, shows the visits of this place, or
- * offers "Boli sme tu" by hand. At a place with several routes (`briefs`) the window also asks which route was
- * walked. The card is part of this component so that nothing, not even an empty frame, shows before `today` is known.
+ * The visited row, the last row of the plan card under Save (Peter, 27 Nov 2026: first tried as a card of its own,
+ * then "better in the same card as the save trip button"; the line at the old place is VisitLink): asks about a plan
+ * whose day has passed, shows the visits of this place, or offers "Boli sme tu" by hand. At a place with several
+ * routes (`briefs`) the window also asks which route was walked, with this page's route picked. The row's frame is
+ * part of this component so that nothing, not even an empty divider, shows before `today` is known.
  */
 export function VisitRow({
   slug,
@@ -101,6 +101,7 @@ export function VisitRow({
           slug={slug}
           reviewed={reviewed}
           pick={pick}
+          preset={route}
           onSave={(date, picked) => {
             addVisitByHand({ slug: place, route: picked ?? route, name, date });
             track("trip_done", { trail: slug, how: "page" });

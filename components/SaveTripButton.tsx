@@ -18,7 +18,7 @@ import { useUserLocation } from "@/lib/userLocation";
 import { sinceArrival, track } from "@/lib/analytics";
 import { ShareButton } from "@/components/ShareButton";
 import { activeClosures } from "@/lib/closures";
-import { TrailStatusLine } from "@/components/TrailStatusLine";
+import { ClosureGuard } from "@/components/ClosureGuard";
 import { HeardFrom } from "@/components/HeardFrom";
 import { EveReminder } from "@/components/EveReminder";
 import type { ShareInfo } from "@/components/ShareButton";
@@ -245,8 +245,8 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Always right above the button or the saved block; a closure is the red box, never a green or open-looking line. */}
-      <TrailStatusLine closures={closures} date={date} />
+      {/* A closed day says so right above the button or the saved block (the closure warning moves with Save). Without a closure nothing stands here: "Stav chodníka neoverený" has its own box near the top of the page (Peter, 27 Nov 2026: a grey line here looked like part of the button). */}
+      <ClosureGuard closures={closures} date={date} />
       {showButton && !(saved && status === "saving") && saveButton}
 
       {/* Order: the green saved block, the reminder question under it, then the first-save question, the error, the switch. */}
