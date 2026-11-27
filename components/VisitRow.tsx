@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { confirmPlanVisit } from "@/lib/confirmPlanVisit";
 import { track } from "@/lib/analytics";
-import { shortDate } from "@/lib/days";
 import { useLang, useT } from "@/lib/i18n";
 import { useMyStars } from "@/lib/reviewed";
 import { useSavedTrips } from "@/lib/savedTrips";
@@ -16,6 +15,7 @@ import { ReviewSheet } from "@/components/ReviewSheet";
 import type { RoutePickData } from "@/components/RoutePick";
 import { VisitMark } from "@/components/VisitMark";
 import { VisitSheet } from "@/components/VisitSheet";
+import { PassedPlanAnswers } from "@/components/PassedPlanAnswers";
 import { VisitsSheet } from "@/components/VisitsSheet";
 
 const focus = "focus-visible:outline-2 focus-visible:outline-[var(--accent)]";
@@ -126,22 +126,11 @@ export function VisitRow({
   if (!today) return null;
 
   if (ask && saved) {
+    // A plan whose day has passed (C229, Peter 26 Nov 2026): went, another day, or cancel, all three at once.
     return (
       <>
-        <section id={VISIT_CARD_ID} aria-label={t("Vaše návštevy")} data-nosnippet className={card}>
-          <p className={rowClass}>
-            <VisitMark done={false} />
-            {/* The answers sit beside the question, not at the card's far edge (Peter, 26 Nov 2026). */}
-            <span className="mr-1 min-w-0">
-              <b>{t("Boli ste tu")}</b> <span className="font-data whitespace-nowrap text-[17px]">{shortDate(saved.date, lang)}</span>?
-            </span>
-            <button type="button" onClick={() => setOpen("ask")} className={`min-h-10 shrink-0 rounded-full bg-[var(--accent)] px-4 text-sm font-bold text-[var(--accent-contrast)] ${focus}`}>
-              {t("Áno")}
-            </button>
-            <button type="button" onClick={() => patch(slug, { skipAsk: true })} className={`min-h-10 shrink-0 rounded-full border border-[var(--border)] px-4 text-sm font-semibold ${focus}`}>
-              {t("Nie")}
-            </button>
-          </p>
+        <section id={VISIT_CARD_ID} aria-label={t("Vaše návštevy")} data-nosnippet className={`${card} flex flex-col gap-2.5 pb-1`}>
+          <PassedPlanAnswers trip={saved} from="ask" here onWent={() => setOpen("ask")} />
         </section>
         {dialogs}
       </>

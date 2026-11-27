@@ -4,7 +4,7 @@ import { UiIcon } from "@/components/UiIcon";
 import { useEffect, useState } from "react";
 import { useLang, useT } from "@/lib/i18n";
 import { langPath } from "@/lib/lang";
-import { EVE_MAX_AHEAD_MS, closedUntilFor, eveAtFor, eveWanted } from "@/lib/eve";
+import { EVE_MAX_AHEAD_MS, eveAtFor, eveJobFor, eveWanted } from "@/lib/eve";
 import type { EveJob } from "@/lib/eve";
 import { appleKind, buildIcs, googleCalendarUrl } from "@/lib/ics";
 import type { IcsTrip } from "@/lib/ics";
@@ -68,20 +68,7 @@ export function EveReminder({
 
   const at = eveWanted(trip.date, now);
   // The plan on the page is the saved one only while the day agrees.
-  const job: EveJob | null =
-    sun && plan && at !== null && sameDay(plan.hikeStart, trip.date)
-      ? {
-          name: trip.name,
-          slug: trip.slug,
-          lang,
-          lat: Math.round(sun.lat * 1e4) / 1e4,
-          lon: Math.round(sun.lon * 1e4) / 1e4,
-          from: plan.hikeStart.getTime(),
-          to: plan.hikeEnd.getTime(),
-          leave: plan.noTrainInLight ? null : plan.latestStart.getTime(),
-          closedUntil: closedUntilFor(trip.date, closures),
-        }
-      : null;
+  const job: EveJob | null = sun && plan && at !== null ? eveJobFor(trip, plan, sun, lang, closures) : null;
   const jobKey = job ? JSON.stringify([job, trip.date]) : "";
 
   /** Tells the server (permission already given). */

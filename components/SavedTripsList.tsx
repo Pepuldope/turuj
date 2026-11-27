@@ -24,6 +24,9 @@ import { useUserLocation } from "@/lib/userLocation";
 import { Reveal } from "@/components/Reveal";
 import { ReviewSheet } from "@/components/ReviewSheet";
 import { VisitedList } from "@/components/VisitedList";
+import { PassedPlanAnswers } from "@/components/PassedPlanAnswers";
+import { VisitSheet } from "@/components/VisitSheet";
+import { confirmPlanVisit } from "@/lib/confirmPlanVisit";
 import { SunArc } from "@/components/SunArc";
 import { TrailMode, activeTrip, trackTrailStart } from "@/components/TrailMode";
 import { useLang, useT } from "@/lib/i18n";
@@ -40,6 +43,8 @@ export function SavedTripsList() {
   // Only the installed app talks about working without signal (Peter, 25 Nov 2026); in a browser tab it read as if the website needed no internet.
   const installed = useInstalled();
   const [reviewing, setReviewing] = useState<SavedTrip | null>(null);
+  // "Boli sme tu" on a plan whose day has passed: the same window as on the home strip and the trip page (C229).
+  const [confirming, setConfirming] = useState<SavedTrip | null>(null);
   // A card leaving "Plánované" for "Navštívené" rolls out of its list and into the other (Peter, 17 Nov), but only
   // once the visitor has pressed something: the trips come out of storage right after hydration, and that is not an event.
   const [touched, setTouched] = useState(false);
@@ -135,6 +140,19 @@ export function SavedTripsList() {
   return (
     <>
       {walking && <TrailMode trip={walking} onClose={closeTrip} />}
+      {confirming && (
+        <VisitSheet
+          name={confirming.name}
+          slug={confirming.slug}
+          plan={{ date: confirming.date }}
+          reviewed={!!confirming.reviewed}
+          onSave={(date) => {
+            setTouched(true);
+            confirmPlanVisit(confirming, date, patch, "list");
+          }}
+          onClose={() => setConfirming(null)}
+        />
+      )}
       {reviewing && (
         <ReviewSheet
           slug={reviewing.slug}
@@ -150,7 +168,7 @@ export function SavedTripsList() {
           <Reveal open={visits.length > 0} animate={touched} appear={touched}>
             <h2 className="pb-5 text-base font-bold">{t("Plánované")}</h2>
           </Reveal>
-          <TripList trips={trips} today={today} open={open} remove={remove} went={went} start={startTrip} animate={touched} />
+          <TripList trips={trips} today={today} open={open} remove={remove} went={went} ask={setConfirming} start={startTrip} animate={touched} />
         </Reveal>
         <VisitedList />
       </div>
@@ -164,6 +182,7 @@ function TripList({
   open,
   remove,
   went,
+  ask,
   start,
   animate,
 }: {
@@ -173,13 +192,14 @@ function TripList({
   open: (trip: SavedTrip) => void;
   remove: (slug: string) => void;
   went: (trip: SavedTrip) => void;
+  ask: (trip: SavedTrip) => void;
   start: (trip: SavedTrip) => void;
 }) {
   return (
     <ul className="flex flex-col">
       {trips.map((trip) => (
         <Reveal as="li" key={trip.slug} open={!trip.doneAt} className="roll-gap [--roll-gap:12px]" appear={animate} animate={animate}>
-          <TripCard trip={trip} today={today} open={open} remove={remove} went={went} start={start} />
+          <TripCard trip={trip} today={today} open={open} remove={remove} went={went} ask={ask} start={start} />
         </Reveal>
       ))}
     </ul>
@@ -277,6 +297,7 @@ function TripCard({
   open,
   remove,
   went,
+  ask,
   start,
 }: {
   trip: SavedTrip;
@@ -284,6 +305,7 @@ function TripCard({
   open: (trip: SavedTrip) => void;
   remove: (slug: string) => void;
   went: (trip: SavedTrip) => void;
+  ask: (trip: SavedTrip) => void;
   start: (trip: SavedTrip) => void;
 }) {
   const t = useT();
@@ -309,6 +331,9 @@ function TripCard({
             // A tap anywhere on the card that is not one of its buttons opens the planned trip, as "Otvoriť" does
             // (Peter, 26 Nov 2026). Not while text is being selected. The keyboard has the "Otvoriť" button.
             onClick={(e) => {
+              // A window opened from the card (the calendar of "Iný deň") is drawn on the page's body, but React still
+              // passes its clicks up to here: only clicks inside the card itself open the trip.
+              if (!e.currentTarget.contains(e.target as Node)) return;
               if ((e.target as Element).closest("button, a, input, select, label, summary, [role='button']")) return;
               if (window.getSelection()?.toString()) return;
               open(trip);
@@ -350,6 +375,12 @@ function TripCard({
                 <SavedWeatherLines plan={plan} below={weather.below} above={weather.above} copyAt={weather.copyAt} missing={weather.missing} />
               </>
             )}
+            {past ? (
+              // The day has passed (C229): went, another day, or cancel, as on the home strip.
+              <div className="flex flex-col gap-2.5 pt-1">
+                <PassedPlanAnswers trip={trip} from="list" onWent={() => ask(trip)} />
+              </div>
+            ) : (
             <div className="flex flex-wrap gap-3 pt-1">
               <button
                 type="button"
@@ -380,6 +411,7 @@ function TripCard({
                 {t("Odstrániť")}
               </button>
             </div>
+            )}
           </div>
   );
 }
