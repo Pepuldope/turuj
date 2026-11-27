@@ -3,6 +3,9 @@
 // timestamp `at`; a deletion stays as a tombstone (`gone`) so it reaches the other devices; and
 // nothing is dropped silently: an item that fails the checks is skipped, never stored.
 
+import type { VisitHow } from "@/lib/visits";
+import type { TripStop } from "@/lib/tripStops";
+
 export type SyncKind = "plan" | "visit";
 /** One item as it travels: `body` is absent when the sender only states which version it has. */
 export interface WireItem { key: string; at: number; gone?: true; body?: unknown }
@@ -16,7 +19,8 @@ export const MAX_PLANS = 300;
 export const MAX_VISITS = 3000;
 /** Characters of one plan's JSON. The largest trip file is 46 kB (25 Nov 2026); a saved plan adds the height profile and stays under about 150 kB. */
 export const MAX_PLAN_BODY = 600_000;
-export const MAX_VISIT_BODY = 2_000;
+/** Characters of one visit's JSON: a visit with its start place and up to 20 stops. */
+export const MAX_VISIT_BODY = 6_000;
 /** Characters of one request. */
 export const MAX_REQUEST = 2_000_000;
 /** Characters of bodies in one answer; the rest comes on the next round. */
@@ -33,6 +37,37 @@ export const VISIT_DATE = /^(\d{4}(-(\d{2}-\d{2}|sp|su|au|wi))?)?$/;
 const DEVICE_ONLY = ["offline", "eve", "weather"];
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+
+const round100m = (n: number) => Math.round(n * 1000) / 1000;
+const text = (v: unknown, max: number): v is string => typeof v === "string" && v.length >= 1 && v.length <= max;
+
+function cleanStop(raw: unknown): TripStop | null {
+  if (!isObject(raw)) return null;
+  const { id, name, min, way, at } = raw;
+  if (!text(id, 160) || !text(name, 120)) return null;
+  if (typeof min !== "number" || !Number.isInteger(min) || min < 0 || min > 600) return null;
+  const stop: TripStop = { id, name, min };
+  if (way === "tam" || way === "spat" || way === "oboje") stop.way = way;
+  if (typeof at === "string" && /^\d{2}:\d{2}$/.test(at)) stop.at = at;
+  return stop;
+}
+
+/** A normalised copy of how a visit went (start place, way of travel, kids, stops), or undefined when nothing valid is left. */
+export function cleanHow(raw: unknown): VisitHow | undefined {
+  if (!isObject(raw)) return undefined;
+  const how: VisitHow = {};
+  const s = raw.start;
+  if (isObject(s) && typeof s.lat === "number" && typeof s.lon === "number" && Number.isFinite(s.lat) && Number.isFinite(s.lon) && Math.abs(s.lat) <= 90 && Math.abs(s.lon) <= 180 && text(s.label, 120)) {
+    how.start = { lat: round100m(s.lat), lon: round100m(s.lon), label: s.label };
+  }
+  if (raw.travel === "car" || raw.travel === "transit") how.travel = raw.travel;
+  if (typeof raw.withKids === "boolean") how.withKids = raw.withKids;
+  if (Array.isArray(raw.stops) && raw.stops.length <= 20) {
+    const stops = raw.stops.map(cleanStop).filter((x): x is TripStop => x !== null);
+    if (stops.length) how.stops = stops;
+  }
+  return Object.keys(how).length ? how : undefined;
+}
 
 /** A normalised copy of one incoming item, or null when it is not valid. */
 export function cleanItem(kind: SyncKind, raw: unknown, now: number): WireItem | null {
@@ -61,7 +96,9 @@ export function cleanItem(kind: SyncKind, raw: unknown, now: number): WireItem |
   if (typeof name !== "string" || name.length < 1 || name.length > 200) return null;
   if (typeof date !== "string" || !VISIT_DATE.test(date)) return null;
   if (from !== "plan" && from !== "manual") return null;
-  const body = { slug, route, name, date, from };
+  // A `how` that is not fit is dropped alone; the visit itself still counts.
+  const how = cleanHow(b.how);
+  const body = { slug, route, name, date, from, ...(how ? { how } : {}) };
   if (JSON.stringify(body).length > MAX_VISIT_BODY) return null;
   return { key, at: clamped, body };
 }

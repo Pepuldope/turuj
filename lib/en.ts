@@ -132,6 +132,7 @@ export const EN: Record<string, string> = {
   "Autom sa sem nedá.": "You can't get here by car.",
   "Autom": "By car",
   "autom": "by car",
+  "autobusom alebo vlakom": "by bus or train",
   "Bus / vlak": "Bus / train",
   "Bez parkoviska": "No car park",
   "bez parkoviska": "no car park",

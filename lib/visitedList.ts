@@ -1,7 +1,7 @@
 // The "Navštívené" list in Moje výlety (Peter, 25 Nov 2026): one row per place, under the year of its latest
 // visit. Pure; the trip's own data (picture, kind, routes) is loaded by the list when it is shown.
 import { latestFirst, planVisitId, routeTrip } from "@/lib/visits";
-import type { Visit } from "@/lib/visits";
+import type { Visit, VisitHow } from "@/lib/visits";
 import { whenYear } from "@/lib/visitWhen";
 import type { SavedTrip } from "@/lib/savedTrips";
 
@@ -44,15 +44,17 @@ export interface LastWalk {
   /** As step 1 names it: a trip slug, or `<slug>/okruh` for a loop. */
   route: string;
   plan: SavedTrip | null;
+  /** How that visit went (start, way of travel, kids, stops), kept with the visit for good; null when it has none. */
+  how: VisitHow | null;
 }
 
 /**
- * The latest visit whose route is known (`visits` the latest first), with the saved plan it came from. Null when
+ * The latest visit whose route is known (`visits` the latest first), with the saved plan it came from and the `how` kept with it. Null when
  * the visitor never said which route they walked. A plan saved again for another day no longer matches its old
  * visit, so it is not taken for "last time".
  */
 export function lastWalk(visits: readonly Visit[], trips: readonly SavedTrip[]): LastWalk | null {
   const visit = visits.find((v) => v.route);
   if (!visit) return null;
-  return { route: visit.route, plan: trips.find((x) => planVisitId(x.route ?? x.slug, x.date) === visit.id) ?? null };
+  return { route: visit.route, plan: trips.find((x) => planVisitId(x.route ?? x.slug, x.date) === visit.id) ?? null, how: visit.how ?? null };
 }

@@ -82,13 +82,16 @@ export function VisitsSheet({
   useScrollLock();
 
   // Last time: the route walked, and from the plan of that day (while the device still has it) how the group went.
-  const walk = lastWalk(visits, trips) ?? { route, plan: null };
+  const walk = lastWalk(visits, trips) ?? { route, plan: null, how: null };
   const last = walk.plan;
+  // From the plan while the device has it, otherwise from what the visit kept.
+  const start = last?.start ?? walk.how?.start;
+  const kids = last ? last.withKids : walk.how?.withKids;
   const asLast = [
     pick ? routeNameOf(pick, walk.route, lang) : null,
-    last?.start ? tx("štart {name}", { name: tx(last.start.label) }) : null,
-    last ? tx(last.transit ? (last.fixed ? "vlakom" : "autobusom") : "autom") : null,
-    last?.withKids ? tx("s deťmi") : null,
+    start ? tx("štart {name}", { name: tx(start.label) }) : null,
+    last ? tx(last.transit ? (last.fixed ? "vlakom" : "autobusom") : "autom") : walk.how?.travel ? tx(walk.how.travel === "car" ? "autom" : "autobusom alebo vlakom") : null,
+    kids ? tx("s deťmi") : null,
   ].filter((x): x is string => !!x);
   // The window goes first: while it is open the page behind does not scroll, so the plan could not be shown.
   const again = () =>
