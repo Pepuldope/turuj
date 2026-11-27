@@ -42,9 +42,9 @@ export function PassedPlanAnswers({ trip, from, here = false, onWent }: { trip: 
     const check = () => {
       const w = el.clientWidth;
       if (!narrow) {
-        // A label fits when it and its icon keep 6 px of air on each side; touching the edge reads as cramped (320 px phones
-        // have about 2 px, 390 px about 8).
-        const need = (b: Element) => Array.from(b.children).reduce((sum, k) => sum + k.getBoundingClientRect().width, 0) + 6 * (b.children.length - 1) + 12;
+        // A label fits when it and its icon keep 4 px of air on each side; touching the edge reads as cramped (320 px phones
+        // have about 2 px).
+        const need = (b: Element) => Array.from(b.children).reduce((sum, k) => sum + k.getBoundingClientRect().width, 0) + 6 * (b.children.length - 1) + 8;
         const over = Array.from(el.children).some((b) => need(b) > b.clientWidth + 0.5);
         if (over) {
           failedAt.current = w;
@@ -66,9 +66,12 @@ export function PassedPlanAnswers({ trip, from, here = false, onWent }: { trip: 
     });
   }, []);
 
+  // A pale blue box with a bright blue frame (Peter, 27 Nov 2026, option A, in all three places: under Save on the trip
+  // page "its too easy to ignore"; it is an important question).
   return (
     <>
-      <p className="text-[15px] leading-snug">
+      <div className="flex flex-col gap-2.5 rounded-xl border-[1.5px] border-[var(--accent)] bg-[var(--accent-soft)] px-2.5 py-3">
+      <p className="px-0.5 text-[15px] leading-snug font-semibold">
         {t(here ? "Boli ste tu" : "Boli ste tam")} {weekdayInSentence(trip.date, lang)}{" "}
         <b className="font-data whitespace-nowrap text-[17px]">{shortDate(trip.date, lang)}</b>?
       </p>
@@ -92,6 +95,7 @@ export function PassedPlanAnswers({ trip, from, here = false, onWent }: { trip: 
           <UiIcon name="close" size={14} />
           <span>{t(narrow ? "Zrušiť plán" : "Zrušiť")}</span>
         </button>
+      </div>
       </div>
       {moving && createPortal(<MoveSheet trip={trip} from={from} onClose={() => setMoving(false)} />, document.body)}
     </>

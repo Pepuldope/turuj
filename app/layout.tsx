@@ -4,6 +4,7 @@ import "./fonts.css";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { AccountSync } from "@/components/AccountSync";
+import { PreviewTestPlan } from "@/components/PreviewTestPlan";
 import { OfflineCopies } from "@/components/OfflineCopies";
 import { StaleCodeReload } from "@/components/StaleCodeReload";
 import { UserLocationProvider } from "@/lib/userLocation";
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
         <AccountSync />
+        <PreviewTestPlan />
         <OfflineCopies />
         <StaleCodeReload />
         <LangProvider>
