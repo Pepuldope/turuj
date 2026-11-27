@@ -13,7 +13,7 @@ import { UiIcon } from "@/components/UiIcon";
  * The way back to a plan on the planned trip's own page (Peter, 25 Nov 2026, C213): a row at the bottom of
  * the first card, "Váš plán: sobota 28. 11. o 09:00 · Otvoriť". "Otvoriť" puts the plan's day, time, start
  * and stops back on this page and moves down to the plan. Shown while the trip is still ahead; the day
- * after, "Boli ste tu?" (VisitRow) takes over.
+ * after, "Boli ste tu?" takes over (VisitLink here, the answer itself in the VisitRow card).
  */
 export function PlanRow({ slug }: { slug: string }) {
   const { trips } = useSavedTrips();

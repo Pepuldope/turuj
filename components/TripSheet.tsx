@@ -24,6 +24,7 @@ import { TripAnswers, TripHeaderFacts } from "@/components/TripAnswers";
 import { TripPlanner } from "@/components/TripPlanner";
 import { TripReviews } from "@/components/TripReviews";
 import { PlanRow } from "@/components/PlanRow";
+import { VisitLink } from "@/components/VisitLink";
 import { VisitRow } from "@/components/VisitRow";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TripFacts } from "@/components/TripFacts";
@@ -382,16 +383,7 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                   {description && <p className="text-sm text-[var(--muted)]">{description}</p>}
                   <TripReviews slug={trail.slug} />
                   <PlanRow slug={trail.slug} />
-                  <VisitRow
-                    slug={trail.slug}
-                    name={trail.name}
-                    place={trip.variant_of ?? trail.slug}
-                    route={current}
-                    routes={routes.length ? routes.map((r) => r.slug).filter((r) => !r.endsWith(LOOP_SUFFIX)) : [trail.slug]}
-                    briefs={routes}
-                    walks={walks}
-                    goal={{ kind: goal, name: trip.destination.name, location: trip.destination.location }}
-                  />
+                  <VisitLink slug={trail.slug} place={trip.variant_of ?? trail.slug} routes={routes.length ? routes.map((r) => r.slug).filter((r) => !r.endsWith(LOOP_SUFFIX)) : [trail.slug]} />
                 </div>
                 {routes.length > 1 && <ShorterRouteHint routes={routes} at={routeAt} walks={walks} />}
                 {!loopBack && (
@@ -409,6 +401,18 @@ export async function TripSheet({ trip, detail, loopBack, lang = "sk" }: { trip:
                 {/* Closed (red) or "Stav chodníka neoverený" (grey): both sit up here under the facts, above Save and Navigate. The closure rule itself is in the "Uzávery a poplatky" section below. */}
                 <ClosureBanner closures={closures} region={trail.region_name} nearbyHref={nearby.length > 0 ? "#ine-vylety" : "/"} />
               </>
+            }
+            visit={
+              <VisitRow
+                slug={trail.slug}
+                name={trail.name}
+                place={trip.variant_of ?? trail.slug}
+                route={current}
+                routes={routes.length ? routes.map((r) => r.slug).filter((r) => !r.endsWith(LOOP_SUFFIX)) : [trail.slug]}
+                briefs={routes}
+                walks={walks}
+                goal={{ kind: goal, name: trip.destination.name, location: trip.destination.location }}
+              />
             }
             outro={
               <TripAnswers
