@@ -7,6 +7,7 @@ export const LEGAL_FACTS: Record<string, string> = {
   OPERATORS: "Peter Nemčok a Radoslav Nemec, dvaja plnoletí študenti",
   OPERATORS_SHORT: "Peter Nemčok a Radoslav Nemec",
   OPERATORS_SHORT_EN: "Peter Nemčok and Radoslav Nemec",
+  OPERATORS_EN: "Peter Nemčok and Radoslav Nemec, two adult students",
   // Peter, 2026-11-03.
   ADDRESS: "Turnianska 3, 851 07 Bratislava-Petržalka",
   CONTROLLERS:
