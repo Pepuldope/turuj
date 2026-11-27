@@ -25,6 +25,7 @@ export type AnalyticsEvent =
   | "review_sent" // the quick review was accepted by the server
   | "on_trail" // "Začať výlet" tapped on a saved trip in Moje výlety (trail mode opens)
   | "plan_open" // the way back to a saved plan was used: the strip on the home page (from: home) or "Otvoriť" in the first card of the planned trip's page (from: trip); also "Naplánovať znova" on a visited place (from: again)
+  | "my_trips_open" // a link to Moje výlety: "Pozrieť v Mojich výletoch" after saving (from: saved), "všetky výlety" in the home plan strip (from: home-plan), the Moje výlety strip on the home page (from: home)
   | "plan_commit" // North Star: the first save, send, navigation or GPX for a trail in this page load (sent by track())
   | "list_empty" // the home trip list came back empty for the chosen filters (trackListEmpty)
   | "heard_from" // one-tap "Ako ste sa o nás dozvedeli?" after the first saved trip on this device

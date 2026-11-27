@@ -40,7 +40,7 @@ export function GpxDownload({ gpxUrl, slug, name }: { gpxUrl: string; slug: stri
     if (gpx) setTimeout(() => URL.revokeObjectURL(url), 10_000);
   }
 
-  // A real action of the "Uložiť a navigovať" card, a secondary button like the others there.
+  // A real action of the "Navigácia a zdieľanie" card, a secondary button like the others there.
   const link = (
     <a
       href={file}

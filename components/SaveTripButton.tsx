@@ -9,7 +9,6 @@ import type { ReactNode } from "react";
 import type { BBox, Closure, LatLng } from "@/lib/types";
 import type { TripProfile } from "@/lib/tripProfile";
 import { makeOfflineCopy, pageBuildFiles } from "@/lib/offlineCopy";
-import { dayAfterNa } from "@/lib/days";
 import { useSavedTrips } from "@/lib/savedTrips";
 import type { SavedTrail, SavedTrip } from "@/lib/savedTrips";
 import { useInstalled } from "@/lib/installApp";
@@ -19,13 +18,15 @@ import { useUserLocation } from "@/lib/userLocation";
 import { sinceArrival, track } from "@/lib/analytics";
 import { ShareButton } from "@/components/ShareButton";
 import { activeClosures } from "@/lib/closures";
-import { ClosureGuard } from "@/components/ClosureGuard";
+import { TrailStatusLine } from "@/components/TrailStatusLine";
 import { HeardFrom } from "@/components/HeardFrom";
 import { EveReminder } from "@/components/EveReminder";
 import type { ShareInfo } from "@/components/ShareButton";
 import type { TripWeather } from "@/components/WeatherBlock";
 import { forecastForDay, mergeForecast } from "@/lib/weather";
 
+import { shortDate } from "@/lib/days";
+import { planDay } from "@/lib/nextPlan";
 import { LangLink, useLang, useT } from "@/lib/i18n";
 import { langPath } from "@/lib/lang";
 /** What saving a trip needs from its page. */
@@ -49,10 +50,10 @@ interface SaveInput {
   weather?: TripWeather | null;
 }
 
-/** Where on the page the save was tapped: the "Uložiť a navigovať" card, or the box of a friend's shared plan. */
+/** Where on the page the save was tapped: the save block of the day card, or the box of a friend's shared plan. */
 type SaveFrom = "card" | "shared";
 
-interface Props extends ShareInfo {
+interface Props {
   sun: LatLng | null;
   tripPlan: TripPlan;
   closures?: Closure[];
@@ -60,7 +61,12 @@ interface Props extends ShareInfo {
   saving: TripSave;
   /** Where the walk starts (parking, stop or trailhead), as the calendar event's place. */
   where?: { name: string; location: LatLng } | null;
-  /** The navigation buttons: they go after the calendar and before the app block. */
+}
+
+interface HandoffProps extends ShareInfo {
+  tripPlan: TripPlan;
+  closures?: Closure[];
+  /** The navigation buttons. */
   nav?: ReactNode;
   /** The GPX download, the last action of the card. */
   gpx?: ReactNode;
@@ -82,7 +88,7 @@ const secondary =
   "rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-2.5 text-sm font-semibold hover:border-[var(--accent)] disabled:opacity-60";
 
 /**
- * Saving one trip, once per trip page: the page has two places to tap it (the "Uložiť a navigovať" card and,
+ * Saving one trip, once per trip page: the page has two places to tap it (the save block at the end of the day card and,
  * on a friend's shared link, the box at the top; C91), and both show the same progress and result.
  */
 export function useTripSave({ slug, place, route, name, gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], weather = null }: SaveInput) {
@@ -206,12 +212,13 @@ export function useTripSave({ slug, place, route, name, gpxUrl, bbox, sun, tripP
 export type TripSave = ReturnType<typeof useTripSave>;
 
 /**
- * "Uložiť výlet" is the main button (PD2): it remembers the trip on this
- * device and stores it for offline use. Right after saving, one tap offers to
- * send the plan to the group.
+ * The save block at the end of the day card (Peter's pick, 26 Nov 2026). "Uložiť výlet" is the main button (PD2): it
+ * remembers the trip on this device and stores it for offline use. Top to bottom: the trail-status line (always
+ * directly above), the button, the green "Uložené" block with the way to Moje výlety, the reminder question,
+ * then HeardFrom and the error line, and the reminder switch.
  */
-export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = null, nav = null, gpx = null, ...trip }: Props) {
-  const { plan, date, time, hikeMin, driveMin, route, loading } = tripPlan;
+export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = null }: Props) {
+  const { plan, date } = tripPlan;
   const { saved, changed, closedDay, status, progress, askHeard, touched, onSave, patch, remove } = saving;
   // The reminder question shows where the save was tapped: here, or in the box of a friend's plan.
   const askEve = saving.askEve === "card";
@@ -220,21 +227,11 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
   // reads as if the website needed no internet. The copy is made either way, and Moje výlety shows its state.
   const installed = useInstalled();
   const lang = useLang();
+  const { today } = useTripSettings();
 
   // "pending" while this page isn't saving: the save was cut off (page closed, phone asleep).
   const showButton = !saved || changed || saved.offline === "failed" || saved.offline === "pending" || saved.offline === "none" || status === "saving";
-  const share = (
-    <ShareButton
-      {...trip}
-      plan={loading ? null : plan}
-      date={date}
-      time={time}
-      hikeMin={hikeMin}
-      hasDrive={route !== null || driveMin !== null}
-      closures={closures}
-      className={`${secondary} min-h-11 w-full`}
-    />
-  );
+  const day = saved && today ? planDay(saved.date, today, lang) : null;
 
   const saveButton = (
         <button type="button" onClick={() => onSave()} disabled={status === "saving" || saving.notReady} className={closedDay ? `${secondary} min-h-11 w-full` : primary}>
@@ -248,46 +245,65 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
 
   return (
     <div className="flex flex-col gap-3">
-      {showButton && <ClosureGuard closures={closures} date={date} />}
+      {/* Always right above the button or the saved block; a closure is the red box, never a green or open-looking line. */}
+      <TrailStatusLine closures={closures} date={date} />
       {showButton && !(saved && status === "saving") && saveButton}
 
-      {/* Order: the confirmation with the reminder question first, then share, the calendar, navigation, GPX. The app offer is AppPromo, outside this card. */}
-      <Reveal open={!!saved && askEve} className="roll-flex-gap" appear animate={touched}>
+      {/* Order: the green saved block, the reminder question under it, then the first-save question, the error, the switch. */}
+      <Reveal open={!!saved && (askEve || status !== "saving")} className="roll-flex-gap" appear animate={touched}>
         {saved && (
-        <div className="flex flex-col gap-2 rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
-          <p role="status">
-            <strong>{t("Uložené.")}</strong> {t("Nájdete to v")}{" "}
-            <LangLink href="/ulozene" className="underline">
-              {t("Mojich výletoch")}
+          <div className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--ok)_35%,transparent)]">
+            <div className="flex items-center gap-2.5 bg-[var(--ok-bg)] px-3 py-2.5 text-[var(--ok)]">
+              <span aria-hidden="true" className="grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full bg-[var(--ok)] text-[var(--ok-bg)]">
+                <UiIcon name="check" size={15} />
+              </span>
+              <div className="min-w-0 flex-1 leading-tight">
+                <p role="status" className="text-[15px] font-bold">
+                  {t("Uložené")}
+                </p>
+                <p className="text-[14.5px]">
+                  {/* Two pieces that never break inside: on a 320 px phone "o 08:00" goes under the day as one piece. */}
+                  <span className="whitespace-nowrap">
+                    {day && <>{day.word} </>}
+                    <span className="font-data text-[17px]">{day ? day.date : shortDate(saved.date, lang)}</span>
+                  </span>{" "}
+                  <span className="whitespace-nowrap">
+                    {t("o")} <span className="font-data text-[17px]">{saved.time}</span>
+                  </span>
+                </p>
+                {saved.offline === "ok" && installed && <p className="mt-0.5 text-[13.5px]">{t("Funguje aj bez signálu.")}</p>}
+              </div>
+              <button
+                type="button"
+                onClick={remove}
+                className="-my-2.5 -mr-1.5 shrink-0 self-stretch px-1.5 text-[13.5px] font-semibold whitespace-nowrap underline underline-offset-[3px] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+              >
+                {t("Odstrániť")}
+              </button>
+            </div>
+            <LangLink
+              href="/ulozene"
+              onClick={() => track("my_trips_open", { from: "saved" })}
+              className="flex min-h-12 items-center justify-between border-t border-[color-mix(in_srgb,var(--ok)_35%,transparent)] bg-[var(--card-bg)] px-3.5 text-[15px] font-bold text-[var(--foreground)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--accent)]"
+            >
+              {t("Pozrieť v Mojich výletoch")}
+              <UiIcon name="chev" size={18} />
             </LangLink>
-            .
-          </p>
-          <EveReminder ask trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch({ eve })} onAsked={saving.doneAskEve} />
-        </div>
+          </div>
         )}
       </Reveal>
 
-      <Reveal open={!!saved && !askEve && status !== "saving"} className="roll-flex-gap" appear animate={touched}>
+      <Reveal open={!!saved && askEve} className="roll-flex-gap" appear animate={touched}>
         {saved && (
-        <p className="rounded-xl bg-[var(--ok-bg)] p-3 text-sm">
-          <strong>{t("Už uložené.")}</strong> {t("Nájdete to v")}{" "}
-          <LangLink href="/ulozene" className="underline">
-            {t("Mojich výletoch")}
-          </LangLink>
-          , {t("naplánované na")} <strong>{dayAfterNa(saved.date, lang)}</strong> {t("o")} <strong>{saved.time}</strong>
-          {saved.offline === "ok" && installed ? t(", funguje aj bez signálu. ") : ". "}
-          <button type="button" onClick={remove} className="underline">
-            {t("Odstrániť")}
-          </button>
-        </p>
+          <div className="rounded-xl border border-[var(--border)] p-3 text-sm">
+            <EveReminder ask trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch({ eve })} onAsked={saving.doneAskEve} />
+          </div>
         )}
       </Reveal>
 
       {showButton && saved && status === "saving" && saveButton}
 
       {saved && askHeard && <HeardFrom onDone={saving.doneAskHeard} />}
-
-      {share}
 
       {/* A browser tab is promised nothing about working without signal (C224), so a failed copy is only said in the installed app. */}
       {status === "error" && installed && (
@@ -298,9 +314,26 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
       )}
 
       {saved && status !== "saving" && !askEve && <EveReminder trip={saved} plan={plan} sun={sun} closures={closures} where={where} onChange={(eve) => patch({ eve })} />}
+    </div>
+  );
+}
 
-      {saved && <ClosureGuard closures={closures} date={date} />}
+/** The "Navigácia a zdieľanie" card's content: the navigation buttons, the share button, the GPX download. */
+export function TripHandoff({ tripPlan, closures = [], nav = null, gpx = null, ...trip }: HandoffProps) {
+  const { plan, date, time, hikeMin, driveMin, route, loading } = tripPlan;
+  return (
+    <div className="flex flex-col gap-3">
       {nav}
+      <ShareButton
+        {...trip}
+        plan={loading ? null : plan}
+        date={date}
+        time={time}
+        hikeMin={hikeMin}
+        hasDrive={route !== null || driveMin !== null}
+        closures={closures}
+        className={`${secondary} min-h-11 w-full`}
+      />
       {gpx}
     </div>
   );
@@ -308,7 +341,7 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
 
 /**
  * In the box of a friend's shared plan (C91): the friend keeps the plan in one tap, with the offline copy and
- * the question about the evening-before reminder, without scrolling to the "Uložiť a navigovať" card. On a
+ * the question about the evening-before reminder, without scrolling to the save block of the day card. On a
  * closed day it stays away: the card below holds the closure box and its own save.
  */
 export function SharedSave({ saving, plan, sun, closures = [], where = null }: { saving: TripSave; plan: TripPlan["plan"]; sun: LatLng | null; closures?: Closure[]; where?: Props["where"] }) {
@@ -351,7 +384,7 @@ export function SharedSave({ saving, plan, sun, closures = [], where = null }: {
 
 /**
  * "Získať appku": the one-time offer to put the saved trip on the home screen. A card of its own under the
- * "Uložiť a navigovať" card, so it doesn't mix with saving, sharing and navigating.
+ * "Navigácia a zdieľanie" card, so it doesn't mix with saving, sharing and navigating.
  */
 export function AppPromo() {
   const t = useT();
