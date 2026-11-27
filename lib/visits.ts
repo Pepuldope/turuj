@@ -2,8 +2,19 @@
 
 import { useMemo, useSyncExternalStore } from "react";
 import type { SavedTrip } from "@/lib/savedTrips";
+import type { Travel } from "@/lib/tripSettings";
+import type { TripStop } from "@/lib/tripStops";
 import { whenKey } from "@/lib/visitWhen";
 import "@/lib/legacyStorage";
+
+/** How a group went, kept with its visit. */
+export interface VisitHow {
+  /** The start place, about 100 m exact (never the exact spot: this is kept for good and travels with the account). */
+  start?: { lat: number; lon: number; label: string };
+  travel?: Travel;
+  withKids?: boolean;
+  stops?: TripStop[];
+}
 
 /** "I was on this route": one entry per route and day, kept on every device of an account. */
 export interface Visit {
@@ -18,6 +29,8 @@ export interface Visit {
   from: "plan" | "manual";
   /** When this entry last changed (ms); decides which copy wins in account sync. */
   at: number;
+  /** How the group went, kept from the plan the visit came from (Peter, 26 Nov 2026: route, start, way of travel, kids, stops; nothing more). Missing on visits ticked by hand and on visits made before this existed. */
+  how?: VisitHow;
 }
 
 export interface VisitsData { visits: Visit[]; gone: Record<string, number> }
@@ -26,7 +39,29 @@ export interface VisitsData { visits: Visit[]; gone: Record<string, number> }
 export const planVisitId = (route: string, date: string) => `p:${route}:${date}`;
 
 /** What a visit needs from a saved plan; `place` and `route` are missing on plans saved before visits existed. */
-export interface PlanTrip { slug: string; name: string; date: string; place?: string; route?: string }
+export interface PlanTrip {
+  slug: string;
+  name: string;
+  date: string;
+  place?: string;
+  route?: string;
+  start?: { lat: number; lon: number; label: string } | null;
+  travel?: Travel;
+  withKids?: boolean;
+  stops?: TripStop[];
+}
+
+const round100m = (n: number) => Math.round(n * 1000) / 1000;
+
+/** What a plan says about how the group goes: start (to about 100 m), way of travel, kids, stops. Undefined when it says none of it. */
+export function howOf(plan: Pick<PlanTrip, "start" | "travel" | "withKids" | "stops">): VisitHow | undefined {
+  const how: VisitHow = {};
+  if (plan.start) how.start = { lat: round100m(plan.start.lat), lon: round100m(plan.start.lon), label: plan.start.label };
+  if (plan.travel !== undefined) how.travel = plan.travel;
+  if (plan.withKids !== undefined) how.withKids = plan.withKids;
+  if (plan.stops && plan.stops.length) how.stops = plan.stops;
+  return Object.keys(how).length ? how : undefined;
+}
 
 const routeOf = (trip: PlanTrip) => trip.route ?? trip.slug;
 
@@ -43,6 +78,8 @@ export function addPlanVisit(data: VisitsData, trip: PlanTrip, at: number, date:
   delete gone[id];
   // Newer than the removal it undoes, even when the clock went backwards.
   const visit: Visit = { id, slug: trip.place ?? "", route, name: trip.name, date, from: "plan", at: Math.max(at, goneAt + 1) };
+  const how = howOf(trip);
+  if (how) visit.how = how;
   return { visits: [visit, ...data.visits], gone };
 }
 
@@ -74,8 +111,14 @@ export function addHandVisit(data: VisitsData, visit: HandVisit, id: string, at:
 export function changeVisit(data: VisitsData, id: string, change: Partial<Pick<Visit, "date" | "route" | "slug">>, now: number): VisitsData {
   const visit = data.visits.find((v) => v.id === id);
   if (!visit) return data;
-  const next = { ...visit, ...change };
+  const next: Visit = { ...visit, ...change };
   if (next.date === visit.date && next.route === visit.route && next.slug === visit.slug) return data;
+  // Stop ids belong to the old route's page; the rest of how it went still holds.
+  if (next.route !== visit.route && visit.how?.stops) {
+    const { stops: _stops, ...rest } = visit.how; // eslint-disable-line @typescript-eslint/no-unused-vars
+    if (Object.keys(rest).length) next.how = rest;
+    else delete next.how;
+  }
   return { visits: data.visits.map((v) => (v.id === id ? { ...next, at: Math.max(now, visit.at + 1) } : v)), gone: data.gone };
 }
 
@@ -127,9 +170,29 @@ export function withPlace(data: VisitsData, place: string, routes: readonly stri
   return { visits: data.visits.map((v) => (!v.slug && routes.includes(routeTrip(v.route)) ? { ...v, slug: place, at: Math.max(now, v.at + 1) } : v)), gone: data.gone };
 }
 
+/**
+ * Once per device, visits from a plan that have no `how` yet: with the plan still here, `how` is filled in from it
+ * (newer, so it wins on the account). Without it, the stamp goes one millisecond back: a device that ran the
+ * previous version received visits with `how` stripped (the old asVisit kept five fields) at the same `at` as the
+ * account's copy, so it would never be sent the full copy again; one older makes the account send its copy once.
+ */
+export function withHow(data: VisitsData, trips: SavedTrip[], now: number): VisitsData {
+  let changed = false;
+  const visits = data.visits.map((v) => {
+    if (v.from !== "plan" || v.how) return v;
+    const trip = trips.find((t) => planVisitId(t.route ?? t.slug, t.date) === v.id);
+    const how = trip ? howOf(trip) : undefined;
+    changed = true;
+    if (how) return { ...v, how, at: Math.max(now, v.at + 1) };
+    return { ...v, at: Math.max(1, v.at - 1) };
+  });
+  return changed ? { visits, gone: data.gone } : data;
+}
+
 const KEY = "turuj-visits";
 const GONE_KEY = "turuj-visits-gone";
 const MOVED_KEY = "turuj-visits-moved";
+const HOW_KEY = "turuj-visits-how";
 const EVENT = "turuj-visits";
 const EMPTY: Visit[] = [];
 
@@ -246,6 +309,20 @@ export function moveDoneTripsToVisits() {
     localStorage.setItem(MOVED_KEY, "1");
   } catch {
     // Storage blocked: nothing to move, and nothing was marked as moved.
+  }
+}
+
+/** Once per device: visits from a plan get their `how` (see withHow). Safe to call again. */
+export function fillHowOnce() {
+  try {
+    if (localStorage.getItem(HOW_KEY) === "1") return;
+    const raw = localStorage.getItem("turuj-saved-trips");
+    const trips = raw ? (JSON.parse(raw) as SavedTrip[]) : [];
+    const before = current();
+    commit(before, withHow(before, Array.isArray(trips) ? trips : [], Date.now()));
+    localStorage.setItem(HOW_KEY, "1");
+  } catch {
+    // Storage blocked: nothing was changed, and nothing was marked as done.
   }
 }
 

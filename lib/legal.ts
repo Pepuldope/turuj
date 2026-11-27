@@ -1,7 +1,7 @@
 // Facts the terms (/podmienky) and privacy page (/sukromie) name. Peter fills what is still open.
 
 /** Date shown on both pages; change it with every real change of either text. */
-export const LEGAL_UPDATED = "2026-11-26";
+export const LEGAL_UPDATED = "2026-11-27";
 
 export const LEGAL_FACTS: Record<string, string> = {
   OPERATORS: "Peter Nemčok a Radoslav Nemec, dvaja plnoletí študenti",

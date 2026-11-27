@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { needsSync, syncIfOlder, syncNow, syncOff } from "@/lib/accountSync";
 import { useAccount } from "@/lib/account";
-import { moveDoneTripsToVisits } from "@/lib/visits";
+import { fillHowOnce, moveDoneTripsToVisits } from "@/lib/visits";
 
 // How soon a change made on another device shows here (Peter, 26 Nov 2026: a trip removed on the phone took
 // about 5 minutes to go from the Mac, which is what the first version waited before it looked again).
@@ -25,6 +25,7 @@ export function AccountSync() {
 
   useEffect(() => {
     moveDoneTripsToVisits();
+    fillHowOnce();
   }, []);
 
   useEffect(() => {

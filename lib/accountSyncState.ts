@@ -2,6 +2,7 @@ import { DEVICE_FIELDS, planAt } from "@/lib/savedTrips";
 import type { SavedTrip } from "@/lib/savedTrips";
 import type { Visit } from "@/lib/visits";
 import type { DeviceState, Synced } from "@/lib/syncCore";
+import { cleanHow } from "@/lib/syncMerge";
 import type { WireItem } from "@/lib/syncMerge";
 
 // The mapping between what this device keeps (saved trips, visits, and the removals it remembers)
@@ -44,7 +45,7 @@ function items<T>(live: T[], keyOf: (x: T) => string, atOf: (x: T) => number, bo
 export function toDevice(lists: DeviceLists, synced: DeviceState["synced"]): DeviceState {
   return {
     plans: items(lists.trips, (t) => t.slug, planAt, planBody, lists.savedGone),
-    visits: items(lists.visits, (v) => v.id, (v) => v.at, (v) => ({ slug: v.slug, route: v.route, name: v.name, date: v.date, from: v.from }), lists.visitsGone),
+    visits: items(lists.visits, (v) => v.id, (v) => v.at, (v) => ({ slug: v.slug, route: v.route, name: v.name, date: v.date, from: v.from, ...(v.how ? { how: v.how } : {}) }), lists.visitsGone),
     synced,
   };
 }
@@ -62,7 +63,8 @@ function asVisit(key: string, at: number, body: unknown): Visit | null {
   const { slug, route, name, date, from } = body;
   if (typeof slug !== "string" || typeof route !== "string" || typeof name !== "string" || typeof date !== "string") return null;
   if (from !== "plan" && from !== "manual") return null;
-  return { id: key, slug, route, name, date, from, at };
+  const how = cleanHow(body.how);
+  return { id: key, slug, route, name, date, from, at, ...(how ? { how } : {}) };
 }
 
 const byKey = (list: WireItem[]) => new Map(list.map((i) => [i.key, i]));

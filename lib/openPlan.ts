@@ -11,6 +11,7 @@ import type { SavedTrip } from "@/lib/savedTrips";
 import type { LastWalk } from "@/lib/visitedList";
 import { useTripSettings } from "@/lib/tripSettings";
 import { setTripStops } from "@/lib/tripStops";
+import { routeTrip } from "@/lib/visits";
 import { useUserLocation } from "@/lib/userLocation";
 
 /**
@@ -43,11 +44,16 @@ export function usePlanAgain(): (walk: LastWalk) => void {
   const router = useRouter();
   const lang = useLang();
   return useCallback(
-    ({ route, plan }: LastWalk) => {
+    ({ route, plan, how }: LastWalk) => {
       if (plan) {
         update({ time: plan.time, ...(plan.travel ? { travel: plan.travel } : {}), ...(plan.withKids !== undefined ? { withKids: plan.withKids } : {}) });
         if (plan.start) setManualStart(plan.start, "remembered");
         setTripStops(plan.slug, plan.stops ?? []);
+      } else if (how) {
+        // Never a day and never a time. Stops are kept under the trip page's slug, which for a loop is not the route.
+        update({ ...(how.travel ? { travel: how.travel } : {}), ...(how.withKids !== undefined ? { withKids: how.withKids } : {}) });
+        if (how.start) setManualStart(how.start, "remembered");
+        setTripStops(routeTrip(route), how.stops ?? []);
       }
       track("plan_open", { from: "again" });
       const href = langPath(lang, `/trasa/${route}`);

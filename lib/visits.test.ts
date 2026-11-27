@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { addHandVisit, addPlanVisit, changeVisit, markVisited, planVisitId, readVisits, removePlanVisit, removeVisit, routeTrip, unmarkVisited, visitsAt, visitsOfDoneTrips, withPlace } from "@/lib/visits";
+import { addHandVisit, addPlanVisit, changeVisit, howOf, markVisited, planVisitId, readVisits, removePlanVisit, removeVisit, routeTrip, unmarkVisited, visitsAt, visitsOfDoneTrips, withHow, withPlace } from "@/lib/visits";
 import type { VisitsData } from "@/lib/visits";
 import type { SavedTrip } from "@/lib/savedTrips";
 
@@ -117,3 +117,59 @@ describe("visits by hand, fixed and removed", () => {
   });
 });
 
+
+describe("how it went", () => {
+  const start = { lat: 48.148598, lon: 17.107748, label: "Bratislava" };
+  const stop = { id: "rysy:poi:1", name: "Chata", min: 40 };
+
+  it("keeps start (to about 100 m), travel, kids and stops, and nothing when there is none of it", () => {
+    expect(howOf({ start, travel: "transit", withKids: false, stops: [stop] })).toEqual({ start: { lat: 48.149, lon: 17.108, label: "Bratislava" }, travel: "transit", withKids: false, stops: [stop] });
+    expect(howOf({ start: null, travel: "car" })).toEqual({ travel: "car" });
+    expect(howOf({ start: null, stops: [] })).toBeUndefined();
+    expect(howOf({})).toBeUndefined();
+  });
+
+  it("is carried by a plan visit, and not by one ticked by hand", () => {
+    const data = addPlanVisit(empty, { ...rysy, start, travel: "car", withKids: true, stops: [stop] }, 100);
+    expect(data.visits[0].how).toEqual({ start: { lat: 48.149, lon: 17.108, label: "Bratislava" }, travel: "car", withKids: true, stops: [stop] });
+    expect(addPlanVisit(empty, rysy, 100).visits[0]).not.toHaveProperty("how");
+    expect(addHandVisit(empty, { slug: "rysy", route: "rysy", name: "Rysy", date: "2026-08-01" }, "m:1", 5).visits[0]).not.toHaveProperty("how");
+  });
+
+  it("drops only the stops when the route changes, and keeps all of it when only the day does", () => {
+    const data = addPlanVisit(empty, { ...rysy, start, travel: "car", stops: [stop] }, 100);
+    const id = data.visits[0].id;
+    expect(changeVisit(data, id, { date: "2026-08-02" }, 200).visits[0].how).toEqual(data.visits[0].how);
+    const moved = changeVisit(data, id, { route: "rysy/okruh" }, 200).visits[0];
+    expect(moved.how).toEqual({ start: { lat: 48.149, lon: 17.108, label: "Bratislava" }, travel: "car" });
+    const onlyStops = addPlanVisit(empty, { ...rysy, stops: [stop] }, 100);
+    expect(changeVisit(onlyStops, onlyStops.visits[0].id, { route: "rysy/okruh" }, 200).visits[0]).not.toHaveProperty("how");
+  });
+
+  describe("withHow", () => {
+    const plain = addPlanVisit(empty, rysy, 100);
+    const trip = { ...rysy, start, travel: "car", route: "rysy", time: "08:00" } as unknown as SavedTrip;
+
+    it("fills it from the plan that is still here, newer than the visit", () => {
+      const out = withHow(plain, [trip], 50);
+      expect(out.visits[0].how).toEqual({ start: { lat: 48.149, lon: 17.108, label: "Bratislava" }, travel: "car" });
+      expect(out.visits[0].at).toBe(101);
+      expect(withHow(plain, [trip], 900).visits[0].at).toBe(900);
+    });
+
+    it("lowers the stamp by one when there is no plan to fill it from", () => {
+      expect(withHow(plain, [], 900).visits[0].at).toBe(99);
+      expect(withHow(plain, [{ ...trip, start: null, travel: undefined } as SavedTrip], 900).visits[0].at).toBe(99);
+      const one = addPlanVisit(empty, rysy, 1);
+      expect(withHow(one, [], 900).visits[0].at).toBe(1);
+    });
+
+    it("leaves visits by hand and visits that have it, and returns the same object when nothing is to do", () => {
+      const hand = addHandVisit(empty, { slug: "rysy", route: "rysy", name: "Rysy", date: "" }, "m:1", 5);
+      expect(withHow(hand, [trip], 900)).toBe(hand);
+      const has = addPlanVisit(empty, { ...rysy, travel: "car" }, 100);
+      expect(withHow(has, [trip], 900)).toBe(has);
+      expect(withHow(empty, [trip], 900)).toBe(empty);
+    });
+  });
+});

@@ -1,6 +1,6 @@
 // The pure merge rule of account sync: item checks and who wins.
 import { describe, expect, it } from "vitest";
-import { MAX_PLAN_BODY, cleanItem, decide } from "@/lib/syncMerge";
+import { MAX_PLAN_BODY, MAX_VISIT_BODY, cleanHow, cleanItem, decide } from "@/lib/syncMerge";
 import type { Held, WireItem } from "@/lib/syncMerge";
 
 const NOW = 1_800_000_000_000;
@@ -142,5 +142,39 @@ describe("decide", () => {
     const r = decide([live("a", 5), live("a", 30), live("a", 20)], held({ a: { at: 10 } }), false);
     expect(r.store).toEqual([live("a", 30)]);
     expect(r.sendKeys).toEqual([]);
+  });
+});
+
+describe("cleanItem visit how", () => {
+  const ok = (how: unknown) => cleanItem("visit", { key: "p:rysy:2026-08-01", at: 5, body: { ...visit, how } }, NOW);
+  const stop = { id: "rysy:poi:1", name: "Chata", min: 40 };
+
+  it("keeps a valid how and re-rounds the start", () => {
+    const how = { start: { lat: 48.148598, lon: 17.107748, label: "Bratislava" }, travel: "transit", withKids: false, stops: [{ ...stop, way: "oboje" }, { id: "obed", name: "Obed", min: 30, at: "12:30" }] };
+    expect(ok(how)?.body).toEqual({ ...visit, how: { ...how, start: { lat: 48.149, lon: 17.108, label: "Bratislava" } } });
+  });
+
+  it("drops unknown keys and bad stops", () => {
+    const how = { junk: 1, travel: "car", stops: [{ ...stop, extra: 1 }, { ...stop, min: 1.5 }, { ...stop, min: 601 }, { ...stop, id: "" }, { ...stop, way: "x", at: "9:00" }, "no"] };
+    expect(ok(how)?.body).toEqual({ ...visit, how: { travel: "car", stops: [stop, stop] } });
+    expect(ok({ stops: Array.from({ length: 21 }, () => stop) })?.body).toEqual(visit);
+  });
+
+  it("drops only how when it is invalid, never the visit", () => {
+    for (const how of ["x", 3, [], {}, { travel: "bike" }, { start: { lat: 91, lon: 0, label: "A" } }, { start: { lat: 0, lon: 0, label: "" } }, { start: { lat: NaN, lon: 0, label: "A" } }, { withKids: "yes" }]) {
+      expect(ok(how)?.body, JSON.stringify(how)).toEqual(visit);
+    }
+  });
+
+  it("respects the size cap", () => {
+    const stops = Array.from({ length: 20 }, (_, i) => ({ id: "x".repeat(160), name: "y".repeat(120), min: i }));
+    expect(JSON.stringify({ ...visit, how: { stops } }).length).toBeGreaterThan(MAX_VISIT_BODY);
+    expect(ok({ stops })).toBeNull();
+    expect(ok({ stops: stops.slice(0, 5) })).not.toBeNull();
+  });
+
+  it("cleanHow of nothing valid is undefined", () => {
+    expect(cleanHow(undefined)).toBeUndefined();
+    expect(cleanHow({ withKids: true })).toEqual({ withKids: true });
   });
 });

@@ -9,6 +9,10 @@ import type { Held, KindAnswer, SyncAnswer, SyncKind, SyncRequest, WireItem } fr
 const WRITE_CHUNK = 20;
 const READ_CHUNK = 50;
 
+// A device still on the previous version changes a visit and sends it back without `how`; that must not wipe the
+// stored one, so a newer visit body without `how` takes the stored `how` along (one statement, no extra read).
+const BODY = `CASE WHEN excluded.kind = 'visit' AND excluded.body IS NOT NULL AND json_extract(excluded.body, '$.how') IS NULL AND json_extract(account_item.body, '$.how') IS NOT NULL THEN json_set(excluded.body, '$.how', json(json_extract(account_item.body, '$.how'))) ELSE excluded.body END`;
+
 interface Row { key: string; at: number; gone: number; body: string | null }
 
 const empty = (): KindAnswer => ({ send: [], want: [], at: {} });
@@ -45,7 +49,7 @@ async function mergeKind(d: NonNullable<Awaited<ReturnType<typeof accountDb>>>, 
     }
     writes.push(item);
   }
-  const upsert = `INSERT INTO account_item (account, kind, key, at, gone, body) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (account, kind, key) DO UPDATE SET at = excluded.at, gone = excluded.gone, body = excluded.body WHERE excluded.at > account_item.at`;
+  const upsert = `INSERT INTO account_item (account, kind, key, at, gone, body) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (account, kind, key) DO UPDATE SET at = excluded.at, gone = excluded.gone, body = ${BODY} WHERE excluded.at > account_item.at`;
   for (let i = 0; i < writes.length; i += WRITE_CHUNK) {
     await d.batch(
       writes.slice(i, i + WRITE_CHUNK).map((w) => d.prepare(upsert).bind(accountId, kind, w.key, w.at, w.gone ? 1 : 0, w.gone ? null : JSON.stringify(w.body))),
