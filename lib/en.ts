@@ -935,6 +935,8 @@ export const EN: Record<string, string> = {
   "naposledy": "last",
   "Upraviť": "Edit",
   "Už ste tu boli?": "Have you been here?",
+  "Pridajte si návštevu": "Add your visit",
+  "Odpovedať": "Answer",
   "Boli sme tu": "We were here",
   "Boli ste tam": "Were you there",
   "Áno, boli sme": "Yes, we were",

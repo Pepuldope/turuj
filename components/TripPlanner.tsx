@@ -78,6 +78,8 @@ interface Props extends ShareInfo {
   children?: ReactNode;
   /** Under the plan card, in the last card. */
   outro?: ReactNode;
+  /** Its own slim card between the plan card and "Navigácia a zdieľanie": the visited row (components/VisitRow.tsx). */
+  visit?: ReactNode;
   /** How many routes the trip has: with one there is no route choice, only a line of plain info. */
   routeCount?: number;
   /** The "Kadiaľ pôjdete" step (several routes only; components/RouteChoice.tsx). */
@@ -116,7 +118,7 @@ function meetingAt(date: string, hhmm: string): Date {
   return zonedDate(y, mo, d, h, mi);
 }
 
-export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction = null, bbox, place, route, closures = [], walk, intro, children, outro, routeCount = 1, routesStep, accessMap, placesMap, dayMap, places, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
+export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction = null, bbox, place, route, closures = [], walk, intro, children, outro, visit, routeCount = 1, routesStep, accessMap, placesMap, dayMap, places, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
   const { start } = useUserLocation();
   const { today, update, withKids } = useTripSettings();
   const t = useT();
@@ -642,6 +644,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
         </PlanDayProvider>
       </section>
 
+      {visit}
       {/* Its own card (Peter, 2026-11-11): navigate, share and the GPX are what you do with a finished plan. Named "Navigácia a zdieľanie" since 26 Nov 2026 (was "Uložiť a navigovať"; saving moved into the day card above). */}
       <section data-nosnippet aria-label={t("Navigácia a zdieľanie")} className={`${part} [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer`}>
         <h2 className="text-[1.35rem] leading-tight font-bold">{t("Navigácia a zdieľanie")}</h2>
