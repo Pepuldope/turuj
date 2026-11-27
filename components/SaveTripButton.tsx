@@ -9,7 +9,9 @@ import type { ReactNode } from "react";
 import type { BBox, Closure, LatLng } from "@/lib/types";
 import type { TripProfile } from "@/lib/tripProfile";
 import { makeOfflineCopy, pageBuildFiles } from "@/lib/offlineCopy";
-import { useSavedTrips } from "@/lib/savedTrips";
+import { newPlanKey, planKey, useSavedTrips } from "@/lib/savedTrips";
+import { openedPlanKey } from "@/lib/openPlan";
+import { nextPlan } from "@/lib/nextPlan";
 import type { SavedTrail, SavedTrip } from "@/lib/savedTrips";
 import { useInstalled } from "@/lib/installApp";
 import { useTripSettings } from "@/lib/tripSettings";
@@ -94,7 +96,7 @@ const secondary =
 export function useTripSave({ slug, place, route, name, gpxUrl, bbox, sun, tripPlan, profile, trail, closures = [], weather = null }: SaveInput) {
   const { trips, save, patch, remove } = useSavedTrips();
   const { start } = useUserLocation();
-  const { travel } = useTripSettings();
+  const { travel, today } = useTripSettings();
   const { date, time, hikeMin, driveMin, transit, fixed, withKids, loading } = tripPlan;
   const { stops } = useTripStops(slug);
   const lang = useLang();
@@ -109,7 +111,14 @@ export function useTripSave({ slug, place, route, name, gpxUrl, bbox, sun, tripP
   // The first trip saved on this device: ask once how they heard of us (after the share offer).
   const [askHeard, setAskHeard] = useState(false);
 
-  const saved = trips.find((t) => t.slug === slug) ?? null;
+  // A route can hold several plans (C235, Peter's pick B, 27 Nov 2026): the day picked on the page decides which one
+  // this is. The same day changes that plan; another day saves one more, and the other plans stay.
+  const own = trips.filter((t) => t.slug === slug);
+  const saved = (date ? own.find((t) => t.date === date) : undefined) ?? null;
+  // The plan "Radšej ho presunúť sem" moves: the one opened from Moje výlety or the plan row, else the nearest ahead, else the newest.
+  const opened = openedPlanKey();
+  const others = own.filter((t) => t !== saved);
+  const movable = saved ? null : (others.find((t) => planKey(t) === opened) ?? (today ? nextPlan(others, today) : null) ?? others[0] ?? null);
   // A closed day: Save steps back to the secondary look; the one primary button is "Nájsť iný výlet" in the red closure box.
   const closedDay = date !== null && activeClosures(closures, date).length > 0;
   const changed =
@@ -121,17 +130,22 @@ export function useTripSave({ slug, place, route, name, gpxUrl, bbox, sun, tripP
       (saved.withKids ?? false) !== withKids ||
       saved.hikeMin !== hikeMin);
 
-  async function onSave(from: SaveFrom = "card") {
+  async function onSave(from: SaveFrom = "card", move = false) {
     setTouched(true);
     // While the drive or the trains load, the plan is still missing them: saving now would keep a wrong day.
     if (!date || !time || !sun || loading) return;
     setStatus("saving");
-    track("trip_saved", { trail: slug, took: sinceArrival(), ...(from === "shared" ? { from } : {}) });
+    track("trip_saved", { trail: slug, took: sinceArrival(), ...(from === "shared" ? { from } : {}), ...(move ? { how: "move" } : movable ? { how: "another" } : {}) });
+    // The plan this save writes: the one for this day, the one being moved here, or a new one beside the others.
+    const base = saved ?? (move ? movable : null);
+    const key = base ? base.key : own.some((t) => planKey(t) === slug) ? newPlanKey(slug, own.map(planKey)) : undefined;
+    const thisKey = key ?? slug;
     if (trips.length === 0) setAskHeard(true);
     // The kept forecast counts only for the same day and the same place.
-    const keep = saved?.date === date && saved.weather?.url === weather?.urls?.below ? saved.weather : null;
+    const keep = base?.date === date && base.weather?.url === weather?.urls?.below ? base.weather : null;
     save({
       slug,
+      ...(key ? { key } : {}),
       place,
       route,
       name,
@@ -150,7 +164,7 @@ export function useTripSave({ slug, place, route, name, gpxUrl, bbox, sun, tripP
       trail,
       gpx: gpxUrl,
       closures,
-      eve: saved?.eve,
+      eve: base?.eve,
       weather: weather?.urls
         ? {
             url: weather.urls.below,
@@ -160,14 +174,14 @@ export function useTripSave({ slug, place, route, name, gpxUrl, bbox, sun, tripP
             above: weather.below && weather.above ? mergeForecast(keep?.above, forecastForDay(weather.above, date)) : (keep?.above ?? null),
             at: weather.below ? new Date().toISOString() : (keep?.at ?? null),
           }
-        : saved?.weather,
+        : base?.date === date ? base.weather : undefined,
       savedAt: new Date().toISOString(),
       offline: "pending",
     });
     setAskEve(from);
 
     if (!("serviceWorker" in navigator)) {
-      patch(slug, { offline: "failed" });
+      patch(thisKey, { offline: "failed" });
       setStatus("idle");
       return;
     }
@@ -179,10 +193,10 @@ export function useTripSave({ slug, place, route, name, gpxUrl, bbox, sun, tripP
       const named = await pageBuildFiles(pagePath).then((f) => f.assets, () => [] as string[]);
       const assets = [...new Set([...loadedAssetUrls(), ...named].map((u) => new URL(u, window.location.origin).href))];
       await makeOfflineCopy({ slug, pagePath, gpxUrl, bbox, assets, onProgress: (d, t) => setProgress({ done: d, total: t }) });
-      patch(slug, { offline: "ok" });
+      patch(thisKey, { offline: "ok" });
       setStatus("idle");
     } catch {
-      patch(slug, { offline: "failed" });
+      patch(thisKey, { offline: "failed" });
       setStatus("error");
     }
   }
@@ -190,6 +204,8 @@ export function useTripSave({ slug, place, route, name, gpxUrl, bbox, sun, tripP
   return {
     saved,
     changed,
+    /** How many plans this route has (this day's included). */
+    plans: own.length,
     closedDay,
     status,
     progress,
@@ -199,11 +215,15 @@ export function useTripSave({ slug, place, route, name, gpxUrl, bbox, sun, tripP
     /** Saving can't start yet: no day or time, or the drive or the trains are still loading. */
     notReady: !date || !time || loading,
     onSave,
-    patch: (change: Partial<SavedTrip>) => patch(slug, change),
+    patch: (change: Partial<SavedTrip>) => {
+      if (saved) patch(planKey(saved), change);
+    },
     remove: () => {
       setTouched(true);
-      remove(slug);
+      if (saved) remove(planKey(saved));
     },
+    /** Another plan of this route that "Radšej ho presunúť sem" would move to the picked day; null when this day has its plan. */
+    movable,
     doneAskEve: () => setAskEve(null),
     doneAskHeard: () => setAskHeard(false),
   };
@@ -239,8 +259,24 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
             ? t(installed ? "Ukladám aj na cestu bez signálu... ({done}/{total})" : "Ukladám... ({done}/{total})", { done: progress.done, total: progress.total || "?" })
             : saved
               ? t("Uložiť zmeny")
-              : t("Uložiť výlet")}
+              : saving.movable && date
+                ? t("Uložiť aj na {date}", { date: shortDate(date, lang) })
+                : t("Uložiť výlet")}
         </button>
+  );
+  // Another plan of this route is on another day (C235, pick B): saving adds this day; one tap moves that plan here instead.
+  const keepLine = saving.movable && status !== "saving" && (
+    <p className="-mt-1 text-[13.5px] text-[var(--muted)]">
+      {t("Plán na {date} zostane.", { date: shortDate(saving.movable.date, lang) })}{" "}
+      <button
+        type="button"
+        onClick={() => onSave("card", true)}
+        disabled={saving.notReady}
+        className="font-semibold text-[var(--accent)] underline underline-offset-[3px] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+      >
+        {t("Radšej ho presunúť sem")}
+      </button>
+    </p>
   );
 
   return (
@@ -248,6 +284,7 @@ export function SaveTripButton({ sun, tripPlan, closures = [], saving, where = n
       {/* A closed day says so right above the button or the saved block (the closure warning moves with Save). Without a closure nothing stands here: "Stav chodníka neoverený" has its own box near the top of the page (Peter, 27 Nov 2026: a grey line here looked like part of the button). */}
       <ClosureGuard closures={closures} date={date} />
       {showButton && !(saved && status === "saving") && saveButton}
+      {showButton && !saved && keepLine}
 
       {/* Order: the green saved block, the reminder question under it, then the first-save question, the error, the switch. */}
       <Reveal open={!!saved && (askEve || status !== "saving")} className="roll-flex-gap" appear animate={touched}>

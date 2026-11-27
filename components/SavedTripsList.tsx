@@ -16,7 +16,8 @@ import { planDay } from "@/lib/dayPlan";
 import { UiIcon } from "@/components/UiIcon";
 import { isoDate } from "@/lib/days";
 import { VERDICT_SHORT, formatDateSk, formatDuration, formatTime } from "@/lib/format";
-import { useSavedTrips } from "@/lib/savedTrips";
+import { useSavedTrips, keySlug, planKey } from "@/lib/savedTrips";
+import { noteOpenedPlan } from "@/lib/openPlan";
 import { markVisited, useVisits } from "@/lib/visits";
 import type { SavedTrip } from "@/lib/savedTrips";
 import { useTripSettings } from "@/lib/tripSettings";
@@ -37,8 +38,13 @@ function todayIso(): string {
 }
 
 /** Saved trips on this device. Renders from the saved snapshots alone, so it works offline. */
+/** A plan by its key (?otvorit=, ?na-trase=); an address from before C235 names the slug: then the route's nearest plan. */
+function byKey(trips: SavedTrip[], key: string): SavedTrip | undefined {
+  return trips.find((x) => planKey(x) === key) ?? trips.filter((x) => x.slug === key).sort((a, b) => a.date.localeCompare(b.date))[0];
+}
+
 export function SavedTripsList() {
-  const { trips, remove, patch } = useSavedTrips();
+  const { trips, remove, patch, patchRoute } = useSavedTrips();
   const { visits } = useVisits();
   // Only the installed app talks about working without signal (Peter, 25 Nov 2026); in a browser tab it read as if the website needed no internet.
   const installed = useInstalled();
@@ -70,20 +76,21 @@ export function SavedTripsList() {
   }, []);
   const startTrip = (trip: SavedTrip) => {
     trackTrailStart(trip.slug);
-    window.history.pushState(null, "", `?na-trase=${encodeURIComponent(trip.slug)}`);
-    setOnTrail(trip.slug);
+    window.history.pushState(null, "", `?na-trase=${encodeURIComponent(planKey(trip))}`);
+    setOnTrail(planKey(trip));
   };
   const closeTrip = () => {
     window.history.replaceState(null, "", window.location.pathname);
     setOnTrail(null);
   };
-  const walking = onTrail ? trips.find((x) => x.slug === onTrail) : undefined;
+  const walking = onTrail ? byKey(trips, onTrail) : undefined;
 
   function open(trip: SavedTrip) {
     // openPlan, not update: the home list's own day comes back when the visitor returns to it (lib/tripSettings.tsx).
     openPlan({ date: trip.date, time: trip.time, ...(trip.travel ? { travel: trip.travel } : {}), ...(trip.withKids !== undefined ? { withKids: trip.withKids } : {}) });
     if (trip.start) setManualStart(trip.start, "remembered");
     setTripStops(trip.slug, trip.stops ?? []);
+    noteOpenedPlan(trip);
     const href = langPath(lang, `/trasa/${trip.slug}`);
     // Offline, a full page load lets the service worker serve the saved copy
     // (client-side navigation would need a network fetch).
@@ -97,12 +104,12 @@ export function SavedTripsList() {
   useEffect(() => {
     const slug = new URLSearchParams(window.location.search).get("otvorit");
     if (!slug || opened.current) return;
-    const trip = trips.find((x) => x.slug === slug);
+    const trip = byKey(trips, slug);
     if (!trip && trips.length === 0) return; // the list may still be loading
     opened.current = true;
     window.history.replaceState(null, "", window.location.pathname);
     if (trip) open(trip);
-    else router.push(langPath(lang, `/trasa/${slug}`));
+    else router.push(langPath(lang, `/trasa/${keySlug(slug)}`));
     // Once, when the list is there.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trips]);
@@ -129,7 +136,7 @@ export function SavedTripsList() {
   const planned = trips.filter((x) => !x.doneAt);
   const went = (trip: SavedTrip) => {
     setTouched(true);
-    patch(trip.slug, { doneAt: new Date().toISOString() });
+    patch(planKey(trip), { doneAt: new Date().toISOString() });
     markVisited(trip);
     track("trip_done", { trail: trip.slug, how: "list" });
     // Also for a trip rated before (Peter, 26 Nov 2026: after taking the visit back and "Už sme tu boli" again
@@ -158,7 +165,7 @@ export function SavedTripsList() {
           slug={reviewing.slug}
           name={reviewing.name}
           onDone={(sent) => {
-            if (sent) patch(reviewing.slug, { reviewed: true });
+            if (sent) patchRoute(reviewing.slug, { reviewed: true });
             setReviewing(null);
           }}
         />
@@ -198,7 +205,7 @@ function TripList({
   return (
     <ul className="flex flex-col">
       {trips.map((trip) => (
-        <Reveal as="li" key={trip.slug} open={!trip.doneAt} className="roll-gap [--roll-gap:12px]" appear={animate} animate={animate}>
+        <Reveal as="li" key={planKey(trip)} open={!trip.doneAt} className="roll-gap [--roll-gap:12px]" appear={animate} animate={animate}>
           <TripCard trip={trip} today={today} open={open} remove={remove} went={went} ask={ask} start={start} />
         </Reveal>
       ))}
@@ -236,7 +243,7 @@ function useSavedWeather(trip: SavedTrip, plan: DayPlan | null, past: boolean) {
   useEffect(() => {
     if (!below) return;
     if (saved && saved.below?.updated === below.updated && (above === null || saved.above?.updated === above.updated)) return;
-    patch(trip.slug, {
+    patch(planKey(trip), {
       weather: { url, topUrl: saved?.topUrl ?? null, below, above: above ?? saved?.above ?? null, at: new Date().toISOString() },
     });
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -405,7 +412,7 @@ function TripCard({
               </button>
               <button
                 type="button"
-                onClick={() => remove(trip.slug)}
+                onClick={() => remove(planKey(trip))}
                 className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-2.5 text-sm font-semibold hover:border-[var(--accent)]"
               >
                 {t("Odstrániť")}

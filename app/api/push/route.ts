@@ -61,7 +61,7 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "bad request" }, { status: 400 });
   }
   const sub = subOf(body.sub);
-  const slug = typeof body.slug === "string" && /^[a-z0-9-]{1,120}$/.test(body.slug) ? body.slug : null;
+  const slug = typeof body.slug === "string" && /^[a-z0-9-]{1,140}$/.test(body.slug) ? body.slug : null;
   if (!sub || !slug) return Response.json({ error: "bad request" }, { status: 400 });
   const lang = body.lang === "en" ? "en" : "sk";
   const db = await getDb();

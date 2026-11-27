@@ -1,4 +1,4 @@
-import { DEVICE_FIELDS, planAt } from "@/lib/savedTrips";
+import { DEVICE_FIELDS, planAt, planKey } from "@/lib/savedTrips";
 import type { SavedTrip } from "@/lib/savedTrips";
 import type { Visit } from "@/lib/visits";
 import type { DeviceState, Synced } from "@/lib/syncCore";
@@ -44,7 +44,7 @@ function items<T>(live: T[], keyOf: (x: T) => string, atOf: (x: T) => number, bo
 
 export function toDevice(lists: DeviceLists, synced: DeviceState["synced"]): DeviceState {
   return {
-    plans: items(lists.trips, (t) => t.slug, planAt, planBody, lists.savedGone),
+    plans: items(lists.trips, planKey, planAt, planBody, lists.savedGone),
     visits: items(lists.visits, (v) => v.id, (v) => v.at, (v) => ({ slug: v.slug, route: v.route, name: v.name, date: v.date, from: v.from, ...(v.how ? { how: v.how } : {}) }), lists.visitsGone),
     synced,
   };
@@ -134,9 +134,10 @@ function mergeKind<T>(
 
 export function fromDevice(result: DeviceState, before: DeviceState, now: DeviceLists): { lists: DeviceLists; synced: DeviceState["synced"]; removed: string[]; arrived: string[] } {
   const nowState = toDevice(now, before.synced);
-  const plans = mergeKind<SavedTrip>(result.plans, before.plans, nowState.plans, before.synced.plans, result.synced.plans, now.trips, (t) => t.slug, (item, local) => {
+  const plans = mergeKind<SavedTrip>(result.plans, before.plans, nowState.plans, before.synced.plans, result.synced.plans, now.trips, planKey, (item, local) => {
     const body = asTrip(item.body);
-    if (!body) return null;
+    // A plan travels under its key (C235): a body that names another key is not this item.
+    if (!body || planKey(body) !== item.key) return null;
     const fields: Partial<SavedTrip> = {};
     for (const f of DEVICE_FIELDS) if (local && local[f] !== undefined) (fields as Record<string, unknown>)[f] = local[f];
     // A forecast copy is for one day: another day arrived, so it is no use here.

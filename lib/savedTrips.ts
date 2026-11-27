@@ -18,6 +18,8 @@ import "@/lib/legacyStorage";
  */
 export interface SavedTrip {
   slug: string;
+  /** This plan's own key when the route has more than one plan (C235): `<slug>--<base36 time>`. Missing on the first plan of a route, then the slug is its key. */
+  key?: string;
   /** The main trip's slug of the place this route belongs to; missing on trips saved before visits existed. */
   place?: string;
   /** The route as step 1 names it: the trip's slug, or `<slug>/okruh` when the plan was made on the loop page; missing on older saves, then the slug counts. */
@@ -64,6 +66,20 @@ export interface SavedTrip {
   /** When the plan itself last changed on any device (ms); decides which copy wins in account sync. Missing on trips saved before sync existed (then savedAt counts). */
   changedAt?: number;
 }
+
+/** A plan's key: its own key, or the slug for a route's first plan (all plans saved before C235). */
+export const planKey = (trip: Pick<SavedTrip, "slug" | "key">): string => trip.key ?? trip.slug;
+
+/** A key for one more plan of the same route; never the bare slug, so the first plan keeps its key. */
+export function newPlanKey(slug: string, taken: Iterable<string>, now = Date.now()): string {
+  const used = new Set(taken);
+  let n = now;
+  while (used.has(`${slug}--${n.toString(36)}`)) n++;
+  return `${slug}--${n.toString(36)}`;
+}
+
+/** The slug a plan key belongs to. */
+export const keySlug = (key: string): string => key.replace(/--[0-9a-z]+$/, "");
 
 /** Fields that belong to one device and never travel with the account. */
 export const DEVICE_FIELDS = ["offline", "eve", "weather"] as const;
@@ -145,7 +161,7 @@ function write(list: SavedTrip[]) {
 let goneRaw: string | null = null;
 let goneMap: Record<string, number> = {};
 
-/** Slugs removed on this device and when; account sync sends them so the removal reaches the other devices. */
+/** Plan keys removed on this device and when; account sync sends them so the removal reaches the other devices. */
 export function readSavedGone(): Record<string, number> {
   let raw: string | null = null;
   try {
@@ -212,29 +228,35 @@ export const tripCacheName = (slug: string) => `turuj-trip-${slug}`;
 export function useSavedTrips() {
   const trips = useSyncExternalStore(subscribe, read, () => EMPTY);
 
-  /** One saved entry per trail: saving again replaces it. Newest first. */
+  /** Saves a plan: it replaces the plan with the same key (a route's first plan has its slug as key). Newest first. */
   const save = useCallback((trip: SavedTrip) => {
     const list = read();
-    write([stampSave(trip, list.find((t) => t.slug === trip.slug), Date.now()), ...list.filter((t) => t.slug !== trip.slug)]);
+    const key = planKey(trip);
+    write([stampSave(trip, list.find((t) => planKey(t) === key), Date.now()), ...list.filter((t) => planKey(t) !== key)]);
     const gone = readSavedGone();
-    if (trip.slug in gone) {
+    if (key in gone) {
       const rest = { ...gone };
-      delete rest[trip.slug];
+      delete rest[key];
       writeSavedGone(rest);
     }
     keepStorage();
   }, []);
 
-  const patch = useCallback((slug: string, change: Partial<SavedTrip>) => {
+  /** Changes one plan, found by its key (planKey). */
+  const patch = useCallback((key: string, change: Partial<SavedTrip>) => {
     const now = Date.now();
-    write(read().map((t) => (t.slug === slug ? stampPatch(t, change, now) : t)));
+    write(read().map((t) => (planKey(t) === key ? stampPatch(t, change, now) : t)));
   }, []);
 
-  const remove = useCallback(async (slug: string) => {
+  /** Removes one plan, found by its key; the route's offline copy goes only with its last plan. */
+  const remove = useCallback(async (key: string) => {
     const list = read();
-    const trip = list.find((t) => t.slug === slug);
-    if (trip) writeSavedGone({ ...readSavedGone(), [slug]: Math.max(Date.now(), planAt(trip) + 1) });
-    write(list.filter((t) => t.slug !== slug));
+    const trip = list.find((t) => planKey(t) === key);
+    if (trip) writeSavedGone({ ...readSavedGone(), [key]: Math.max(Date.now(), planAt(trip) + 1) });
+    const rest = list.filter((t) => planKey(t) !== key);
+    write(rest);
+    const slug = trip?.slug ?? keySlug(key);
+    if (rest.some((t) => t.slug === slug)) return;
     try {
       await caches.delete(tripCacheName(slug));
     } catch {
@@ -242,5 +264,11 @@ export function useSavedTrips() {
     }
   }, []);
 
-  return { trips, save, patch, remove };
+  /** Changes every plan of one route (what belongs to the route, like a sent review). */
+  const patchRoute = useCallback((slug: string, change: Partial<SavedTrip>) => {
+    const now = Date.now();
+    write(read().map((t) => (t.slug === slug ? stampPatch(t, change, now) : t)));
+  }, []);
+
+  return { trips, save, patch, patchRoute, remove };
 }

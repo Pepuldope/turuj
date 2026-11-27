@@ -12,6 +12,7 @@ import { track } from "@/lib/analytics";
 import { currentSub, lastPushError, post, subscribe, support } from "@/components/TrailReminders";
 import type { Support } from "@/components/TrailReminders";
 import type { SavedTrip } from "@/lib/savedTrips";
+import { planKey } from "@/lib/savedTrips";
 import type { DayPlan } from "@/lib/dayPlan";
 import type { Closure, LatLng } from "@/lib/types";
 import { zonedDate } from "@/lib/zoned";
@@ -75,7 +76,7 @@ export function EveReminder({
   async function register(): Promise<boolean> {
     if (!job) return false;
     const sub = await subscribe();
-    return post({ action: "eve", sub: sub.toJSON(), slug: trip.slug, name: trip.name, lang, date: trip.date, job });
+    return post({ action: "eve", sub: sub.toJSON(), slug: planKey(trip), name: trip.name, lang, date: trip.date, job });
   }
 
   async function plant(): Promise<boolean> {
@@ -88,9 +89,9 @@ export function EveReminder({
 
   // First time on a device that already allowed notifications: on by default. Later changes of the plan are sent again.
   useEffect(() => {
-    if (can !== "ok" || !job || trip.eve === false || sentFor.get(trip.slug) === jobKey) return;
+    if (can !== "ok" || !job || trip.eve === false || sentFor.get(planKey(trip)) === jobKey) return;
     if (trip.eve === undefined && Notification.permission !== "granted") return;
-    sentFor.set(trip.slug, jobKey);
+    sentFor.set(planKey(trip), jobKey);
     register().then(
       (ok) => {
         if (!ok) return;
@@ -110,7 +111,7 @@ export function EveReminder({
     try {
       if (trip.eve === true) {
         const sub = await currentSub();
-        if (sub) await post({ action: "eve-cancel", sub: sub.toJSON(), slug: trip.slug });
+        if (sub) await post({ action: "eve-cancel", sub: sub.toJSON(), slug: planKey(trip) });
         onChange(false);
         setState("idle");
         return false;
@@ -120,7 +121,7 @@ export function EveReminder({
         setState((s) => (s === "denied" ? s : "failed"));
         return false;
       }
-      sentFor.set(trip.slug, jobKey);
+      sentFor.set(planKey(trip), jobKey);
       onChange(true);
       track("eve_planned", { trail: trip.slug, how: ask ? "ask" : "switch" });
       setState("idle");
@@ -137,7 +138,7 @@ export function EveReminder({
     if (!job) return;
     try {
       const sub = await subscribe();
-      const ok = await post({ action: "eve-test", sub: sub.toJSON(), slug: trip.slug, name: trip.name, lang, job });
+      const ok = await post({ action: "eve-test", sub: sub.toJSON(), slug: planKey(trip), name: trip.name, lang, job });
       setTest(ok ? t("Skúšobná pripomienka odoslaná.") : t("Skúšobnú pripomienku sa nepodarilo poslať."));
     } catch {
       setTest(t("Skúšobnú pripomienku sa nepodarilo poslať."));
@@ -157,7 +158,7 @@ export function EveReminder({
       startMs: start,
       endMs: end,
       lang,
-      uid: `${trip.slug}-${trip.date}@turuj.sk`,
+      uid: `${planKey(trip)}-${trip.date}@turuj.sk`,
       stampMs: Date.now(),
       location: where?.name ?? trip.name,
       geo: where ? { lat: where.location.lat, lon: where.location.lon } : null,

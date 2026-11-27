@@ -7,6 +7,7 @@ import { useLang, useT } from "@/lib/i18n";
 import { useMyStars } from "@/lib/reviewed";
 import { useSavedTrips } from "@/lib/savedTrips";
 import { useTripSettings } from "@/lib/tripSettings";
+import { nextPlan, planToAsk } from "@/lib/nextPlan";
 import type { DestinationKind, GeoPoint, RouteBrief } from "@/lib/tripSchema";
 import { addVisitByHand, fillPlace, routeTrip, useVisits, visitsAt } from "@/lib/visits";
 import type { RouteWalk } from "@/lib/walkFacts";
@@ -32,13 +33,16 @@ type Open = "ask" | "hand" | "list" | "review" | null;
  * visits of this place, and whether to ask about a plan whose day has passed. `today` is "" until known.
  */
 export function useVisitState(slug: string, place: string, routes: string[]) {
-  const { trips, patch } = useSavedTrips();
+  const { trips, patch, patchRoute } = useSavedTrips();
   const { visits } = useVisits();
   const { today } = useTripSettings();
-  const saved = trips.find((x) => x.slug === slug);
+  // A route can hold several plans (C235): the one to ask about is the latest whose day has passed, else the nearest ahead.
+  const own = trips.filter((x) => x.slug === slug);
+  const passed = today ? planToAsk(own, today) : null;
+  const saved = passed ?? (today ? nextPlan(own, today) : null) ?? own[0];
   const mine = visitsAt(visits, place, routes);
   const ask = !!today && !!saved && !saved.doneAt && !saved.skipAsk && saved.date < today;
-  return { trips, patch, today, saved, mine, ask };
+  return { trips, patch, patchRoute, today, saved, mine, ask };
 }
 
 /**
@@ -70,7 +74,7 @@ export function VisitRow({
   walks: Record<string, RouteWalk>;
   goal: { kind: DestinationKind; name: string; location: GeoPoint };
 }) {
-  const { trips, patch, today, saved, mine, ask } = useVisitState(slug, place, routes);
+  const { trips, patch, patchRoute, today, saved, mine, ask } = useVisitState(slug, place, routes);
   const reviewedMap = useMyStars();
   const t = useT();
   const lang = useLang();
@@ -115,7 +119,7 @@ export function VisitRow({
           slug={reviewSlug}
           name={name}
           onDone={(sent) => {
-            if (sent && trips.some((x) => x.slug === reviewSlug)) patch(reviewSlug, { reviewed: true });
+            if (sent) patchRoute(reviewSlug, { reviewed: true });
             close();
           }}
         />
