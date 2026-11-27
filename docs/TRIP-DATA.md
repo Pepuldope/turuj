@@ -44,6 +44,8 @@ Key fields of `TripSummary` (see `lib/tripSchema.ts` for all):
 - `difficulty`: `lahka` ≤ 3 h and ≤ 400 m up and nothing harder than T2; `tazka` ≥ 6 h or ≥ 1,000 m up or any T4+; else `stredna`.
 - `family_friendly`: `lahka`, ≤ 2.5 h, nothing harder than T2.
 - `marking`: KST colours walked (`red`, `blue`, `green`, `yellow`, `black`), most-used first; `marked_share` 0..1.
+  A pavement or side path that runs beside a marked road (within 15 m, same direction, 50 m or more) counts as that
+  road's colour in `marking` and `marking_runs` (`pipeline/beside.py`); `marked_share` counts only ways that belong to a route.
 - `fees`: entry fees from OSM tags or `fee-rules.json`. Empty means "none known", not "free".
 - `closure_rule_ids`: rules from `closure-rules.json` that cover this trip. **Empty means "Stav chodníka neoverený", never "otvorené".** Use `isClosureActive()` in `lib/closures.ts` with the trip date to decide whether a rule is in force.
 - `rank` 0..100 (how well known the destination is), `curated` (one of the 10 hand-picked trips), `gpx_url`, `bbox`.

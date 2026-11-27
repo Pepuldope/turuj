@@ -19,15 +19,34 @@ import { VisitSheet } from "@/components/VisitSheet";
 import { VisitsSheet } from "@/components/VisitsSheet";
 
 const focus = "focus-visible:outline-2 focus-visible:outline-[var(--accent)]";
-const rowClass = "mt-1 flex min-h-10 items-center gap-2 border-t border-[var(--border)] pt-3 text-[14.5px]";
+const rowClass = "flex min-h-10 items-center gap-2 text-[14.5px]";
+/** The row's place: the last row of the plan card, under Save; `VisitLink` scrolls here. */
+export const VISIT_CARD_ID = "navstevy";
+const card = "scroll-mt-[calc(64px+env(safe-area-inset-top))] border-t border-[var(--border)] pt-3 lg:scroll-mt-3";
 const textLink = `-my-2 -mr-2 shrink-0 py-2 pr-2 pl-1 text-sm font-bold text-[var(--accent)] underline underline-offset-[3px] ${focus}`;
 
 type Open = "ask" | "hand" | "list" | "review" | null;
 
 /**
- * The visited row at the bottom of the trip page's first card (Peter, 25 Nov 2026): asks about a plan whose day
- * has passed, shows the visits of this place, or offers "Boli sme tu" by hand. At a place with several routes
- * (`briefs`) the window also asks which route was walked.
+ * What the visited row and the line that points to it (VisitLink) both go by: the saved plan of this page, the
+ * visits of this place, and whether to ask about a plan whose day has passed. `today` is "" until known.
+ */
+export function useVisitState(slug: string, place: string, routes: string[]) {
+  const { trips, patch } = useSavedTrips();
+  const { visits } = useVisits();
+  const { today } = useTripSettings();
+  const saved = trips.find((x) => x.slug === slug);
+  const mine = visitsAt(visits, place, routes);
+  const ask = !!today && !!saved && !saved.doneAt && !saved.skipAsk && saved.date < today;
+  return { trips, patch, today, saved, mine, ask };
+}
+
+/**
+ * The visited row, the last row of the plan card under Save (Peter, 27 Nov 2026: first tried as a card of its own,
+ * then "better in the same card as the save trip button"; the line at the old place is VisitLink): asks about a plan
+ * whose day has passed, shows the visits of this place, or offers "Boli sme tu" by hand. At a place with several
+ * routes (`briefs`) the window also asks which route was walked, with this page's route picked. The row's frame is
+ * part of this component so that nothing, not even an empty divider, shows before `today` is known.
  */
 export function VisitRow({
   slug,
@@ -51,10 +70,8 @@ export function VisitRow({
   walks: Record<string, RouteWalk>;
   goal: { kind: DestinationKind; name: string; location: GeoPoint };
 }) {
-  const { trips, patch } = useSavedTrips();
-  const { visits } = useVisits();
+  const { trips, patch, today, saved, mine, ask } = useVisitState(slug, place, routes);
   const reviewedMap = useMyStars();
-  const { today } = useTripSettings();
   const t = useT();
   const lang = useLang();
   const [open, setOpen] = useState<Open>(null);
@@ -67,13 +84,10 @@ export function VisitRow({
   }, [place, routesKey]);
 
   const pick = useMemo<RoutePickData | undefined>(() => (briefs.length > 1 ? { routes: briefs, walks, current: route, goal } : undefined), [briefs, walks, route, goal]);
-  const saved = trips.find((x) => x.slug === slug);
-  const mine = visitsAt(visits, place, routes);
   // A review is about one route: the one of the latest visit when it is known, else this page's.
   const walked = mine.length ? routeTrip(mine[0].route) : "";
   const reviewSlug = walked && routes.includes(walked) ? walked : slug;
   const reviewed = !!trips.find((x) => x.slug === reviewSlug)?.reviewed || reviewedMap[reviewSlug] !== undefined;
-  const ask = !!today && !!saved && !saved.doneAt && !saved.skipAsk && saved.date < today;
   const close = () => setOpen(null);
 
   const dialogs = (
@@ -87,6 +101,7 @@ export function VisitRow({
           slug={slug}
           reviewed={reviewed}
           pick={pick}
+          preset={route}
           onSave={(date, picked) => {
             addVisitByHand({ slug: place, route: picked ?? route, name, date });
             track("trip_done", { trail: slug, how: "page" });
@@ -113,19 +128,21 @@ export function VisitRow({
   if (ask && saved) {
     return (
       <>
-        <p className={rowClass}>
-          <VisitMark done={false} />
-          {/* The answers sit beside the question, not at the card's far edge (Peter, 26 Nov 2026). */}
-          <span className="mr-1 min-w-0">
-            <b>{t("Boli ste tu")}</b> <span className="font-data whitespace-nowrap text-[17px]">{shortDate(saved.date, lang)}</span>?
-          </span>
-          <button type="button" onClick={() => setOpen("ask")} className={`min-h-10 shrink-0 rounded-full bg-[var(--accent)] px-4 text-sm font-bold text-[var(--accent-contrast)] ${focus}`}>
-            {t("Áno")}
-          </button>
-          <button type="button" onClick={() => patch(slug, { skipAsk: true })} className={`min-h-10 shrink-0 rounded-full border border-[var(--border)] px-4 text-sm font-semibold ${focus}`}>
-            {t("Nie")}
-          </button>
-        </p>
+        <section id={VISIT_CARD_ID} aria-label={t("Vaše návštevy")} data-nosnippet className={card}>
+          <p className={rowClass}>
+            <VisitMark done={false} />
+            {/* The answers sit beside the question, not at the card's far edge (Peter, 26 Nov 2026). */}
+            <span className="mr-1 min-w-0">
+              <b>{t("Boli ste tu")}</b> <span className="font-data whitespace-nowrap text-[17px]">{shortDate(saved.date, lang)}</span>?
+            </span>
+            <button type="button" onClick={() => setOpen("ask")} className={`min-h-10 shrink-0 rounded-full bg-[var(--accent)] px-4 text-sm font-bold text-[var(--accent-contrast)] ${focus}`}>
+              {t("Áno")}
+            </button>
+            <button type="button" onClick={() => patch(slug, { skipAsk: true })} className={`min-h-10 shrink-0 rounded-full border border-[var(--border)] px-4 text-sm font-semibold ${focus}`}>
+              {t("Nie")}
+            </button>
+          </p>
+        </section>
         {dialogs}
       </>
     );
@@ -137,28 +154,30 @@ export function VisitRow({
     const rate = mine.length === 1 && !reviewed;
     return (
       <>
-        <p className={rowClass}>
-          <button type="button" aria-label={t("Vaše návštevy")} onClick={() => setOpen("list")} className={`flex min-h-10 min-w-0 flex-1 items-center gap-2 text-left ${focus}`}>
-            <VisitMark done />
-            {/* Two pieces that never break inside: on a narrow phone "naposledy" and its date go to the second line together. */}
-            <span className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
-              <span className="whitespace-nowrap">
-                <b>{t("Boli ste tu")}</b>
-                {mine.length > 1 && <span className="font-data text-[17px]"> {mine.length}×</span>}
-                {mine.length > 1 && dated && ","}
-              </span>
-              {dated && (
+        <section id={VISIT_CARD_ID} aria-label={t("Vaše návštevy")} data-nosnippet className={card}>
+          <p className={rowClass}>
+            <button type="button" aria-label={t("Vaše návštevy")} onClick={() => setOpen("list")} className={`flex min-h-10 min-w-0 flex-1 items-center gap-2 text-left ${focus}`}>
+              <VisitMark done />
+              {/* Two pieces that never break inside: on a narrow phone "naposledy" and its date go to the second line together. */}
+              <span className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
                 <span className="whitespace-nowrap">
-                  {mine.length > 1 && `${t("naposledy")} `}
-                  <span className="font-data text-[17px]">{whenLabel(latest.date, lang)}</span>
+                  <b>{t("Boli ste tu")}</b>
+                  {mine.length > 1 && <span className="font-data text-[17px]"> {mine.length}×</span>}
+                  {mine.length > 1 && dated && ","}
                 </span>
-              )}
-            </span>
-          </button>
-          <button type="button" onClick={() => setOpen(rate ? "review" : "list")} className={textLink}>
-            {rate ? t("Ohodnotiť") : t("Upraviť")}
-          </button>
-        </p>
+                {dated && (
+                  <span className="whitespace-nowrap">
+                    {mine.length > 1 && `${t("naposledy")} `}
+                    <span className="font-data text-[17px]">{whenLabel(latest.date, lang)}</span>
+                  </span>
+                )}
+              </span>
+            </button>
+            <button type="button" onClick={() => setOpen(rate ? "review" : "list")} className={textLink}>
+              {rate ? t("Ohodnotiť") : t("Upraviť")}
+            </button>
+          </p>
+        </section>
         {dialogs}
       </>
     );
@@ -166,17 +185,20 @@ export function VisitRow({
 
   return (
     <>
-      <p className={rowClass}>
-        {/* One control, the answer right beside its question (Peter, 26 Nov 2026: at the card's far edge the
-            button "has no connection to the text"). The circle and the question open the window too. */}
-        <button type="button" onClick={() => setOpen("hand")} className={`group flex min-h-10 items-center gap-2 rounded-full text-left ${focus}`}>
-          <VisitMark done={false} />
-          <span>{t("Už ste tu boli?")}</span>
-          <span className="ml-1 grid min-h-10 shrink-0 place-items-center rounded-full border border-[var(--accent)] px-4 text-sm font-bold text-[var(--accent)] group-hover:bg-[var(--accent-soft)]">
-            {t("Boli sme tu")}
-          </span>
-        </button>
-      </p>
+      <section id={VISIT_CARD_ID} aria-label={t("Vaše návštevy")} data-nosnippet className={card}>
+          <p className={rowClass}>
+          {/* One control across the row: the circle and the question open the window too. The button sits at the
+              row's right end (Peter, 27 Nov 2026, under Save: "the boli sme tu button should be on the right"; on
+              26 Nov, in the first card, he had it moved beside the question). */}
+          <button type="button" onClick={() => setOpen("hand")} className={`group flex min-h-10 w-full items-center gap-2 rounded-full text-left ${focus}`}>
+            <VisitMark done={false} />
+            <span className="min-w-0">{t("Už ste tu boli?")}</span>
+            <span className="ml-auto grid min-h-10 shrink-0 place-items-center rounded-full border border-[var(--accent)] px-4 text-sm font-bold text-[var(--accent)] group-hover:bg-[var(--accent-soft)]">
+              {t("Boli sme tu")}
+            </span>
+          </button>
+        </p>
+      </section>
       {dialogs}
     </>
   );

@@ -2,7 +2,7 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Grapa</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Grapa</name><desc>grapa</desc><trkseg>
-    <trkpt lat="49.439021" lon="19.489502"><ele>637</ele></trkpt>
+    <trkpt lat="49.438926" lon="19.489615"><ele>636</ele></trkpt>
     <trkpt lat="49.439332" lon="19.489101"><ele>639</ele></trkpt>
     <trkpt lat="49.439451" lon="19.488812"><ele>639</ele></trkpt>
     <trkpt lat="49.439439" lon="19.487833"><ele>638</ele></trkpt>
@@ -16,12 +16,12 @@
     <trkpt lat="49.440441" lon="19.483323"><ele>648</ele></trkpt>
     <trkpt lat="49.441564" lon="19.482312"><ele>653</ele></trkpt>
     <trkpt lat="49.442167" lon="19.481972"><ele>655</ele></trkpt>
-    <trkpt lat="49.442903" lon="19.481409"><ele>658</ele></trkpt>
-    <trkpt lat="49.443189" lon="19.481325"><ele>658</ele></trkpt>
+    <trkpt lat="49.442807" lon="19.481505"><ele>658</ele></trkpt>
+    <trkpt lat="49.442977" lon="19.481238"><ele>657</ele></trkpt>
+    <trkpt lat="49.443109" lon="19.481314"><ele>658</ele></trkpt>
     <trkpt lat="49.443531" lon="19.481338"><ele>660</ele></trkpt>
     <trkpt lat="49.443709" lon="19.481400"><ele>662</ele></trkpt>
     <trkpt lat="49.443936" lon="19.481585"><ele>665</ele></trkpt>
-    <trkpt lat="49.444058" lon="19.481755"><ele>667</ele></trkpt>
     <trkpt lat="49.444098" lon="19.481844"><ele>668</ele></trkpt>
     <trkpt lat="49.444173" lon="19.482326"><ele>673</ele></trkpt>
     <trkpt lat="49.444289" lon="19.482489"><ele>676</ele></trkpt>
@@ -29,7 +29,6 @@
     <trkpt lat="49.445172" lon="19.482713"><ele>685</ele></trkpt>
     <trkpt lat="49.445507" lon="19.482844"><ele>692</ele></trkpt>
     <trkpt lat="49.446587" lon="19.483427"><ele>702</ele></trkpt>
-    <trkpt lat="49.446831" lon="19.483524"><ele>701</ele></trkpt>
     <trkpt lat="49.447037" lon="19.483567"><ele>700</ele></trkpt>
     <trkpt lat="49.447201" lon="19.483417"><ele>700</ele></trkpt>
     <trkpt lat="49.447283" lon="19.483203"><ele>700</ele></trkpt>
@@ -69,7 +68,6 @@
     <trkpt lat="49.447283" lon="19.483203"><ele>700</ele></trkpt>
     <trkpt lat="49.447201" lon="19.483417"><ele>700</ele></trkpt>
     <trkpt lat="49.447037" lon="19.483567"><ele>700</ele></trkpt>
-    <trkpt lat="49.446831" lon="19.483524"><ele>701</ele></trkpt>
     <trkpt lat="49.446587" lon="19.483427"><ele>702</ele></trkpt>
     <trkpt lat="49.445507" lon="19.482844"><ele>692</ele></trkpt>
     <trkpt lat="49.445172" lon="19.482713"><ele>685</ele></trkpt>
@@ -77,12 +75,12 @@
     <trkpt lat="49.444289" lon="19.482489"><ele>676</ele></trkpt>
     <trkpt lat="49.444173" lon="19.482326"><ele>673</ele></trkpt>
     <trkpt lat="49.444098" lon="19.481844"><ele>668</ele></trkpt>
-    <trkpt lat="49.444058" lon="19.481755"><ele>667</ele></trkpt>
     <trkpt lat="49.443936" lon="19.481585"><ele>665</ele></trkpt>
     <trkpt lat="49.443709" lon="19.481400"><ele>662</ele></trkpt>
     <trkpt lat="49.443531" lon="19.481338"><ele>660</ele></trkpt>
-    <trkpt lat="49.443189" lon="19.481325"><ele>658</ele></trkpt>
-    <trkpt lat="49.442903" lon="19.481409"><ele>658</ele></trkpt>
+    <trkpt lat="49.443109" lon="19.481314"><ele>658</ele></trkpt>
+    <trkpt lat="49.442977" lon="19.481238"><ele>657</ele></trkpt>
+    <trkpt lat="49.442807" lon="19.481505"><ele>658</ele></trkpt>
     <trkpt lat="49.442167" lon="19.481972"><ele>655</ele></trkpt>
     <trkpt lat="49.441564" lon="19.482312"><ele>653</ele></trkpt>
     <trkpt lat="49.440441" lon="19.483323"><ele>648</ele></trkpt>
@@ -96,7 +94,7 @@
     <trkpt lat="49.439439" lon="19.487833"><ele>638</ele></trkpt>
     <trkpt lat="49.439451" lon="19.488812"><ele>639</ele></trkpt>
     <trkpt lat="49.439332" lon="19.489101"><ele>639</ele></trkpt>
-    <trkpt lat="49.439021" lon="19.489502"><ele>637</ele></trkpt>
+    <trkpt lat="49.438926" lon="19.489615"><ele>636</ele></trkpt>
   </trkseg></trk>
   <trk><name>Grapa</name><desc>grapa-klin-chotar</desc><trkseg>
     <trkpt lat="49.443027" lon="19.493216"><ele>678</ele></trkpt>

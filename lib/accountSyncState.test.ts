@@ -64,6 +64,12 @@ describe("toDevice", () => {
     expect((state.plans[0].body as SavedTrip).start).toEqual({ lat: 48.149, lon: 17.108, label: "Bratislava" });
     expect(mine.start?.lat).toBe(48.148598);
   });
+  it("sends how with a visit, and no key when there is none", () => {
+    const how = { travel: "car" as const, withKids: true };
+    const state = toDevice(lists({ visits: [{ ...visit("p:a:2026-08-01", 7), how }, visit("p:b:2026-08-01", 8)] }), noSynced());
+    expect(state.visits[0].body).toMatchObject({ how });
+    expect(state.visits[1].body).not.toHaveProperty("how");
+  });
   it("maps visits", () => {
     const state = toDevice(lists({ visits: [visit("p:a:2026-08-01", 7)] }), noSynced());
     expect(state.visits).toEqual([{ key: "p:a:2026-08-01", at: 7, body: { slug: "a", route: "a", name: "A", date: "2026-08-01", from: "plan" } }]);
@@ -72,6 +78,23 @@ describe("toDevice", () => {
 
 /** An exchange where the server answered with exactly `result`, as if the lists did not change meanwhile. */
 const body = (t: SavedTrip) => toDevice(lists({ trips: [t] }), noSynced()).plans[0];
+
+describe("how on a visit across the wire", () => {
+  const how = { start: { lat: 48.149, lon: 17.108, label: "Bratislava" }, travel: "transit" as const, stops: [{ id: "a:poi:1", name: "Chata", min: 30 }] };
+  const empty = toDevice(lists(), noSynced());
+  const arrive = (body: unknown) => {
+    const result: DeviceState = { ...empty, visits: [{ key: "p:a:2026-08-01", at: 7, body }], synced: { plans: {}, visits: { "p:a:2026-08-01": 7 } } };
+    return fromDevice(result, empty, lists()).lists.visits;
+  };
+  it("survives toDevice and fromDevice", () => {
+    const sent = toDevice(lists({ visits: [{ ...visit("p:a:2026-08-01", 7), how }] }), noSynced()).visits[0];
+    expect(arrive(JSON.parse(JSON.stringify(sent.body)))).toEqual([{ ...visit("p:a:2026-08-01", 7), how }]);
+  });
+  it("a malformed how is ignored and the visit still arrives", () => {
+    const out = arrive({ slug: "a", route: "a", name: "A", date: "2026-08-01", from: "plan", how: { travel: "bike" } });
+    expect(out).toEqual([visit("p:a:2026-08-01", 7)]);
+  });
+});
 
 describe("fromDevice", () => {
   const empty = toDevice(lists(), noSynced());

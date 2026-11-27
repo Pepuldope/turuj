@@ -96,6 +96,45 @@ describe("syncAccount storing", () => {
   });
 });
 
+describe("how on a stored visit", () => {
+  const key = "p:rysy:2026-08-01";
+  const withHow = (at: number, date: string, how?: unknown): WireItem => ({ key, at, body: { slug: "rysy", route: "rysy", name: "Rysy", date, from: "plan", ...(how ? { how } : {}) } });
+  const stored = () => JSON.parse(rows(acc).find((r) => r.kind === "visit")?.body ?? "null");
+
+  it("is kept when a newer copy without it arrives (a device on the previous version), and the new day is kept too", async () => {
+    await store.syncAccount(acc, { visits: [withHow(100, "2026-08-01", { travel: "car" })] }, NOW);
+    const a = await store.syncAccount(acc, { visits: [withHow(200, "2026-08-02")] }, NOW);
+    expect(stored()).toEqual({ slug: "rysy", route: "rysy", name: "Rysy", date: "2026-08-02", from: "plan", how: { travel: "car" } });
+    expect(rows(acc).find((r) => r.kind === "visit")?.at).toBe(200);
+    // An older device asking later is sent the copy with how.
+    const b = await store.syncAccount(acc, { visits: [{ key, at: 150 }] }, NOW);
+    expect(b.visits.send).toEqual([{ key, at: 200, body: stored() }]);
+    expect(a.visits.send).toEqual([]);
+  });
+
+  it("is replaced by a newer copy that has another one", async () => {
+    await store.syncAccount(acc, { visits: [withHow(100, "2026-08-01", { travel: "car" })] }, NOW);
+    await store.syncAccount(acc, { visits: [withHow(200, "2026-08-01", { travel: "transit", withKids: true })] }, NOW);
+    expect(stored().how).toEqual({ travel: "transit", withKids: true });
+  });
+
+  it("is not carried by an older copy, and a tombstone still clears the body", async () => {
+    await store.syncAccount(acc, { visits: [withHow(200, "2026-08-01", { travel: "car" })] }, NOW);
+    await store.syncAccount(acc, { visits: [withHow(100, "2026-08-05")] }, NOW);
+    expect(stored().date).toBe("2026-08-01");
+    await store.syncAccount(acc, { visits: [gone(key, 300)] }, NOW);
+    expect(rows(acc).find((r) => r.kind === "visit")).toMatchObject({ gone: 1, at: 300, body: null });
+    await store.syncAccount(acc, { visits: [withHow(400, "2026-08-09")] }, NOW);
+    expect(stored()).toEqual({ slug: "rysy", route: "rysy", name: "Rysy", date: "2026-08-09", from: "plan" });
+  });
+
+  it("does not carry how into a plan", async () => {
+    await store.syncAccount(acc, { plans: [plan("a", 100, { how: { travel: "car" } })] }, NOW);
+    await store.syncAccount(acc, { plans: [plan("a", 200)] }, NOW);
+    expect(JSON.parse(rows(acc)[0].body ?? "{}")).not.toHaveProperty("how");
+  });
+});
+
 describe("the most items an account may hold", () => {
   const small = { plan: 3, visit: 3 };
   it("refuses new keys when full but still updates and deletes existing ones", async () => {

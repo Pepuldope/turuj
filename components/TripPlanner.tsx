@@ -29,7 +29,7 @@ import { KedyBody, kedySummary, kedyWarnings } from "@/components/KedyStep";
 import type { KedyProps } from "@/components/KedyStep";
 import { hasLeg, latestSetStart } from "@/lib/kedyTimeline";
 import { NavHandoff } from "@/components/NavHandoff";
-import { AppPromo, SaveTripButton, SharedSave, useTripSave } from "@/components/SaveTripButton";
+import { AppPromo, SaveTripButton, SharedSave, TripHandoff, useTripSave } from "@/components/SaveTripButton";
 import type { ShareInfo } from "@/components/ShareButton";
 import { PlanStep, PlanStepsProvider, PlanWarningsRecap, StepInfo } from "@/components/PlanStep";
 import type { StepDef } from "@/components/PlanStep";
@@ -78,6 +78,8 @@ interface Props extends ShareInfo {
   children?: ReactNode;
   /** Under the plan card, in the last card. */
   outro?: ReactNode;
+  /** The visited row (components/VisitRow.tsx), the plan card's last row under Save. */
+  visit?: ReactNode;
   /** How many routes the trip has: with one there is no route choice, only a line of plain info. */
   routeCount?: number;
   /** The "Kadiaľ pôjdete" step (several routes only; components/RouteChoice.tsx). */
@@ -91,7 +93,7 @@ interface Props extends ShareInfo {
   places?: ReactNode;
   /** The trip has places on or near the walk that can be added as stops. */
   hasPlaces?: boolean;
-  /** The GPX download, an action of the "Uložiť a navigovať" card. */
+  /** The GPX download, an action of the "Navigácia a zdieľanie" card. */
   gpxAction?: ReactNode;
   /** The walk, kept with the saved trip for the trail screen ("Začať výlet"). */
   trail?: SavedTrail;
@@ -116,7 +118,7 @@ function meetingAt(date: string, hhmm: string): Date {
   return zonedDate(y, mo, d, h, mi);
 }
 
-export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction = null, bbox, place, route, closures = [], walk, intro, children, outro, routeCount = 1, routesStep, accessMap, placesMap, dayMap, places, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
+export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction = null, bbox, place, route, closures = [], walk, intro, children, outro, visit, routeCount = 1, routesStep, accessMap, placesMap, dayMap, places, hasPlaces = false, trail, tanap = false, ...trip }: Props) {
   const { start } = useUserLocation();
   const { today, update, withKids } = useTripSettings();
   const t = useT();
@@ -246,7 +248,7 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
     [plan, weather.strip]
   );
 
-  // One save for the page: the "Uložiť a navigovať" card and the box of a friend's shared plan both use it.
+  // One save for the page: the save block of the day card and the box of a friend's shared plan both use it.
   const saving = useTripSave({ slug: trip.slug, place, route, name: trip.name, gpxUrl, bbox, sun, tripPlan, profile, trail, closures, weather });
 
   // A shared link opens the sender's day, kids pace and parking or stop (once, then it's ours to change).
@@ -633,15 +635,21 @@ export function TripPlanner({ sun, goal, profile: fullProfile, gpxUrl, gpxAction
           </section>
         )}
 
+        {/* Saving sits at the end of the day card (Peter's pick, 26 Nov 2026), also with no plan yet. */}
+        <div data-nosnippet className="border-t border-[var(--border)] pt-4 [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer">
+          <SaveTripButton sun={sun} tripPlan={tripPlan} closures={closures} saving={saving} where={calendarPlace} />
+        </div>
+        {/* The visited row, the card's last row (Peter, 27 Nov 2026: in the same card as Save, not a card of its own). */}
+        {visit}
         </div>
         </PlanStepsProvider>
         </PlanDayProvider>
       </section>
 
-      {/* Its own card (Peter, 2026-11-11): save, share, navigate and the GPX are what you do with a finished plan. Named "Uložiť a navigovať" (Peter, 2026-11-13; was "Vyraziť"). */}
-      <section data-nosnippet aria-label={t("Uložiť a navigovať")} className={`${part} [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer`}>
-        <h2 className="text-[1.35rem] leading-tight font-bold">{t("Uložiť a navigovať")}</h2>
-        <SaveTripButton sun={sun} tripPlan={tripPlan} closures={closures} saving={saving} where={calendarPlace} {...trip} nav={<NavHandoff slug={trip.slug} drive={destination} start={start} walkFrom={walkStart} walk={walk} join={trailJoin} />} gpx={gpxAction} />
+      {/* Its own card (Peter, 2026-11-11): navigate, share and the GPX are what you do with a finished plan. Named "Navigácia a zdieľanie" since 26 Nov 2026 (was "Uložiť a navigovať"; saving moved into the day card above). */}
+      <section data-nosnippet aria-label={t("Navigácia a zdieľanie")} className={`${part} [&_a]:cursor-pointer [&_button:not(:disabled):not([aria-disabled])]:cursor-pointer`}>
+        <h2 className="text-[1.35rem] leading-tight font-bold">{t("Navigácia a zdieľanie")}</h2>
+        <TripHandoff tripPlan={tripPlan} closures={closures} {...trip} nav={<NavHandoff slug={trip.slug} drive={destination} start={start} walkFrom={walkStart} walk={walk} join={trailJoin} />} gpx={gpxAction} />
       </section>
       <AppPromo />
 

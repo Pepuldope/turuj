@@ -53,13 +53,18 @@ describe("lastWalk", () => {
 
   it("takes the latest visit with a known route and the plan it came from", () => {
     const visits = [visit({ id: "x", route: "", date: "2026-11-25" }), visit({ id: planVisitId(plan.slug, plan.date), route: plan.slug, from: "plan" })];
-    expect(lastWalk(visits, [plan])).toEqual({ route: plan.slug, plan });
+    expect(lastWalk(visits, [plan])).toEqual({ route: plan.slug, plan, how: null });
   });
 
   it("has no plan for a visit ticked by hand, or once the plan was saved again for another day", () => {
-    expect(lastWalk([visit({ id: "m:9", route: plan.slug })], [plan])).toEqual({ route: plan.slug, plan: null });
+    expect(lastWalk([visit({ id: "m:9", route: plan.slug })], [plan])).toEqual({ route: plan.slug, plan: null, how: null });
     const visits = [visit({ id: planVisitId(plan.slug, plan.date), route: plan.slug, from: "plan" })];
     expect(lastWalk(visits, [{ ...plan, date: "2026-12-05" }])?.plan).toBeNull();
+  });
+
+  it("carries the how kept with that visit", () => {
+    const how = { travel: "car" as const, withKids: true };
+    expect(lastWalk([visit({ id: "p:x:2026-11-21", route: "krivan", from: "plan", how })], [])).toEqual({ route: "krivan", plan: null, how });
   });
 
   it("is nothing when no visit says which route it was", () => {

@@ -115,7 +115,7 @@
     <trkpt lat="49.455005" lon="19.478728"><ele>778</ele></trkpt>
   </trkseg></trk>
   <trk><name>Kopanica</name><desc>kopanica-pod-kohutovou-klin-kostol</desc><trkseg>
-    <trkpt lat="49.439021" lon="19.489502"><ele>637</ele></trkpt>
+    <trkpt lat="49.438926" lon="19.489615"><ele>636</ele></trkpt>
     <trkpt lat="49.439332" lon="19.489101"><ele>639</ele></trkpt>
     <trkpt lat="49.439451" lon="19.488812"><ele>639</ele></trkpt>
     <trkpt lat="49.439439" lon="19.487833"><ele>638</ele></trkpt>
@@ -129,8 +129,8 @@
     <trkpt lat="49.440441" lon="19.483323"><ele>648</ele></trkpt>
     <trkpt lat="49.441564" lon="19.482312"><ele>653</ele></trkpt>
     <trkpt lat="49.442167" lon="19.481972"><ele>655</ele></trkpt>
-    <trkpt lat="49.442903" lon="19.481409"><ele>658</ele></trkpt>
-    <trkpt lat="49.443036" lon="19.481120"><ele>657</ele></trkpt>
+    <trkpt lat="49.442857" lon="19.481448"><ele>658</ele></trkpt>
+    <trkpt lat="49.443023" lon="19.481130"><ele>657</ele></trkpt>
     <trkpt lat="49.443288" lon="19.480371"><ele>660</ele></trkpt>
     <trkpt lat="49.443534" lon="19.479929"><ele>664</ele></trkpt>
     <trkpt lat="49.444252" lon="19.479043"><ele>666</ele></trkpt>
@@ -248,8 +248,8 @@
     <trkpt lat="49.444252" lon="19.479043"><ele>666</ele></trkpt>
     <trkpt lat="49.443534" lon="19.479929"><ele>664</ele></trkpt>
     <trkpt lat="49.443288" lon="19.480371"><ele>660</ele></trkpt>
-    <trkpt lat="49.443036" lon="19.481120"><ele>657</ele></trkpt>
-    <trkpt lat="49.442903" lon="19.481409"><ele>658</ele></trkpt>
+    <trkpt lat="49.443023" lon="19.481130"><ele>657</ele></trkpt>
+    <trkpt lat="49.442857" lon="19.481448"><ele>658</ele></trkpt>
     <trkpt lat="49.442167" lon="19.481972"><ele>655</ele></trkpt>
     <trkpt lat="49.441564" lon="19.482312"><ele>653</ele></trkpt>
     <trkpt lat="49.440441" lon="19.483323"><ele>648</ele></trkpt>
@@ -263,7 +263,7 @@
     <trkpt lat="49.439439" lon="19.487833"><ele>638</ele></trkpt>
     <trkpt lat="49.439451" lon="19.488812"><ele>639</ele></trkpt>
     <trkpt lat="49.439332" lon="19.489101"><ele>639</ele></trkpt>
-    <trkpt lat="49.439021" lon="19.489502"><ele>637</ele></trkpt>
+    <trkpt lat="49.438926" lon="19.489615"><ele>636</ele></trkpt>
   </trkseg></trk>
   <trk><name>Kopanica</name><desc>kopanica-pod-kohutovou-oravska-jasenica-shell</desc><trkseg>
     <trkpt lat="49.391671" lon="19.451996"><ele>610</ele></trkpt>
