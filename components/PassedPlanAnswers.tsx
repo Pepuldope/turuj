@@ -42,7 +42,9 @@ export function PassedPlanAnswers({ trip, from, here = false, onWent }: { trip: 
     const check = () => {
       const w = el.clientWidth;
       if (!narrow) {
-        const over = Array.from(el.children).some((b) => b.scrollWidth > b.clientWidth + 0.5);
+        // A label fits when it and its icon keep 8 px of air on each side; touching the edge reads as cramped (320 px phones).
+        const need = (b: Element) => Array.from(b.children).reduce((sum, k) => sum + k.getBoundingClientRect().width, 0) + 6 * (b.children.length - 1) + 16;
+        const over = Array.from(el.children).some((b) => need(b) > b.clientWidth + 0.5);
         if (over) {
           failedAt.current = w;
           setNarrow(true);
