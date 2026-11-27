@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { longDay } from "@/lib/days";
+import { addDaysIso, longDay } from "@/lib/days";
 import { useLang, useT } from "@/lib/i18n";
 import { compareMonths, monthGrid, monthOf, monthTitle, shiftMonth, weekdayHeads } from "@/lib/monthGrid";
 import type { Month } from "@/lib/monthGrid";
@@ -13,14 +13,28 @@ const arrow = `grid h-10 w-10 shrink-0 place-items-center rounded-full border bo
 /**
  * A month to pick a past day from, drawn by the page itself (Peter, 26 Nov 2026: the browser's own date picker
  * did not work for him; it is a different thing in every browser). No day after `today` can be picked; the year
- * is a list, so a visit from years ago is two taps away, not thirty.
+ * is a list, so a visit from years ago is two taps away, not thirty. With `ahead` it is the other way round, for moving
+ * a plan (C229): today and the year after it, nothing before today.
  */
-export function DayCalendar({ value, today, oldestYear, onPick }: { value: string | null; today: string; oldestYear: number; onPick: (iso: string) => void }) {
+export function DayCalendar({
+  value,
+  today,
+  oldestYear = 1980,
+  ahead = false,
+  onPick,
+}: {
+  value: string | null;
+  today: string;
+  oldestYear?: number;
+  ahead?: boolean;
+  onPick: (iso: string) => void;
+}) {
   const t = useT();
   const lang = useLang();
-  const last = monthOf(today);
-  const first: Month = { year: oldestYear, month: 1 };
-  const [shown, setShown] = useState<Month>(() => (value ? monthOf(value) : last));
+  const last = ahead ? monthOf(addDaysIso(today, 365)) : monthOf(today);
+  const first: Month = ahead ? monthOf(today) : { year: oldestYear, month: 1 };
+  const shut = (iso: string) => (ahead ? iso < today : iso > today);
+  const [shown, setShown] = useState<Month>(() => (value ? monthOf(value) : ahead ? first : last));
   const go = (m: Month) => setShown(compareMonths(m, last) > 0 ? last : compareMonths(m, first) < 0 ? first : m);
   const weeks = monthGrid(shown);
   const [monthName] = monthTitle(shown, lang).split(" ");
@@ -39,7 +53,7 @@ export function DayCalendar({ value, today, oldestYear, onPick }: { value: strin
             onChange={(e) => go({ year: Number(e.target.value), month: shown.month })}
             className={`font-data min-h-10 rounded-lg border border-[var(--border)] bg-[var(--card-bg)] px-1.5 text-[16px] ${focus}`}
           >
-            {Array.from({ length: last.year - oldestYear + 1 }, (_, i) => last.year - i).map((y) => (
+            {Array.from({ length: last.year - first.year + 1 }, (_, i) => (ahead ? first.year + i : last.year - i)).map((y) => (
               <option key={y} value={y}>
                 {y}
               </option>
@@ -67,7 +81,7 @@ export function DayCalendar({ value, today, oldestYear, onPick }: { value: strin
                 <span key={j} role="gridcell" className="grid place-items-center">
                   <button
                     type="button"
-                    disabled={iso > today}
+                    disabled={shut(iso)}
                     aria-pressed={iso === value}
                     aria-label={longDay(iso, lang)}
                     onClick={() => onPick(iso)}

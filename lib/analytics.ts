@@ -24,6 +24,8 @@ export type AnalyticsEvent =
   | "trip_done" // a saved trip marked as done: "Už sme tu boli" in Moje výlety (how: list) or "Áno" to "Boli ste tu?" on the trip page (how: ask) or on the home page (how: home), or "Boli sme tu" by hand on the trip page (how: page); "Nie" afterwards does not take it back
   | "review_sent" // the quick review was accepted by the server
   | "on_trail" // "Začať výlet" tapped on a saved trip in Moje výlety (trail mode opens)
+  | "plan_moved" // "Iný deň" on a plan whose day has passed moved it to a new day (from: home / ask / list); a total, never tied to an account
+  | "plan_cancelled" // "Zrušiť" on a plan whose day has passed removed it (from: home / ask / list); a total, never tied to an account
   | "plan_open" // the way back to a saved plan was used: the strip on the home page (from: home) or "Otvoriť" in the first card of the planned trip's page (from: trip); also "Naplánovať znova" on a visited place (from: again)
   | "my_trips_open" // a link to Moje výlety: "Pozrieť v Mojich výletoch" after saving (from: saved), "všetky výlety" in the home plan strip (from: home-plan), the Moje výlety strip on the home page (from: home)
   | "plan_commit" // North Star: the first save, send, navigation or GPX for a trail in this page load (sent by track())

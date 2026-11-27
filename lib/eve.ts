@@ -38,6 +38,28 @@ export function eveAtFor(date: string): number | null {
   return zonedDate(Number(m[1]), Number(m[2]), Number(m[3]) - 1, EVE_HOUR, 0).getTime();
 }
 
+/** What the server needs for a plan's evening reminder; null when the day plan is not for that day. Used by the switch on the trip page and by moving a plan to another day. */
+export function eveJobFor(
+  trip: { name: string; slug: string; date: string },
+  plan: { hikeStart: Date; hikeEnd: Date; latestStart: Date; noTrainInLight?: boolean },
+  sun: { lat: number; lon: number },
+  lang: Lang,
+  closures: { starts_on: string; ends_on: string }[],
+): EveJob | null {
+  if (new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Bratislava" }).format(plan.hikeStart) !== trip.date) return null;
+  return {
+    name: trip.name,
+    slug: trip.slug,
+    lang,
+    lat: Math.round(sun.lat * 1e4) / 1e4,
+    lon: Math.round(sun.lon * 1e4) / 1e4,
+    from: plan.hikeStart.getTime(),
+    to: plan.hikeEnd.getTime(),
+    leave: plan.noTrainInLight ? null : plan.latestStart.getTime(),
+    closedUntil: closedUntilFor(trip.date, closures),
+  };
+}
+
 /** Can the evening reminder still be sent for this day? Not on the day itself, not past 19:00 the day before, not beyond the horizon. */
 export function eveWanted(date: string, now = Date.now()): number | null {
   const at = eveAtFor(date);
