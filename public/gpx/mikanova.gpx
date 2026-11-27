@@ -2,13 +2,13 @@
 <gpx version="1.1" creator="Túruj (OpenStreetMap)" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>Chata Mikanova</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Chata Mikanova</name><desc>mikanova</desc><trkseg>
-    <trkpt lat="49.114402" lon="18.950281"><ele>398</ele></trkpt>
+    <trkpt lat="49.114533" lon="18.950419"><ele>400</ele></trkpt>
     <trkpt lat="49.114679" lon="18.950602"><ele>400</ele></trkpt>
-    <trkpt lat="49.114842" lon="18.950560"><ele>401</ele></trkpt>
-    <trkpt lat="49.115126" lon="18.950637"><ele>404</ele></trkpt>
+    <trkpt lat="49.114800" lon="18.950558"><ele>401</ele></trkpt>
+    <trkpt lat="49.115195" lon="18.950632"><ele>405</ele></trkpt>
     <trkpt lat="49.115398" lon="18.950571"><ele>407</ele></trkpt>
-    <trkpt lat="49.115727" lon="18.950397"><ele>408</ele></trkpt>
-    <trkpt lat="49.115870" lon="18.950394"><ele>408</ele></trkpt>
+    <trkpt lat="49.115720" lon="18.950390"><ele>408</ele></trkpt>
+    <trkpt lat="49.115851" lon="18.950385"><ele>408</ele></trkpt>
     <trkpt lat="49.116832" lon="18.951460"><ele>420</ele></trkpt>
     <trkpt lat="49.117140" lon="18.951852"><ele>422</ele></trkpt>
     <trkpt lat="49.117565" lon="18.952041"><ele>423</ele></trkpt>
@@ -66,12 +66,12 @@
     <trkpt lat="49.117565" lon="18.952041"><ele>423</ele></trkpt>
     <trkpt lat="49.117140" lon="18.951852"><ele>422</ele></trkpt>
     <trkpt lat="49.116832" lon="18.951460"><ele>420</ele></trkpt>
-    <trkpt lat="49.115870" lon="18.950394"><ele>408</ele></trkpt>
-    <trkpt lat="49.115727" lon="18.950397"><ele>408</ele></trkpt>
+    <trkpt lat="49.115851" lon="18.950385"><ele>408</ele></trkpt>
+    <trkpt lat="49.115720" lon="18.950390"><ele>408</ele></trkpt>
     <trkpt lat="49.115398" lon="18.950571"><ele>407</ele></trkpt>
-    <trkpt lat="49.115126" lon="18.950637"><ele>404</ele></trkpt>
-    <trkpt lat="49.114842" lon="18.950560"><ele>401</ele></trkpt>
+    <trkpt lat="49.115195" lon="18.950632"><ele>405</ele></trkpt>
+    <trkpt lat="49.114800" lon="18.950558"><ele>401</ele></trkpt>
     <trkpt lat="49.114679" lon="18.950602"><ele>400</ele></trkpt>
-    <trkpt lat="49.114402" lon="18.950281"><ele>398</ele></trkpt>
+    <trkpt lat="49.114533" lon="18.950419"><ele>400</ele></trkpt>
   </trkseg></trk>
 </gpx>

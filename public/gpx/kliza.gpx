@@ -209,8 +209,10 @@
   </trkseg></trk>
   <trk><name>Klíža</name><desc>kliza-kalnica-ina-cesta</desc><trkseg>
     <trkpt lat="48.762948" lon="17.926391"><ele>223</ele></trkpt>
-    <trkpt lat="48.763025" lon="17.926356"><ele>223</ele></trkpt>
+    <trkpt lat="48.763056" lon="17.926351"><ele>223</ele></trkpt>
+    <trkpt lat="48.763108" lon="17.925782"><ele>222</ele></trkpt>
     <trkpt lat="48.763071" lon="17.925755"><ele>222</ele></trkpt>
+    <trkpt lat="48.763059" lon="17.925385"><ele>221</ele></trkpt>
     <trkpt lat="48.763071" lon="17.925146"><ele>221</ele></trkpt>
     <trkpt lat="48.763127" lon="17.924884"><ele>221</ele></trkpt>
     <trkpt lat="48.763352" lon="17.924283"><ele>221</ele></trkpt>
@@ -344,8 +346,10 @@
     <trkpt lat="48.763352" lon="17.924283"><ele>221</ele></trkpt>
     <trkpt lat="48.763127" lon="17.924884"><ele>221</ele></trkpt>
     <trkpt lat="48.763071" lon="17.925146"><ele>221</ele></trkpt>
+    <trkpt lat="48.763059" lon="17.925385"><ele>221</ele></trkpt>
     <trkpt lat="48.763071" lon="17.925755"><ele>222</ele></trkpt>
-    <trkpt lat="48.763025" lon="17.926356"><ele>223</ele></trkpt>
+    <trkpt lat="48.763108" lon="17.925782"><ele>222</ele></trkpt>
+    <trkpt lat="48.763056" lon="17.926351"><ele>223</ele></trkpt>
     <trkpt lat="48.762948" lon="17.926391"><ele>223</ele></trkpt>
   </trkseg></trk>
 </gpx>

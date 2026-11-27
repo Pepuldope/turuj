@@ -3,7 +3,7 @@
   <metadata><name>Terchovské srdce</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   <trk><name>Terchovské srdce</name><desc>terchovske-srdce</desc><trkseg>
     <trkpt lat="49.257573" lon="19.031474"><ele>517</ele></trkpt>
-    <trkpt lat="49.257638" lon="19.031384"><ele>516</ele></trkpt>
+    <trkpt lat="49.257639" lon="19.031377"><ele>516</ele></trkpt>
     <trkpt lat="49.257747" lon="19.031422"><ele>517</ele></trkpt>
     <trkpt lat="49.257892" lon="19.030766"><ele>515</ele></trkpt>
     <trkpt lat="49.257955" lon="19.030754"><ele>516</ele></trkpt>
@@ -61,7 +61,7 @@
     <trkpt lat="49.257955" lon="19.030754"><ele>516</ele></trkpt>
     <trkpt lat="49.257892" lon="19.030766"><ele>515</ele></trkpt>
     <trkpt lat="49.257747" lon="19.031422"><ele>517</ele></trkpt>
-    <trkpt lat="49.257638" lon="19.031384"><ele>516</ele></trkpt>
+    <trkpt lat="49.257639" lon="19.031377"><ele>516</ele></trkpt>
     <trkpt lat="49.257573" lon="19.031474"><ele>517</ele></trkpt>
   </trkseg></trk>
   <trk><name>Terchovské srdce</name><desc>terchovske-srdce-od-auta</desc><trkseg>
