@@ -187,12 +187,13 @@ export function VisitRow({
     <>
       <section id={VISIT_CARD_ID} aria-label={t("Vaše návštevy")} data-nosnippet className={card}>
           <p className={rowClass}>
-          {/* One control, the answer right beside its question (Peter, 26 Nov 2026: at the card's far edge the
-              button "has no connection to the text"). The circle and the question open the window too. */}
-          <button type="button" onClick={() => setOpen("hand")} className={`group flex min-h-10 items-center gap-2 rounded-full text-left ${focus}`}>
+          {/* One control across the row: the circle and the question open the window too. The button sits at the
+              row's right end (Peter, 27 Nov 2026, under Save: "the boli sme tu button should be on the right"; on
+              26 Nov, in the first card, he had it moved beside the question). */}
+          <button type="button" onClick={() => setOpen("hand")} className={`group flex min-h-10 w-full items-center gap-2 rounded-full text-left ${focus}`}>
             <VisitMark done={false} />
-            <span>{t("Už ste tu boli?")}</span>
-            <span className="ml-1 grid min-h-10 shrink-0 place-items-center rounded-full border border-[var(--accent)] px-4 text-sm font-bold text-[var(--accent)] group-hover:bg-[var(--accent-soft)]">
+            <span className="min-w-0">{t("Už ste tu boli?")}</span>
+            <span className="ml-auto grid min-h-10 shrink-0 place-items-center rounded-full border border-[var(--accent)] px-4 text-sm font-bold text-[var(--accent)] group-hover:bg-[var(--accent-soft)]">
               {t("Boli sme tu")}
             </span>
           </button>
