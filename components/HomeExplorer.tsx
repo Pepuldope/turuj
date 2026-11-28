@@ -43,6 +43,7 @@ import { suggestTowns } from "@/lib/townSuggest";
 import { decimal, regionIn } from "@/lib/lang";
 import { StartChip } from "@/components/StartChip";
 import { NextPlanStrip } from "@/components/NextPlanStrip";
+import { KnownTripsStrip } from "@/components/KnownTripsStrip";
 import { useVisitedTrips } from "@/lib/visits";
 import { TownButton } from "@/components/TownButton";
 import { CardVisitMark, TripCard } from "@/components/TripCard";
@@ -1196,6 +1197,11 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
           <FilterChips />
           <KidsRow forList />
         </div>
+
+        {/* Known trips on the first phone screen, above the search (C155). Hidden while searching. */}
+        {words.length === 0 && (
+          <KnownTripsStrip items={listedAll} month={Number((date ?? isoDate(new Date())).slice(5, 7))} hasStart={!!start} transit={transit} />
+        )}
 
         <TownButton start={start} knownTowns={knownTowns} />
 
