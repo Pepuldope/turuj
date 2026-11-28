@@ -41,7 +41,7 @@ export function KnownTripsStrip({ items, month, hasStart, transit }: { items: re
       <h2 id="zname-vylety" className="px-4 text-[17px] leading-tight font-bold">
         {knownTitle(month, lang)}
       </h2>
-      <ul className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-1 [scrollbar-width:none]">
+      <ul className="flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto overscroll-x-contain px-4 pb-1 [scrollbar-width:none]">
         {picks.map(({ item }) => {
           const { trail } = item.detail;
           const goal = trail.goal ?? "ine";
