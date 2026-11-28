@@ -23,7 +23,7 @@ import type { DestinationKind } from "../lib/tripSchema";
 import type { PlacePhoto } from "../lib/tripFiles";
 
 /** Bump when the picture's look changes: every cached file is then made again. */
-export const TEMPLATE_VERSION = 2;
+export const TEMPLATE_VERSION = 3;
 
 const W = 1200;
 const H = 630;
@@ -39,7 +39,7 @@ interface Place {
   key: string;
   name: string;
   kind: string;
-  /** The main trip's walk, climb, time and region: "11,2 km · ↑ 124 m · 3 h 15 · Slovenský raj" (C52). */
+  /** The main trip's walk, climb, time and region: "Hlavná trasa: 11,2 km · ↑ 124 m · 3 h 15 · Slovenský raj" (C52). */
   facts?: string;
 }
 
@@ -50,7 +50,8 @@ export function factsLine(t: { distance_m?: number | null; ascent_m?: number | n
   if (t.ascent_m && t.ascent_m >= 10) parts.push(`↑\u00a0${Math.round(t.ascent_m)}\u00a0m`);
   if (t.duration_min) parts.push(formatDurationShort(Math.round(t.duration_min)));
   if (t.region_name) parts.push(t.region_name);
-  return parts.join(" · ");
+  // The card is the place's, also on its side routes' pages: say whose numbers these are (Peter, 28 Nov).
+  return parts.length ? `Hlavná trasa: ${parts.join(" · ")}` : "";
 }
 
 const warn = (m: string) => console.log(`::warning::share pictures: ${m}`);

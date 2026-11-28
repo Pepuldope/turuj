@@ -63,10 +63,10 @@ describe("terrain share cards", () => {
 
 describe("factsLine", () => {
   it("says length, climb, time and region (C52)", () => {
-    expect(factsLine({ distance_m: 14400, ascent_m: 581, duration_min: 315, region_name: "Levočské vrchy" })).toBe("14,4 km · ↑\u00a0581\u00a0m · 5\u00a0h\u00a015 · Levočské vrchy");
+    expect(factsLine({ distance_m: 14400, ascent_m: 581, duration_min: 315, region_name: "Levočské vrchy" })).toBe("Hlavná trasa: 14,4 km · ↑\u00a0581\u00a0m · 5\u00a0h\u00a015 · Levočské vrchy");
   });
   it("leaves out what is missing, and a climb under 10 m", () => {
-    expect(factsLine({ distance_m: 2000, ascent_m: 4, duration_min: null, region_name: null })).toBe("2,0 km");
+    expect(factsLine({ distance_m: 2000, ascent_m: 4, duration_min: null, region_name: null })).toBe("Hlavná trasa: 2,0 km");
     expect(factsLine({})).toBe("");
   });
 });
