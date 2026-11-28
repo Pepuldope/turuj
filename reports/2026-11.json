@@ -1,0 +1,323 @@
+{
+  "month": "2026-11",
+  "made_at": "2026-11-28T12:06:09+00:00",
+  "visits": [
+    {
+      "month": "2026-10",
+      "visitors": 151,
+      "visitors_2plus_days": 19,
+      "visitors_4plus_days": 8,
+      "avg_days": 1.38,
+      "visitors_4plus_use_days": 0
+    },
+    {
+      "month": "2026-11",
+      "visitors": 532,
+      "visitors_2plus_days": 23,
+      "visitors_4plus_days": 5,
+      "avg_days": 1.12,
+      "visitors_4plus_use_days": 2
+    }
+  ],
+  "events": {
+    "starts": 169,
+    "saved": 14,
+    "sent": 5,
+    "sent_fast": 3,
+    "friend_opens": 3,
+    "navigations": 7,
+    "plus_want": 0,
+    "plus_no": 0,
+    "planned": 20,
+    "planned_timed": 17,
+    "planned_fast": 10,
+    "gpx": 1,
+    "on_trail": 0,
+    "list_empty": 4,
+    "opened": 136,
+    "search_hit": 12,
+    "search_miss": 3,
+    "start_how": {
+      "gps": 42,
+      "manual": 15,
+      "map_pick": 2,
+      "remembered": 90,
+      "suggestion": 7,
+      "town_button": 1,
+      "town_page": 7,
+      "typed": 5
+    },
+    "day_pick": {
+      "dnes": 4,
+      "iny": 33,
+      "zajtra": 5
+    }
+  },
+  "event_rows": [
+    {
+      "month": "2026-10",
+      "name": "nav_open",
+      "detail": "",
+      "n": 12
+    },
+    {
+      "month": "2026-10",
+      "name": "share_sent",
+      "detail": "2-5 min",
+      "n": 1
+    },
+    {
+      "month": "2026-10",
+      "name": "shared_open",
+      "detail": "",
+      "n": 2
+    },
+    {
+      "month": "2026-10",
+      "name": "start_set",
+      "detail": "gps",
+      "n": 19
+    },
+    {
+      "month": "2026-10",
+      "name": "start_set",
+      "detail": "manual",
+      "n": 11
+    },
+    {
+      "month": "2026-10",
+      "name": "start_set",
+      "detail": "remembered",
+      "n": 90
+    },
+    {
+      "month": "2026-10",
+      "name": "trip_saved",
+      "detail": "0-2 min",
+      "n": 2
+    },
+    {
+      "month": "2026-10",
+      "name": "trip_saved",
+      "detail": "15+ min",
+      "n": 1
+    },
+    {
+      "month": "2026-10",
+      "name": "trip_saved",
+      "detail": "2-5 min",
+      "n": 6
+    },
+    {
+      "month": "2026-10",
+      "name": "trip_saved",
+      "detail": "5-15 min",
+      "n": 2
+    },
+    {
+      "month": "2026-11",
+      "name": "day_pick",
+      "detail": "dnes",
+      "n": 4
+    },
+    {
+      "month": "2026-11",
+      "name": "day_pick",
+      "detail": "iny",
+      "n": 33
+    },
+    {
+      "month": "2026-11",
+      "name": "day_pick",
+      "detail": "zajtra",
+      "n": 5
+    },
+    {
+      "month": "2026-11",
+      "name": "gpx_download",
+      "detail": "",
+      "n": 1
+    },
+    {
+      "month": "2026-11",
+      "name": "heard_from",
+      "detail": "kamarat",
+      "n": 3
+    },
+    {
+      "month": "2026-11",
+      "name": "list_empty",
+      "detail": "",
+      "n": 4
+    },
+    {
+      "month": "2026-11",
+      "name": "nav_open",
+      "detail": "",
+      "n": 7
+    },
+    {
+      "month": "2026-11",
+      "name": "plan_commit",
+      "detail": "gpx",
+      "n": 2
+    },
+    {
+      "month": "2026-11",
+      "name": "plan_commit",
+      "detail": "nav",
+      "n": 3
+    },
+    {
+      "month": "2026-11",
+      "name": "plan_commit",
+      "detail": "save",
+      "n": 12
+    },
+    {
+      "month": "2026-11",
+      "name": "plan_commit",
+      "detail": "share",
+      "n": 3
+    },
+    {
+      "month": "2026-11",
+      "name": "plan_took",
+      "detail": "0-2 min",
+      "n": 10
+    },
+    {
+      "month": "2026-11",
+      "name": "plan_took",
+      "detail": "2-5 min",
+      "n": 3
+    },
+    {
+      "month": "2026-11",
+      "name": "plan_took",
+      "detail": "5-15 min",
+      "n": 4
+    },
+    {
+      "month": "2026-11",
+      "name": "review_sent",
+      "detail": "",
+      "n": 2
+    },
+    {
+      "month": "2026-11",
+      "name": "share_sent",
+      "detail": "0-2 min",
+      "n": 3
+    },
+    {
+      "month": "2026-11",
+      "name": "share_sent",
+      "detail": "2-5 min",
+      "n": 2
+    },
+    {
+      "month": "2026-11",
+      "name": "shared_open",
+      "detail": "",
+      "n": 3
+    },
+    {
+      "month": "2026-11",
+      "name": "start_set",
+      "detail": "gps",
+      "n": 42
+    },
+    {
+      "month": "2026-11",
+      "name": "start_set",
+      "detail": "manual",
+      "n": 15
+    },
+    {
+      "month": "2026-11",
+      "name": "start_set",
+      "detail": "map_pick",
+      "n": 2
+    },
+    {
+      "month": "2026-11",
+      "name": "start_set",
+      "detail": "remembered",
+      "n": 90
+    },
+    {
+      "month": "2026-11",
+      "name": "start_set",
+      "detail": "suggestion",
+      "n": 7
+    },
+    {
+      "month": "2026-11",
+      "name": "start_set",
+      "detail": "town_button",
+      "n": 1
+    },
+    {
+      "month": "2026-11",
+      "name": "start_set",
+      "detail": "town_page",
+      "n": 7
+    },
+    {
+      "month": "2026-11",
+      "name": "start_set",
+      "detail": "typed",
+      "n": 5
+    },
+    {
+      "month": "2026-11",
+      "name": "trip_done",
+      "detail": "list",
+      "n": 4
+    },
+    {
+      "month": "2026-11",
+      "name": "trip_open",
+      "detail": "",
+      "n": 136
+    },
+    {
+      "month": "2026-11",
+      "name": "trip_saved",
+      "detail": "0-2 min",
+      "n": 8
+    },
+    {
+      "month": "2026-11",
+      "name": "trip_saved",
+      "detail": "2-5 min",
+      "n": 2
+    },
+    {
+      "month": "2026-11",
+      "name": "trip_saved",
+      "detail": "5-15 min",
+      "n": 4
+    },
+    {
+      "month": "2026-11",
+      "name": "trip_search",
+      "detail": "hit",
+      "n": 12
+    },
+    {
+      "month": "2026-11",
+      "name": "trip_search",
+      "detail": "miss",
+      "n": 3
+    }
+  ],
+  "kpis": {
+    "planned": 20,
+    "activation": 0.284,
+    "two_minute_share": 0.588,
+    "two_minute_basis": "plan_commit",
+    "growth_loop": 0.6
+  }
+}
