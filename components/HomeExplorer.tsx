@@ -27,7 +27,6 @@ import { smoothScroll } from "@/lib/motion";
 import { usePresence } from "@/lib/usePresence";
 import { useUserLocation } from "@/lib/userLocation";
 import { Reveal } from "@/components/Reveal";
-import { FilterChips, KidsRow } from "@/components/FilterChips";
 import { MapExpandButton } from "@/components/MapExpandButton";
 import { SeasonScene } from "@/components/SeasonScene";
 import { PullSky, SunPull } from "@/components/SunPull";
@@ -252,7 +251,11 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
   const trails = useAllTrails(initial);
   // Back on the list: stops added on a trip page don't follow into the next one.
   useEffect(() => clearAllStops(), []);
-  const { date, today, withKids, easier, travel, update } = useTripSettings();
+  const { date, today, travel, update } = useTripSettings();
+  // No kids switch on the home page any more (Peter, 28 Nov, C155): the list keeps adult times and every trip;
+  // "Idete s deťmi?" lives on the trip page, where it changes that trip's plan.
+  const withKids: boolean = false;
+  const easier: boolean = false;
   // After a saved plan was open, the list shows its own day again, not the plan's (Peter, 26 Nov 2026).
   useOwnDay();
   const t = useT();
@@ -1123,11 +1126,6 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
                 {t("Zrušiť filtre")}
               </button>
             )}
-            {easier && (
-              <button type="button" onClick={() => update({ easier: false })} className="font-semibold text-[var(--accent)] underline">
-                {t("Ukázať aj náročnejšie trasy")}
-              </button>
-            )}
             {date === today && (
               <button type="button" onClick={showTomorrow} className="font-semibold text-[var(--accent)] underline">
                 {t("Pozrieť zajtra")}
@@ -1191,11 +1189,6 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
         <div className="relative z-[1] -mx-1 -mt-14 flex flex-col gap-3">
           <NextPlanStrip />
           <StartChip />
-        </div>
-
-        <div className="-mx-1 flex flex-col gap-3 rounded-[18px] bg-[var(--card-bg)] p-3 shadow-[var(--shadow-float)]">
-          <FilterChips />
-          <KidsRow forList />
         </div>
 
         {/* Known trips on the first phone screen, above the search (C155). Hidden while searching. */}
