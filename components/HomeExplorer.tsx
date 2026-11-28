@@ -42,7 +42,7 @@ import { suggestTowns } from "@/lib/townSuggest";
 import { decimal, regionIn } from "@/lib/lang";
 import { StartChip } from "@/components/StartChip";
 import { NextPlanStrip } from "@/components/NextPlanStrip";
-import { KnownTripsStrip } from "@/components/KnownTripsStrip";
+import { AllTripsLink, KnownTripsStrip } from "@/components/KnownTripsStrip";
 import { useVisitedTrips } from "@/lib/visits";
 import { TownButton } from "@/components/TownButton";
 import { CardVisitMark, TripCard } from "@/components/TripCard";
@@ -1197,6 +1197,8 @@ export function HomeExplorer({ trails: initial, knownTowns }: Props) {
         )}
 
         <TownButton start={start} knownTowns={knownTowns} />
+
+        {words.length === 0 && <AllTripsLink />}
 
         {startReady && !start && <StartReminder />}
 

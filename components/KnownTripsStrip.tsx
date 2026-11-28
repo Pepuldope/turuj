@@ -12,7 +12,7 @@ import { smoothScroll } from "@/lib/motion";
 
 /**
  * Known trips on the first phone screen (C155, Peter 14 Nov: option C): a swipe strip of the best known trips
- * that fit the day and the month, above the search; "Všetky výlety" under it goes to the full list, as before.
+ * that fit the day and the month, above the search; AllTripsLink, under it or under "Výlety okolo …", goes to the full list.
  * The rule for "well-known" is in lib/knownTrips.ts.
  */
 export function KnownTripsStrip({ items, month, hasStart, transit }: { items: readonly TripCardItem[]; month: number; hasStart: boolean; transit: boolean }) {
@@ -87,20 +87,27 @@ export function KnownTripsStrip({ items, month, hasStart, transit }: { items: re
           );
         })}
       </ul>
-      <a
-        href="#vylety"
-        onClick={(e) => {
-          const list = document.getElementById("vylety");
-          if (!list) return;
-          e.preventDefault();
-          list.scrollIntoView({ behavior: smoothScroll(), block: "start" });
-          list.focus({ preventScroll: true });
-        }}
-        className="mx-4 inline-flex w-fit items-center gap-1 text-sm font-semibold text-[var(--accent)]"
-      >
-        {t("Všetky výlety v zozname")}
-        <UiIcon name="down" size={14} />
-      </a>
     </section>
+  );
+}
+
+/** "Všetky výlety v zozname": jumps to the full list. Under "Výlety okolo …" when that shows, else under the strip (Peter, 28 Nov). */
+export function AllTripsLink() {
+  const t = useT();
+  return (
+    <a
+      href="#vylety"
+      onClick={(e) => {
+        const list = document.getElementById("vylety");
+        if (!list) return;
+        e.preventDefault();
+        list.scrollIntoView({ behavior: smoothScroll(), block: "start" });
+        list.focus({ preventScroll: true });
+      }}
+      className="inline-flex w-fit items-center gap-1 text-sm font-semibold text-[var(--accent)]"
+    >
+      {t("Všetky výlety v zozname")}
+      <UiIcon name="down" size={14} />
+    </a>
   );
 }
