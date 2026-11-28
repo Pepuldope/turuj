@@ -15,15 +15,13 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { kindSvg } from "../lib/kindIcons";
-import { formatDurationShort } from "../lib/format";
-import { formatKm } from "../lib/walkFacts";
 import { GOAL_COLOUR, POI_COLOUR } from "../lib/palette";
 import { bannerScene, terrainKeyOf, type PackedLayers } from "../lib/terrainScene";
 import type { DestinationKind } from "../lib/tripSchema";
 import type { PlacePhoto } from "../lib/tripFiles";
 
 /** Bump when the picture's look changes: every cached file is then made again. */
-export const TEMPLATE_VERSION = 3;
+export const TEMPLATE_VERSION = 1;
 
 const W = 1200;
 const H = 630;
@@ -39,19 +37,6 @@ interface Place {
   key: string;
   name: string;
   kind: string;
-  /** The main trip's walk, climb, time and region: "Hlavná trasa: 11,2 km · ↑ 124 m · 3 h 15 · Slovenský raj" (C52). */
-  facts?: string;
-}
-
-/** The facts line under the name (C52): length, climb, walking time, region; parts that are missing are left out. */
-export function factsLine(t: { distance_m?: number | null; ascent_m?: number | null; duration_min?: number | null; region_name?: string | null }): string {
-  const parts: string[] = [];
-  if (t.distance_m) parts.push(formatKm(t.distance_m));
-  if (t.ascent_m && t.ascent_m >= 10) parts.push(`↑\u00a0${Math.round(t.ascent_m)}\u00a0m`);
-  if (t.duration_min) parts.push(formatDurationShort(Math.round(t.duration_min)));
-  if (t.region_name) parts.push(t.region_name);
-  // The card is the place's, also on its side routes' pages: say whose numbers these are (Peter, 28 Nov).
-  return parts.length ? `Hlavná trasa: ${parts.join(" · ")}` : "";
 }
 
 const warn = (m: string) => console.log(`::warning::share pictures: ${m}`);
@@ -70,14 +55,14 @@ export function sourceOf(p: PlacePhoto): { url?: string; file?: string } | null 
   return { url };
 }
 
-export function hashOf(key: string, source: string, name: string, kind: string, p: PlacePhoto, facts = ""): string {
-  return createHash("sha1").update(TEMPLATE_VERSION + key + source + name + kind + p.author + p.license + facts).digest("hex").slice(0, 12);
+export function hashOf(key: string, source: string, name: string, kind: string, p: PlacePhoto): string {
+  return createHash("sha1").update(TEMPLATE_VERSION + key + source + name + kind + p.author + p.license).digest("hex").slice(0, 12);
 }
 
 /** Hash of a terrain card: the template, the place, and the picture drawn (its SVG covers the layers and the drawing code). */
-export function terrainHashOf(key: string, name: string, kind: string, svg: string, facts = ""): string {
+export function terrainHashOf(key: string, name: string, kind: string, svg: string): string {
   const drawn = createHash("sha1").update(svg).digest("hex");
-  return createHash("sha1").update(`${TEMPLATE_VERSION}${key}${name}${kind}terrain${drawn}${facts}`).digest("hex").slice(0, 12);
+  return createHash("sha1").update(`${TEMPLATE_VERSION}${key}${name}${kind}terrain${drawn}`).digest("hex").slice(0, 12);
 }
 
 export interface TerrainPlace { k: DestinationKind; banner: PackedLayers }
@@ -92,9 +77,9 @@ export function terrainKeys(terrain: Record<string, TerrainPlace>, photos: Recor
   return Object.keys(terrain).filter((k) => !photos[k] && places.has(k));
 }
 
-/** Each place's name, kind and facts, by photo key as lib/tripFiles.ts getTripPhoto() finds it; its main trip wins over variants. */
+/** Each place's name and kind, by photo key as lib/tripFiles.ts getTripPhoto() finds it; the first trip wins. */
 function placesFromTrips(): Map<string, Place> {
-  return readTrips((t, d, keys) => d.osm ?? keys[t.slug] ?? `trip/${t.slug}`, true);
+  return readTrips((t, d, keys) => d.osm ?? keys[t.slug] ?? `trip/${t.slug}`);
 }
 
 /** The same, by the key the trip page finds its terrain picture under (terrainKeyOf); a place's main trip wins over its variants. */
@@ -119,7 +104,7 @@ function readTrips(keyOf: (t: { slug: string; variant_of?: string | null }, d: {
       if (!t?.slug || !d?.name || !d?.kind) continue;
       const key = keyOf(t, d, keys);
       if (!out.has(key) || (mainFirst && fromVariant.has(key) && !t.variant_of)) {
-        out.set(key, { key, name: String(d.name), kind: String(d.kind), facts: factsLine(t) || undefined });
+        out.set(key, { key, name: String(d.name), kind: String(d.kind) });
         if (t.variant_of) fromVariant.add(key);
         else fromVariant.delete(key);
       }
@@ -202,7 +187,7 @@ ${fontFace("Fig", "400 800", "figtree-latin-ext.woff2", "unicode-range:U+0100-02
 #nm{width:${NAME_W}px;font-size:84px;white-space:nowrap;overflow:hidden}</style></head><body>${background}
 <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25) 0,transparent 35%,rgba(0,0,0,.72) 100%)"></div>
 <div style="position:absolute;left:44px;top:40px;background:#fff;border-radius:999px;padding:14px 26px 12px">${LOGO}</div>
-<div style="position:absolute;left:44px;right:44px;bottom:44px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.5);display:flex;align-items:center;gap:${GAP}px"><span style="display:grid;place-items:center;width:${TILE}px;height:${TILE}px;border-radius:19.2px;background:color-mix(in srgb,${colourOf(place.kind)} 88%,#000);flex:none;color:#fff">${glyph}</span><div style="min-width:0"><div class="d" id="nm">${esc(place.name)}</div>${place.facts ? `<div style="margin-top:10px;font-size:30px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:${NAME_W}px">${esc(place.facts)}</div>` : ""}</div></div>
+<div style="position:absolute;left:44px;right:44px;bottom:44px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.5);display:flex;align-items:center;gap:${GAP}px"><span style="display:grid;place-items:center;width:${TILE}px;height:${TILE}px;border-radius:19.2px;background:color-mix(in srgb,${colourOf(place.kind)} 88%,#000);flex:none;color:#fff">${glyph}</span><div class="d" id="nm">${esc(place.name)}</div></div>
 <span class="cr" style="right:20px;top:20px">${esc(credit)}</span></body></html>`;
 }
 
@@ -257,7 +242,7 @@ async function main() {
     if (!place || !photo) continue;
     const src = sourceOf(photo);
     if (!src) continue;
-    const hash = hashOf(key, src.url ?? src.file!.slice(ROOT.length), place.name, place.kind, photo, place.facts);
+    const hash = hashOf(key, src.url ?? src.file!.slice(ROOT.length), place.name, place.kind, photo);
     jobs.push({ place, photo, src, hash, file: join(outDir, `${hash}.jpg`) });
   }
   const scoped = jobs.filter((j) => !only || only.has(j.place.key)).slice(0, limit);
@@ -271,7 +256,7 @@ async function main() {
     for (const key of terrainKeys(terrain, json.photos, tPlaces)) {
       const place = tPlaces.get(key)!;
       const svg = terrainSvgOf(key, terrain[key]);
-      const hash = terrainHashOf(key, place.name, place.kind, svg, place.facts);
+      const hash = terrainHashOf(key, place.name, place.kind, svg);
       tJobs.push({ place, svg, hash, file: join(outDir, `${hash}.jpg`) });
     }
   } catch (e) {
