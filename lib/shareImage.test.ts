@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { shareImage, type PlacePhoto } from "@/lib/tripFiles";
 import { ownImages } from "@/lib/sitemapEntries";
 import { terrainKeyOf } from "@/lib/terrainScene";
-import { hashOf, terrainHashOf, terrainKeys, terrainSvgOf } from "@/scripts/share-pics";
+import { factsLine, hashOf, terrainHashOf, terrainKeys, terrainSvgOf } from "@/scripts/share-pics";
 
 const photo = (url: string, extra: Partial<PlacePhoto> = {}): PlacePhoto => ({ url, w: 500, h: 375, author: "x", license: "CC0", page: "p", ...extra });
 
@@ -58,5 +58,15 @@ describe("terrain share cards", () => {
     const places = new Map([["a", { key: "a", name: "A", kind: "vrchol" }], ["b", { key: "b", name: "B", kind: "hrad" }]]);
     const terrain = { a: { k: "vrchol" as const, banner: layers }, b: { k: "hrad" as const, banner: layers }, c: { k: "vrchol" as const, banner: layers } };
     expect(terrainKeys(terrain, { b: {} }, places)).toEqual(["a"]);
+  });
+});
+
+describe("factsLine", () => {
+  it("says length, climb, time and region (C52)", () => {
+    expect(factsLine({ distance_m: 14400, ascent_m: 581, duration_min: 315, region_name: "Levočské vrchy" })).toBe("14,4 km · ↑\u00a0581\u00a0m · 5\u00a0h\u00a015 · Levočské vrchy");
+  });
+  it("leaves out what is missing, and a climb under 10 m", () => {
+    expect(factsLine({ distance_m: 2000, ascent_m: 4, duration_min: null, region_name: null })).toBe("2,0 km");
+    expect(factsLine({})).toBe("");
   });
 });
